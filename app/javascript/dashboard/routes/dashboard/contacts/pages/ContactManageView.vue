@@ -20,6 +20,8 @@ const router = useRouter();
 
 const contact = useMapGetter('contacts/getContactById');
 const uiFlags = useMapGetter('contacts/getUIFlags');
+const currentUser = useMapGetter('getCurrentUser');
+const isAdministrator = computed(() => currentUser.value?.role === 'administrator');
 
 const activeTab = ref('attributes');
 const contactMergeRef = ref(null);
@@ -44,10 +46,12 @@ const CONTACT_TABS_OPTIONS = [
 ];
 
 const tabs = computed(() => {
-  return CONTACT_TABS_OPTIONS.map(tab => ({
-    label: t(`CONTACTS_LAYOUT.SIDEBAR.TABS.${tab.key}`),
-    value: tab.value,
-  }));
+  return CONTACT_TABS_OPTIONS
+    .filter(tab => tab.value !== 'history' || isAdministrator.value)
+    .map(tab => ({
+      label: t(`CONTACTS_LAYOUT.SIDEBAR.TABS.${tab.key}`),
+      value: tab.value,
+    }));
 });
 
 const activeTabIndex = computed(() => {
@@ -170,7 +174,7 @@ onMounted(() => {
             :selected-contact="selectedContact"
           />
           <ContactNotes v-if="activeTab === 'notes'" />
-          <ContactHistory v-if="activeTab === 'history'" />
+          <ContactHistory v-if="activeTab === 'history' && isAdministrator" />
           <ContactMerge
             v-if="activeTab === 'merge'"
             ref="contactMergeRef"

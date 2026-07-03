@@ -24,6 +24,8 @@ const router = useRouter();
 
 const currentChat = useMapGetter('getSelectedChat');
 const uiFlags = useMapGetter('contactConversations/getUIFlags');
+const currentUser = useMapGetter('getCurrentUser');
+const isAdministrator = computed(() => currentUser.value?.role === 'administrator');
 
 const contactGetter = useMapGetter('contacts/getContact');
 const inboxGetter = useMapGetter('inboxes/getInbox');
@@ -129,7 +131,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div v-if="!uiFlags.isFetching" class="">
+  <div v-if="!uiFlags.isFetching && isAdministrator" class="">
     <div v-if="!previousConversations.length" class="no-label-message px-4 p-3">
       <span>
         {{ $t('CONTACT_PANEL.CONVERSATIONS.NO_RECORDS_FOUND') }}
