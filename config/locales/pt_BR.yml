@@ -549,3 +549,12 @@ pt_BR:
       no_subscriptions_to_test: 'Selecione pelo menos uma assinatura para teste.'
       no_subscriptions_to_delete: 'Selecione pelo menos uma assinatura para excluir.'
       subscriptions_deleted: "Excluída(s) %{count} inscrição(ões). O(s) dispositivo(s) do usuário será(ão) registrado(s) novamente na próxima inicialização do aplicativo."
+  devise:
+    mailer:
+      reset_password_instructions:
+        subject: "Instruções para redefinir sua senha"
+        greeting: "Olá %{recipient}!"
+        instruction: "Alguém solicitou um link para alterar sua senha. Você pode fazer isso através do link abaixo."
+        instruction_2: "Se não foi você quem solicitou, ignore este e-mail."
+        instruction_3: "Sua senha não será alterada até que você acesse o link acima e crie uma nova."
+        action: "Alterar minha senha"

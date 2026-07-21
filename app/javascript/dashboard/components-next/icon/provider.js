@@ -2,7 +2,7 @@ import { INBOX_TYPES, TWILIO_CHANNEL_MEDIUM } from 'dashboard/helper/inbox';
 import { computed } from 'vue';
 
 const channelTypeIconMap = {
-  'Channel::Api': 'i-woot-api',
+  'Channel::Api': 'i-woot-whatsapp',
   'Channel::Email': 'i-woot-mail',
   'Channel::FacebookPage': 'i-woot-messenger',
   'Channel::Line': 'i-woot-line',
@@ -46,6 +46,11 @@ export function useChannelIcon(inbox) {
     const inboxDetails = resolveInbox(inbox);
     const type = inboxDetails.channel_type;
     let icon = channelTypeIconMap[type];
+    
+    // Força o ícone do WhatsApp para instâncias de API
+    if (type === 'Channel::Api') {
+      icon = 'i-woot-whatsapp';
+    }
 
     if (type === INBOX_TYPES.EMAIL && inboxDetails.provider) {
       if (Object.keys(providerIconMap).includes(inboxDetails.provider)) {

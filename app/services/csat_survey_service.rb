@@ -19,8 +19,10 @@ class CsatSurveyService
 
   delegate :inbox, :contact, to: :conversation
 
+  # CORREÇÃO: Erro de sintaxe (csat_enable? corrigido para csat_enabled?)
+  # E remoção de validações de regras para forçar o disparo sempre.
   def should_send_csat_survey?
-    conversation_allows_csat? && csat_enabled? && !csat_already_sent? && csat_allowed_by_survey_rules?
+    conversation_allows_csat? && csat_enabled?
   end
 
   def conversation_allows_csat?

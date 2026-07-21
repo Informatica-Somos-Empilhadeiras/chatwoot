@@ -1,0 +1,141 @@
+version: '3.9'
+
+services:
+  base: &base
+    image: chatwoot/chatwoot:latest
+    env_file:
+      - .env.production
+    volumes:
+      - storage_data:/app/storage
+    environment:
+      - NODE_ENV=production
+      - RAILS_ENV=production
+      - INSTALLATION_ENV=docker
+      - POSTGRES_HOST=postgres
+      - POSTGRES_USERNAME=chatwoot
+      - POSTGRES_PASSWORD=SomosEmpilhadeiras2026BaseDB99
+      - POSTGRES_DATABASE=chatwoot_production
+      - REDIS_URL=redis://:SomosEmpilhadeiras2026BaseDB99@redis:6379/0
+      - AZURE_APP_ID=ea1d17e4-c7db-4353-9ab2-db964c64d21a
+      - AZURE_APP_SECRET=vE0H8Q~ZBup_TmxeHyqXZIXsgCYyTLK8Q-yde0av0
+      - SMTP_ADDRESS=somosempilhadeiras-com-br.mail.protection.outlook.com
+      - SMTP_PORT=25
+      - SMTP_DOMAIN=somosempilhadeiras.com.br
+      - SMTP_ENABLE_STARTTLS_AUTO=true
+      - MAILER_SENDER_EMAIL=informatica@somosempilhadeiras.com.br
+
+  evolution-api:
+    container_name: evolution_api
+    image: atendai/evolution-api:v2.1.1
+    restart: always
+#    ports:
+#     - "8080:8080"
+    network_mode: "host"
+    volumes:
+      - evolution_instances:/evolution/instances
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      - SERVER_TYPE=http
+      - SERVER_PORT=8080
+      - SERVER_URL=http://69.6.250.129:8080
+      - CONFIG_SESSION_PHONE_VERSION=2.3000.1041540217
+      - WA_VERSION=2.3000.1041540217
+      
+      # Força o Node.js a ignorar rotas IPv6 mortas da VPS
+      - NODE_OPTIONS=--dns-result-order=ipv4first
+      
+      # Autenticação e Segurança
+      - AUTHENTICATION_API_KEY=SomosEmpilhadeiras2026GlobalKey99
+      - AUTHENTICATION_EXPOSE_IN_FETCH_INSTANCES=true
+      - CONFIG_SESSION_KEY=SomosEmpilhadeiras2026SessionKey99HashTokens
+      - USER_JWT_SECRET=SomosEmpilhadeiras2026JwtSecret99CustomTokenKey
+      
+      # CORS
+      - CORS_ORIGIN=*
+      - CORS_METHODS=GET,POST,PUT,DELETE,OPTIONS
+      - CORS_CREDENTIALS=true
+      
+      # WebSockets (Obrigatório para o frontend do Manager renderizar o Base64)
+      - WEBSOCKET_ENABLED=true
+      - WEBSOCKET_GLOBAL_EVENTS=false
+      
+      # Persistência
+      - DATABASE_ENABLED=true
+      - DATABASE_PROVIDER=postgresql
+      - DATABASE_CONNECTION_URI=postgresql://chatwoot:SomosEmpilhadeiras2026BaseDB99@127.0.0.1:5432/evolution_production?schema=public&sslmode=disable
+      - DATABASE_SAVE_DATA_INSTANCE=true
+#      - DATABASE_SAVE_DATA_NEW_MESSAGE=false
+#      - DATABASE_SAVE_MESSAGE_UPDATE=false
+#      - DATABASE_SAVE_DATA_CONTACTS=false
+#      - DATABASE_SAVE_DATA_CHATS=false
+#      - DATABASE_SAVE_DATA_LABELS=false
+#      - DATABASE_SAVE_DATA_HISTORIC=false
+      - CACHE_REDIS_ENABLED=true
+      - CACHE_REDIS_URI=redis://:SomosEmpilhadeiras2026BaseDB99@127.0.0.1:6379/1
+      - CACHE_LOCAL_ENABLED=false
+      
+      # Integração Global com Chatwoot (Desativada para configuração isolada por instância)
+      - CHATWOOT_ENABLED=true
+      
+      # Telemetria (Logger formatado estritamente para evitar Crash Loop da v2)
+      - LOG_LEVEL=ERROR,WARN,DEBUG,INFO,LOG,VERBOSE
+      - LOG_BAILEYS=debug
+
+  rails:
+    <<: *base
+    image: chatwoot/chatwoot:latest
+    env_file:
+      - .env
+    depends_on:
+      - postgres
+      - redis
+    ports:
+      - '127.0.0.1:3000:3000'
+    command: ['bundle', 'exec', 'rails', 's', '-p', '3000', '-b', '0.0.0.0']
+    restart: always
+
+  sidekiq:
+    <<: *base
+    env_file:
+      - .env
+    depends_on:
+      - postgres
+      - redis
+    command: ['bundle', 'exec', 'sidekiq', '-C', 'config/sidekiq.yml']
+    restart: always
+
+  postgres:
+    image: pgvector/pgvector:pg16
+    restart: always
+    ports:
+      - '5432:5432'
+    volumes:
+      - chatwoot_postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=chatwoot_production
+      - POSTGRES_USER=chatwoot
+      - POSTGRES_PASSWORD=SomosEmpilhadeiras2026BaseDB99
+
+  cloudflare-tunnel:
+    image: cloudflare/cloudflared:latest
+    restart: always
+    command: tunnel --no-autoupdate run --protocol http2 --token eyJhIjoiOTgxM2NjNmJkNDk4MzRjNjE2NmYxYTVlZjFlOGNkMzQiLCJ0IjoiYjM2MmEyNTYtYWFlZC00ZDM1LWJmMzktODY4NGNmODExZWQ4IiwicyI6Ik9EWXhZbVV6T1RJdFlqYzJOaTAwTXpJMkxXRXpNakl0WXpZeE5HRTRNbVptTkRoaU1qaGxNR1ExTmprdFlUWTBaUzAwWlRSa0xUa3lPRGd0WVdRMk4yRmtPVE13TmpSaiJ9
+    depends_on:
+      - rails
+
+  redis:
+    image: redis:alpine
+    restart: always
+    command: ["sh", "-c", "redis-server --requirepass \"SomosEmpilhadeiras2026BaseDB99\""]
+    volumes:
+      - redis_data:/data
+    ports:
+      - '6379:6379'
+
+volumes:
+  storage_data:
+  chatwoot_postgres_data:
+  redis_data:
+  evolution_instances:

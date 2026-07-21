@@ -113,29 +113,14 @@ class Whatsapp::IncomingMessageBaseService
   end
 
   def set_conversation
-    Rails.logger.info "=== EVOLUTION DEBUG ==="
-    Rails.logger.info "ContactInbox ID: #{@contact_inbox.id}"
-
-    Rails.logger.info "Conversas do contato:"
-    Rails.logger.info @contact_inbox.conversations.pluck(:id, :status).inspect
-
-    open_conversation = @contact_inbox.conversations.where.not(status: :resolved).last
-
-    Rails.logger.info "Conversa aberta encontrada:"
-    Rails.logger.info(open_conversation&.id)
-
+    # if lock to single conversation is disabled, we will create a new conversation if previous conversation is resolved
     @conversation = if @inbox.lock_to_single_conversation
-                    @contact_inbox.conversations.last
-                  else
-                    open_conversation
-                  end
-
-    Rails.logger.info "Conversa escolhida:"
-    Rails.logger.info(@conversation&.id)
-
+                      @contact_inbox.conversations.last
+                    else
+                      @contact_inbox.conversations
+                                    .where.not(status: :resolved).last
+                    end
     return if @conversation
-
-    Rails.logger.info "CRIANDO NOVA CONVERSA"
 
     @conversation = ::Conversation.create!(conversation_params)
   end
