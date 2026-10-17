@@ -182,7 +182,7 @@ useEmitter(CMD_RESOLVE_CONVERSATION, onCmdResolveConversation);
         size="sm"
         color="slate"
         no-animation
-        class="ltr:rounded-r-none rtl:rounded-l-none !outline-0"
+        class="ltr:rounded-r-none rtl:rounded-l-none !outline-0 !bg-[#00a884] !text-white hover:!bg-[#008f6f]"
         :is-loading="isLoading"
         @click="onCmdResolveConversation"
       />
@@ -192,7 +192,7 @@ useEmitter(CMD_RESOLVE_CONVERSATION, onCmdResolveConversation);
         size="sm"
         color="slate"
         no-animation
-        class="ltr:rounded-r-none rtl:rounded-l-none !outline-0"
+        class="ltr:rounded-r-none rtl:rounded-l-none !outline-0 !bg-[#00a884] !text-white hover:!bg-[#008f6f]"
         :is-loading="isLoading"
         @click="onCmdOpenConversation"
       />
@@ -202,6 +202,7 @@ useEmitter(CMD_RESOLVE_CONVERSATION, onCmdResolveConversation);
         size="sm"
         color="slate"
         no-animation
+        class="!bg-[#00a884] !text-white hover:!bg-[#008f6f]"
         :is-loading="isLoading"
         @click="onCmdOpenConversation"
       />
@@ -212,7 +213,7 @@ useEmitter(CMD_RESOLVE_CONVERSATION, onCmdResolveConversation);
         :disabled="isLoading"
         size="sm"
         no-animation
-        class="ltr:rounded-l-none rtl:rounded-r-none !outline-0"
+        class="ltr:rounded-l-none rtl:rounded-r-none !outline-0 !bg-[#00a884] !text-white hover:!bg-[#008f6f]"
         color="slate"
         trailing-icon
         @click="openDropdown"

@@ -16,6 +16,7 @@ import MenuItem from '../../../components/widgets/conversation/contextMenu/menuI
 import { useTrack } from 'dashboard/composables';
 import NextButton from 'dashboard/components-next/button/Button.vue';
 import ReportCaptainMessageDialog from './ReportCaptainMessageDialog.vue';
+import { emitter } from 'shared/helpers/mitt';
 
 export default {
   components: {
@@ -140,6 +141,15 @@ export default {
       this.$emit('replyTo', this.message);
       this.handleClose();
     },
+    handleForward() {
+      const payload = {
+        text: this.plainTextContent,
+        attachments: this.message.attachments || []
+      };
+      // Nome do evento alterado para isolamento total
+      emitter.emit('CMD_OPEN_CUSTOM_FORWARD', payload);
+      this.handleClose();
+    },
     openDeleteModal() {
       this.handleClose();
       this.showDeleteModal = true;
@@ -216,6 +226,15 @@ export default {
           }"
           variant="icon"
           @click.stop="handleReplyTo"
+        />
+        <!-- Novo Botão de Encaminhar -->
+        <MenuItem
+          :option="{
+            icon: 'share',
+            label: 'Encaminhar',
+          }"
+          variant="icon"
+          @click.stop="handleForward"
         />
         <MenuItem
           v-if="enabledOptions['copy']"

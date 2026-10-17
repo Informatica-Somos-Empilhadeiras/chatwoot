@@ -190,13 +190,7 @@ export default {
       //   navigator.userAgent
       // );
 
-      return (
-        this.isFeatureEnabledonAccount(
-          this.accountId,
-          FEATURE_FLAGS.VOICE_RECORDER
-        ) && this.showAudioRecorder
-        // !isSafari
-      );
+      return this.showAudioRecorder;
     },
     showAudioPlayStopButton() {
       if (this.isEditorDisabled) return false;
@@ -316,9 +310,7 @@ export default {
         v-if="showAudioRecorderButton"
         v-tooltip.top-end="$t('CONVERSATION.REPLYBOX.TIP_AUDIORECORDER_ICON')"
         :icon="!isRecordingAudio ? 'i-ph-microphone' : 'i-ph-microphone-slash'"
-        slate
-        faded
-        sm
+        class="!absolute !right-4 !bottom-[4.2rem] z-[60] !rounded-full !w-10 !h-10 !bg-[#00a884] !text-white hover:!bg-[#008f6f] !shadow-md !flex !items-center !justify-center"
         @click="toggleAudioRecorder"
       />
       <NextButton

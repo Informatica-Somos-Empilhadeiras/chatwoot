@@ -107,3 +107,9 @@ Procfile.worktree
 .env.production
 docker-compose.yaml
 docker-compose.yml
+.env.evolution*
+*.save
+*.save.*
+*.bak
+*.bkp
+nano.*.save

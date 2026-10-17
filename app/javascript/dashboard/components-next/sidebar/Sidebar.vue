@@ -407,6 +407,29 @@ const menuItems = computed(() => {
           to: accountScopedRoute('conversation_unattended'),
         },
         {
+          name: 'Channels',
+          label: t('SIDEBAR.CHANNELS'),
+          icon: 'i-lucide-mailbox',
+          activeOn: ['conversation_through_inbox'],
+          ...buildSortConfig(SIDEBAR_SORT_SECTIONS.CHANNELS),
+          collapsible: true,
+          showTreeLine: true,
+          children: sortedInboxes.value.map(inbox => ({
+            name: `${inbox.name}-${inbox.id}`,
+            label: inbox.name,
+            badgeCount: getInboxUnreadCount.value(inbox.id),
+            icon: h(ChannelIcon, { inbox, class: 'size-[16px]' }),
+            to: accountScopedRoute('inbox_dashboard', { inbox_id: inbox.id }),
+            component: leafProps =>
+              h(ChannelLeaf, {
+                label: leafProps.label,
+                active: leafProps.active,
+                inbox,
+                badgeCount: leafProps.badgeCount,
+              }),
+          })),
+        },
+        {
           name: 'Folders',
           label: t('SIDEBAR.CUSTOM_VIEWS_FOLDER'),
           icon: 'i-lucide-folder',
@@ -436,29 +459,6 @@ const menuItems = computed(() => {
             label: team.name,
             badgeCount: getTeamUnreadCount.value(team.id),
             to: accountScopedRoute('team_conversations', { teamId: team.id }),
-          })),
-        },
-        {
-          name: 'Channels',
-          label: t('SIDEBAR.CHANNELS'),
-          icon: 'i-lucide-mailbox',
-          activeOn: ['conversation_through_inbox'],
-          ...buildSortConfig(SIDEBAR_SORT_SECTIONS.CHANNELS),
-          collapsible: true,
-          showTreeLine: true,
-          children: sortedInboxes.value.map(inbox => ({
-            name: `${inbox.name}-${inbox.id}`,
-            label: inbox.name,
-            badgeCount: getInboxUnreadCount.value(inbox.id),
-            icon: h(ChannelIcon, { inbox, class: 'size-[16px]' }),
-            to: accountScopedRoute('inbox_dashboard', { inbox_id: inbox.id }),
-            component: leafProps =>
-              h(ChannelLeaf, {
-                label: leafProps.label,
-                active: leafProps.active,
-                inbox,
-                badgeCount: leafProps.badgeCount,
-              }),
           })),
         },
         {
@@ -999,12 +999,12 @@ const menuItems = computed(() => {
               icon="i-lucide-pen-line"
               color="slate"
               size="sm"
-              class="dark:hover:!bg-n-slate-9/30"
+              class="!bg-[#00a884] !text-white hover:!bg-[#008f6f] dark:hover:!bg-[#008f6f]"
               :class="[
                 isEffectivelyCollapsed
-                  ? '!size-8 !outline-n-weak !text-n-slate-11'
-                  : '!h-7 !outline-n-weak !text-n-slate-11',
-                { '!bg-n-alpha-2 dark:!bg-n-slate-9/30': isOpen },
+                  ? '!size-8 !outline-n-weak'
+                  : '!h-7 !outline-n-weak',
+                { '!bg-[#008f6f] dark:!bg-[#008f6f]': isOpen },
               ]"
             />
           </template>

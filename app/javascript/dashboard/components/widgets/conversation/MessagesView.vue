@@ -552,3 +552,23 @@ export default {
     </div>
   </div>
 </template>
+
+<style lang="scss">
+/* Fundo padrão (Tema Claro) */
+.conversation-panel {
+  /* O linear-gradient aplica um branco com 50% de opacidade por cima da imagem */
+  background-image: linear-gradient(rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.6)), url('/light.png') !important;
+  background-repeat: no-repeat !important;
+  background-position: center center !important;
+  background-size: cover !important;
+  background-color: transparent !important;
+}
+
+/* Fundo para Tema Escuro (Especificidade Aumentada) */
+html.dark .conversation-panel,
+body.dark .conversation-panel,
+.dark .conversation-panel {
+  /* No tema escuro, aplicamos um preto com 50% de opacidade por cima da imagem */
+  background-image: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)), url('/dark.png') !important;
+}
+</style>

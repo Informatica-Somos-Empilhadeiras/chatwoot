@@ -5,6 +5,7 @@ import NextSidebar from 'next/sidebar/Sidebar.vue';
 import WootKeyShortcutModal from 'dashboard/components/widgets/modal/WootKeyShortcutModal.vue';
 import AddAccountModal from 'dashboard/components/app/AddAccountModal.vue';
 import UpgradePage from 'dashboard/routes/dashboard/upgrade/UpgradePage.vue';
+import FowardMessageModal from 'dashboard/components-next/message/FowardMessageModal.vue';
 
 import { useUISettings } from 'dashboard/composables/useUISettings';
 import { useAccount } from 'dashboard/composables/useAccount';
@@ -37,6 +38,7 @@ export default {
     CopilotContainer,
     FloatingCallWidget,
     MobileSidebarLauncher,
+    FowardMessageModal,
   },
   setup() {
     const upgradePageRef = ref(null);
@@ -175,4 +177,5 @@ export default {
       />
     </main>
   </div>
+  <FowardMessageModal />
 </template>

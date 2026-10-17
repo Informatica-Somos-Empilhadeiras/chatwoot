@@ -222,6 +222,10 @@ const onDeleteConversation = () => {
     @close="closeContextMenu"
   >
     <ConversationContextMenu
+      v-if="showContextMenu"
+      :x="contextMenu.x"
+      :y="contextMenu.y"
+      :conversation="source"
       :status="source.status"
       :inbox-id="inbox.id"
       :priority="source.priority"

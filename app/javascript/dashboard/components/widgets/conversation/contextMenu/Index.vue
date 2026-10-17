@@ -65,6 +65,10 @@ export default {
       type: Array,
       default: () => [],
     },
+    conversation: {
+      type: Object,
+      default: () => ({}),
+    },
   },
   emits: [
     'updateConversation',
@@ -216,6 +220,15 @@ export default {
       // Don't show snooze if the conversation is already snoozed/resolved/pending
       return this.status === wootConstants.STATUS_TYPE.OPEN;
     },
+    isPinned() {
+      return !!this.conversation?.custom_attributes?.pinned;
+    },
+    pinOption() {
+      return {
+        label: this.isPinned ? 'Desafixar conversa' : 'Fixar conversa',
+        icon: this.isPinned ? 'dismiss' : 'warning',
+      };
+    },
   },
   mounted() {
     this.$store.dispatch('inboxAssignableAgents/fetch', [this.inboxId]);
@@ -275,6 +288,15 @@ export default {
         ...(type === 'team' && { label: option.name }),
       };
     },
+    async togglePin() {
+      try {
+        await this.$store.dispatch('toggleConversationPin', this.conversation);
+      } catch (error) {
+        // Tratar falha silenciosamente ou adicionar log se necessário
+      } finally {
+        this.$emit('close');
+      }
+    },
   },
 };
 </script>
@@ -295,6 +317,11 @@ export default {
         :option="readOption"
         variant="icon"
         @click.stop="$emit('markAsRead')"
+      />
+      <MenuItem
+        :option="pinOption"
+        variant="icon"
+        @click.stop="togglePin"
       />
       <hr class="m-1 rounded border-b border-n-weak dark:border-n-weak" />
     </template>

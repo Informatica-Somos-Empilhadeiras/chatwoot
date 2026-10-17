@@ -1,4 +1,9 @@
 <script setup>
+// ======================
+// OUTSIDER FUNCTION
+import ConversationSearchBar from './widgets/conversation/ConversationSearchBar.vue';
+// ======================
+
 import { ref, unref, provide, computed, watch, onMounted } from 'vue';
 import { useStore } from 'vuex';
 import { useRoute, useRouter } from 'vue-router';
@@ -74,6 +79,14 @@ const resolveAttributesModalRef = ref(null);
 
 const activeAssigneeTab = ref(wootConstants.ASSIGNEE_TYPE.ME);
 const activeStatus = ref(wootConstants.STATUS_TYPE.OPEN);
+
+// ==================================
+// OUTSIDER CONSTANTS
+const searchResults = ref([]);
+const isSearchActive = ref(false);
+// OUTSIDER CONSTANTS
+// ==================================
+
 const activeSortBy = ref(wootConstants.SORT_BY_TYPE.LAST_ACTIVITY_AT_DESC);
 const showAdvancedFilters = ref(false);
 // chatsOnView is to store the chats that are currently visible on the screen,
@@ -318,6 +331,10 @@ function sortByUnreadStatus(conversations) {
 }
 
 const conversationList = computed(() => {
+  if (isSearchActive.value) {
+    return searchResults.value;
+  }
+
   let localConversationList = [];
 
   if (!hasAppliedFiltersOrActiveFolders.value) {
@@ -353,6 +370,7 @@ const conversationList = computed(() => {
     localConversationList = sortByUnreadStatus(localConversationList);
   }
 
+  localConversationList = sortPinnedFirst(localConversationList);
   return localConversationList;
 });
 
@@ -800,6 +818,16 @@ function toggleSelectAll(check) {
   selectAllConversations(check, conversationList);
 }
 
+function sortPinnedFirst(conversations) {
+  // sort é stable no JS moderno, então isso só reordena os pinned pra cima
+  // sem bagunçar a ordem que já veio de sortBy/filtros
+  return [...conversations].sort((a, b) => {
+    const aPinned = a.custom_attributes?.pinned ? 1 : 0;
+    const bPinned = b.custom_attributes?.pinned ? 1 : 0;
+    return bPinned - aPinned;
+  });
+}
+
 useEmitter('fetch_conversation_stats', () => {
   if (hasAppliedFiltersOrActiveFolders.value) return;
   store.dispatch('conversationStats/get', conversationFilters.value);
@@ -933,6 +961,11 @@ watch(conversationFilters, (newVal, oldVal) => {
       :active-tab="activeAssigneeTab"
       is-compact
       @chat-tab-change="updateAssigneeTab"
+    />
+
+    <ConversationSearchBar
+      @update:results="searchResults = $event"
+      @update:active="isSearchActive = $event"
     />
 
     <p

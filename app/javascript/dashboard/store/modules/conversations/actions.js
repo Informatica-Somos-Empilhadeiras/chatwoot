@@ -18,6 +18,7 @@ import {
   handleVoiceCallUpdated,
   syncConversationCallVisibility,
 } from 'dashboard/helper/voice';
+import conversationPinActions from './actions/conversationPinActions';
 
 export const hasMessageFailedWithExternalError = pendingMessage => {
   // This helper is used to check if the message has failed with an external error.
@@ -550,6 +551,7 @@ const actions = {
 
   ...messageReadActions,
   ...messageTranslateActions,
+  ...conversationPinActions,
 };
 
 export default actions;

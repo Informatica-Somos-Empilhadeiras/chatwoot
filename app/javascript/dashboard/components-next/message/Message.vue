@@ -371,6 +371,7 @@ const payloadForContextMenu = computed(() => {
     content_attributes: props.contentAttributes,
     content: props.content,
     conversation_id: props.conversationId,
+    attachments: props.attachments, // VARIÁVEL ADICIONADA: Repassa os anexos para o menu
   };
 });
 
@@ -574,7 +575,26 @@ provideMessageContext({
         }"
         @contextmenu="openContextMenu($event)"
       >
-        <Component :is="componentToRender" />
+        <!-- Wrapper com isolate para proteger o empilhamento visual -->
+        <div class="relative group max-w-full flex isolate">
+          <Component :is="componentToRender" />
+
+          <!-- Botão de Opções com a classe 'peer' para controlar o gatilho da sombra -->
+          <button
+            v-if="shouldShowContextMenu"
+            class="peer hidden group-hover:flex absolute top-1 ltr:right-1.5 rtl:left-1.5 size-7 items-center justify-center rounded-full bg-white dark:bg-[#151718] shadow-sm border border-black/5 dark:border-white/10 text-n-slate-11 hover:text-n-slate-12 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all z-20 cursor-pointer"
+            @click.prevent.stop="openContextMenu($event)"
+            title="Opções"
+          >
+            <span class="i-lucide-chevron-down size-4"></span>
+          </button>
+
+          <!-- Máscara de sombreamento em toda a extensão do topo (acionada apenas no hover do botão) -->
+          <div
+            v-if="shouldShowContextMenu"
+            class="hidden peer-hover:block absolute top-0 inset-x-0 h-10 pointer-events-none z-10 bg-gradient-to-b from-black/20 to-transparent rounded-t-lg transition-all"
+          ></div>
+        </div>
       </div>
       <MessageError
         v-if="contentAttributes.externalError"
