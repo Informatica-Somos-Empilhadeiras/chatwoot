@@ -4,6 +4,7 @@ import ConversationHeader from './ConversationHeader.vue';
 import DashboardAppFrame from '../DashboardApp/Frame.vue';
 import EmptyState from './EmptyState/EmptyState.vue';
 import MessagesView from './MessagesView.vue';
+import ConversationSearchPanel from './outsider/ConversationSearchPanel.vue'; // OUTSIDER: busca na conversa
 
 export default {
   components: {
@@ -11,6 +12,7 @@ export default {
     DashboardAppFrame,
     EmptyState,
     MessagesView,
+    ConversationSearchPanel, // OUTSIDER
   },
   props: {
     inboxId: {
@@ -106,6 +108,11 @@ export default {
       :class="{
         'border-b border-b-n-weak !pt-2': !dashboardApps.length,
       }"
+    />
+    <!-- OUTSIDER: busca dentro da conversa -->
+    <ConversationSearchPanel
+      v-if="currentChat.id && !activeIndex"
+      :conversation-id="currentChat.id"
     />
     <woot-tabs
       v-if="dashboardApps.length && currentChat.id"

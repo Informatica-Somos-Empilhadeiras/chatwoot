@@ -12,6 +12,7 @@ import ConversationLabelSuggestion from './conversation/LabelSuggestion.vue';
 import Banner from 'dashboard/components/ui/Banner.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 import ResizableEditorWrapper from './ResizableEditorWrapper.vue';
+import MessageListNavigator from './outsider/MessageListNavigator.vue'; // OUTSIDER: histórico
 
 // stores and apis
 import { mapGetters } from 'vuex';
@@ -29,6 +30,12 @@ import {
   getReadMessages,
   getUnreadMessages,
 } from 'dashboard/helper/conversationHelper';
+// OUTSIDER: busca e ida até datas antigas (ver composables/outsider/useConversationHistory.js)
+import {
+  historyWindowMessages,
+  interceptScrollRequest,
+  isHistoryWindowOpen,
+} from 'dashboard/composables/outsider/useConversationHistory';
 
 // constants
 import { BUS_EVENTS } from 'shared/constants/busEvents';
@@ -47,6 +54,7 @@ export default {
     ConversationLabelSuggestion,
     Spinner,
     ResizableEditorWrapper,
+    MessageListNavigator, // OUTSIDER
   },
   mixins: [inboxMixin],
   setup() {
@@ -134,7 +142,11 @@ export default {
       return '';
     },
     getMessages() {
-      const messages = this.currentChat.messages || [];
+      // OUTSIDER: trecho antigo aberto pela busca/calendário, se houver
+      const messages =
+        historyWindowMessages(this.currentChat.id) ||
+        this.currentChat.messages ||
+        [];
       if (this.isAWhatsAppChannel) {
         return filterDuplicateSourceMessages(messages);
       }
@@ -336,6 +348,7 @@ export default {
       emitter.off(BUS_EVENTS.SCROLL_TO_MESSAGE, this.onScrollToMessage);
     },
     onScrollToMessage({ messageId = '' } = {}) {
+      if (interceptScrollRequest(messageId)) return; // OUTSIDER
       this.$nextTick(() => {
         const messageElement = document.getElementById('message' + messageId);
         if (messageElement) {
@@ -397,6 +410,7 @@ export default {
     },
 
     async fetchPreviousMessages(scrollTop = 0) {
+      if (isHistoryWindowOpen(this.currentChat.id)) return; // OUTSIDER: o navegador carrega
       this.setScrollParams();
       const shouldLoadMoreMessages =
         this.currentChat.dataFetched === true &&
@@ -528,6 +542,11 @@ export default {
       </template>
     </MessageList>
     <div class="flex relative flex-col bg-n-surface-1">
+      <!-- OUTSIDER: rolagem do histórico e botão "ir para as mais recentes" -->
+      <MessageListNavigator
+        :panel="conversationPanel"
+        :conversation-id="currentChat.id"
+      />
       <div
         v-if="isAnyoneTyping"
         class="absolute flex items-center w-full h-0 -top-7"

@@ -50,8 +50,14 @@ const isAlbumCandidate = message =>
 
 const senderIdOf = message => message.senderId ?? message.sender?.id;
 
+// um álbum não atravessa a meia-noite (o separador de dia fica entre os dois)
+const isSameDay = (previous, current) =>
+  new Date(previous.createdAt * 1000).toDateString() ===
+  new Date(current.createdAt * 1000).toDateString();
+
 const belongsToSameAlbum = (previous, current, firstUnreadId) =>
   current.id !== firstUnreadId &&
+  isSameDay(previous, current) &&
   senderIdOf(previous) === senderIdOf(current) &&
   previous.messageType === current.messageType &&
   splitSenderHeader(previous.content).header ===

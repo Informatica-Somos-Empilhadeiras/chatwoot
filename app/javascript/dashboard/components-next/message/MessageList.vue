@@ -6,6 +6,9 @@ import { useCamelCase } from 'dashboard/composables/useTransformKeys';
 import { useMapGetter } from 'dashboard/composables/store.js';
 import MessageApi from 'dashboard/api/inbox/message.js';
 import { groupMediaAlbums } from 'dashboard/helper/outsider/mediaAlbum'; // OUTSIDER: álbum
+import { dayStarts } from 'dashboard/helper/outsider/conversationHistory'; // OUTSIDER: dias
+import DaySeparator from './outsider/DaySeparator.vue'; // OUTSIDER: dias
+import CurrentDayPill from './outsider/CurrentDayPill.vue'; // OUTSIDER: dias
 
 /**
  * Props definition for the component
@@ -53,6 +56,9 @@ const allMessages = computed(() => {
 const renderedMessages = computed(() =>
   groupMediaAlbums(allMessages.value, props.firstUnreadId)
 );
+
+// OUTSIDER: primeira mensagem de cada dia -> separador de dia
+const dayStartKeys = computed(() => dayStarts(renderedMessages.value));
 
 const currentChat = useMapGetter('getSelectedChat');
 
@@ -171,7 +177,14 @@ const getInReplyToMessage = parentMessage => {
 <template>
   <ul class="px-4 bg-n-surface-1">
     <slot name="beforeAll" />
+    <!-- OUTSIDER: dia das mensagens no topo, acompanhando a rolagem -->
+    <CurrentDayPill :messages="renderedMessages" />
     <template v-for="(message, index) in renderedMessages" :key="message.id">
+      <!-- OUTSIDER: separador de dia -->
+      <DaySeparator
+        v-if="dayStartKeys.has(message.id)"
+        :date-key="dayStartKeys.get(message.id)"
+      />
       <slot
         v-if="firstUnreadId && message.id === firstUnreadId"
         name="unreadBadge"
