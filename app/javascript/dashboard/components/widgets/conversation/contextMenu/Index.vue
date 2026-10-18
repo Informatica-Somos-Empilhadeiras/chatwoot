@@ -1,4 +1,5 @@
 <script>
+import { useConversationPins } from 'dashboard/composables/outsider/useConversationPins';
 import { mapGetters } from 'vuex';
 import { useAdmin } from 'dashboard/composables/useAdmin';
 import { useAlert } from 'dashboard/composables';
@@ -84,8 +85,13 @@ export default {
   ],
   setup() {
     const { isAdmin } = useAdmin();
+    // OUTSIDER: fixar conversa só para quem fixou
+    const { isPinned: isConversationPinned, togglePin: toggleConversationPin } =
+      useConversationPins();
     return {
       isAdmin,
+      isConversationPinned,
+      toggleConversationPin,
     };
   },
   data() {
@@ -221,12 +227,12 @@ export default {
       return this.status === wootConstants.STATUS_TYPE.OPEN;
     },
     isPinned() {
-      return !!this.conversation?.custom_attributes?.pinned;
+      return this.isConversationPinned(this.conversation.id);
     },
     pinOption() {
       return {
         label: this.isPinned ? 'Desafixar conversa' : 'Fixar conversa',
-        icon: this.isPinned ? 'dismiss' : 'warning',
+        lucideIcon: this.isPinned ? 'i-lucide-pin-off' : 'i-lucide-pin',
       };
     },
   },
@@ -288,14 +294,9 @@ export default {
         ...(type === 'team' && { label: option.name }),
       };
     },
-    async togglePin() {
-      try {
-        await this.$store.dispatch('toggleConversationPin', this.conversation);
-      } catch (error) {
-        // Tratar falha silenciosamente ou adicionar log se necessário
-      } finally {
-        this.$emit('close');
-      }
+    togglePin() {
+      this.toggleConversationPin(this.conversation.id);
+      this.$emit('close');
     },
   },
 };
@@ -318,11 +319,7 @@ export default {
         variant="icon"
         @click.stop="$emit('markAsRead')"
       />
-      <MenuItem
-        :option="pinOption"
-        variant="icon"
-        @click.stop="togglePin"
-      />
+      <MenuItem :option="pinOption" variant="icon" @click.stop="togglePin" />
       <hr class="m-1 rounded border-b border-n-weak dark:border-n-weak" />
     </template>
     <template v-if="isAllowed([MENU.STATUS, MENU.SNOOZE])">

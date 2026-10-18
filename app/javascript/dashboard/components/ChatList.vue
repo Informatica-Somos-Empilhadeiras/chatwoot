@@ -2,6 +2,7 @@
 // ======================
 // OUTSIDER FUNCTION
 import ConversationSearchBar from './widgets/conversation/ConversationSearchBar.vue';
+import { SHOW_WAITING_TAB_EVENT } from 'dashboard/routes/dashboard/outsider/waitingAlert/config';
 // ======================
 
 import { ref, unref, provide, computed, watch, onMounted } from 'vue';
@@ -34,6 +35,7 @@ import {
   useSnakeCase,
 } from 'dashboard/composables/useTransformKeys';
 import { useEmitter } from 'dashboard/composables/emitter';
+import { useConversationPins } from 'dashboard/composables/outsider/useConversationPins'; // OUTSIDER
 import { useConversationRequiredAttributes } from 'dashboard/composables/useConversationRequiredAttributes';
 
 import { emitter } from 'shared/helpers/mitt';
@@ -84,6 +86,7 @@ const activeStatus = ref(wootConstants.STATUS_TYPE.OPEN);
 // OUTSIDER CONSTANTS
 const searchResults = ref([]);
 const isSearchActive = ref(false);
+const { isPinned } = useConversationPins();
 // OUTSIDER CONSTANTS
 // ==================================
 
@@ -822,11 +825,16 @@ function sortPinnedFirst(conversations) {
   // sort é stable no JS moderno, então isso só reordena os pinned pra cima
   // sem bagunçar a ordem que já veio de sortBy/filtros
   return [...conversations].sort((a, b) => {
-    const aPinned = a.custom_attributes?.pinned ? 1 : 0;
-    const bPinned = b.custom_attributes?.pinned ? 1 : 0;
+    const aPinned = isPinned(a.id) ? 1 : 0; // OUTSIDER: fixada só para quem fixou
+    const bPinned = isPinned(b.id) ? 1 : 0;
     return bPinned - aPinned;
   });
 }
+
+// OUTSIDER: o aviso de clientes esperando abre a aba Esperando
+useEmitter(SHOW_WAITING_TAB_EVENT, () =>
+  updateAssigneeTab(wootConstants.ASSIGNEE_TYPE.UNASSIGNED)
+);
 
 useEmitter('fetch_conversation_stats', () => {
   if (hasAppliedFiltersOrActiveFolders.value) return;

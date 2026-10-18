@@ -12,6 +12,7 @@ import UnreadBadge from 'dashboard/components-next/Conversation/ConversationCard
 import SLACardLabel from './components/SLACardLabel.vue';
 import VoiceCallStatus from './VoiceCallStatus.vue';
 import Checkbox from 'dashboard/components-next/checkbox/Checkbox.vue';
+import { useConversationPins } from 'dashboard/composables/outsider/useConversationPins'; // OUTSIDER
 
 const props = defineProps({
   chat: { type: Object, required: true },
@@ -33,6 +34,7 @@ const emit = defineEmits([
   'deSelectConversation',
 ]);
 
+const { isPinned } = useConversationPins(); // OUTSIDER: conversa fixada
 const hovered = ref(false);
 
 const unreadCount = computed(() => props.chat.unread_count);
@@ -230,6 +232,12 @@ watch(
           v-if="hasUnread"
           :count="unreadCount"
           class="ltr:ml-auto rtl:mr-auto mt-1"
+        />
+        <!-- OUTSIDER: conversa fixada -->
+        <Icon
+          v-if="isPinned(chat.id)"
+          icon="i-lucide-pin"
+          class="ltr:ml-auto rtl:mr-auto mt-1 size-3.5 rotate-45 text-n-slate-10"
         />
       </div>
       <CardLabels

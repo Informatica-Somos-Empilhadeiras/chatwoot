@@ -1,99 +1,69 @@
 <script setup>
 import { ref } from 'vue';
-import { useMapGetter } from 'dashboard/composables/store';
-import { useAdmin } from 'dashboard/composables/useAdmin';
+import { useI18n } from 'vue-i18n';
+import { useStore } from 'dashboard/composables/store';
 import { debounce } from '@chatwoot/utils';
-import SearchAPI from 'dashboard/api/search';
-import ContactAPI from 'dashboard/api/contacts';
+import ConversationSearchAPI from 'dashboard/api/outsider/conversationSearch';
+import SearchLockedConversation from './SearchLockedConversation.vue';
 
 const emit = defineEmits(['update:results', 'update:active']);
 
-const { isAdmin } = useAdmin();
-const currentUser = useMapGetter('getCurrentUser');
+const store = useStore();
+const { t } = useI18n();
 
 const query = ref('');
 const isSearching = ref(false);
-const hiddenCount = ref(0);
+// conversas com outros agentes: aparecem aqui, sem abrir, para saber com quem está o contato
+const lockedResults = ref([]);
+// só vale a resposta da última busca (quem digita rápido dispara várias)
+let lastRequest = 0;
 
+const reset = () => {
+  lastRequest += 1;
+  isSearching.value = false;
+  lockedResults.value = [];
+  emit('update:active', false);
+  emit('update:results', []);
+};
+
+// O servidor já devolve uma conversa por contato e caixa (a não resolvida ou a mais
+// recente), só das caixas do agente, e marca as que estão com outro agente.
 const runSearch = debounce(async () => {
   const q = query.value.trim();
-
   if (q.length < 2) {
-    emit('update:active', false);
-    emit('update:results', []);
-    hiddenCount.value = 0;
+    reset();
     return;
   }
 
+  lastRequest += 1;
+  const request = lastRequest;
   isSearching.value = true;
   emit('update:active', true);
 
   try {
-    // 1. Busca por CONTATO (nome/telefone/email) - preciso, sem ruído
-    //    de conteúdo de mensagem, ao contrário de search/conversations.
-    //    Formato real da resposta: { payload: { contacts: [...] } }
-    const { data } = await SearchAPI.contacts({ q });
-    const contacts = data?.payload?.contacts ?? [];
+    const { data } = await ConversationSearchAPI.search(q);
+    if (request !== lastRequest) return;
 
-    // 2. Para cada contato encontrado, busca as conversas dele via
-    //    o endpoint já existente (o mesmo do painel "Conversas
-    //    anteriores"). Chamado direto na API, não via Vuex, porque o
-    //    getter do módulo contactConversations faz camelcaseKeys() e
-    //    quebraria a renderização (ConversationList.vue espera
-    //    snake_case: unread_count, meta.assignee, etc).
-    //    Em lotes de 3 para não sobrecarregar o backend quando a busca
-    //    casar com muitos contatos de uma vez.
-    const BATCH_SIZE = 3;
-    const conversationsPerContact = [];
-    for (let i = 0; i < contacts.length; i += BATCH_SIZE) {
-      const batch = contacts.slice(i, i + BATCH_SIZE);
-      const batchResults = await Promise.all(
-        batch.map(async contact => {
-          try {
-            const { data: convData } = await ContactAPI.getConversations(
-              contact.id
-            );
-            return convData?.payload ?? [];
-          } catch (error) {
-            // eslint-disable-next-line no-console
-            console.error(
-              `[ConversationSearchBar] Falha ao buscar conversas do contato ${contact.id}:`,
-              error
-            );
-            return [];
-          }
-        })
-      );
-      conversationsPerContact.push(...batchResults);
-    }
-
-    // 3. Achata e remove duplicatas reais (mesmo id de conversa)
-    const uniqueConversations = [
-      ...new Map(
-        conversationsPerContact.flat().map(c => [c.id, c])
-      ).values(),
-    ];
-
-    // 4. Aplica o escopo: admin vê tudo; agente comum só vê o que é
-    //    dele ou não está atribuído a ninguém.
-    const visibleConversations = isAdmin.value
-      ? uniqueConversations
-      : uniqueConversations.filter(
-          c =>
-            !c.meta?.assignee || c.meta.assignee.id === currentUser.value?.id
-        );
-
-    hiddenCount.value = uniqueConversations.length - visibleConversations.length;
-    emit('update:results', visibleConversations);
+    const conversations = data.payload;
+    // o card da lista pega o nome e a foto do contato na store
+    conversations.forEach(conversation =>
+      store.dispatch('contacts/setContact', conversation.meta.sender)
+    );
+    lockedResults.value = conversations.filter(c => c.outsider_locked);
+    emit(
+      'update:results',
+      conversations.filter(c => !c.outsider_locked)
+    );
   } catch (error) {
+    if (request !== lastRequest) return;
     // eslint-disable-next-line no-console
     console.error('[ConversationSearchBar] Falha na busca:', error);
-    hiddenCount.value = 0;
+    lockedResults.value = [];
     emit('update:results', []);
   } finally {
-    isSearching.value = false;
+    if (request === lastRequest) isSearching.value = false;
   }
-}, 400);
+}, 300);
 
 const onInput = () => {
   runSearch();
@@ -101,38 +71,18 @@ const onInput = () => {
 
 const clearSearch = () => {
   query.value = '';
-  hiddenCount.value = 0;
-  emit('update:active', false);
-  emit('update:results', []);
+  reset();
 };
 </script>
 
 <template>
   <div class="w-full px-3 py-2">
     <div
-      class="grid grid-cols-[32px_minmax(0,1fr)_32px]
-            items-center
-            w-full
-            h-10
-            min-w-0
-            box-sizing-border-box
-            border
-            border-n-weak
-            rounded-lg
-            bg-n-alpha-1
-            overflow-hidden
-            focus-within:ring-1
-            focus-within:ring-n-brand"
+      class="grid grid-cols-[32px_minmax(0,1fr)_32px] items-center w-full h-10 min-w-0 box-sizing-border-box border border-n-weak rounded-lg bg-n-alpha-1 overflow-hidden focus-within:ring-1 focus-within:ring-n-brand"
     >
       <!-- Lupa -->
       <div
-        class="flex
-              items-center
-              justify-center
-              w-8
-              h-10
-              shrink-0
-              text-n-slate-10"
+        class="flex items-center justify-center w-8 h-10 shrink-0 text-n-slate-10"
       >
         <svg
           class="block size-4 shrink-0"
@@ -152,23 +102,8 @@ const clearSearch = () => {
       <input
         v-model="query"
         type="text"
-        placeholder="Buscar conversa por nome ou telefone..."
-        class="block
-              w-full
-              min-w-0
-              h-10
-              !m-0
-              !p-0
-              !border-0
-              !outline-none
-              !ring-0
-              !bg-transparent
-              appearance-none
-              text-sm
-              leading-5
-              text-n-slate-12
-              placeholder:text-n-slate-10
-              truncate"
+        :placeholder="t('CHAT_LIST.OUTSIDER_SEARCH.PLACEHOLDER')"
+        class="block w-full min-w-0 h-10 !m-0 !p-0 !border-0 !outline-none !ring-0 !bg-transparent appearance-none text-sm leading-5 text-n-slate-12 placeholder:text-n-slate-10 truncate"
         @input="onInput"
       />
 
@@ -176,16 +111,7 @@ const clearSearch = () => {
       <button
         v-if="query"
         type="button"
-        class="flex
-              items-center
-              justify-center
-              w-8
-              h-10
-              shrink-0
-              !m-0
-              !p-0
-              text-n-slate-10
-              hover:text-n-slate-12"
+        class="flex items-center justify-center w-8 h-10 shrink-0 !m-0 !p-0 text-n-slate-10 hover:text-n-slate-12"
         @click="clearSearch"
       >
         <svg
@@ -204,14 +130,23 @@ const clearSearch = () => {
     </div>
 
     <div v-if="isSearching" class="mt-1 text-xs text-n-slate-11 text-center">
-      Buscando...
+      {{ t('CHAT_LIST.OUTSIDER_SEARCH.SEARCHING') }}
     </div>
-    <div
-      v-else-if="hiddenCount > 0"
-      class="mt-1 text-xs text-n-slate-11 text-center"
-    >
-      {{ hiddenCount }} resultado(s) fora do seu escopo — apenas
-      administradores podem visualizá-los.
+    <div v-if="lockedResults.length" class="mt-2">
+      <p class="px-1 mb-1.5 text-xs font-medium text-n-slate-11">
+        {{
+          t('CHAT_LIST.OUTSIDER_SEARCH.LOCKED_HEADING', {
+            count: lockedResults.length,
+          })
+        }}
+      </p>
+      <div class="flex flex-col gap-1.5 overflow-y-auto max-h-72">
+        <SearchLockedConversation
+          v-for="conversation in lockedResults"
+          :key="conversation.id"
+          :conversation="conversation"
+        />
+      </div>
     </div>
   </div>
 </template>

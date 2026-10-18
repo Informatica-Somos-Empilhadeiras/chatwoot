@@ -1,11 +1,13 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue';
-import { useStore, useMapGetter } from 'dashboard/composables/store';
+import { useMapGetter } from 'dashboard/composables/store';
 import { useAlert } from 'dashboard/composables';
 import { emitter } from 'shared/helpers/mitt';
 import { debounce } from '@chatwoot/utils';
 import { createContactSearcher } from 'dashboard/components-next/NewConversation/helpers/composeConversationHelper';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
+import MessageForwardAPI from 'dashboard/api/outsider/messageForward';
+import { splitSenderHeader } from 'dashboard/helper/outsider/mediaAlbum';
 
 const isOpen = ref(false);
 const isSearching = ref(false);
@@ -17,15 +19,10 @@ const selectedContact = ref(null);
 const contactableInboxes = ref([]);
 const payloadData = ref(null);
 
-const store = useStore();
 const accountId = useMapGetter('getCurrentAccountId');
 const searchContacts = createContactSearcher();
 
 const openModal = data => {
-  console.log("========== MENSAGEM RECEBIDA ==========");
-  console.dir(data);
-  console.log(JSON.stringify(data, null, 2));
-
   payloadData.value = data;
   isOpen.value = true;
 };
@@ -75,201 +72,29 @@ const selectContact = async contact => {
   }
 };
 
+// Os anexos são copiados no servidor (ver app/services/outsider/message_forward.rb).
+// Nos grupos, a Evolution põe "**+55 ... - Nome:**" no começo do texto: isso não vai junto.
 const executeForward = async inbox => {
-  console.group('========== FORWARD ==========');
-
   isProcessing.value = true;
-  processingStatus.value = 'Preparando pacote...';
+  processingStatus.value = 'Encaminhando...';
 
   try {
-    console.log('Payload:', payloadData.value);
-    console.log('Contato:', selectedContact.value);
-    console.log('Inbox:', inbox);
+    const { content, text, attachments = [] } = payloadData.value;
+    const { body } = splitSenderHeader(content ?? text);
 
-    // ======================================================
-    // DADOS DA INBOX
-    // ======================================================
-
-    const targetInboxId = inbox.inbox ? inbox.inbox.id : inbox.id;
-    const targetSourceId = inbox.source_id;
-
-    console.log('Inbox ID:', targetInboxId);
-    console.log('Source ID:', targetSourceId);
-
-    if (!targetInboxId) {
-      throw new Error('Inbox inválida.');
-    }
-
-    // ======================================================
-    // CRIA CONVERSA
-    // ======================================================
-
-    console.log('Criando conversa...');
-
-    const convResponse = await window.axios.post(
-      `/api/v1/accounts/${accountId.value}/conversations`,
-      {
-        contact_id: selectedContact.value.id,
-        inbox_id: targetInboxId,
-        source_id: targetSourceId,
-      }
-    );
-
-    console.log('Resposta conversa:', convResponse);
-    console.log('Data conversa:', convResponse.data);
-
-    const targetConversationId = convResponse.data.id;
-
-    console.log('Conversation ID:', targetConversationId);
-
-    if (!targetConversationId) {
-      throw new Error('A API não retornou ID da conversa.');
-    }
-
-    // ======================================================
-    // PREPARA ANEXOS
-    // ======================================================
-
-    console.log('Preparando anexos...');
-
-    // 3. Processamento de anexos usando o proxy interno do Chatwoot
-    const filesToUpload = [];
-
-    if (payloadData.value.attachments && payloadData.value.attachments.length > 0) {
-      for (const att of payloadData.value.attachments) {
-        try {
-          // O objeto real usa camelCase
-          const sourceUrl = att.dataUrl;
-
-          console.log('URL original:', sourceUrl);
-
-          if (!sourceUrl) continue;
-
-          const res = await window.axios.get(sourceUrl, {
-            responseType: 'blob',
-            withCredentials: true,
-          });
-
-          console.log('STATUS:', res.status);
-          console.log('CONTENT-TYPE:', res.headers['content-type']);
-          console.log('SIZE:', res.data.size);
-
-          console.log('Blob recebido:', res.data);
-
-          const extension = att.extension || 'bin';
-          const filename = `forwarded-${att.id}.${extension}`;
-
-          const file = new File(
-            [res.data],
-            filename,
-            {
-              type: att.contentType || res.data.type || 'application/octet-stream',
-            }
-          );
-
-          console.log('Arquivo criado:', file);
-
-          filesToUpload.push(file);
-        } catch (error) {
-          console.error('Erro ao processar anexo:', error);
-        }
-      }
-    }
-
-    console.log('Arquivos prontos para upload:', filesToUpload);
-
-    // ======================================================
-    // TEXTO
-    // ======================================================
-
-    let textContent = payloadData.value.text
-      ? `*[Mensagem Encaminhada]*\n\n${payloadData.value.text}`
-      : '';
-
-    if (!textContent && filesToUpload.length > 0) {
-      textContent = '*[Mídia encaminhada]*';
-    }
-
-    if (!textContent && filesToUpload.length === 0) {
-      textContent = '*[Falha ao encaminhar mídia]*';
-    }
-
-    console.log('Texto:', textContent);
-
-    // ======================================================
-    // ENVIO
-    // ======================================================
-
-    processingStatus.value = 'Enviando...';
-
-    let payload;
-
-    if (filesToUpload.length) {
-      payload = new FormData();
-
-      payload.append('content', textContent);
-      payload.append('private', false);
-
-      filesToUpload.forEach(file => {
-        payload.append('attachments[]', file);
-      });
-
-      console.log('Enviando FormData');
-
-      for (const pair of payload.entries()) {
-        console.log(pair[0], pair[1]);
-      }
-    } else {
-      payload = {
-        content: textContent,
-        private: false,
-      };
-
-      console.log('Enviando JSON');
-      console.log(payload);
-    }
-
-    console.log('ANTES DO POST MESSAGE');
-
-    const messageResponse = await window.axios.post(
-      `/api/v1/accounts/${accountId.value}/conversations/${targetConversationId}/messages`,
-      payload
-    );
-
-    console.log('DEPOIS DO POST MESSAGE');
-    console.log(messageResponse);
-
-    await store.dispatch('fetchConversations', {
-      page: 1,
+    await MessageForwardAPI.forward({
+      contactId: selectedContact.value.id,
+      inboxId: inbox.inbox ? inbox.inbox.id : inbox.id,
+      sourceId: inbox.source_id,
+      content: body ? `*[Mensagem Encaminhada]*\n\n${body}` : '',
+      attachmentIds: attachments.map(attachment => attachment.id),
     });
 
-    console.log('SUCESSO');
-
     useAlert('Mensagem encaminhada!');
-
     closeModal();
   } catch (error) {
-    console.error('==============================');
-    console.error('ERRO');
-
-    console.error(error);
-
-    if (error.response) {
-      console.error('STATUS', error.response.status);
-      console.error('DATA', error.response.data);
-      console.error('HEADERS', error.response.headers);
-    }
-
-    if (error.request) {
-      console.error('REQUEST', error.request);
-    }
-
-    console.error('MESSAGE', error.message);
-
-    useAlert('Erro. Veja o Console.');
+    useAlert('Não foi possível encaminhar a mensagem. Tente de novo.');
   } finally {
-    console.groupEnd();
-
     isProcessing.value = false;
   }
 };
@@ -312,7 +137,7 @@ onUnmounted(() => {
               @click="selectContact(contact)"
             >
               <div class="size-8 rounded-full bg-n-brand/20 flex items-center justify-center text-n-brand font-bold">
-                {{ contact.name.charAt(0) }}
+                {{ (contact.name || '?').charAt(0) }}
               </div>
               <div>
                 <div class="font-medium text-sm text-n-slate-12">{{ contact.name }}</div>
