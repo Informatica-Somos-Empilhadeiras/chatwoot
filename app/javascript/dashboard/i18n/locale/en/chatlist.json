@@ -17,6 +17,7 @@
     "ASSIGNEE_TYPE_TABS": {
       "me": "Mine",
       "unassigned": "Unassigned",
+      "group": "Groups",
       "all": "All"
     },
     "CHAT_STATUS_FILTER_ITEMS": {

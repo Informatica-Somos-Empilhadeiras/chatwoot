@@ -64,8 +64,10 @@ export const mutations = {
       mine_count: mineCount,
       unassigned_count: unAssignedCount,
       all_count: allCount,
+      group_count: groupCount, // OUTSIDER: aba Grupos
     } = {}
   ) {
+    $state.groupCount = groupCount; // OUTSIDER
     $state.mineCount = mineCount;
     $state.allCount = allCount;
     $state.unAssignedCount = unAssignedCount;

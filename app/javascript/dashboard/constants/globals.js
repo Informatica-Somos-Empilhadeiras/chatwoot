@@ -4,6 +4,7 @@ export default {
     ME: 'me',
     UNASSIGNED: 'unassigned',
     ALL: 'all',
+    GROUP: 'group', // OUTSIDER: aba Grupos
   },
   STATUS_TYPE: {
     OPEN: 'open',

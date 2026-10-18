@@ -17,6 +17,7 @@
     "ASSIGNEE_TYPE_TABS": {
       "me": "Minhas",
       "unassigned": "Esperando",
+      "group": "Grupos",
       "all": "Todos"
     },
     "CHAT_STATUS_FILTER_ITEMS": {

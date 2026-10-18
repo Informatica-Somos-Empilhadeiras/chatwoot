@@ -33,6 +33,11 @@ export const ASSIGNEE_TYPE_TAB_PERMISSIONS = {
       CONVERSATION_UNASSIGNED_PERMISSIONS,
     ],
   },
+  // OUTSIDER: aba Grupos (antes de Todos, para o atalho Alt+N passar por ela)
+  group: {
+    count: 'groupCount',
+    permissions: [...ROLES, ...CONVERSATION_PERMISSIONS],
+  },
   all: {
     count: 'allCount',
     permissions: [

@@ -1,4 +1,5 @@
 import { CONVERSATION_PRIORITY_ORDER } from 'shared/constants/messages';
+import { filterByGroupTab } from 'dashboard/helper/outsider/groupConversations'; // OUTSIDER
 
 export const findPendingMessageIndex = (chat, message) => {
   const { echo_id: tempMessageId } = message;
@@ -37,6 +38,7 @@ export const filterByUnattended = (
 
 export const applyPageFilters = (conversation, filters) => {
   const { inboxId, status, labels = [], teamId, conversationType } = filters;
+  const { assigneeType } = filters; // OUTSIDER: aba Grupos
   const {
     status: chatStatus,
     inbox_id: chatInboxId,
@@ -58,6 +60,7 @@ export const applyPageFilters = (conversation, filters) => {
     firstReplyOn,
     waitingSince
   );
+  shouldFilter = filterByGroupTab(shouldFilter, assigneeType, conversation); // OUTSIDER
 
   return shouldFilter;
 };
