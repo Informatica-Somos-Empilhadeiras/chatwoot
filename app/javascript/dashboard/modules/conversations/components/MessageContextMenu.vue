@@ -144,6 +144,8 @@ export default {
     handleForward() {
       const payload = {
         text: this.plainTextContent,
+        // texto original: o modal tira o cabeçalho de grupo ("**+55 ... - Nome:**")
+        content: this.message.content,
         attachments: this.message.attachments || []
       };
       // Nome do evento alterado para isolamento total

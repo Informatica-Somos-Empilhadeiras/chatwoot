@@ -22,6 +22,12 @@ defineProps({
       size="14"
       class="flex-shrink-0"
     />
+    <!-- OUTSIDER: ícone lucide no menu (o fluent não tem alfinete) -->
+    <Icon
+      v-else-if="variant === 'icon' && option.lucideIcon"
+      :icon="option.lucideIcon"
+      class="flex-shrink-0 size-3.5"
+    />
     <span
       v-if="
         (variant === 'label' || variant === 'label-assigned') && option.color
