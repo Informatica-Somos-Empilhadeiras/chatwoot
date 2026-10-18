@@ -12,7 +12,7 @@ class Api::V1::Accounts::Outsider::WhatsappStatusesController < Api::V1::Account
 
   before_action :fetch_inbox, except: [:inboxes, :permissions, :update_permission]
   before_action :check_admin_authorization?, only: [:permissions, :update_permission]
-  before_action -> { check_status_permission('publish') }, only: [:create]
+  before_action :check_create_permission, only: [:create]
   before_action -> { check_status_permission('republish') }, only: [:republish]
 
   rescue_from ::Outsider::EvolutionApi::Error do |error|
@@ -93,6 +93,13 @@ class Api::V1::Accounts::Outsider::WhatsappStatusesController < Api::V1::Account
 
   def check_status_permission(permission)
     raise Pundit::NotAuthorizedError unless status_permissions.allowed?(Current.account_user, permission)
+  end
+
+  # "Editar e publicar de novo" manda edit_of com o id do status antigo
+  def check_create_permission
+    return if status_permissions.allowed?(Current.account_user, 'publish')
+
+    check_status_permission(params[:edit_of].present? ? 'edit' : 'publish')
   end
 
   def fetch_inbox

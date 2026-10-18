@@ -168,6 +168,7 @@ const onSeen = id => {
 };
 
 const openPublish = () => publishDialogRef.value.open();
+const openEdit = status => publishDialogRef.value.open(status);
 const openInteractions = status => interactionsDialogRef.value.open(status);
 </script>
 
@@ -283,6 +284,7 @@ const openInteractions = status => interactionsDialogRef.value.open(status);
               :can="can"
               :inbox-id="inboxId"
               @view="viewStatus"
+              @edit="openEdit"
               @interactions="openInteractions"
               @republished="refreshMine"
             />

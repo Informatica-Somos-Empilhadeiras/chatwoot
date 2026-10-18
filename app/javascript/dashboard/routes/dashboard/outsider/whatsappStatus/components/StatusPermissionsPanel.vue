@@ -27,6 +27,11 @@ const permissions = computed(() => [
     description: t('OUTSIDER_WHATSAPP_STATUS.PERMISSIONS.PUBLISH_DESCRIPTION'),
   },
   {
+    key: 'edit',
+    label: t('OUTSIDER_WHATSAPP_STATUS.PERMISSIONS.EDIT'),
+    description: t('OUTSIDER_WHATSAPP_STATUS.PERMISSIONS.EDIT_DESCRIPTION'),
+  },
+  {
     key: 'republish',
     label: t('OUTSIDER_WHATSAPP_STATUS.PERMISSIONS.REPUBLISH'),
     description: t(
@@ -136,7 +141,7 @@ onMounted(async () => {
       class="overflow-hidden outline outline-1 -outline-offset-1 outline-n-container rounded-xl bg-n-solid-2"
     >
       <div
-        class="hidden md:grid grid-cols-[minmax(0,1fr)_repeat(4,8rem)] items-end gap-2 px-4 py-3 border-b border-n-weak"
+        class="hidden md:grid grid-cols-[minmax(0,1fr)_repeat(5,7rem)] items-end gap-2 px-4 py-3 border-b border-n-weak"
       >
         <span class="text-xs font-medium text-n-slate-11">
           {{ t('OUTSIDER_WHATSAPP_STATUS.PERMISSIONS.NAME') }}
@@ -159,7 +164,7 @@ onMounted(async () => {
         <li
           v-for="user in visible"
           :key="user.id"
-          class="flex flex-col gap-3 px-4 py-3 md:grid md:grid-cols-[minmax(0,1fr)_repeat(4,8rem)] md:items-center md:gap-2"
+          class="flex flex-col gap-3 px-4 py-3 md:grid md:grid-cols-[minmax(0,1fr)_repeat(5,7rem)] md:items-center md:gap-2"
         >
           <div class="flex items-center min-w-0 gap-3">
             <Avatar

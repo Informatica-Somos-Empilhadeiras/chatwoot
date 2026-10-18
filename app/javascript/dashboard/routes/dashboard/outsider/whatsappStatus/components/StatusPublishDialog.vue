@@ -1,5 +1,5 @@
 <script setup>
-// OUTSIDER: publicar um status de texto, foto ou vídeo.
+// OUTSIDER: publicar um status de texto, foto ou vídeo, do zero ou a partir de um antigo (Editar).
 import { ref, reactive, computed, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useAlert } from 'dashboard/composables';
@@ -10,6 +10,7 @@ import Button from 'dashboard/components-next/button/Button.vue';
 import Select from 'dashboard/components-next/select/Select.vue';
 import TextArea from 'dashboard/components-next/textarea/TextArea.vue';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
+import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 import StatusColorPicker from './StatusColorPicker.vue';
 import StatusAudiencePicker from './StatusAudiencePicker.vue';
 import {
@@ -18,7 +19,9 @@ import {
   FONTS,
   TEXT_MAX_LENGTH,
   appendAudience,
+  colorFor,
   errorMessage,
+  fetchMedia,
   parseNumbers,
 } from '../helpers';
 
@@ -45,6 +48,9 @@ const caption = ref('');
 const audience = reactive({ mode: 'contacts', numbers: '' });
 const audienceCount = ref(null);
 const isPublishing = ref(false);
+// o status antigo, quando é "Editar e publicar de novo"
+const source = ref(null);
+const isLoadingSource = ref(false);
 
 const tabs = computed(() => [
   { key: 'text', label: t('OUTSIDER_WHATSAPP_STATUS.TYPES.TEXT') },
@@ -113,17 +119,35 @@ const changeType = tab => {
   if (tab.key === 'text') nextTick(fitText);
 };
 
-const open = async () => {
-  type.value = 'text';
-  text.value = '';
-  color.value = BACKGROUND_COLORS[0];
+// a foto ou o vídeo do status antigo vira o arquivo escolhido
+const loadSourceMedia = async status => {
+  isLoadingSource.value = true;
+  try {
+    const { url } = await fetchMedia(props.inboxId, status.id);
+    const blob = await (await fetch(url)).blob();
+    const extension = blob.type.split('/')[1].replace('jpeg', 'jpg');
+    setFile(new File([blob], `status.${extension}`, { type: blob.type }));
+  } catch {
+    useAlert(t('OUTSIDER_WHATSAPP_STATUS.VIEWER.MEDIA_ERROR'));
+  } finally {
+    isLoadingSource.value = false;
+  }
+};
+
+const open = async (status = null) => {
+  source.value = status;
+  type.value = status?.type || 'text';
+  text.value = status?.type === 'text' ? status.text : '';
+  // a Evolution não guarda a cor, então começa com a mesma da miniatura
+  color.value = status ? colorFor(status.id) : BACKGROUND_COLORS[0];
   font.value = FONTS.DEFAULT;
-  caption.value = '';
+  caption.value = status && status.type !== 'text' ? status.text || '' : '';
   clearFile();
   Object.assign(audience, { mode: 'contacts', numbers: '' });
   audienceCount.value = null;
   dialogRef.value.open();
   nextTick(fitText);
+  if (status && status.type !== 'text') loadSourceMedia(status);
 
   try {
     const { data } = await WhatsappStatusAPI.getAudience(props.inboxId);
@@ -147,6 +171,7 @@ const publish = async () => {
     formData.append('file', file.value);
     if (caption.value.trim()) formData.append('caption', caption.value.trim());
   }
+  if (source.value) formData.append('edit_of', source.value.id);
   appendAudience(formData, audience);
 
   isPublishing.value = true;
@@ -172,7 +197,11 @@ defineExpose({ open });
 <template>
   <Dialog
     ref="dialogRef"
-    :title="t('OUTSIDER_WHATSAPP_STATUS.PUBLISH.TITLE')"
+    :title="
+      source
+        ? t('OUTSIDER_WHATSAPP_STATUS.PUBLISH.EDIT_TITLE')
+        : t('OUTSIDER_WHATSAPP_STATUS.PUBLISH.TITLE')
+    "
     width="2xl"
     overflow-y-auto
     :confirm-button-label="t('OUTSIDER_WHATSAPP_STATUS.PUBLISH.CONFIRM')"
@@ -182,6 +211,9 @@ defineExpose({ open });
     @close="clearFile"
   >
     <div class="flex flex-col gap-5">
+      <p v-if="source" class="mb-0 text-sm text-n-slate-11">
+        {{ t('OUTSIDER_WHATSAPP_STATUS.PUBLISH.EDIT_NOTE') }}
+      </p>
       <TabBar
         :tabs="tabs"
         :initial-active-tab="TYPES.indexOf(type)"
@@ -225,7 +257,13 @@ defineExpose({ open });
             @change="setFile($event.target.files[0])"
           />
           <div
-            v-if="!file"
+            v-if="isLoadingSource"
+            class="flex items-center justify-center h-80 rounded-xl bg-n-alpha-1"
+          >
+            <Spinner class="text-n-slate-10" />
+          </div>
+          <div
+            v-else-if="!file"
             class="flex flex-col items-center justify-center gap-3 p-6 text-center border-2 border-dashed h-80 rounded-xl border-n-weak"
             @dragover.prevent
             @drop.prevent="setFile($event.dataTransfer.files[0])"

@@ -4,7 +4,8 @@
 # não precisa de migração.
 class Outsider::WhatsappStatusPermissions
   # download e export só escondem os botões: a mídia vem pela mesma rota que mostra o status
-  ALL = %w[publish republish download export].freeze
+  # edit é publicar um status novo a partir de um antigo (o WhatsApp não edita status publicado)
+  ALL = %w[publish edit republish download export].freeze
   KEY = 'outsider_whatsapp_status_permissions'.freeze
 
   def initialize(account)

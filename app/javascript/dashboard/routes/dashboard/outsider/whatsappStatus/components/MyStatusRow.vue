@@ -21,6 +21,7 @@ const emit = defineEmits([
   'toggle',
   'view',
   'interactions',
+  'edit',
   'republish',
   'download',
 ]);
@@ -71,6 +72,7 @@ const badge = computed(() => situation(t, props.status));
       :can="can"
       :downloading="downloading"
       @view="emit('view')"
+      @edit="emit('edit')"
       @republish="emit('republish')"
       @download="emit('download')"
     />

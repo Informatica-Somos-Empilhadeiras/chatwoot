@@ -29,7 +29,7 @@ const props = defineProps({
   inboxId: { type: Number, required: true },
 });
 
-const emit = defineEmits(['view', 'interactions', 'republished']);
+const emit = defineEmits(['view', 'edit', 'interactions', 'republished']);
 
 const period = defineModel('period', { type: Number, default: 7 });
 
@@ -335,6 +335,7 @@ const exportCsv = () =>
         :downloading="downloadingIds.includes(status.id)"
         @toggle="toggle(status.id)"
         @view="emit('view', status)"
+        @edit="emit('edit', status)"
         @interactions="emit('interactions', status)"
         @republish="republish([status])"
         @download="downloadOne(status)"
@@ -352,6 +353,7 @@ const exportCsv = () =>
         :inbox-id="inboxId"
         @toggle="toggle(status.id)"
         @view="emit('view', status)"
+        @edit="emit('edit', status)"
         @interactions="emit('interactions', status)"
         @republish="republish([status])"
         @download="downloadOne(status)"

@@ -1,5 +1,5 @@
 <script setup>
-// OUTSIDER: ações de um dos meus status (ver, copiar texto, republicar e baixar).
+// OUTSIDER: ações de um dos meus status (ver, copiar texto, editar, republicar e baixar).
 import { useI18n } from 'vue-i18n';
 import { useAlert } from 'dashboard/composables';
 import { copyTextToClipboard } from 'shared/helpers/clipboard';
@@ -13,7 +13,7 @@ const props = defineProps({
   downloading: { type: Boolean, default: false },
 });
 
-const emit = defineEmits(['view', 'republish', 'download']);
+const emit = defineEmits(['view', 'edit', 'republish', 'download']);
 
 const { t } = useI18n();
 
@@ -42,6 +42,16 @@ const copyText = async () => {
       variant="ghost"
       color="slate"
       @click="copyText"
+    />
+    <Button
+      v-if="can.edit"
+      v-tooltip.top="t('OUTSIDER_WHATSAPP_STATUS.ACTIONS.EDIT')"
+      icon="i-lucide-pencil"
+      size="xs"
+      variant="ghost"
+      color="slate"
+      :disabled="!canRepublish(status)"
+      @click="emit('edit')"
     />
     <Button
       v-if="can.republish"

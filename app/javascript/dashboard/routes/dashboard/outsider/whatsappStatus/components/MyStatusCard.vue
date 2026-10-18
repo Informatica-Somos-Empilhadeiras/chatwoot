@@ -22,6 +22,7 @@ const emit = defineEmits([
   'toggle',
   'view',
   'interactions',
+  'edit',
   'republish',
   'download',
 ]);
@@ -84,6 +85,7 @@ const caption = computed(() =>
           :can="can"
           :downloading="downloading"
           @view="emit('view')"
+          @edit="emit('edit')"
           @republish="emit('republish')"
           @download="emit('download')"
         />
