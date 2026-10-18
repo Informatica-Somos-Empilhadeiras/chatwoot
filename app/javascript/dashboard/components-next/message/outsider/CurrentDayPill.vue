@@ -4,7 +4,7 @@
 // que está no alto da tela e some quando o próprio separador do dia aparece.
 // Com a busca aberta (card no alto à direita) o "alto da tela" começa embaixo
 // do card e a etiqueta vai para o outro canto; se não couber ao lado do card
-// (tela estreita), some enquanto a busca está aberta.
+// inteira, mostra só "Ontem" ou "qua., 14/10"; sem espaço nem para isso (celular), some.
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useResizeObserver } from '@vueuse/core';
 import DayPill from './DayPill.vue';
@@ -20,6 +20,7 @@ const SEARCH_CARD = '[data-outsider-search-card]';
 const LIST_INSET_PX = 16; // px-4 da lista
 const GAP_PX = 12;
 const TYPICAL_PILL_PX = 300; // até medir a etiqueta de verdade
+const TYPICAL_COMPACT_PX = 130; // "qua., 14/10/25"
 const CARD_TRANSITION_MS = 250;
 
 const root = ref(null);
@@ -28,7 +29,8 @@ const scroller = ref(null);
 const searchCard = ref(null);
 const dateKey = ref(null);
 const besideSearch = ref(false);
-const pillWidths = new Map(); // dia -> largura da etiqueta
+const compact = ref(false);
+const pillWidths = new Map(); // "dia|full" ou "dia|compact" -> largura da etiqueta
 let frame = null;
 let cardTimer = null;
 
@@ -37,19 +39,27 @@ const visibleSearchCard = () =>
     ? searchCard.value
     : null;
 
-const fitsBeside = (card, box, key) => {
+// ao lado do card: a etiqueta inteira, a curta ("qua., 14/10") ou nenhuma
+const placeBeside = (card, box, key) => {
   const rect = card.getBoundingClientRect();
   const room =
-    Math.max(rect.left - box.left, box.right - rect.right) - LIST_INSET_PX;
-  return room >= (pillWidths.get(key) || TYPICAL_PILL_PX) + GAP_PX;
+    Math.max(rect.left - box.left, box.right - rect.right) -
+    LIST_INSET_PX -
+    GAP_PX;
+  if (room >= (pillWidths.get(`${key}|full`) || TYPICAL_PILL_PX)) return 'full';
+  if (room >= (pillWidths.get(`${key}|compact`) || TYPICAL_COMPACT_PX)) {
+    return 'compact';
+  }
+  return 'none';
 };
 
 // guarda a largura da etiqueta mostrada; devolve true se mudou (recalcular o lugar)
 const measurePill = () => {
   const pill = pillBox.value?.firstElementChild;
   if (!pill || !dateKey.value) return false;
-  if (pillWidths.get(dateKey.value) === pill.offsetWidth) return false;
-  pillWidths.set(dateKey.value, pill.offsetWidth);
+  const widthKey = `${dateKey.value}|${compact.value ? 'compact' : 'full'}`;
+  if (pillWidths.get(widthKey) === pill.offsetWidth) return false;
+  pillWidths.set(widthKey, pill.offsetWidth);
   return true;
 };
 
@@ -79,12 +89,13 @@ const update = () => {
     }
   });
   const key = current?.dataset.outsiderDay;
-  const blockedBySearch = card && !fitsBeside(card, box, key);
+  const beside = card ? placeBeside(card, box, key) : 'full';
   // sem a busca, no começo da conversa o primeiro separador já está à vista
   const atStart = !card && list.scrollTop < 1;
-  const hidden = separatorAtTop || !current || atStart || blockedBySearch;
+  const hidden = separatorAtTop || !current || atStart || beside === 'none';
   dateKey.value = hidden ? null : key;
   besideSearch.value = !!card;
+  compact.value = beside === 'compact';
   nextTick(() => {
     if (measurePill() && !frame) frame = requestAnimationFrame(update);
   });
@@ -143,7 +154,7 @@ useResizeObserver(searchCard, scheduleUpdate);
         class="absolute inset-x-0 top-0 flex pt-2"
         :class="besideSearch ? 'justify-start' : 'justify-center'"
       >
-        <DayPill :date-key="dateKey" />
+        <DayPill :date-key="dateKey" :compact="compact" />
       </div>
     </Transition>
   </div>
