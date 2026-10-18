@@ -13,6 +13,18 @@
     "SEARCH": {
       "INPUT": "Pesquisar pessoas, conversas, respostas salvas .."
     },
+    "OUTSIDER_SEARCH": {
+      "PLACEHOLDER": "Buscar conversa por nome ou telefone...",
+      "SEARCHING": "Buscando...",
+      "LOCKED_HEADING": "Com outros agentes ({count})",
+      "WITH_AGENT": "Com {name}",
+      "LOCKED_HINT": "Esta conversa está com {name}. Peça para atribuir a você.",
+      "STATUS": {
+        "resolved": "Resolvida",
+        "pending": "Pendente",
+        "snoozed": "Adiada"
+      }
+    },
     "FILTER_ALL": "Todos",
     "ASSIGNEE_TYPE_TABS": {
       "me": "Minhas",

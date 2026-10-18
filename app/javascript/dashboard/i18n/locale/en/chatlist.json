@@ -13,6 +13,18 @@
     "SEARCH": {
       "INPUT": "Search for People, Chats, Saved Replies .."
     },
+    "OUTSIDER_SEARCH": {
+      "PLACEHOLDER": "Search conversations by name or phone...",
+      "SEARCHING": "Searching...",
+      "LOCKED_HEADING": "With other agents ({count})",
+      "WITH_AGENT": "With {name}",
+      "LOCKED_HINT": "This conversation is with {name}. Ask for it to be assigned to you.",
+      "STATUS": {
+        "resolved": "Resolved",
+        "pending": "Pending",
+        "snoozed": "Snoozed"
+      }
+    },
     "FILTER_ALL": "All",
     "ASSIGNEE_TYPE_TABS": {
       "me": "Mine",
