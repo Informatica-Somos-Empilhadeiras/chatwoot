@@ -1,4 +1,5 @@
 import advancedFilters from './advancedFilters.json';
+import outsiderWhatsappStatus from './outsiderWhatsappStatus.json'; // OUTSIDER: página Status do WhatsApp
 import agentBots from './agentBots.json';
 import agentMgmt from './agentMgmt.json';
 import attributesMgmt from './attributesMgmt.json';
@@ -45,6 +46,7 @@ import yearInReview from './yearInReview.json';
 
 export default {
   ...advancedFilters,
+  ...outsiderWhatsappStatus, // OUTSIDER
   ...agentBots,
   ...agentMgmt,
   ...attributesMgmt,

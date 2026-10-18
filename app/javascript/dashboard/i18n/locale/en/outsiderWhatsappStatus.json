@@ -1,0 +1,179 @@
+{
+  "OUTSIDER_WHATSAPP_STATUS": {
+    "SIDEBAR": "Status",
+    "TITLE": "WhatsApp Status",
+    "REFRESH": "Refresh",
+    "PUBLISH_BUTTON": "Post status",
+    "TABS": {
+      "CONTACTS": "Contacts' status",
+      "MINE": "My status",
+      "PERMISSIONS": "Permissions"
+    },
+    "STATES": {
+      "NOT_CONFIGURED_ADMIN": "The Evolution API key is missing on the Chatwoot server (EVOLUTION_API_KEY in .env).",
+      "NOT_CONFIGURED": "The Status page is not set up yet. Ask an administrator.",
+      "NO_INBOXES": "You don't have access to any WhatsApp inbox connected through the Evolution API."
+    },
+    "TIME": {
+      "TODAY": "Today at {time}",
+      "YESTERDAY": "Yesterday at {time}",
+      "DATE": "{date} at {time}"
+    },
+    "TYPES": {
+      "TEXT": "Text",
+      "IMAGE": "Photo",
+      "VIDEO": "Video",
+      "AUDIO": "Audio"
+    },
+    "SITUATION": {
+      "ACTIVE": "Live for {hours} more h",
+      "EXPIRED": "Expired",
+      "DELETED": "Deleted"
+    },
+    "CONTACTS": {
+      "MY_STATUS": "My status",
+      "MY_STATUS_EMPTY": "No live status",
+      "MY_STATUS_COUNT": "{count} live · {time}",
+      "RECENT": "Recent",
+      "SEEN": "Viewed",
+      "EMPTY": "No contact posted a status in the last 24 hours.",
+      "HINT_TITLE": "Your contacts' status",
+      "HINT": "Click a contact to see their status updates. They disappear 24 hours after being posted, just like on WhatsApp."
+    },
+    "VIEWER": {
+      "OPEN_CONTACT": "Open contact",
+      "MUTE": "Mute",
+      "UNMUTE": "Unmute",
+      "PAUSE": "Pause",
+      "PLAY": "Resume",
+      "CLOSE": "Close",
+      "PREVIOUS": "Previous",
+      "NEXT": "Next",
+      "MEDIA_ERROR": "Could not load this status media."
+    },
+    "PUBLISH": {
+      "TITLE": "Post status",
+      "CONFIRM": "Post",
+      "TEXT_PLACEHOLDER": "Type a status",
+      "COLOR": "Background color",
+      "FONT": "Default font",
+      "FONT_SCRIPT": "Script font",
+      "IMAGE_HINT": "Drop a photo here or choose a file. JPG or PNG, up to 5 MB.",
+      "VIDEO_HINT": "Drop a video here or choose a file. MP4, up to 16 MB.",
+      "CHOOSE_FILE": "Choose file",
+      "CAPTION_PLACEHOLDER": "Caption (optional)",
+      "IMAGE_TYPE_ERROR": "Use a JPG or PNG photo.",
+      "VIDEO_TYPE_ERROR": "Use an MP4 video.",
+      "FILE_SIZE_ERROR": "The file is larger than {size} MB.",
+      "SUCCESS": "Status posted.",
+      "PENDING": "The status is being sent. With many contacts this takes a few minutes, and it shows up in My status when it's done."
+    },
+    "AUDIENCE": {
+      "TITLE": "Who will see it",
+      "CONTACTS": "Contacts of this inbox",
+      "CONTACTS_DESCRIPTION": "All WhatsApp contacts of this inbox, except groups and blocked contacts.",
+      "CONTACTS_COUNT": "No WhatsApp contacts in this inbox. | {count} WhatsApp contact in this inbox, except groups and blocked. | {count} WhatsApp contacts in this inbox, except groups and blocked.",
+      "NUMBERS": "Only these numbers (test)",
+      "NUMBERS_DESCRIPTION": "Good for testing before sending to everyone.",
+      "NUMBERS_PLACEHOLDER": "5511999998888, 5521988887777",
+      "NUMBERS_COUNT": "No valid number yet. Use country and area code, like 5511999998888. | {count} valid number | {count} valid numbers",
+      "OWN_NUMBER": "The company number always gets it too, so the status shows up on the phone."
+    },
+    "REPUBLISH": {
+      "TITLE": "Repost status",
+      "CONFIRM": "Repost",
+      "PROGRESS": "Reposting {current} of {total}",
+      "DESCRIPTION": "None of the chosen status updates can be reposted. | The status will be posted again as a new status. Likes and replies start from zero. | {count} status updates will be posted again as new ones. Likes and replies start from zero.",
+      "SKIPPED": "{count} is left out (deleted or audio). | {count} are left out (deleted or audio).",
+      "COLOR": "Background color for text status",
+      "SUCCESS": "Status reposted. | {count} status updates reposted.",
+      "PENDING": "Reposted. With many contacts the sending takes a few minutes.",
+      "FAILED": "{count} status was not reposted: {error} | {count} status updates were not reposted: {error}"
+    },
+    "MINE": {
+      "PERIOD_1": "Last 24 hours",
+      "PERIOD_7": "Last 7 days",
+      "PERIOD_30": "Last 30 days",
+      "ALL_TYPES": "All types",
+      "SORT_RECENT": "Most recent",
+      "SORT_LIKES": "Most liked",
+      "SORT_REPLIES": "Most replied",
+      "LIST": "List",
+      "CARDS": "Cards",
+      "SELECT_ALL": "Select all",
+      "SELECTED": "{count} selected",
+      "NO_TEXT": "No caption",
+      "EMPTY": "No status posted in this period.",
+      "EMPTY_FILTER": "No status matches this filter.",
+      "NO_MEDIA": "None of the selected status updates has a photo or video to download.",
+      "DOWNLOAD_ERROR": "Could not download the media. | Could not download {count} files.",
+      "SUMMARY": {
+        "PUBLISHED": "Posted",
+        "ACTIVE": "Live now",
+        "ACTIVE_HINT": "Each status stays live for 24 hours",
+        "LIKES": "Likes",
+        "REPLIES": "Replies",
+        "AVERAGE": "{value} per status on average"
+      }
+    },
+    "ACTIONS": {
+      "VIEW": "View",
+      "COPY_TEXT": "Copy text",
+      "COPIED": "Text copied",
+      "REPUBLISH": "Repost",
+      "DOWNLOAD": "Download media",
+      "EXPORT_CSV": "Export CSV",
+      "CLEAR_SELECTION": "Clear selection"
+    },
+    "INTERACTIONS": {
+      "TITLE": "Likes and replies",
+      "LIKES": "Likes",
+      "REPLIES": "Replies",
+      "NO_LIKES": "Nobody liked this status yet.",
+      "NO_REPLIES": "Nobody replied to this status yet.",
+      "OPEN_CONVERSATION": "Open conversation",
+      "CLOSE": "Close",
+      "NOTE": "Likes are emoji reactions. Replies received before the Status page was installed are not counted. Views don't show yet because the Evolution API doesn't store who viewed."
+    },
+    "PERMISSIONS": {
+      "TITLE": "Agent permissions",
+      "DESCRIPTION": "Agents can see contacts' statuses and My status. Choose what else each one can do. Administrators can do everything, and changes are saved right away.",
+      "SEARCH": "Search by name or email",
+      "NAME": "Name",
+      "ADMIN": "Administrator",
+      "ADMIN_HINT": "Administrators can always do everything",
+      "COUNT": "no agents | {granted} of {count} agent | {granted} of {count} agents",
+      "EMPTY_SEARCH": "Nobody matches this search.",
+      "NOTE": "Permissions apply to the WhatsApp inboxes the agent belongs to. If the agent has the Status page open, changes show up the next time they open it.",
+      "PUBLISH": "Publish",
+      "PUBLISH_DESCRIPTION": "Publish new text, photo or video statuses",
+      "REPUBLISH": "Republish",
+      "REPUBLISH_DESCRIPTION": "Publish old statuses again, one or several at once",
+      "DOWNLOAD": "Download media",
+      "DOWNLOAD_DESCRIPTION": "Download photos and videos from My status",
+      "EXPORT": "Export CSV",
+      "EXPORT_DESCRIPTION": "Export the My status list with likes and replies"
+    },
+    "CSV": {
+      "PUBLISHED_AT": "Posted at",
+      "TYPE": "Type",
+      "TEXT": "Text or caption",
+      "SITUATION": "Situation",
+      "LIKES": "Likes",
+      "REPLIES": "Replies",
+      "WHO_LIKED": "Who liked",
+      "REPLY_TEXTS": "Replies received"
+    },
+    "ERRORS": {
+      "NOT_CONFIGURED": "The Evolution API key is missing on the Chatwoot server.",
+      "EVOLUTION_UNAUTHORIZED": "The Evolution API rejected the key configured on the server (EVOLUTION_API_KEY).",
+      "EVOLUTION_UNREACHABLE": "Could not reach the Evolution API. Check that it is running.",
+      "EVOLUTION_TIMEOUT": "The Evolution API took too long to answer. Try again.",
+      "EVOLUTION_ERROR": "The Evolution API returned an error: {message}",
+      "EMPTY_AUDIENCE": "There is nobody to receive the status.",
+      "UNSUPPORTED_TYPE": "This type of status can't be reposted.",
+      "NO_PERMISSION": "You don't have permission to do this. Ask an administrator.",
+      "GENERIC": "Something went wrong. Try again."
+    }
+  }
+}

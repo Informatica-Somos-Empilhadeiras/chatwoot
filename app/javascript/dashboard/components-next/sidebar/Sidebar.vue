@@ -484,6 +484,13 @@ const menuItems = computed(() => {
         },
       ],
     },
+    // OUTSIDER: página Status do WhatsApp
+    {
+      name: 'WhatsappStatus',
+      label: t('OUTSIDER_WHATSAPP_STATUS.SIDEBAR'),
+      icon: 'i-lucide-circle-dashed',
+      to: accountScopedRoute('outsider_whatsapp_status'),
+    },
     {
       name: 'Captain',
       icon: 'i-woot-captain',

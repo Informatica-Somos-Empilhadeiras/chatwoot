@@ -1,0 +1,179 @@
+{
+  "OUTSIDER_WHATSAPP_STATUS": {
+    "SIDEBAR": "Status",
+    "TITLE": "Status do WhatsApp",
+    "REFRESH": "Atualizar",
+    "PUBLISH_BUTTON": "Publicar status",
+    "TABS": {
+      "CONTACTS": "Status dos contatos",
+      "MINE": "Meus status",
+      "PERMISSIONS": "Permissões"
+    },
+    "STATES": {
+      "NOT_CONFIGURED_ADMIN": "Falta configurar a chave da Evolution API no servidor do Chatwoot (EVOLUTION_API_KEY no .env).",
+      "NOT_CONFIGURED": "A página Status ainda não foi configurada. Fale com um administrador.",
+      "NO_INBOXES": "Você não tem acesso a nenhuma caixa do WhatsApp ligada pela Evolution API."
+    },
+    "TIME": {
+      "TODAY": "Hoje às {time}",
+      "YESTERDAY": "Ontem às {time}",
+      "DATE": "{date} às {time}"
+    },
+    "TYPES": {
+      "TEXT": "Texto",
+      "IMAGE": "Foto",
+      "VIDEO": "Vídeo",
+      "AUDIO": "Áudio"
+    },
+    "SITUATION": {
+      "ACTIVE": "No ar por mais {hours} h",
+      "EXPIRED": "Expirado",
+      "DELETED": "Apagado"
+    },
+    "CONTACTS": {
+      "MY_STATUS": "Meu status",
+      "MY_STATUS_EMPTY": "Nenhum status no ar",
+      "MY_STATUS_COUNT": "{count} no ar · {time}",
+      "RECENT": "Recentes",
+      "SEEN": "Vistos",
+      "EMPTY": "Nenhum contato publicou status nas últimas 24 horas.",
+      "HINT_TITLE": "Status dos seus contatos",
+      "HINT": "Clique em um contato para ver os status. Eles somem 24 horas depois de publicados, como no WhatsApp."
+    },
+    "VIEWER": {
+      "OPEN_CONTACT": "Abrir contato",
+      "MUTE": "Tirar o som",
+      "UNMUTE": "Ligar o som",
+      "PAUSE": "Pausar",
+      "PLAY": "Continuar",
+      "CLOSE": "Fechar",
+      "PREVIOUS": "Anterior",
+      "NEXT": "Próximo",
+      "MEDIA_ERROR": "Não foi possível carregar a mídia deste status."
+    },
+    "PUBLISH": {
+      "TITLE": "Publicar status",
+      "CONFIRM": "Publicar",
+      "TEXT_PLACEHOLDER": "Digite um status",
+      "COLOR": "Cor de fundo",
+      "FONT": "Letra padrão",
+      "FONT_SCRIPT": "Letra cursiva",
+      "IMAGE_HINT": "Arraste uma foto para cá ou escolha um arquivo. JPG ou PNG, até 5 MB.",
+      "VIDEO_HINT": "Arraste um vídeo para cá ou escolha um arquivo. MP4, até 16 MB.",
+      "CHOOSE_FILE": "Escolher arquivo",
+      "CAPTION_PLACEHOLDER": "Legenda (opcional)",
+      "IMAGE_TYPE_ERROR": "Use uma foto JPG ou PNG.",
+      "VIDEO_TYPE_ERROR": "Use um vídeo MP4.",
+      "FILE_SIZE_ERROR": "O arquivo passa de {size} MB.",
+      "SUCCESS": "Status publicado.",
+      "PENDING": "O status está sendo enviado. Com muitos contatos isso leva alguns minutos, e ele aparece em Meus status quando terminar."
+    },
+    "AUDIENCE": {
+      "TITLE": "Quem vai ver",
+      "CONTACTS": "Contatos desta caixa",
+      "CONTACTS_DESCRIPTION": "Todos os contatos do WhatsApp desta caixa, sem grupos e bloqueados.",
+      "CONTACTS_COUNT": "Nenhum contato do WhatsApp nesta caixa. | {count} contato do WhatsApp nesta caixa, sem grupos e bloqueados. | {count} contatos do WhatsApp nesta caixa, sem grupos e bloqueados.",
+      "NUMBERS": "Somente estes números (teste)",
+      "NUMBERS_DESCRIPTION": "Bom para testar antes de mandar para todos.",
+      "NUMBERS_PLACEHOLDER": "5511999998888, 5521988887777",
+      "NUMBERS_COUNT": "Nenhum número válido ainda. Use DDI e DDD, como 5511999998888. | {count} número válido | {count} números válidos",
+      "OWN_NUMBER": "O número da empresa sempre recebe também, para o status aparecer no celular."
+    },
+    "REPUBLISH": {
+      "TITLE": "Republicar status",
+      "CONFIRM": "Republicar",
+      "PROGRESS": "Republicando {current} de {total}",
+      "DESCRIPTION": "Nenhum dos status escolhidos pode ser republicado. | O status vai ser publicado de novo, como um status novo. As curtidas e respostas começam do zero. | {count} status vão ser publicados de novo, como status novos. As curtidas e respostas começam do zero.",
+      "SKIPPED": "{count} fica de fora (apagado ou áudio). | {count} ficam de fora (apagados ou áudio).",
+      "COLOR": "Cor de fundo dos status de texto",
+      "SUCCESS": "Status republicado. | {count} status republicados.",
+      "PENDING": "Republicado. Com muitos contatos o envio leva alguns minutos.",
+      "FAILED": "{count} status não foi republicado: {error} | {count} status não foram republicados: {error}"
+    },
+    "MINE": {
+      "PERIOD_1": "Últimas 24 horas",
+      "PERIOD_7": "Últimos 7 dias",
+      "PERIOD_30": "Últimos 30 dias",
+      "ALL_TYPES": "Todos os tipos",
+      "SORT_RECENT": "Mais recentes",
+      "SORT_LIKES": "Mais curtidos",
+      "SORT_REPLIES": "Mais respondidos",
+      "LIST": "Lista",
+      "CARDS": "Cards",
+      "SELECT_ALL": "Selecionar todos",
+      "SELECTED": "{count} selecionado | {count} selecionados",
+      "NO_TEXT": "Sem legenda",
+      "EMPTY": "Nenhum status publicado neste período.",
+      "EMPTY_FILTER": "Nenhum status com este filtro.",
+      "NO_MEDIA": "Nenhum dos selecionados tem foto ou vídeo para baixar.",
+      "DOWNLOAD_ERROR": "Não foi possível baixar a mídia. | Não foi possível baixar {count} mídias.",
+      "SUMMARY": {
+        "PUBLISHED": "Publicados",
+        "ACTIVE": "No ar agora",
+        "ACTIVE_HINT": "Cada status fica 24 horas no ar",
+        "LIKES": "Curtidas",
+        "REPLIES": "Respostas",
+        "AVERAGE": "Média de {value} por status"
+      }
+    },
+    "ACTIONS": {
+      "VIEW": "Ver",
+      "COPY_TEXT": "Copiar texto",
+      "COPIED": "Texto copiado",
+      "REPUBLISH": "Republicar",
+      "DOWNLOAD": "Baixar mídia",
+      "EXPORT_CSV": "Exportar CSV",
+      "CLEAR_SELECTION": "Limpar seleção"
+    },
+    "INTERACTIONS": {
+      "TITLE": "Curtidas e respostas",
+      "LIKES": "Curtidas",
+      "REPLIES": "Respostas",
+      "NO_LIKES": "Ninguém curtiu este status ainda.",
+      "NO_REPLIES": "Ninguém respondeu este status ainda.",
+      "OPEN_CONVERSATION": "Abrir conversa",
+      "CLOSE": "Fechar",
+      "NOTE": "Curtidas são as reações com emoji. Respostas que chegaram antes da página Status ser instalada não entram na conta. Visualizações ainda não aparecem, porque a Evolution não guarda quem viu."
+    },
+    "PERMISSIONS": {
+      "TITLE": "Permissões dos agentes",
+      "DESCRIPTION": "Os agentes podem ver os status dos contatos e de Meus status. Escolha o que cada um também pode fazer. Administradores podem tudo, e as mudanças são salvas na hora.",
+      "SEARCH": "Buscar por nome ou e-mail",
+      "NAME": "Nome",
+      "ADMIN": "Administrador",
+      "ADMIN_HINT": "Administradores sempre podem tudo",
+      "COUNT": "nenhum agente | {granted} de {count} agente | {granted} de {count} agentes",
+      "EMPTY_SEARCH": "Ninguém encontrado com essa busca.",
+      "NOTE": "As permissões valem nas caixas do WhatsApp em que o agente está. Se ele estiver com a página Status aberta, as mudanças aparecem quando ele abrir a página de novo.",
+      "PUBLISH": "Publicar",
+      "PUBLISH_DESCRIPTION": "Publicar status novos de texto, foto ou vídeo",
+      "REPUBLISH": "Republicar",
+      "REPUBLISH_DESCRIPTION": "Publicar de novo status antigos, um ou vários de uma vez",
+      "DOWNLOAD": "Baixar mídia",
+      "DOWNLOAD_DESCRIPTION": "Baixar as fotos e os vídeos de Meus status",
+      "EXPORT": "Exportar CSV",
+      "EXPORT_DESCRIPTION": "Exportar a lista de Meus status com curtidas e respostas"
+    },
+    "CSV": {
+      "PUBLISHED_AT": "Publicado em",
+      "TYPE": "Tipo",
+      "TEXT": "Texto ou legenda",
+      "SITUATION": "Situação",
+      "LIKES": "Curtidas",
+      "REPLIES": "Respostas",
+      "WHO_LIKED": "Quem curtiu",
+      "REPLY_TEXTS": "Respostas recebidas"
+    },
+    "ERRORS": {
+      "NOT_CONFIGURED": "Falta configurar a chave da Evolution API no servidor do Chatwoot.",
+      "EVOLUTION_UNAUTHORIZED": "A Evolution API recusou a chave configurada no servidor (EVOLUTION_API_KEY).",
+      "EVOLUTION_UNREACHABLE": "Não foi possível falar com a Evolution API. Confira se ela está no ar.",
+      "EVOLUTION_TIMEOUT": "A Evolution API demorou demais para responder. Tente de novo.",
+      "EVOLUTION_ERROR": "A Evolution API respondeu com erro: {message}",
+      "EMPTY_AUDIENCE": "Não há ninguém para receber o status.",
+      "UNSUPPORTED_TYPE": "Este tipo de status não pode ser republicado.",
+      "NO_PERMISSION": "Você não tem permissão para isso. Fale com um administrador.",
+      "GENERIC": "Algo deu errado. Tente de novo."
+    }
+  }
+}
