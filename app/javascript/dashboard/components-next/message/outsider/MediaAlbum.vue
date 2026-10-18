@@ -1,18 +1,23 @@
 <script setup>
 // OUTSIDER: bolha de álbum estilo WhatsApp (ver helper/outsider/mediaAlbum.js).
 // 2 mídias: lado a lado; 3: uma larga em cima e duas embaixo; 4+: grade 2x2
-// com "+N" na última. Clicar abre a galeria do Chatwoot naquela mídia.
+// com "+N" na última. Em grupo, mostra quem enviou em cima e aceita 1 mídia só.
+// Clicar abre a galeria do Chatwoot naquela mídia.
 import { ref, computed } from 'vue';
 import BaseBubble from '../bubbles/Base.vue';
 import Icon from 'next/icon/Icon.vue';
 import { useSnakeCase } from 'dashboard/composables/useTransformKeys';
 import { useMessageContext } from '../provider.js';
 import { ATTACHMENT_TYPES } from '../constants';
+import { splitSenderHeader } from 'dashboard/helper/outsider/mediaAlbum';
 import GalleryView from 'dashboard/components/widgets/conversation/components/GalleryView.vue';
 
 const VISIBLE_ITEMS = 4;
 
-const { filteredCurrentChatAttachments, attachments } = useMessageContext();
+const { filteredCurrentChatAttachments, attachments, content } =
+  useMessageContext();
+
+const senderHeader = computed(() => splitSenderHeader(content.value).header);
 
 const selectedAttachment = ref(null);
 const failedIds = ref([]);
@@ -22,20 +27,35 @@ const visibleAttachments = computed(() =>
 );
 const hiddenCount = computed(() => attachments.value.length - VISIBLE_ITEMS);
 
-const isWideTile = index => index === 0 && attachments.value.length === 3;
+const isSingle = computed(() => attachments.value.length === 1);
+
+const tileClass = index => {
+  if (isSingle.value) return 'col-span-2 max-h-96';
+  if (index === 0 && attachments.value.length === 3) {
+    return 'col-span-2 aspect-[2/1]';
+  }
+  return 'aspect-square';
+};
+
+const mediaClass = computed(() =>
+  isSingle.value ? 'w-full h-auto object-cover' : 'size-full object-cover'
+);
 
 const isVideo = attachment => attachment.fileType === ATTACHMENT_TYPES.VIDEO;
 </script>
 
 <template>
   <BaseBubble class="p-1" data-bubble-name="media-album">
+    <p v-if="senderHeader" class="px-2 pt-1 pb-2 mb-0 font-semibold">
+      {{ `${senderHeader}:` }}
+    </p>
     <div class="grid grid-cols-2 gap-1 w-64 max-w-full">
       <button
         v-for="(attachment, index) in visibleAttachments"
         :key="attachment.id"
         type="button"
         class="relative overflow-hidden rounded-lg bg-n-alpha-2"
-        :class="isWideTile(index) ? 'col-span-2 aspect-[2/1]' : 'aspect-square'"
+        :class="tileClass(index)"
         @click="selectedAttachment = attachment"
       >
         <Icon
@@ -46,7 +66,8 @@ const isVideo = attachment => attachment.fileType === ATTACHMENT_TYPES.VIDEO;
         <video
           v-else-if="isVideo(attachment)"
           :src="attachment.dataUrl"
-          class="size-full object-cover skip-context-menu"
+          class="skip-context-menu"
+          :class="mediaClass"
           muted
           playsinline
           preload="metadata"
@@ -55,7 +76,8 @@ const isVideo = attachment => attachment.fileType === ATTACHMENT_TYPES.VIDEO;
         <img
           v-else
           :src="attachment.thumbUrl || attachment.dataUrl"
-          class="size-full object-cover skip-context-menu"
+          class="skip-context-menu"
+          :class="mediaClass"
           loading="lazy"
           @error="failedIds.push(attachment.id)"
         />
