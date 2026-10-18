@@ -5,9 +5,13 @@
 # ignora essas mensagens, então elas não viram conversas.
 #
 # - contacts: status dos contatos nas últimas 24h, agrupados por contato
-# - mine: meus status no período, com curtidas e respostas
+# - mine: meus status no período, com curtidas, respostas e visualizações
+# - viewers: quem viu um dos meus status
 # - replied_status: o status que o contato respondeu, para mostrar na conversa
-# - inbox_contact_jids: quem recebe um status novo (contatos da caixa, sem grupos)
+# - audience: quem pode receber um status novo (ver Outsider::WhatsappStatusAudience)
+#
+# Visualizações: só a Evolution ajustada guarda quem viu (linhas VIEWED em MessageUpdate,
+# ver /mnt/project-files/status-whatsapp/evolution); nas outras, views vem nil.
 class Outsider::WhatsappStatusService
   STATUS_JID = 'status@broadcast'.freeze
   CONTACTS_WINDOW = 24.hours
@@ -27,15 +31,31 @@ class Outsider::WhatsappStatusService
       author(author_records, people)
     end
 
-    { me: me, authors: authors.sort_by { |author| -author[:last_timestamp] } }
+    { me: me, read_status: @api.read_status?, authors: authors.sort_by { |author| -author[:last_timestamp] } }
   end
 
   def mine(since:)
-    statuses = status_records(since: since, from_me: true).filter_map { |record| Record.serialize(record) }
-                                                          .sort_by { |status| -status[:timestamp] }
+    views = @api.views_supported?
+    statuses = status_records(since: since, from_me: true).filter_map do |record|
+      Record.serialize(record)&.merge(views: (Record.view_count(record) if views))
+    end
+    statuses.sort_by! { |status| -status[:timestamp] }
     interactions = Outsider::WhatsappStatusInteractions.new(@inbox, @api, statuses)
 
     { me: me, statuses: statuses.map { |status| status.merge(interactions.for(status[:id])) } }
+  end
+
+  # quem não está nos contatos do Chatwoot vem sem nome (a página mostra o número, ou
+  # "Contato sem nome" quando só há o código @lid)
+  def viewers(id)
+    raise ActiveRecord::RecordNotFound unless status_record!(id).dig('key', 'fromMe')
+
+    jids = @api.status_updates(id).select { |update| update['status'] == Record::VIEWED }.pluck('participant').compact.uniq
+    people = Outsider::WhatsappStatusPeople.new(@inbox.account, jids)
+    jids.map do |jid|
+      person = people.find([jid], nil)
+      person[:contact_id] ? person : person.merge(name: nil)
+    end
   end
 
   def media(id)
@@ -47,9 +67,8 @@ class Outsider::WhatsappStatusService
     Record.serialize(status_record!(id)) || raise(ActiveRecord::RecordNotFound)
   end
 
-  def inbox_contact_jids
-    @inbox.contacts.where(blocked: false).pluck(:identifier, :phone_number)
-          .filter_map { |identifier, phone_number| audience_jid(identifier, phone_number) }.uniq
+  def audience
+    @audience ||= Outsider::WhatsappStatusAudience.new(@inbox, @api)
   end
 
   def owner_jid
@@ -110,13 +129,5 @@ class Outsider::WhatsappStatusService
   def status_record!(id)
     @api.find_messages({ key: { id: id, remoteJid: STATUS_JID } }, page: 1, offset: 1)['records'].first ||
       raise(ActiveRecord::RecordNotFound)
-  end
-
-  def audience_jid(identifier, phone_number)
-    return identifier if identifier.to_s.match?(Record::PERSON_JID)
-    return if identifier.to_s.end_with?('@g.us')
-
-    digits = phone_number.to_s.delete('^0-9')
-    "#{digits}@s.whatsapp.net" if digits.present?
   end
 end

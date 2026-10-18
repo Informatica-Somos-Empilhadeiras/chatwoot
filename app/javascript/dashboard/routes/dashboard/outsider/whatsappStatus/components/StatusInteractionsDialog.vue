@@ -1,14 +1,21 @@
 <script setup>
-// OUTSIDER: quem curtiu e quem respondeu um dos meus status.
+// OUTSIDER: quem viu, quem curtiu e quem respondeu um dos meus status.
 import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useAccount } from 'dashboard/composables/useAccount';
+import { useAlert } from 'dashboard/composables';
+import WhatsappStatusAPI from 'dashboard/api/outsider/whatsappStatus';
 import Dialog from 'dashboard/components-next/dialog/Dialog.vue';
 import TabBar from 'dashboard/components-next/tabbar/TabBar.vue';
 import Avatar from 'dashboard/components-next/avatar/Avatar.vue';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
+import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 import StatusThumbnail from './StatusThumbnail.vue';
-import { formatPhone, timeLabel, typeLabel } from '../helpers';
+import { errorMessage, formatPhone, timeLabel, typeLabel } from '../helpers';
+
+const props = defineProps({
+  inboxId: { type: Number, default: null },
+});
 
 const { t } = useI18n();
 const { accountScopedRoute } = useAccount();
@@ -16,8 +23,22 @@ const { accountScopedRoute } = useAccount();
 const dialogRef = ref(null);
 const status = ref(null);
 const activeTab = ref('likes');
+// quem viu é buscado só quando a aba abre
+const viewers = ref(null);
+const isLoadingViewers = ref(false);
+
+const hasViews = computed(() => status.value?.views != null);
 
 const tabs = computed(() => [
+  ...(hasViews.value
+    ? [
+        {
+          key: 'views',
+          label: t('OUTSIDER_WHATSAPP_STATUS.INTERACTIONS.VIEWS'),
+          count: status.value.views,
+        },
+      ]
+    : []),
   {
     key: 'likes',
     label: t('OUTSIDER_WHATSAPP_STATUS.INTERACTIONS.LIKES'),
@@ -33,10 +54,33 @@ const tabs = computed(() => [
 const contactRoute = contactId =>
   accountScopedRoute('contacts_edit', { contactId });
 
-const open = selected => {
+const loadViewers = async () => {
+  const current = status.value;
+  isLoadingViewers.value = true;
+  try {
+    const { data } = await WhatsappStatusAPI.getViewers(
+      props.inboxId,
+      current.id
+    );
+    if (status.value === current) viewers.value = data.payload;
+  } catch (error) {
+    useAlert(errorMessage(t, error));
+  } finally {
+    isLoadingViewers.value = false;
+  }
+};
+
+const changeTab = tab => {
+  activeTab.value = tab.key;
+  if (tab.key === 'views' && viewers.value === null) loadViewers();
+};
+
+const open = (selected, tab = 'likes') => {
   status.value = selected;
-  activeTab.value = 'likes';
+  viewers.value = null;
+  activeTab.value = tab === 'views' && selected.views == null ? 'likes' : tab;
   dialogRef.value.open();
+  if (activeTab.value === 'views') loadViewers();
 };
 
 defineExpose({ open });
@@ -68,13 +112,63 @@ defineExpose({ open });
       </div>
 
       <TabBar
+        :key="status.id"
         :tabs="tabs"
-        :initial-active-tab="activeTab === 'likes' ? 0 : 1"
-        @tab-changed="tab => (activeTab = tab.key)"
+        :initial-active-tab="tabs.findIndex(tab => tab.key === activeTab)"
+        @tab-changed="changeTab"
       />
 
+      <template v-if="activeTab === 'views'">
+        <div v-if="isLoadingViewers" class="flex justify-center py-4">
+          <Spinner class="text-n-slate-10" />
+        </div>
+        <ul v-else-if="viewers?.length" class="flex flex-col list-none">
+          <li
+            v-for="viewer in viewers"
+            :key="viewer.jid"
+            class="flex items-center gap-3 py-2"
+          >
+            <Avatar
+              :name="viewer.name || ''"
+              :src="viewer.avatar_url"
+              :size="32"
+              rounded-full
+            />
+            <div class="flex flex-col flex-1 min-w-0">
+              <router-link
+                v-if="viewer.contact_id"
+                :to="contactRoute(viewer.contact_id)"
+                class="text-sm truncate text-n-slate-12 hover:underline"
+              >
+                {{ viewer.name }}
+              </router-link>
+              <span
+                v-else
+                class="text-sm truncate"
+                :class="viewer.phone ? 'text-n-slate-12' : 'text-n-slate-10'"
+              >
+                {{
+                  viewer.phone
+                    ? formatPhone(viewer.phone)
+                    : t('OUTSIDER_WHATSAPP_STATUS.INTERACTIONS.UNKNOWN_VIEWER')
+                }}
+              </span>
+              <span
+                v-if="viewer.contact_id && viewer.phone"
+                class="text-xs text-n-slate-11"
+              >
+                {{ formatPhone(viewer.phone) }}
+              </span>
+            </div>
+          </li>
+        </ul>
+        <p v-else class="py-4 mb-0 text-sm text-center text-n-slate-11">
+          {{ t('OUTSIDER_WHATSAPP_STATUS.INTERACTIONS.NO_VIEWS') }}
+        </p>
+      </template>
+
       <ul
-        v-if="activeTab === 'likes' && status.reactions.length"
+        v-else-if="activeTab === 'likes' && status.reactions.length"
         class="flex flex-col list-none"
       >
         <li

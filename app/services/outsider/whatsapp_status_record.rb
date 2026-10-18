@@ -5,6 +5,8 @@ module Outsider::WhatsappStatusRecord
     'conversation' => 'text', 'extendedTextMessage' => 'text'
   }.freeze
   PERSON_JID = /\A\d+@(s\.whatsapp\.net|lid)\z/
+  # gravado pela Evolution ajustada a cada pessoa que vê um status meu
+  VIEWED = 'VIEWED'.freeze
 
   module_function
 
@@ -39,6 +41,10 @@ module Outsider::WhatsappStatusRecord
 
   def phone_from(jid)
     "+#{jid.split('@').first}" if jid&.end_with?('@s.whatsapp.net')
+  end
+
+  def view_count(record)
+    Array(record['MessageUpdate']).count { |update| update['status'] == VIEWED }
   end
 
   # status apagado pelo autor: a Evolution trata o "apagar" como edição da mensagem original

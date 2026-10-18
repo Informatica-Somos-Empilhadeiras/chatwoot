@@ -38,7 +38,8 @@
       "SEEN": "Vistos",
       "EMPTY": "Nenhum contato publicou status nas últimas 24 horas.",
       "HINT_TITLE": "Status dos seus contatos",
-      "HINT": "Clique em um contato para ver os status. Eles somem 24 horas depois de publicados, como no WhatsApp."
+      "HINT": "Clique em um contato para ver os status. Eles somem 24 horas depois de publicados, como no WhatsApp.",
+      "READ_STATUS_OFF": "A opção \"Ler status\" está desligada nesta caixa, então a Evolution descarta os status dos contatos. Para ver os status, ligue em Evolution Manager → Configurações → Ler status. Os status publicados antes disso não voltam."
     },
     "VIEWER": {
       "OPEN_CONTACT": "Abrir contato",
@@ -75,11 +76,16 @@
       "CONTACTS": "Contatos desta caixa",
       "CONTACTS_DESCRIPTION": "Todos os contatos do WhatsApp desta caixa, sem grupos e bloqueados.",
       "CONTACTS_COUNT": "Nenhum contato do WhatsApp nesta caixa. | {count} contato do WhatsApp nesta caixa, sem grupos e bloqueados. | {count} contatos do WhatsApp nesta caixa, sem grupos e bloqueados.",
-      "NUMBERS": "Somente estes números (teste)",
-      "NUMBERS_DESCRIPTION": "Bom para testar antes de mandar para todos.",
-      "NUMBERS_PLACEHOLDER": "5511999998888, 5521988887777",
-      "NUMBERS_COUNT": "Nenhum número válido ainda. Use DDI e DDD, como 5511999998888. | {count} número válido | {count} números válidos",
-      "OWN_NUMBER": "O número da empresa sempre recebe também, para o status aparecer no celular."
+      "NUMBERS": "Digitar números",
+      "NUMBERS_DESCRIPTION": "Para números que não estão nos contatos, ou para testar.",
+      "NUMBERS_PLACEHOLDER": "62 99999-8888, 61 98888-7777",
+      "NUMBERS_COUNT": "Nenhum número válido ainda. Use o DDD, como 62999998888. | {count} número válido | {count} números válidos",
+      "OWN_NUMBER": "O número da empresa sempre recebe também, para o status aparecer no celular.",
+      "SELECTED": "Escolher contatos",
+      "SELECTED_DESCRIPTION": "Escolha na lista, com busca e filtro por região, estado e DDD.",
+      "SELECTED_COUNT": "Nenhum contato escolhido | {count} contato escolhido | {count} contatos escolhidos",
+      "CHOOSE": "Escolher",
+      "CHANGE_SELECTION": "Alterar"
     },
     "REPUBLISH": {
       "TITLE": "Republicar status",
@@ -115,8 +121,11 @@
         "ACTIVE_HINT": "Cada status fica 24 horas no ar",
         "LIKES": "Curtidas",
         "REPLIES": "Respostas",
-        "AVERAGE": "Média de {value} por status"
-      }
+        "AVERAGE": "Média de {value} por status",
+        "VIEWS": "Visualizações",
+        "VIEWS_UNAVAILABLE": "Precisa da versão ajustada da Evolution"
+      },
+      "SORT_VIEWS": "Mais vistos"
     },
     "ACTIONS": {
       "VIEW": "Ver",
@@ -129,14 +138,17 @@
       "CLEAR_SELECTION": "Limpar seleção"
     },
     "INTERACTIONS": {
-      "TITLE": "Curtidas e respostas",
+      "TITLE": "Quem viu, curtiu e respondeu",
       "LIKES": "Curtidas",
       "REPLIES": "Respostas",
       "NO_LIKES": "Ninguém curtiu este status ainda.",
       "NO_REPLIES": "Ninguém respondeu este status ainda.",
       "OPEN_CONVERSATION": "Abrir conversa",
       "CLOSE": "Fechar",
-      "NOTE": "Curtidas são as reações com emoji. Respostas que chegaram antes da página Status ser instalada não entram na conta. Visualizações ainda não aparecem, porque a Evolution não guarda quem viu."
+      "NOTE": "Curtidas são as reações com emoji. Visualizações contam só quem deixa a confirmação de leitura ligada no WhatsApp, como no celular, e só a partir da instalação da versão ajustada da Evolution. Respostas que chegaram antes da página Status ser instalada não entram na conta.",
+      "VIEWS": "Visualizações",
+      "NO_VIEWS": "Ninguém viu este status ainda.",
+      "UNKNOWN_VIEWER": "Contato sem nome"
     },
     "REPLY_QUOTE": {
       "LABEL": "Seu status"
@@ -170,7 +182,8 @@
       "LIKES": "Curtidas",
       "REPLIES": "Respostas",
       "WHO_LIKED": "Quem curtiu",
-      "REPLY_TEXTS": "Respostas recebidas"
+      "REPLY_TEXTS": "Respostas recebidas",
+      "VIEWS": "Visualizações"
     },
     "ERRORS": {
       "NOT_CONFIGURED": "Falta configurar a chave da Evolution API no servidor do Chatwoot.",
@@ -181,7 +194,33 @@
       "EMPTY_AUDIENCE": "Não há ninguém para receber o status.",
       "UNSUPPORTED_TYPE": "Este tipo de status não pode ser republicado.",
       "NO_PERMISSION": "Você não tem permissão para isso. Fale com um administrador.",
-      "GENERIC": "Algo deu errado. Tente de novo."
+      "GENERIC": "Algo deu errado. Tente de novo.",
+      "NUMBERS_NOT_FOUND": "Estes números não têm WhatsApp: {numbers}. Confira o DDD e tente de novo."
+    },
+    "PICKER": {
+      "TITLE": "Escolher quem vê o status",
+      "CONFIRM": "Escolha alguém | Usar {count} contato | Usar {count} contatos",
+      "SEARCH": "Buscar por nome ou número",
+      "ALL": "Todos",
+      "EXPAND": "Mostrar ou esconder",
+      "REGIONS": {
+        "N": "Região Norte",
+        "NE": "Região Nordeste",
+        "CO": "Região Centro-Oeste",
+        "SE": "Região Sudeste",
+        "S": "Região Sul"
+      },
+      "DDD": "{ddd} · {city} e região",
+      "OTHERS": "Outros países",
+      "UNKNOWN": "Sem número",
+      "FOREIGN_TAG": "Exterior",
+      "SELECT_FOUND": "Nenhum contato com este filtro | Marcar o contato achado | Marcar os {count} contatos achados",
+      "UNSELECT_FOUND": "Desmarcar o contato achado | Desmarcar o contato achado | Desmarcar os {count} contatos achados",
+      "CLEAR": "Limpar escolha",
+      "EMPTY": "Nenhum contato com esta busca.",
+      "NO_NAME": "Contato sem nome",
+      "MORE": "Mostrar mais ({count} restantes)",
+      "SELECTED": "Nenhum contato escolhido. | {count} contato escolhido no total. | {count} contatos escolhidos no total."
     }
   }
 }

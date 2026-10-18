@@ -20,9 +20,10 @@ import {
   TEXT_MAX_LENGTH,
   appendAudience,
   colorFor,
+  emptyAudience,
   errorMessage,
   fetchMedia,
-  parseNumbers,
+  isAudienceValid,
 } from '../helpers';
 
 const props = defineProps({
@@ -45,8 +46,8 @@ const font = ref(FONTS.DEFAULT);
 const file = ref(null);
 const previewUrl = ref('');
 const caption = ref('');
-const audience = reactive({ mode: 'contacts', numbers: '' });
-const audienceCount = ref(null);
+const audience = reactive(emptyAudience());
+const audienceSummary = ref(null);
 const isPublishing = ref(false);
 // o status antigo, quando é "Editar e publicar de novo"
 const source = ref(null);
@@ -84,9 +85,7 @@ const fileError = computed(() => {
 });
 
 const isValid = computed(() => {
-  if (audience.mode === 'numbers' && !parseNumbers(audience.numbers).length) {
-    return false;
-  }
+  if (!isAudienceValid(audience)) return false;
   if (type.value === 'text') return text.value.trim().length > 0;
   return !!file.value && !fileError.value;
 });
@@ -143,15 +142,15 @@ const open = async (status = null) => {
   font.value = FONTS.DEFAULT;
   caption.value = status && status.type !== 'text' ? status.text || '' : '';
   clearFile();
-  Object.assign(audience, { mode: 'contacts', numbers: '' });
-  audienceCount.value = null;
+  Object.assign(audience, emptyAudience());
+  audienceSummary.value = null;
   dialogRef.value.open();
   nextTick(fitText);
   if (status && status.type !== 'text') loadSourceMedia(status);
 
   try {
     const { data } = await WhatsappStatusAPI.getAudience(props.inboxId);
-    audienceCount.value = data.count;
+    audienceSummary.value = data;
   } catch (error) {
     useAlert(errorMessage(t, error));
   }
@@ -327,9 +326,11 @@ defineExpose({ open });
 
         <StatusAudiencePicker
           v-model:mode="audience.mode"
+          v-model:contact-ids="audience.contactIds"
           v-model:numbers="audience.numbers"
           id-prefix="publish"
-          :count="audienceCount"
+          :inbox-id="inboxId"
+          :summary="audienceSummary"
         />
       </div>
     </div>

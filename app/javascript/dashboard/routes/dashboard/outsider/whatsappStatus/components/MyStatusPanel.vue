@@ -55,8 +55,16 @@ const typeOptions = computed(() => [
   { value: 'video', label: t('OUTSIDER_WHATSAPP_STATUS.TYPES.VIDEO') },
 ]);
 
+// a Evolution sem o ajuste das visualizações manda views null
+const hasViews = computed(() =>
+  props.statuses.some(status => status.views != null)
+);
+
 const sortOptions = computed(() => [
   { value: 'recent', label: t('OUTSIDER_WHATSAPP_STATUS.MINE.SORT_RECENT') },
+  ...(hasViews.value
+    ? [{ value: 'views', label: t('OUTSIDER_WHATSAPP_STATUS.MINE.SORT_VIEWS') }]
+    : []),
   { value: 'likes', label: t('OUTSIDER_WHATSAPP_STATUS.MINE.SORT_LIKES') },
   { value: 'replies', label: t('OUTSIDER_WHATSAPP_STATUS.MINE.SORT_REPLIES') },
 ]);
@@ -66,6 +74,9 @@ const visible = computed(() => {
     status => typeFilter.value === 'all' || status.type === typeFilter.value
   );
   // a lista já vem do mais novo para o mais antigo
+  if (sortBy.value === 'views') {
+    return [...list].sort((a, b) => (b.views || 0) - (a.views || 0));
+  }
   if (sortBy.value === 'likes') {
     return [...list].sort((a, b) => b.reactions.length - a.reactions.length);
   }
@@ -90,6 +101,10 @@ const summary = computed(() => {
     (total, status) => total + status.replies.length,
     0
   );
+  const views = props.statuses.reduce(
+    (total, status) => total + (status.views || 0),
+    0
+  );
   return [
     {
       key: 'published',
@@ -105,6 +120,18 @@ const summary = computed(() => {
       label: t('OUTSIDER_WHATSAPP_STATUS.MINE.SUMMARY.ACTIVE'),
       value: props.statuses.filter(isActive).length,
       hint: t('OUTSIDER_WHATSAPP_STATUS.MINE.SUMMARY.ACTIVE_HINT'),
+    },
+    {
+      key: 'views',
+      icon: 'i-lucide-eye',
+      label: t('OUTSIDER_WHATSAPP_STATUS.MINE.SUMMARY.VIEWS'),
+      value: hasViews.value || !count ? views : '—',
+      hint:
+        hasViews.value || !count
+          ? t('OUTSIDER_WHATSAPP_STATUS.MINE.SUMMARY.AVERAGE', {
+              value: average(views, count),
+            })
+          : t('OUTSIDER_WHATSAPP_STATUS.MINE.SUMMARY.VIEWS_UNAVAILABLE'),
     },
     {
       key: 'likes',
@@ -207,7 +234,7 @@ const exportCsv = () =>
 
 <template>
   <div class="flex flex-col gap-5">
-    <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
+    <div class="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">
       <div
         v-for="card in summary"
         :key="card.key"

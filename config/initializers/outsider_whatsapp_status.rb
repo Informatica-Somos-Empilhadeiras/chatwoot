@@ -12,6 +12,8 @@ Rails.application.routes.prepend do
                 get :media
                 get :replied_status
                 get :audience
+                get :audience_contacts
+                get :viewers
                 post :republish
                 get :permissions
                 patch :permissions, action: :update_permission

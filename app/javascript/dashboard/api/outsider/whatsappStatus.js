@@ -40,6 +40,19 @@ class WhatsappStatusAPI extends ApiClient {
     });
   }
 
+  // params: { q, areas, page } ou { q, areas, all_ids: 1 }
+  getAudienceContacts(inboxId, params) {
+    return axios.get(`${this.url}/audience_contacts`, {
+      params: { inbox_id: inboxId, ...params },
+    });
+  }
+
+  getViewers(inboxId, id) {
+    return axios.get(`${this.url}/viewers`, {
+      params: { inbox_id: inboxId, id },
+    });
+  }
+
   publish(formData) {
     return axios.post(this.url, formData);
   }

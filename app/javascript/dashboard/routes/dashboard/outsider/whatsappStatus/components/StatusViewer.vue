@@ -325,6 +325,10 @@ useEventListener(document, 'keydown', event => {
           class="flex items-center gap-4 px-4 py-2 text-sm rounded-full bg-white/10 hover:bg-white/20"
           @click="openInteractions"
         >
+          <span v-if="status.views != null" class="flex items-center gap-1.5">
+            <Icon icon="i-lucide-eye" class="size-4" />
+            {{ status.views }}
+          </span>
           <span class="flex items-center gap-1.5">
             <Icon icon="i-lucide-heart" class="size-4" />
             {{ status.reactions.length }}

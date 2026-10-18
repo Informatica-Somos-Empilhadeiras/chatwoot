@@ -11,8 +11,9 @@ import {
   BACKGROUND_COLORS,
   audienceParams,
   canRepublish,
+  emptyAudience,
   errorMessage,
-  parseNumbers,
+  isAudienceValid,
 } from '../helpers';
 
 const props = defineProps({
@@ -27,8 +28,8 @@ const dialogRef = ref(null);
 const items = ref([]);
 const skipped = ref(0);
 const color = ref(BACKGROUND_COLORS[0]);
-const audience = reactive({ mode: 'contacts', numbers: '' });
-const audienceCount = ref(null);
+const audience = reactive(emptyAudience());
+const audienceSummary = ref(null);
 const isRunning = ref(false);
 const current = ref(0);
 
@@ -36,8 +37,7 @@ const hasText = computed(() => items.value.some(item => item.type === 'text'));
 
 const isValid = computed(
   () =>
-    items.value.length > 0 &&
-    (audience.mode !== 'numbers' || parseNumbers(audience.numbers).length > 0)
+    items.value.length > 0 && isAudienceValid(audience)
 );
 
 const confirmLabel = computed(() =>
@@ -53,13 +53,13 @@ const open = async statuses => {
   items.value = statuses.filter(canRepublish);
   skipped.value = statuses.length - items.value.length;
   color.value = BACKGROUND_COLORS[0];
-  Object.assign(audience, { mode: 'contacts', numbers: '' });
-  audienceCount.value = null;
+  Object.assign(audience, emptyAudience());
+  audienceSummary.value = null;
   dialogRef.value.open();
 
   try {
     const { data } = await WhatsappStatusAPI.getAudience(props.inboxId);
-    audienceCount.value = data.count;
+    audienceSummary.value = data;
   } catch (error) {
     useAlert(errorMessage(t, error));
   }
@@ -148,9 +148,11 @@ defineExpose({ open });
       </div>
       <StatusAudiencePicker
         v-model:mode="audience.mode"
+        v-model:contact-ids="audience.contactIds"
         v-model:numbers="audience.numbers"
         id-prefix="republish"
-        :count="audienceCount"
+        :inbox-id="inboxId"
+        :summary="audienceSummary"
       />
     </div>
   </Dialog>

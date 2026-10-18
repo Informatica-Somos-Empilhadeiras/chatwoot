@@ -38,7 +38,8 @@
       "SEEN": "Viewed",
       "EMPTY": "No contact posted a status in the last 24 hours.",
       "HINT_TITLE": "Your contacts' status",
-      "HINT": "Click a contact to see their status updates. They disappear 24 hours after being posted, just like on WhatsApp."
+      "HINT": "Click a contact to see their status updates. They disappear 24 hours after being posted, just like on WhatsApp.",
+      "READ_STATUS_OFF": "\"Read status\" is off for this inbox, so Evolution drops your contacts' statuses. To see them, turn it on in Evolution Manager → Settings → Read status. Statuses posted before that will not come back."
     },
     "VIEWER": {
       "OPEN_CONTACT": "Open contact",
@@ -75,11 +76,16 @@
       "CONTACTS": "Contacts of this inbox",
       "CONTACTS_DESCRIPTION": "All WhatsApp contacts of this inbox, except groups and blocked contacts.",
       "CONTACTS_COUNT": "No WhatsApp contacts in this inbox. | {count} WhatsApp contact in this inbox, except groups and blocked. | {count} WhatsApp contacts in this inbox, except groups and blocked.",
-      "NUMBERS": "Only these numbers (test)",
-      "NUMBERS_DESCRIPTION": "Good for testing before sending to everyone.",
-      "NUMBERS_PLACEHOLDER": "5511999998888, 5521988887777",
-      "NUMBERS_COUNT": "No valid number yet. Use country and area code, like 5511999998888. | {count} valid number | {count} valid numbers",
-      "OWN_NUMBER": "The company number always gets it too, so the status shows up on the phone."
+      "NUMBERS": "Type numbers",
+      "NUMBERS_DESCRIPTION": "For numbers that are not in your contacts, or for testing.",
+      "NUMBERS_PLACEHOLDER": "62 99999-8888, 61 98888-7777",
+      "NUMBERS_COUNT": "No valid numbers yet. Include the area code, like 62999998888. | {count} valid number | {count} valid numbers",
+      "OWN_NUMBER": "The company number always gets it too, so the status shows up on the phone.",
+      "SELECTED": "Choose contacts",
+      "SELECTED_DESCRIPTION": "Pick from the list, with search and filters by region, state and area code.",
+      "SELECTED_COUNT": "No contacts chosen | {count} contact chosen | {count} contacts chosen",
+      "CHOOSE": "Choose",
+      "CHANGE_SELECTION": "Change"
     },
     "REPUBLISH": {
       "TITLE": "Repost status",
@@ -115,8 +121,11 @@
         "ACTIVE_HINT": "Each status stays live for 24 hours",
         "LIKES": "Likes",
         "REPLIES": "Replies",
-        "AVERAGE": "{value} per status on average"
-      }
+        "AVERAGE": "{value} per status on average",
+        "VIEWS": "Views",
+        "VIEWS_UNAVAILABLE": "Needs the adjusted Evolution version"
+      },
+      "SORT_VIEWS": "Most viewed"
     },
     "ACTIONS": {
       "VIEW": "View",
@@ -129,14 +138,17 @@
       "CLEAR_SELECTION": "Clear selection"
     },
     "INTERACTIONS": {
-      "TITLE": "Likes and replies",
+      "TITLE": "Who viewed, liked and replied",
       "LIKES": "Likes",
       "REPLIES": "Replies",
       "NO_LIKES": "Nobody liked this status yet.",
       "NO_REPLIES": "Nobody replied to this status yet.",
       "OPEN_CONVERSATION": "Open conversation",
       "CLOSE": "Close",
-      "NOTE": "Likes are emoji reactions. Replies received before the Status page was installed are not counted. Views don't show yet because the Evolution API doesn't store who viewed."
+      "NOTE": "Likes are emoji reactions. Views only count people who keep read receipts on in WhatsApp, as on the phone, and only since the adjusted Evolution version was installed. Replies that arrived before the Status page was installed are not counted.",
+      "VIEWS": "Views",
+      "NO_VIEWS": "Nobody has viewed this status yet.",
+      "UNKNOWN_VIEWER": "Unnamed contact"
     },
     "REPLY_QUOTE": {
       "LABEL": "Your status"
@@ -170,7 +182,8 @@
       "LIKES": "Likes",
       "REPLIES": "Replies",
       "WHO_LIKED": "Who liked",
-      "REPLY_TEXTS": "Replies received"
+      "REPLY_TEXTS": "Replies received",
+      "VIEWS": "Views"
     },
     "ERRORS": {
       "NOT_CONFIGURED": "The Evolution API key is missing on the Chatwoot server.",
@@ -181,7 +194,33 @@
       "EMPTY_AUDIENCE": "There is nobody to receive the status.",
       "UNSUPPORTED_TYPE": "This type of status can't be reposted.",
       "NO_PERMISSION": "You don't have permission to do this. Ask an administrator.",
-      "GENERIC": "Something went wrong. Try again."
+      "GENERIC": "Something went wrong. Try again.",
+      "NUMBERS_NOT_FOUND": "These numbers are not on WhatsApp: {numbers}. Check the area code and try again."
+    },
+    "PICKER": {
+      "TITLE": "Choose who sees the status",
+      "CONFIRM": "Choose someone | Use {count} contact | Use {count} contacts",
+      "SEARCH": "Search by name or number",
+      "ALL": "All",
+      "EXPAND": "Show or hide",
+      "REGIONS": {
+        "N": "North region",
+        "NE": "Northeast region",
+        "CO": "Center-West region",
+        "SE": "Southeast region",
+        "S": "South region"
+      },
+      "DDD": "{ddd} · {city} area",
+      "OTHERS": "Other countries",
+      "UNKNOWN": "No number",
+      "FOREIGN_TAG": "Abroad",
+      "SELECT_FOUND": "No contacts match this filter | Select the contact found | Select the {count} contacts found",
+      "UNSELECT_FOUND": "Unselect the contact found | Unselect the contact found | Unselect the {count} contacts found",
+      "CLEAR": "Clear choice",
+      "EMPTY": "No contacts match this search.",
+      "NO_NAME": "Unnamed contact",
+      "MORE": "Show more ({count} left)",
+      "SELECTED": "No contacts chosen. | {count} contact chosen in total. | {count} contacts chosen in total."
     }
   }
 }

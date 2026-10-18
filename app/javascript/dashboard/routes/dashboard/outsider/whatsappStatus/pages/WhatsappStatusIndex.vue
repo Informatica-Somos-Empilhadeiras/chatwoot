@@ -169,7 +169,8 @@ const onSeen = id => {
 
 const openPublish = () => publishDialogRef.value.open();
 const openEdit = status => publishDialogRef.value.open(status);
-const openInteractions = status => interactionsDialogRef.value.open(status);
+const openInteractions = status =>
+  interactionsDialogRef.value.open(status, 'views');
 </script>
 
 <template>
@@ -247,6 +248,13 @@ const openInteractions = status => interactionsDialogRef.value.open(status);
                 @tab-changed="tab => (activeTab = tab.key)"
               />
             </div>
+            <p
+              v-if="activeTab === 'contacts' && feed.read_status === false"
+              class="flex gap-2 p-3 mb-4 text-sm rounded-xl bg-n-amber-2 text-n-amber-11"
+            >
+              <Icon icon="i-lucide-triangle-alert" class="flex-shrink-0 size-5" />
+              {{ t('OUTSIDER_WHATSAPP_STATUS.CONTACTS.READ_STATUS_OFF') }}
+            </p>
             <div v-if="activeTab === 'contacts'" class="flex gap-6">
               <StatusContactList
                 class="w-full lg:flex-shrink-0 lg:w-96"
@@ -311,6 +319,6 @@ const openInteractions = status => interactionsDialogRef.value.open(status);
       :inbox-id="inboxId"
       @published="refreshMine"
     />
-    <StatusInteractionsDialog ref="interactionsDialogRef" />
+    <StatusInteractionsDialog ref="interactionsDialogRef" :inbox-id="inboxId" />
   </section>
 </template>

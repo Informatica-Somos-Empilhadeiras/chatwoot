@@ -126,6 +126,10 @@ export const errorMessage = (t, error) => {
       return t('OUTSIDER_WHATSAPP_STATUS.ERRORS.EVOLUTION_ERROR', { message });
     case 'empty_audience':
       return t('OUTSIDER_WHATSAPP_STATUS.ERRORS.EMPTY_AUDIENCE');
+    case 'numbers_not_found':
+      return t('OUTSIDER_WHATSAPP_STATUS.ERRORS.NUMBERS_NOT_FOUND', {
+        numbers: message,
+      });
     case 'unsupported_type':
       return t('OUTSIDER_WHATSAPP_STATUS.ERRORS.UNSUPPORTED_TYPE');
     default:
@@ -133,28 +137,57 @@ export const errorMessage = (t, error) => {
   }
 };
 
-// números com DDI e DDD, separados por vírgula, espaço ou linha
+// números com DDD (o 55 é opcional), um por linha ou separados por vírgula. Espaços e
+// traços dentro do número valem ("62 99999-8888"); números só separados por espaço também.
+const MAX_DIGITS = 13;
+
 export const parseNumbers = text => [
   ...new Set(
     text
-      .split(/[\s,;]+/)
-      .map(number => number.replace(/\D/g, ''))
-      .filter(number => number.length >= 10)
+      .split(/[,;\n]+/)
+      .flatMap(chunk => {
+        const digits = chunk.replace(/\D/g, '');
+        return digits.length <= MAX_DIGITS
+          ? [digits]
+          : chunk.split(/\s+/).map(part => part.replace(/\D/g, ''));
+      })
+      .filter(number => number.length >= 10 && number.length <= MAX_DIGITS)
   ),
 ];
 
-export const appendAudience = (formData, audience) => {
-  if (audience.mode !== 'numbers') return;
-  formData.append('audience', 'numbers');
-  parseNumbers(audience.numbers).forEach(number =>
-    formData.append('numbers[]', number)
-  );
+// audience: { mode: 'contacts' | 'selected' | 'numbers', contactIds, numbers }
+export const emptyAudience = () => ({
+  mode: 'contacts',
+  contactIds: [],
+  numbers: '',
+});
+
+export const isAudienceValid = audience => {
+  if (audience.mode === 'selected') return audience.contactIds.length > 0;
+  if (audience.mode === 'numbers') {
+    return parseNumbers(audience.numbers).length > 0;
+  }
+  return true;
 };
 
-export const audienceParams = audience =>
-  audience.mode === 'numbers'
-    ? { audience: 'numbers', numbers: parseNumbers(audience.numbers) }
-    : {};
+export const audienceParams = audience => {
+  if (audience.mode === 'selected') {
+    return { audience: 'selected', contact_ids: audience.contactIds };
+  }
+  if (audience.mode === 'numbers') {
+    return { audience: 'numbers', numbers: parseNumbers(audience.numbers) };
+  }
+  return {};
+};
+
+export const appendAudience = (formData, audience) => {
+  const params = audienceParams(audience);
+  if (!params.audience) return;
+  formData.append('audience', params.audience);
+  (params.contact_ids || params.numbers).forEach(value =>
+    formData.append(params.contact_ids ? 'contact_ids[]' : 'numbers[]', value)
+  );
+};
 
 // status já vistos neste navegador (id => quando), como as bolinhas cinzas do WhatsApp
 export const loadSeen = () => {
@@ -235,6 +268,7 @@ export const statusesCsv = (t, statuses) => {
     t('OUTSIDER_WHATSAPP_STATUS.CSV.TYPE'),
     t('OUTSIDER_WHATSAPP_STATUS.CSV.TEXT'),
     t('OUTSIDER_WHATSAPP_STATUS.CSV.SITUATION'),
+    t('OUTSIDER_WHATSAPP_STATUS.CSV.VIEWS'),
     t('OUTSIDER_WHATSAPP_STATUS.CSV.LIKES'),
     t('OUTSIDER_WHATSAPP_STATUS.CSV.REPLIES'),
     t('OUTSIDER_WHATSAPP_STATUS.CSV.WHO_LIKED'),
@@ -245,6 +279,7 @@ export const statusesCsv = (t, statuses) => {
     typeLabel(t, status.type),
     status.text || '',
     situation(t, status).label,
+    status.views ?? '',
     status.reactions.length,
     status.replies.length,
     status.reactions

@@ -50,8 +50,22 @@ class Api::V1::Accounts::Outsider::WhatsappStatusesController < Api::V1::Account
     render json: service.replied_status(params.require(:id))
   end
 
+  # quem viu um dos meus status (só com a Evolution ajustada, ver whatsapp_status_service.rb)
+  def viewers
+    render json: { payload: service.viewers(params.require(:id)) }
+  end
+
   def audience
-    render json: { count: service.inbox_contact_jids.size }
+    render json: service.audience.summary
+  end
+
+  # contatos para escolher quem vê: busca e DDDs; com all_ids, só os ids de todos os achados
+  def audience_contacts
+    query = params[:q].to_s
+    areas = Array(params[:areas]).map(&:to_s)
+    return render json: { ids: service.audience.ids(query: query, areas: areas) } if params[:all_ids].present?
+
+    render json: service.audience.search(query: query, areas: areas, page: [params[:page].to_i, 1].max)
   end
 
   def create
@@ -121,14 +135,14 @@ class Api::V1::Accounts::Outsider::WhatsappStatusesController < Api::V1::Account
     params[:background_color].to_s.match?(/\A#\h{6}\z/) ? params[:background_color] : DEFAULT_BACKGROUND
   end
 
-  # "numbers" é para testar com poucos números; o normal é mandar para os contatos da caixa
+  # sem audience vai para todos os contatos da caixa; "selected" para os contatos escolhidos
+  # na lista; "numbers" para números digitados
   def audience_jids
-    return service.inbox_contact_jids unless params[:audience] == 'numbers'
-
-    Array(params[:numbers]).filter_map do |number|
-      digits = number.to_s.delete('^0-9')
-      "#{digits}@s.whatsapp.net" if digits.length >= 10
-    end.uniq
+    case params[:audience]
+    when 'selected' then service.audience.jids_for(Array(params[:contact_ids]))
+    when 'numbers' then service.audience.resolve_numbers(Array(params[:numbers]))
+    else service.audience.jids
+    end
   end
 
   def publish(payload)
