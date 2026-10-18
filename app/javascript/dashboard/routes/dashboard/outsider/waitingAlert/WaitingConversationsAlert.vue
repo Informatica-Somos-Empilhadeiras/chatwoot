@@ -51,12 +51,15 @@ const isEnabled = computed(
 
 const nowInSeconds = () => Math.floor(now.value / 1000);
 
-// waiting_since é quando o cliente mandou a mensagem que ainda não foi respondida
+// waiting_since é quando o cliente mandou a mensagem que ainda não foi respondida.
+// Sem ele, alguém já respondeu (ex.: conversa aberta por um agente), então não avisa.
 const waitingSeconds = conversation =>
-  nowInSeconds() - (conversation.waiting_since || conversation.created_at);
+  nowInSeconds() - conversation.waiting_since;
 
 const overdue = computed(() =>
-  conversations.value.filter(c => waitingSeconds(c) >= ALERT_AFTER)
+  conversations.value.filter(
+    c => c.waiting_since && waitingSeconds(c) >= ALERT_AFTER
+  )
 );
 const waitingCount = computed(() =>
   Math.max(total.value, overdue.value.length)
