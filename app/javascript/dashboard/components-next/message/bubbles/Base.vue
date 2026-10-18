@@ -2,6 +2,8 @@
 import { computed } from 'vue';
 
 import MessageMeta from '../MessageMeta.vue';
+// OUTSIDER: status do WhatsApp respondido
+import StatusReplyQuote from 'dashboard/routes/dashboard/outsider/whatsappStatus/components/StatusReplyQuote.vue';
 
 import { emitter } from 'shared/helpers/mitt';
 import { useMessageContext } from '../provider.js';
@@ -113,6 +115,8 @@ const replyToPreview = computed(() => {
         class="prose prose-bubble line-clamp-2"
       />
     </div>
+    <!-- OUTSIDER: status do WhatsApp respondido -->
+    <StatusReplyQuote v-else />
     <slot />
     <MessageMeta
       v-if="shouldShowMeta"

@@ -138,6 +138,9 @@
       "CLOSE": "Fechar",
       "NOTE": "Curtidas são as reações com emoji. Respostas que chegaram antes da página Status ser instalada não entram na conta. Visualizações ainda não aparecem, porque a Evolution não guarda quem viu."
     },
+    "REPLY_QUOTE": {
+      "LABEL": "Seu status"
+    },
     "PERMISSIONS": {
       "TITLE": "Permissões dos agentes",
       "DESCRIPTION": "Os agentes podem ver os status dos contatos e de Meus status. Escolha o que cada um também pode fazer. Administradores podem tudo, e as mudanças são salvas na hora.",

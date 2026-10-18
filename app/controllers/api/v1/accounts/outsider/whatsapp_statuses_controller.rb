@@ -45,6 +45,11 @@ class Api::V1::Accounts::Outsider::WhatsappStatusesController < Api::V1::Account
     send_data Base64.decode64(media['base64']), type: media['mimetype'], disposition: 'inline'
   end
 
+  # a resposta a um status chega na conversa só com o id do status (ver app/models/outsider/message_reply_link.rb)
+  def replied_status
+    render json: service.replied_status(params.require(:id))
+  end
+
   def audience
     render json: { count: service.inbox_contact_jids.size }
   end

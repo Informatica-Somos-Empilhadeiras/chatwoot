@@ -6,6 +6,7 @@
 #
 # - contacts: status dos contatos nas últimas 24h, agrupados por contato
 # - mine: meus status no período, com curtidas e respostas
+# - replied_status: o status que o contato respondeu, para mostrar na conversa
 # - inbox_contact_jids: quem recebe um status novo (contatos da caixa, sem grupos)
 class Outsider::WhatsappStatusService
   STATUS_JID = 'status@broadcast'.freeze
@@ -40,6 +41,10 @@ class Outsider::WhatsappStatusService
   def media(id)
     status_record!(id)
     @api.media(id)
+  end
+
+  def replied_status(id)
+    Record.serialize(status_record!(id)) || raise(ActiveRecord::RecordNotFound)
   end
 
   def inbox_contact_jids

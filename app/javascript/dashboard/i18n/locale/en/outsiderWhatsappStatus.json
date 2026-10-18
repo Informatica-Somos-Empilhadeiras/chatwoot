@@ -138,6 +138,9 @@
       "CLOSE": "Close",
       "NOTE": "Likes are emoji reactions. Replies received before the Status page was installed are not counted. Views don't show yet because the Evolution API doesn't store who viewed."
     },
+    "REPLY_QUOTE": {
+      "LABEL": "Your status"
+    },
     "PERMISSIONS": {
       "TITLE": "Agent permissions",
       "DESCRIPTION": "Agents can see contacts' statuses and My status. Choose what else each one can do. Administrators can do everything, and changes are saved right away.",

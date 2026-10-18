@@ -28,6 +28,12 @@ class WhatsappStatusAPI extends ApiClient {
     });
   }
 
+  getRepliedStatus(inboxId, id) {
+    return axios.get(`${this.url}/replied_status`, {
+      params: { inbox_id: inboxId, id },
+    });
+  }
+
   getAudience(inboxId) {
     return axios.get(`${this.url}/audience`, {
       params: { inbox_id: inboxId },

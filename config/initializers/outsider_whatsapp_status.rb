@@ -10,6 +10,7 @@ Rails.application.routes.prepend do
                 get :inboxes
                 get :mine
                 get :media
+                get :replied_status
                 get :audience
                 post :republish
                 get :permissions

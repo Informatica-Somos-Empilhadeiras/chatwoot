@@ -191,6 +191,23 @@ export const fetchMedia = (inboxId, id) => {
   return mediaCache.get(id);
 };
 
+// na conversa: o status que o contato respondeu, ou null quando a mensagem citada não é um status
+const repliedStatusCache = new Map();
+
+export const fetchRepliedStatus = (inboxId, id) => {
+  const key = `${inboxId}:${id}`;
+  if (!repliedStatusCache.has(key)) {
+    repliedStatusCache.set(
+      key,
+      WhatsappStatusAPI.getRepliedStatus(inboxId, id).then(
+        ({ data }) => data,
+        () => null
+      )
+    );
+  }
+  return repliedStatusCache.get(key);
+};
+
 export const clearMediaCache = () => {
   mediaCache.forEach(request =>
     request.then(
