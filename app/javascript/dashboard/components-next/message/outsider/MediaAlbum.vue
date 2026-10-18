@@ -1,7 +1,7 @@
 <script setup>
 // OUTSIDER: bolha de álbum estilo WhatsApp (ver helper/outsider/mediaAlbum.js).
-// Mostra as 4 primeiras mídias em grade 2x2 e "+N" na última; clicar abre a
-// galeria do Chatwoot já posicionada naquela mídia.
+// 2 mídias: lado a lado; 3: uma larga em cima e duas embaixo; 4+: grade 2x2
+// com "+N" na última. Clicar abre a galeria do Chatwoot naquela mídia.
 import { ref, computed } from 'vue';
 import BaseBubble from '../bubbles/Base.vue';
 import Icon from 'next/icon/Icon.vue';
@@ -22,6 +22,8 @@ const visibleAttachments = computed(() =>
 );
 const hiddenCount = computed(() => attachments.value.length - VISIBLE_ITEMS);
 
+const isWideTile = index => index === 0 && attachments.value.length === 3;
+
 const isVideo = attachment => attachment.fileType === ATTACHMENT_TYPES.VIDEO;
 </script>
 
@@ -32,7 +34,8 @@ const isVideo = attachment => attachment.fileType === ATTACHMENT_TYPES.VIDEO;
         v-for="(attachment, index) in visibleAttachments"
         :key="attachment.id"
         type="button"
-        class="relative aspect-square overflow-hidden rounded-lg bg-n-alpha-2"
+        class="relative overflow-hidden rounded-lg bg-n-alpha-2"
+        :class="isWideTile(index) ? 'col-span-2 aspect-[2/1]' : 'aspect-square'"
         @click="selectedAttachment = attachment"
       >
         <Icon

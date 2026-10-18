@@ -4,7 +4,7 @@
 // Message.vue desenha essa mensagem com o MediaAlbum.vue.
 // As mensagens aqui já estão em camelCase (vêm do MessageList.vue).
 
-export const ALBUM_MIN_ITEMS = 4;
+export const ALBUM_MIN_ITEMS = 2;
 export const ALBUM_MAX_GAP_SECONDS = 60;
 
 const MEDIA_TYPES = ['image', 'video'];
