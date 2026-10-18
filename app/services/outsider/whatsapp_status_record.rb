@@ -14,7 +14,7 @@ module Outsider::WhatsappStatusRecord
     type = TYPES[record['messageType']]
     return if type.nil?
 
-    message = record['message']
+    message = record['message'] || {}
     content = message[record['messageType']]
     content = {} unless content.is_a?(Hash)
     {
@@ -47,9 +47,11 @@ module Outsider::WhatsappStatusRecord
     Array(record['MessageUpdate']).count { |update| update['status'] == VIEWED }
   end
 
-  # status apagado pelo autor: a Evolution trata o "apagar" como edição da mensagem original
+  # status apagado pelo autor: a Evolution trata o "apagar" como edição da mensagem original,
+  # troca a mensagem por null e grava uma linha EDITED
   def deleted?(record)
-    record.dig('key', 'deleted').present? || Array(record['MessageUpdate']).any? { |update| update['status'] == 'EDITED' }
+    record['message'].nil? || record.dig('key', 'deleted').present? ||
+      Array(record['MessageUpdate']).any? { |update| update['status'] == 'EDITED' }
   end
 
   # a Evolution guarda o jpegThumbnail como base64 ou como objeto { "0": 255, "1": 216, ... }
