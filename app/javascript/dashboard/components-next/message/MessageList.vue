@@ -5,6 +5,7 @@ import { MESSAGE_TYPES } from './constants.js';
 import { useCamelCase } from 'dashboard/composables/useTransformKeys';
 import { useMapGetter } from 'dashboard/composables/store.js';
 import MessageApi from 'dashboard/api/inbox/message.js';
+import { groupMediaAlbums } from 'dashboard/helper/outsider/mediaAlbum'; // OUTSIDER: álbum
 
 /**
  * Props definition for the component
@@ -47,6 +48,11 @@ const allMessages = computed(() => {
     stopPaths: ['content_attributes.translations'],
   });
 });
+
+// OUTSIDER: junta fotos/vídeos seguidos em um álbum
+const renderedMessages = computed(() =>
+  groupMediaAlbums(allMessages.value, props.firstUnreadId)
+);
 
 const currentChat = useMapGetter('getSelectedChat');
 
@@ -165,7 +171,7 @@ const getInReplyToMessage = parentMessage => {
 <template>
   <ul class="px-4 bg-n-surface-1">
     <slot name="beforeAll" />
-    <template v-for="(message, index) in allMessages" :key="message.id">
+    <template v-for="(message, index) in renderedMessages" :key="message.id">
       <slot
         v-if="firstUnreadId && message.id === firstUnreadId"
         name="unreadBadge"
@@ -174,7 +180,7 @@ const getInReplyToMessage = parentMessage => {
         v-bind="message"
         :is-email-inbox="isAnEmailChannel"
         :in-reply-to="getInReplyToMessage(message)"
-        :group-with-next="shouldGroupWithNext(index, allMessages)"
+        :group-with-next="shouldGroupWithNext(index, renderedMessages)"
         :inbox-supports-reply-to="inboxSupportsReplyTo"
         :current-user-id="currentUserId"
         data-clarity-mask="True"

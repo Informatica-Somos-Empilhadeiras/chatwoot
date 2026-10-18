@@ -41,6 +41,8 @@ import LocationBubble from './bubbles/Location.vue';
 import CSATBubble from './bubbles/CSAT.vue';
 import FormBubble from './bubbles/Form.vue';
 import VoiceCallBubble from './bubbles/VoiceCall.vue';
+import MediaAlbumBubble from './outsider/MediaAlbum.vue'; // OUTSIDER: álbum
+import { isMediaAlbum } from 'dashboard/helper/outsider/mediaAlbum'; // OUTSIDER
 
 import MessageError from './MessageError.vue';
 import ContextMenu from 'dashboard/modules/conversations/components/MessageContextMenu.vue';
@@ -291,6 +293,8 @@ const shouldShowAvatar = computed(() => {
 });
 
 const componentToRender = computed(() => {
+  if (isMediaAlbum(props)) return MediaAlbumBubble; // OUTSIDER: álbum
+
   if (props.isEmailInbox && !props.private) {
     const emailInboxTypes = [MESSAGE_TYPES.INCOMING, MESSAGE_TYPES.OUTGOING];
     if (emailInboxTypes.includes(props.messageType)) return EmailBubble;
