@@ -2,6 +2,7 @@
 // ======================
 // OUTSIDER FUNCTION
 import ConversationSearchBar from './widgets/conversation/ConversationSearchBar.vue';
+import { SHOW_WAITING_TAB_EVENT } from 'dashboard/routes/dashboard/outsider/waitingAlert/config';
 // ======================
 
 import { ref, unref, provide, computed, watch, onMounted } from 'vue';
@@ -827,6 +828,11 @@ function sortPinnedFirst(conversations) {
     return bPinned - aPinned;
   });
 }
+
+// OUTSIDER: o aviso de clientes esperando abre a aba Esperando
+useEmitter(SHOW_WAITING_TAB_EVENT, () =>
+  updateAssigneeTab(wootConstants.ASSIGNEE_TYPE.UNASSIGNED)
+);
 
 useEmitter('fetch_conversation_stats', () => {
   if (hasAppliedFiltersOrActiveFolders.value) return;

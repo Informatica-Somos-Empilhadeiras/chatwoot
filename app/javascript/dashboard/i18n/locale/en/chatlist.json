@@ -145,6 +145,19 @@
     "SHOW_QUOTED_TEXT": "Show Quoted Text",
     "MESSAGE_READ": "Read",
     "SENDING": "Sending",
-    "UNREAD_COUNT_OVERFLOW": "9+"
+    "UNREAD_COUNT_OVERFLOW": "9+",
+    "OUTSIDER_WAITING": {
+      "TITLE": "1 customer is waiting for an agent | {count} customers are waiting for an agent",
+      "DESCRIPTION": "Nobody has taken it yet. Take a conversation so the customer isn't left without an answer.",
+      "MINUTES": "waiting for less than 1 min | waiting for 1 min | waiting for {count} min",
+      "HOURS": "waiting for {hours} h {minutes} min",
+      "TAKE": "Take",
+      "ALREADY_TAKEN": "{name} already took this conversation.",
+      "TAKE_ERROR": "Could not take the conversation. Try again.",
+      "MORE": "and {count} more in the Unassigned tab",
+      "LATER": "Not now",
+      "VIEW_ALL": "Open Unassigned tab",
+      "TAB_TITLE": "({count}) Customer waiting!"
+    }
   }
 }

@@ -26,6 +26,8 @@ import CopilotContainer from 'dashboard/components/copilot/CopilotContainer.vue'
 
 import MobileSidebarLauncher from 'dashboard/components-next/sidebar/MobileSidebarLauncher.vue';
 import { useCallsStore } from 'dashboard/stores/calls';
+// OUTSIDER: aviso de clientes esperando
+import WaitingConversationsAlert from './outsider/waitingAlert/WaitingConversationsAlert.vue';
 
 export default {
   components: {
@@ -39,6 +41,7 @@ export default {
     FloatingCallWidget,
     MobileSidebarLauncher,
     FowardMessageModal,
+    WaitingConversationsAlert, // OUTSIDER
   },
   setup() {
     const upgradePageRef = ref(null);
@@ -165,6 +168,8 @@ export default {
         />
         <CopilotContainer />
         <FloatingCallWidget v-if="hasActiveCall || hasIncomingCall" />
+        <!-- OUTSIDER: aviso de clientes esperando -->
+        <WaitingConversationsAlert />
       </template>
       <AddAccountModal
         :show="showCreateAccountModal"

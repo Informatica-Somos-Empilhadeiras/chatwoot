@@ -145,6 +145,19 @@
     "SHOW_QUOTED_TEXT": "Mostrar Texto Citado",
     "MESSAGE_READ": "Lida",
     "SENDING": "Enviando",
-    "UNREAD_COUNT_OVERFLOW": "9+"
+    "UNREAD_COUNT_OVERFLOW": "9+",
+    "OUTSIDER_WAITING": {
+      "TITLE": "Tem 1 cliente esperando atendimento | Tem {count} clientes esperando atendimento",
+      "DESCRIPTION": "Ninguém assumiu ainda. Assuma uma conversa para o cliente não ficar sem resposta.",
+      "MINUTES": "esperando há menos de 1 min | esperando há 1 min | esperando há {count} min",
+      "HOURS": "esperando há {hours} h {minutes} min",
+      "TAKE": "Assumir",
+      "ALREADY_TAKEN": "{name} já assumiu essa conversa.",
+      "TAKE_ERROR": "Não foi possível assumir a conversa. Tente de novo.",
+      "MORE": "e mais {count} na aba Esperando",
+      "LATER": "Agora não",
+      "VIEW_ALL": "Ver aba Esperando",
+      "TAB_TITLE": "({count}) Cliente esperando!"
+    }
   }
 }
