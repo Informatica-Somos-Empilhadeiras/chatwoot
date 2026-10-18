@@ -61,8 +61,9 @@ const handleImageError = () => {
       </p>
     </div>
     <div v-else-if="isLoaded" class="relative group rounded-lg overflow-hidden">
+      <!-- OUTSIDER: tamanho máximo estilo WhatsApp -->
       <img
-        class="skip-context-menu"
+        class="skip-context-menu max-w-xs max-h-96 w-auto h-auto object-contain"
         :src="attachment.dataUrl"
         :width="attachment.width"
         :height="attachment.height"

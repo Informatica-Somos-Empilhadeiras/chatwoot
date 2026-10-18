@@ -39,13 +39,14 @@ const isReel = computed(() => {
       >
         <Icon icon="i-lucide-instagram" class="text-white shadow-lg" />
       </div>
+      <!-- OUTSIDER: tamanho máximo estilo WhatsApp -->
       <video
         controls
-        class="rounded-lg skip-context-menu"
+        class="rounded-lg skip-context-menu max-h-96"
         :src="attachment.dataUrl"
         :class="{
           'max-w-48': isReel,
-          'max-w-full': !isReel,
+          'max-w-xs': !isReel,
         }"
         @click.stop
         @error="handleError"
