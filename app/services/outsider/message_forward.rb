@@ -1,9 +1,11 @@
 # OUTSIDER: encaminhar uma mensagem (texto e anexos, inclusive um álbum inteiro) para um contato.
 #
-# Os anexos são copiados aqui no servidor. Antes o navegador baixava cada arquivo e mandava
+# Os anexos são resolvidos aqui no servidor. Antes o navegador baixava cada arquivo e mandava
 # de novo, o que falhava quando o arquivo estava em outro endereço (ex.: o Dev abrindo os
-# anexos da produção) e só o texto chegava. Cada cópia é um arquivo novo, então apagar a
-# mensagem original não apaga o anexo encaminhado.
+# anexos da produção) e só o texto chegava. A mensagem nova reaproveita o mesmo arquivo
+# (blob) da original, sem ler nem copiar nada, então funciona também no Dev, que não tem
+# os arquivos da produção no disco. Apagar a mensagem original não apaga o arquivo: o
+# ActiveStorage só remove um blob quando nenhum anexo usa mais ele.
 #
 # A mensagem vai para a conversa do contato nessa caixa que ainda não foi resolvida. Se não
 # houver, abre uma nova, já atribuída a quem encaminhou.
@@ -16,7 +18,7 @@ class Outsider::MessageForward
     attachments = source_attachments
     raise NothingToForward if content.blank? && attachments.empty?
 
-    signed_ids = attachments.map { |attachment| copy(attachment) }
+    signed_ids = attachments.map { |attachment| attachment.file.blob.signed_id }
     ActiveRecord::Base.transaction do
       params = ActionController::Parameters.new(content: content, private: false, attachments: signed_ids)
       Messages::MessageBuilder.new(user, target_conversation, params).perform
@@ -38,13 +40,6 @@ class Outsider::MessageForward
     conversation_ids = attachments.map { |attachment| attachment.message.conversation_id }.uniq
     scope = account.conversations.where(id: conversation_ids)
     Conversations::PermissionFilterService.new(scope, user, account).perform.count == conversation_ids.size
-  end
-
-  def copy(attachment)
-    blob = attachment.file.blob
-    blob.open do |file|
-      ActiveStorage::Blob.create_and_upload!(io: file, filename: blob.filename, content_type: blob.content_type).signed_id
-    end
   end
 
   def target_conversation
