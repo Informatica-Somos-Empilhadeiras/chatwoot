@@ -19,7 +19,8 @@ import ReplyBoxBanner from './ReplyBoxBanner.vue';
 import QuotedEmailPreview from './QuotedEmailPreview.vue';
 import { REPLY_EDITOR_MODES } from 'dashboard/components/widgets/WootWriter/constants';
 import WootMessageEditor from 'dashboard/components/widgets/WootWriter/Editor.vue';
-import AudioRecorder from 'dashboard/components/widgets/WootWriter/AudioRecorder.vue';
+import AudioRecorder from 'dashboard/components/widgets/WootWriter/outsider/VoiceRecorder.vue'; // OUTSIDER: gravador estilo WhatsApp
+import VoiceRecordButton from 'dashboard/components/widgets/WootWriter/outsider/VoiceRecordButton.vue'; // OUTSIDER
 import { AUDIO_FORMATS } from 'shared/constants/messages';
 import { BUS_EVENTS } from 'shared/constants/busEvents';
 import { CMD_AI_ASSIST } from 'dashboard/helper/commandbar/events';
@@ -68,6 +69,7 @@ export default {
     ArticleSearchPopover,
     AttachmentPreview,
     AudioRecorder,
+    VoiceRecordButton, // OUTSIDER
     ReplyBoxBanner,
     EmojiIconPicker,
     MessageSignatureMissingAlert,
@@ -329,6 +331,25 @@ export default {
     },
     showAudioRecorderEditor() {
       return this.showAudioRecorder && this.isRecordingAudio;
+    },
+    // OUTSIDER: microfone dentro da caixa de texto
+    outsiderShowMic() {
+      return (
+        this.showAudioRecorder &&
+        !this.isEditorDisabled &&
+        !this.isALineChannel &&
+        !this.isATiktokChannel
+      );
+    },
+    // OUTSIDER: caixa de texto arredondada; amarela na mensagem privada
+    outsiderEditorClass() {
+      return [
+        'rounded-3xl border ltr:pl-4 rtl:pr-4 py-1 my-1',
+        this.isOnPrivateNote
+          ? 'bg-n-amber-2 dark:bg-n-amber-3 border-n-amber-8/50'
+          : 'bg-white dark:bg-[#2A2F32] border-n-strong',
+        this.outsiderShowMic ? 'ltr:pr-12 rtl:pl-12' : 'ltr:pr-4 rtl:pl-4',
+      ];
     },
     isOnPrivateNote() {
       return this.replyType === REPLY_EDITOR_MODES.NOTE;
@@ -1228,6 +1249,20 @@ export default {
     toggleInsertArticle() {
       this.showArticleSearchPopover = !this.showArticleSearchPopover;
     },
+    // OUTSIDER: o áudio gravado vai sozinho, como mensagem de voz; o texto continua na caixa
+    outsiderSendVoice(voice) {
+      this.sendMessage(
+        this.setReplyToInPayload({
+          conversationId: this.currentChat.id,
+          message: '',
+          private: false,
+          sender: this.sender,
+          ...voice,
+        })
+      );
+      this.resetReplyToMessage();
+      this.resetAudioRecorderInput();
+    },
     resetAudioRecorderInput() {
       this.recordingAudioDurationText = '00:00';
       this.isRecordingAudio = false;
@@ -1253,7 +1288,15 @@ export default {
 
 <template>
   <ReplyBoxBanner :message="message" :is-on-private-note="isOnPrivateNote" />
-  <div ref="replyEditor" class="reply-box !bg-transparent !border-none !shadow-none" :class="replyBoxClass">
+  <!-- OUTSIDER: fundo transparente na resposta; a mensagem privada volta a ficar amarela -->
+  <div
+    ref="replyEditor"
+    class="reply-box"
+    :class="[
+      replyBoxClass,
+      { '!bg-transparent !border-none !shadow-none': !isPrivate },
+    ]"
+  >
     <ReplyTopPanel
       :mode="replyType"
       :conversation-id="conversationId"
@@ -1309,15 +1352,13 @@ export default {
           v-model:bcc-emails="bccEmails"
           v-model:to-emails="toEmails"
         />
+        <!-- OUTSIDER: gravador estilo WhatsApp (pausar, ouvir, continuar, enviar) -->
         <AudioRecorder
           v-if="showAudioRecorderEditor"
-          ref="audioRecorderInput"
           :audio-record-format="audioRecordFormat"
-          @recorder-progress-changed="onRecordProgressChanged"
-          @finish-record="onFinishRecorder"
-          @record-error="onRecordError"
-          @play="recordingAudioState = 'playing'"
-          @pause="recordingAudioState = 'paused'"
+          :inbox="inbox"
+          @send="outsiderSendVoice"
+          @close="resetAudioRecorderInput"
         />
         <CopilotEditorSection
           v-if="copilot.isActive.value && !showAudioRecorderEditor"
@@ -1339,6 +1380,7 @@ export default {
           :conversation-id="conversationId"
           :editor-id="editorStateId"
           class="input popover-prosemirror-menu"
+          :class="outsiderEditorClass"
           :is-private="isOnPrivateNote"
           :placeholder="messagePlaceHolder"
           :update-selection-with="updateEditorSelectionWith"
@@ -1359,7 +1401,15 @@ export default {
           @toggle-variables-menu="toggleVariablesMenu"
           @clear-selection="clearEditorSelection"
           @execute-copilot-action="executeCopilotAction"
-        />
+        >
+          <!-- OUTSIDER -->
+          <template #footer>
+            <VoiceRecordButton
+              v-if="outsiderShowMic"
+              @click="toggleAudioRecorder"
+            />
+          </template>
+        </WootMessageEditor>
 
         <QuotedEmailPreview
           v-if="shouldShowQuotedPreview && isDefaultEditorMode"
@@ -1391,6 +1441,7 @@ export default {
       </div>
     </Transition>
 
+    <!-- OUTSIDER: show-audio-recorder false, o microfone fica na caixa de texto -->
     <Transition
       mode="out-in"
       enter-active-class="transition-all duration-300 ease-out"
@@ -1426,7 +1477,7 @@ export default {
         :recording-audio-duration-text="recordingAudioDurationText"
         :recording-audio-state="recordingAudioState"
         :send-button-text="replyButtonLabel"
-        :show-audio-recorder="showAudioRecorder"
+        :show-audio-recorder="false"
         :show-emoji-picker="showEmojiPicker"
         :show-file-upload="showFileUpload"
         :show-quoted-reply-toggle="shouldShowQuotedReplyToggle"

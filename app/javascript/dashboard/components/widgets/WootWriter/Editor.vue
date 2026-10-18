@@ -872,7 +872,7 @@ useEmitter(BUS_EVENTS.INSERT_INTO_RICH_EDITOR, insertContentIntoEditor);
 <template>
   <div
     ref="editorRoot"
-    class="relative w-full rounded-3xl bg-white dark:bg-[#2A2F32] border border-n-strong pl-4 pr-12 py-1 my-1"
+    class="relative w-full"
     :class="{
       'opacity-50 cursor-not-allowed pointer-events-none': disabled,
     }"

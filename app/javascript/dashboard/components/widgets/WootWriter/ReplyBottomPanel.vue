@@ -190,7 +190,13 @@ export default {
       //   navigator.userAgent
       // );
 
-      return this.showAudioRecorder;
+      return (
+        this.isFeatureEnabledonAccount(
+          this.accountId,
+          FEATURE_FLAGS.VOICE_RECORDER
+        ) && this.showAudioRecorder
+        // !isSafari
+      );
     },
     showAudioPlayStopButton() {
       if (this.isEditorDisabled) return false;
@@ -270,15 +276,17 @@ export default {
 </script>
 
 <template>
-  <div class="flex justify-between p-3" :class="wrapClass">
-    <div class="left-wrap">
+  <div class="flex justify-between gap-2 p-3" :class="wrapClass">
+    <!-- OUTSIDER: botões maiores, com nome; escondidos enquanto grava áudio -->
+    <div class="left-wrap" :class="{ invisible: isRecordingAudio }">
       <NextButton
         v-if="!isEditorDisabled"
         v-tooltip.top-end="$t('CONVERSATION.REPLYBOX.TIP_EMOJI_ICON')"
         icon="i-ph-smiley-sticker"
+        :label="$t('CONVERSATION.REPLYBOX.OUTSIDER_COMPOSER.EMOJI')"
         slate
         faded
-        sm
+        md
         @click="toggleEmojiPicker"
       />
       <FileUpload
@@ -301,16 +309,19 @@ export default {
           v-if="showAttachButton"
           v-tooltip.top-end="$t('CONVERSATION.REPLYBOX.TIP_ATTACH_ICON')"
           icon="i-ph-paperclip"
+          :label="$t('CONVERSATION.REPLYBOX.OUTSIDER_COMPOSER.ATTACH')"
           slate
           faded
-          sm
+          md
         />
       </FileUpload>
       <NextButton
         v-if="showAudioRecorderButton"
         v-tooltip.top-end="$t('CONVERSATION.REPLYBOX.TIP_AUDIORECORDER_ICON')"
         :icon="!isRecordingAudio ? 'i-ph-microphone' : 'i-ph-microphone-slash'"
-        class="!absolute !right-4 !bottom-[4.2rem] z-[60] !rounded-full !w-10 !h-10 !bg-[#00a884] !text-white hover:!bg-[#008f6f] !shadow-md !flex !items-center !justify-center"
+        slate
+        faded
+        sm
         @click="toggleAudioRecorder"
       />
       <NextButton
@@ -326,9 +337,14 @@ export default {
         v-if="showMessageSignatureButton"
         v-tooltip.top-end="signatureToggleTooltip"
         icon="i-ph-signature"
-        slate
+        :label="
+          sendWithSignature
+            ? $t('CONVERSATION.REPLYBOX.OUTSIDER_COMPOSER.SIGNATURE_ON')
+            : $t('CONVERSATION.REPLYBOX.OUTSIDER_COMPOSER.SIGNATURE_OFF')
+        "
+        :color="sendWithSignature ? 'teal' : 'slate'"
         faded
-        sm
+        md
         @click="toggleMessageSignature"
       />
       <NextButton
@@ -337,7 +353,7 @@ export default {
         icon="i-ph-quotes"
         :variant="quotedReplyEnabled ? 'solid' : 'faded'"
         color="slate"
-        sm
+        md
         :aria-pressed="quotedReplyEnabled"
         @click="$emit('toggleQuotedReply')"
       />
@@ -347,7 +363,7 @@ export default {
         icon="i-ph-whatsapp-logo"
         slate
         faded
-        sm
+        md
         @click="$emit('selectWhatsappTemplate')"
       />
       <NextButton
@@ -356,7 +372,7 @@ export default {
         icon="i-ph-whatsapp-logo"
         slate
         faded
-        sm
+        md
         @click="$emit('selectContentTemplate')"
       />
       <VideoCallButton
@@ -384,7 +400,7 @@ export default {
         icon="i-ph-article-ny-times"
         slate
         faded
-        sm
+        md
         @click="toggleInsertArticle"
       />
     </div>
@@ -392,10 +408,10 @@ export default {
       <NextButton
         :label="sendButtonText"
         type="submit"
-        sm
+        md
         :color="isNote ? 'amber' : 'blue'"
-        :disabled="isSendDisabled"
-        class="flex-shrink-0"
+        :disabled="isSendDisabled || isRecordingAudio"
+        class="flex-shrink-0 !rounded-full"
         @click="onSend"
       />
     </div>
@@ -404,7 +420,16 @@ export default {
 
 <style lang="scss" scoped>
 .left-wrap {
-  @apply items-center flex gap-2;
+  @apply items-center flex flex-wrap gap-2;
+
+  // OUTSIDER: botões redondos com ícone maior
+  :deep(button) {
+    @apply rounded-full;
+  }
+
+  :deep(button [class^='i-']) {
+    @apply size-5;
+  }
 }
 
 .right-wrap {
