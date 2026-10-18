@@ -120,9 +120,7 @@ const goToTime = () => {
 </script>
 
 <template>
-  <div
-    class="w-[22rem] p-3 rounded-xl shadow-xl bg-n-solid-1 ring-1 ring-n-strong"
-  >
+  <div class="p-3">
     <div class="flex items-center justify-between mb-2">
       <button
         type="button"
@@ -184,9 +182,11 @@ const goToTime = () => {
       </button>
     </div>
 
-    <div class="flex items-center gap-2 pt-3 mt-2 border-t border-n-weak">
+    <div
+      class="flex flex-wrap items-center gap-2 pt-3 mt-2 border-t border-n-weak"
+    >
       <label
-        class="flex items-center flex-1 gap-2 text-sm text-n-slate-11"
+        class="flex items-center flex-1 gap-2 text-sm whitespace-nowrap text-n-slate-11"
         for="outsider-history-time"
       >
         <span class="i-lucide-clock size-4 shrink-0" />
@@ -211,10 +211,10 @@ const goToTime = () => {
       {{ t('CONVERSATION.OUTSIDER_HISTORY.CALENDAR.HINT') }}
     </p>
 
-    <div class="grid grid-cols-2 gap-2 mt-3">
+    <div class="flex flex-wrap gap-2 mt-3">
       <button
         type="button"
-        class="flex items-center justify-center gap-1.5 h-9 text-sm font-medium whitespace-nowrap rounded-lg ring-1 ring-n-weak text-n-slate-12 hover:bg-n-alpha-2"
+        class="flex items-center justify-center flex-1 basis-36 gap-1.5 h-9 px-2 text-sm font-medium whitespace-nowrap rounded-lg ring-1 ring-n-weak text-n-slate-12 hover:bg-n-alpha-2"
         @click="emit('jumpStart')"
       >
         <span class="i-lucide-arrow-up-to-line size-4" />
@@ -222,7 +222,7 @@ const goToTime = () => {
       </button>
       <button
         type="button"
-        class="flex items-center justify-center gap-1.5 h-9 text-sm font-medium whitespace-nowrap rounded-lg ring-1 ring-n-weak text-n-slate-12 hover:bg-n-alpha-2"
+        class="flex items-center justify-center flex-1 basis-36 gap-1.5 h-9 px-2 text-sm font-medium whitespace-nowrap rounded-lg ring-1 ring-n-weak text-n-slate-12 hover:bg-n-alpha-2"
         @click="emit('jumpLatest')"
       >
         <span class="i-lucide-arrow-down-to-line size-4" />

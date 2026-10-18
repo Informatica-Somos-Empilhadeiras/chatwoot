@@ -1,5 +1,6 @@
 <script setup>
-// OUTSIDER: botão do cabeçalho que abre a busca dentro da conversa.
+// OUTSIDER: botão do cabeçalho que abre a busca dentro da conversa (lupa com
+// contorno verde para ser fácil de achar; cheia enquanto a busca está aberta).
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import NextButton from 'dashboard/components-next/button/Button.vue';
@@ -29,8 +30,8 @@ const toggle = () => (isOpen.value ? closeSearch() : openSearch());
     v-tooltip.bottom="t('CONVERSATION.OUTSIDER_HISTORY.SEARCH_BUTTON')"
     icon="i-lucide-search"
     size="sm"
-    :color="isOpen ? 'teal' : 'slate'"
-    :variant="isOpen ? 'faded' : 'ghost'"
+    color="teal"
+    :variant="isOpen ? 'solid' : 'outline'"
     @click="toggle"
   />
 </template>

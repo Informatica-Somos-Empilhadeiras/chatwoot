@@ -33,6 +33,7 @@ const NEWER_PAGE = 100; // MessageFinder com `after`
 const AT_BOTTOM_PX = 160;
 const STICKY_DAY_OFFSET_PX = 56; // espaço do separador de dia fixo no topo
 const HIGHLIGHT_NAME = 'outsider-search-hit';
+const SEARCH_CARD = '[data-outsider-search-card]';
 const DAYS_CACHE_MS = 60 * 1000;
 const TODAY_CHECK_MS = 60 * 1000;
 const ACTIVITY_MESSAGE = 2;
@@ -184,12 +185,21 @@ const flash = element => {
   );
 };
 
+// altura do alto da conversa coberta pelo card da busca, quando ele está aberto
+const coveredTop = panelTop => {
+  const card = document.querySelector(SEARCH_CARD);
+  if (!card?.offsetParent) return 0;
+  return Math.max(0, card.getBoundingClientRect().bottom - panelTop);
+};
+
 // align "center": mensagem no meio da tela (resultado da busca);
-// align "top": começo do dia (ou a mensagem) no alto da tela (ida até uma data)
+// align "top": começo do dia (ou a mensagem) no alto da tela (ida até uma data);
+// as duas contam só a parte da tela que o card da busca não cobre
 const revealMessage = (messageId, terms, align, withFlash = true) => {
   const element = renderedMessageElement(messageId);
   if (!element || !panel) return;
   const panelTop = panel.getBoundingClientRect().top;
+  const covered = coveredTop(panelTop);
   const separator = element.previousElementSibling?.matches(
     '[data-outsider-day]'
   )
@@ -198,13 +208,17 @@ const revealMessage = (messageId, terms, align, withFlash = true) => {
   let delta;
   if (align === 'top') {
     delta = separator
-      ? separator.getBoundingClientRect().top - panelTop - 8
-      : element.getBoundingClientRect().top - panelTop - STICKY_DAY_OFFSET_PX;
+      ? separator.getBoundingClientRect().top - panelTop - covered - 8
+      : element.getBoundingClientRect().top -
+        panelTop -
+        covered -
+        STICKY_DAY_OFFSET_PX;
   } else {
     const { top, height } = element.getBoundingClientRect();
-    const free = panel.clientHeight - height;
+    const free = panel.clientHeight - covered - height;
     const offset =
-      free > STICKY_DAY_OFFSET_PX * 2 ? free / 2 : STICKY_DAY_OFFSET_PX;
+      covered +
+      (free > STICKY_DAY_OFFSET_PX * 2 ? free / 2 : STICKY_DAY_OFFSET_PX);
     delta = top - panelTop - offset;
   }
   panel.scrollTop += delta;

@@ -101,18 +101,13 @@ export default {
       'border-l rtl:border-l-0 rtl:border-r border-n-weak': !isOnExpandedLayout,
     }"
   >
+    <!-- OUTSIDER: relative z-40 deixa os menus do cabeçalho por cima do card da busca -->
     <ConversationHeader
       v-if="currentChat.id"
       :chat="currentChat"
       :show-back-button="isOnExpandedLayout && !isInboxView"
-      :class="{
-        'border-b border-b-n-weak !pt-2': !dashboardApps.length,
-      }"
-    />
-    <!-- OUTSIDER: busca dentro da conversa -->
-    <ConversationSearchPanel
-      v-if="currentChat.id && !activeIndex"
-      :conversation-id="currentChat.id"
+      class="relative z-40"
+      :class="[{ 'border-b border-b-n-weak !pt-2': !dashboardApps.length }]"
     />
     <woot-tabs
       v-if="dashboardApps.length && currentChat.id"
@@ -129,6 +124,11 @@ export default {
         is-compact
       />
     </woot-tabs>
+    <!-- OUTSIDER: busca dentro da conversa -->
+    <ConversationSearchPanel
+      v-if="currentChat.id && !activeIndex"
+      :conversation-id="currentChat.id"
+    />
     <div v-show="!activeIndex" class="flex h-full min-h-0 m-0">
       <MessagesView
         v-if="currentChat.id"
