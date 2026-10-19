@@ -9,7 +9,8 @@ class Outsider::EvolutionApi
   include HTTParty
 
   WEBHOOK_PATTERN = %r{\A(?<base_url>https?://.+?)/chatwoot/webhook/(?<instance>[^/?#]+)}
-  DEFAULT_TIMEOUT = 20
+  # abaixo dos 15 s do rack-timeout da produção, para a página mostrar "a Evolution demorou" e não um erro genérico
+  DEFAULT_TIMEOUT = 12
   MAX_PAGES = 20
 
   class Error < StandardError
@@ -88,9 +89,11 @@ class Outsider::EvolutionApi
     updates
   end
 
-  # "Ler status" da instância: sem ele a Evolution descarta os status dos contatos
+  # "Ler status" da instância: sem ele a Evolution descarta os status dos contatos. É só um aviso
+  # na página, então uma resposta estranha vira nil em vez de derrubar a lista.
   def read_status?
-    request { self.class.get("#{@base_url}/settings/find/#{@instance}", headers: headers, timeout: DEFAULT_TIMEOUT) }&.dig('readStatus')
+    settings = request { self.class.get("#{@base_url}/settings/find/#{@instance}", headers: headers, timeout: DEFAULT_TIMEOUT) }
+    settings['readStatus'] if settings.is_a?(Hash)
   rescue Error
     nil
   end

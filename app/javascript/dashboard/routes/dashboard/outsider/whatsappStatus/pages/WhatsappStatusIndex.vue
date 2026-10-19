@@ -134,7 +134,9 @@ const myStory = statuses => ({
   statuses,
 });
 
+// o cartão clicado continua com o foco por baixo do visualizador; um Enter ali não troca os status
 const openAuthor = (stories, startIndex) => {
+  if (viewer.value) return;
   viewer.value = { stories, startIndex, isMine: false };
 };
 

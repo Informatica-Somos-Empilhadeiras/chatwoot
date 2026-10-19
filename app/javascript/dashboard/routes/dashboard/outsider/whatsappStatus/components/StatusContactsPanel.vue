@@ -138,13 +138,18 @@ const selectedAreas = computed(() => {
 const normalize = text =>
   (text || '')
     .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
+    .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase();
 
-const matchesQuery = (author, words, digits) =>
-  words.every(word => normalize(author.name).includes(word)) ||
-  (digits.length >= 3 &&
-    (author.phone || '').replace(/\D/g, '').includes(digits));
+// no WhatsApp, muitos celulares estão sem o 9 (ex.: +55 62 9988-7766), então o número
+// digitado também vale sem o 9 depois do DDD
+const matchesQuery = (author, words, digits) => {
+  if (words.every(word => normalize(author.name).includes(word))) return true;
+  if (digits.length < 3) return false;
+  const phone = (author.phone || '').replace(/\D/g, '');
+  const withoutNine = digits.replace(/^((?:55)?[1-9]\d)?9(\d{8})$/, '$1$2');
+  return phone.includes(digits) || phone.includes(withoutNine);
+};
 
 const isFiltered = computed(
   () =>
@@ -153,7 +158,8 @@ const isFiltered = computed(
     areaFilter.value !== 'all'
 );
 
-// com filtro de tipo, cada contato fica só com os status daquele tipo
+// com filtro de tipo, cada contato fica só com os status daquele tipo, e a ordem segue o
+// último status que aparece
 const filtered = computed(() => {
   const words = normalize(query.value).split(/\s+/).filter(Boolean);
   const digits = query.value.replace(/\D/g, '');
@@ -171,7 +177,8 @@ const filtered = computed(() => {
             ),
           }
     )
-    .filter(author => author.statuses.length);
+    .filter(author => author.statuses.length)
+    .sort((a, b) => b.statuses.at(-1).timestamp - a.statuses.at(-1).timestamp);
 });
 
 const isViewed = author =>

@@ -17,12 +17,22 @@ class Outsider::WhatsappStatusPeople
 
   def find(jids, push_name)
     jid = Outsider::WhatsappStatusRecord.preferred_jid(jids)
+    # quando não acha o pushName, a Evolution usa o número do jid; aí ele não serve de nome
+    push_name = nil if push_name.to_s.match?(/\A\d+\z/)
     contact = jids.filter_map { |candidate| @contacts[candidate] }.first
-    return self.class.details(contact).merge(jid: jid) if contact
+    return contact_details(contact, jid, push_name) if contact
 
     phone = Outsider::WhatsappStatusRecord.phone_from(jid)
-    # quando não acha o pushName, a Evolution usa o número do jid; aí vale mais o telefone
-    name = push_name.presence unless push_name.to_s.match?(/\A\d+\z/)
-    { jid: jid, name: name || phone || jid, phone: phone, avatar_url: nil, contact_id: nil }
+    { jid: jid, name: push_name.presence || phone || jid, phone: phone, avatar_url: nil, contact_id: nil }
+  end
+
+  private
+
+  # quando a empresa manda a primeira mensagem, a integração da Evolution cria o contato com o
+  # número no lugar do nome; aí o nome que a pessoa usa no WhatsApp é melhor
+  def contact_details(contact, jid, push_name)
+    details = self.class.details(contact).merge(jid: jid)
+    details[:name] = push_name if push_name.present? && details[:name].to_s.match?(/\A[+\d\s()-]+\z/)
+    details
   end
 end

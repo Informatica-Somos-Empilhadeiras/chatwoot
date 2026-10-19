@@ -39,7 +39,11 @@ const hasUnseen = computed(() =>
       hide-duration
       class="absolute inset-0 transition-transform duration-300 size-full group-hover:scale-105"
     />
-    <div class="absolute flex gap-1 inset-x-2 top-2">
+    <!-- com muitos status, as barrinhas ficam coladas para caber no cartão -->
+    <div
+      class="absolute flex inset-x-2 top-2"
+      :class="author.statuses.length > 20 ? 'gap-px' : 'gap-1'"
+    >
       <span
         v-for="status in author.statuses"
         :key="status.id"

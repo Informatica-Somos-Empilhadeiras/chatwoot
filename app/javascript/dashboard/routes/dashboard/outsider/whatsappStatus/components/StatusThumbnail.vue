@@ -23,7 +23,7 @@ if (props.inboxId && props.status.type === 'image' && !props.status.deleted) {
   const { stop } = useIntersectionObserver(root, ([entry]) => {
     if (!entry?.isIntersecting) return;
     stop();
-    fetchMedia(props.inboxId, props.status.id)
+    fetchMedia(props.inboxId, props.status.id, { preview: true })
       .then(({ url }) => {
         mediaUrl.value = url;
       })

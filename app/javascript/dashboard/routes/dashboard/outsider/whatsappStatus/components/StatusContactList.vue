@@ -106,7 +106,7 @@ const myDescription = computed(() => {
           />
         </li>
       </ul>
-      <ul v-else class="grid list-none gap-x-4 gap-y-1 md:grid-cols-2">
+      <ul v-else class="grid grid-cols-1 list-none gap-x-4 gap-y-1 md:grid-cols-2">
         <li v-for="author in section.authors" :key="author.jid">
           <button
             type="button"

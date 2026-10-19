@@ -221,9 +221,30 @@ export const saveContactsLayout = layout =>
 // a mídia vem da Evolution pelo nosso servidor; cada uma é baixada uma vez por visita à página
 const mediaCache = new Map();
 
-export const fetchMedia = (inboxId, id) => {
+// as prévias da grade baixam no máximo 3 por vez, para não ocupar o servidor todo de uma vez
+const PREVIEW_LIMIT = 3;
+const previewQueue = [];
+let previewsRunning = 0;
+
+const queuePreview = task =>
+  new Promise((resolve, reject) => {
+    const run = () => {
+      previewsRunning += 1;
+      task()
+        .then(resolve, reject)
+        .finally(() => {
+          previewsRunning -= 1;
+          previewQueue.shift()?.();
+        });
+    };
+    if (previewsRunning < PREVIEW_LIMIT) run();
+    else previewQueue.push(run);
+  });
+
+export const fetchMedia = (inboxId, id, { preview = false } = {}) => {
   if (!mediaCache.has(id)) {
-    const request = WhatsappStatusAPI.getMedia(inboxId, id).then(
+    const download = () => WhatsappStatusAPI.getMedia(inboxId, id);
+    const request = (preview ? queuePreview(download) : download()).then(
       ({ data }) => ({ url: URL.createObjectURL(data), type: data.type })
     );
     request.catch(() => mediaCache.delete(id));
