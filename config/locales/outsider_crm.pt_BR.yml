@@ -1,0 +1,4 @@
+pt_BR:
+  outsider_crm:
+    errors:
+      duplicate_open_opportunity: Este contato já tem uma oportunidade aberta nesta unidade

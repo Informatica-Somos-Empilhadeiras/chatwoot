@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_07_13_184351) do
+ActiveRecord::Schema[7.1].define(version: 2026_10_19_190000) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -1226,6 +1226,195 @@ ActiveRecord::Schema[7.1].define(version: 2026_07_13_184351) do
     t.index ["user_id"], name: "index_notifications_on_user_id"
   end
 
+  create_table "outsider_crm_activities", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.bigint "opportunity_id", null: false
+    t.bigint "user_id"
+    t.bigint "message_id"
+    t.integer "kind", default: 0, null: false
+    t.text "body"
+    t.jsonb "metadata", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_outsider_crm_activities_on_account_id"
+    t.index ["opportunity_id", "created_at"], name: "idx_ocrm_activities_on_opp_created"
+    t.index ["opportunity_id"], name: "index_outsider_crm_activities_on_opportunity_id"
+  end
+
+  create_table "outsider_crm_business_unit_members", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.bigint "business_unit_id", null: false
+    t.bigint "user_id", null: false
+    t.integer "role", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_outsider_crm_business_unit_members_on_account_id"
+    t.index ["business_unit_id", "user_id"], name: "idx_ocrm_members_on_unit_user", unique: true
+    t.index ["business_unit_id"], name: "index_outsider_crm_business_unit_members_on_business_unit_id"
+    t.index ["user_id"], name: "index_outsider_crm_business_unit_members_on_user_id"
+  end
+
+  create_table "outsider_crm_business_units", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.string "name", null: false
+    t.text "description"
+    t.boolean "active", default: true, null: false
+    t.integer "position", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id", "name"], name: "idx_ocrm_units_on_account_name", unique: true
+    t.index ["account_id"], name: "index_outsider_crm_business_units_on_account_id"
+  end
+
+  create_table "outsider_crm_custom_field_definitions", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.string "key", null: false
+    t.string "label", null: false
+    t.integer "field_type", default: 0, null: false
+    t.jsonb "options", default: [], null: false
+    t.boolean "required", default: false, null: false
+    t.boolean "active", default: true, null: false
+    t.integer "position", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id", "key"], name: "idx_ocrm_fields_on_account_key", unique: true
+    t.index ["account_id"], name: "index_outsider_crm_custom_field_definitions_on_account_id"
+  end
+
+  create_table "outsider_crm_forwards", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.bigint "journey_id", null: false
+    t.bigint "from_opportunity_id", null: false
+    t.bigint "to_opportunity_id"
+    t.bigint "from_business_unit_id", null: false
+    t.bigint "to_business_unit_id", null: false
+    t.bigint "reason_id"
+    t.bigint "requested_by_id"
+    t.bigint "decided_by_id"
+    t.integer "status", default: 0, null: false
+    t.integer "attempt_number", default: 1, null: false
+    t.text "notes"
+    t.datetime "decided_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_outsider_crm_forwards_on_account_id"
+    t.index ["from_business_unit_id"], name: "index_outsider_crm_forwards_on_from_business_unit_id"
+    t.index ["from_opportunity_id"], name: "index_outsider_crm_forwards_on_from_opportunity_id"
+    t.index ["journey_id"], name: "index_outsider_crm_forwards_on_journey_id"
+    t.index ["reason_id"], name: "index_outsider_crm_forwards_on_reason_id"
+    t.index ["to_business_unit_id"], name: "index_outsider_crm_forwards_on_to_business_unit_id"
+    t.index ["to_opportunity_id"], name: "index_outsider_crm_forwards_on_to_opportunity_id"
+  end
+
+  create_table "outsider_crm_journeys", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.bigint "contact_id", null: false
+    t.bigint "company_id"
+    t.integer "status", default: 0, null: false
+    t.string "origin"
+    t.datetime "closed_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id", "contact_id"], name: "idx_ocrm_journeys_on_account_contact"
+    t.index ["account_id"], name: "index_outsider_crm_journeys_on_account_id"
+  end
+
+  create_table "outsider_crm_lost_reasons", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.string "name", null: false
+    t.integer "kind", default: 0, null: false
+    t.boolean "active", default: true, null: false
+    t.integer "position", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_outsider_crm_lost_reasons_on_account_id"
+  end
+
+  create_table "outsider_crm_opportunities", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.integer "display_id", null: false
+    t.bigint "journey_id", null: false
+    t.bigint "business_unit_id", null: false
+    t.bigint "pipeline_id", null: false
+    t.bigint "stage_id", null: false
+    t.bigint "lost_reason_id"
+    t.bigint "forwarded_from_id"
+    t.bigint "contact_id", null: false
+    t.bigint "conversation_id"
+    t.bigint "owner_id"
+    t.bigint "created_by_id"
+    t.string "title", null: false
+    t.bigint "value_cents", default: 0, null: false
+    t.string "currency", default: "BRL", null: false
+    t.date "expected_close_on"
+    t.integer "probability"
+    t.integer "status", default: 0, null: false
+    t.integer "position", default: 0, null: false
+    t.jsonb "custom_fields", default: {}, null: false
+    t.datetime "closed_at"
+    t.datetime "stage_changed_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id", "contact_id", "business_unit_id"], name: "idx_ocrm_opps_one_open_per_contact_unit", unique: true, where: "(status = 0)"
+    t.index ["account_id", "contact_id"], name: "idx_ocrm_opps_on_account_contact"
+    t.index ["account_id", "conversation_id"], name: "idx_ocrm_opps_on_account_conversation"
+    t.index ["account_id", "display_id"], name: "idx_ocrm_opps_on_account_display_id", unique: true
+    t.index ["account_id", "owner_id"], name: "idx_ocrm_opps_on_account_owner"
+    t.index ["account_id"], name: "index_outsider_crm_opportunities_on_account_id"
+    t.index ["business_unit_id"], name: "index_outsider_crm_opportunities_on_business_unit_id"
+    t.index ["forwarded_from_id"], name: "index_outsider_crm_opportunities_on_forwarded_from_id"
+    t.index ["journey_id"], name: "index_outsider_crm_opportunities_on_journey_id"
+    t.index ["lost_reason_id"], name: "index_outsider_crm_opportunities_on_lost_reason_id"
+    t.index ["pipeline_id"], name: "index_outsider_crm_opportunities_on_pipeline_id"
+    t.index ["stage_id", "position"], name: "idx_ocrm_opps_on_stage_position"
+    t.index ["stage_id"], name: "index_outsider_crm_opportunities_on_stage_id"
+  end
+
+  create_table "outsider_crm_pipelines", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.bigint "business_unit_id", null: false
+    t.string "name", null: false
+    t.boolean "active", default: true, null: false
+    t.integer "position", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_outsider_crm_pipelines_on_account_id"
+    t.index ["business_unit_id"], name: "index_outsider_crm_pipelines_on_business_unit_id"
+  end
+
+  create_table "outsider_crm_stages", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.bigint "pipeline_id", null: false
+    t.string "name", null: false
+    t.integer "position", default: 0, null: false
+    t.integer "probability", default: 0, null: false
+    t.integer "kind", default: 0, null: false
+    t.string "color"
+    t.integer "sla_hours"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_outsider_crm_stages_on_account_id"
+    t.index ["pipeline_id"], name: "index_outsider_crm_stages_on_pipeline_id"
+  end
+
+  create_table "outsider_crm_tasks", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.bigint "opportunity_id", null: false
+    t.bigint "assignee_id"
+    t.bigint "created_by_id"
+    t.bigint "completed_by_id"
+    t.string "title", null: false
+    t.text "description"
+    t.integer "kind", default: 0, null: false
+    t.datetime "due_at"
+    t.datetime "completed_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id", "assignee_id", "completed_at"], name: "idx_ocrm_tasks_on_account_assignee_done"
+    t.index ["account_id"], name: "index_outsider_crm_tasks_on_account_id"
+    t.index ["opportunity_id"], name: "index_outsider_crm_tasks_on_opportunity_id"
+  end
+
   create_table "platform_app_permissibles", force: :cascade do |t|
     t.bigint "platform_app_id", null: false
     t.string "permissible_type", null: false
@@ -1497,6 +1686,23 @@ ActiveRecord::Schema[7.1].define(version: 2026_07_13_184351) do
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "inboxes", "portals"
+  add_foreign_key "outsider_crm_activities", "outsider_crm_opportunities", column: "opportunity_id"
+  add_foreign_key "outsider_crm_business_unit_members", "outsider_crm_business_units", column: "business_unit_id"
+  add_foreign_key "outsider_crm_forwards", "outsider_crm_business_units", column: "from_business_unit_id"
+  add_foreign_key "outsider_crm_forwards", "outsider_crm_business_units", column: "to_business_unit_id"
+  add_foreign_key "outsider_crm_forwards", "outsider_crm_journeys", column: "journey_id"
+  add_foreign_key "outsider_crm_forwards", "outsider_crm_lost_reasons", column: "reason_id"
+  add_foreign_key "outsider_crm_forwards", "outsider_crm_opportunities", column: "from_opportunity_id"
+  add_foreign_key "outsider_crm_forwards", "outsider_crm_opportunities", column: "to_opportunity_id"
+  add_foreign_key "outsider_crm_opportunities", "outsider_crm_business_units", column: "business_unit_id"
+  add_foreign_key "outsider_crm_opportunities", "outsider_crm_journeys", column: "journey_id"
+  add_foreign_key "outsider_crm_opportunities", "outsider_crm_lost_reasons", column: "lost_reason_id"
+  add_foreign_key "outsider_crm_opportunities", "outsider_crm_opportunities", column: "forwarded_from_id"
+  add_foreign_key "outsider_crm_opportunities", "outsider_crm_pipelines", column: "pipeline_id"
+  add_foreign_key "outsider_crm_opportunities", "outsider_crm_stages", column: "stage_id"
+  add_foreign_key "outsider_crm_pipelines", "outsider_crm_business_units", column: "business_unit_id"
+  add_foreign_key "outsider_crm_stages", "outsider_crm_pipelines", column: "pipeline_id"
+  add_foreign_key "outsider_crm_tasks", "outsider_crm_opportunities", column: "opportunity_id"
   add_foreign_key "user_sessions", "users"
   create_trigger("accounts_after_insert_row_tr", :generated => true, :compatibility => 1).
       on("accounts").

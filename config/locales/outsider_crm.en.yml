@@ -1,0 +1,4 @@
+en:
+  outsider_crm:
+    errors:
+      duplicate_open_opportunity: This contact already has an open opportunity in this business unit
