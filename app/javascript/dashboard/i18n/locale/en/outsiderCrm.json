@@ -34,7 +34,8 @@
       "CLOSE_DATE": "Expected close",
       "OWNER": "Owner",
       "STATUS": "Status",
-      "SUMMARY": "{count} deals · {total} on this page"
+      "SUMMARY": "{count} deals · {total} on this page",
+      "EXPORT": "Export CSV"
     },
     "OPPORTUNITY": {
       "NEW": "New deal",
@@ -162,6 +163,52 @@
       "IN_USE": "It is in use and can't be deleted. Deactivate it instead.",
       "NOT_FOUND": "Not found. It may have been deleted.",
       "GENERIC": "Something went wrong. Try again."
+    },
+    "VIEWS": {
+      "BOARD": "Board",
+      "TABLE": "Table"
+    },
+    "SORT": {
+      "LABEL": "Sort by",
+      "RECENT": "Recently updated",
+      "VALUE": "Highest value",
+      "CLOSE": "Closest close date",
+      "CREATED": "Recently created"
+    },
+    "METRICS": {
+      "PERIOD": "Period for wins and conversion",
+      "PERIODS": {
+        "MONTH": "This month",
+        "QUARTER": "This quarter",
+        "YEAR": "This year"
+      },
+      "OPEN": "Open pipeline",
+      "WEIGHTED": "Weighted forecast",
+      "WON": "Won in period",
+      "CONVERSION": "Conversion",
+      "AVERAGE_DAYS": "Average time to win",
+      "DEALS": "{count} deals",
+      "WEIGHTED_HINT": "Value × probability",
+      "CONVERSION_HINT": "{won} won of {closed} closed",
+      "DAYS": "{days} days",
+      "AVERAGE_DAYS_HINT": "From creation to win"
+    },
+    "BOARD": {
+      "ADD": "Add deal",
+      "HIDDEN": "{count} more deals in this stage. Use the table to see all.",
+      "NO_STAGES": "This pipeline has no open stages.",
+      "READ_ONLY": "Another seller's deal: read only",
+      "OVERDUE": "Expected close date has passed",
+      "SLA": "Stuck in stage",
+      "SLA_HOURS": "{hours}h limit",
+      "DROP_WON": "Drop here: Won",
+      "DROP_LOST": "Drop here: Lost",
+      "LOST_TITLE": "Mark \"{title}\" as lost",
+      "LOST_DESCRIPTION": "The deal leaves the board and stays in the table as Lost.",
+      "MARK_LOST": "Mark as lost",
+      "CHOOSE_REASON": "Choose the reason",
+      "WON_DONE": "\"{title}\" marked as won",
+      "LOST_DONE": "\"{title}\" marked as lost"
     }
   }
 }

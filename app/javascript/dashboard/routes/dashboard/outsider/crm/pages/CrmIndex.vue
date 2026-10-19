@@ -75,7 +75,10 @@ onMounted(async () => {
     <div class="flex flex-col w-full h-full">
       <header class="px-6">
         <div
-          class="flex flex-wrap items-center justify-between w-full max-w-6xl gap-3 pt-6 pb-4 mx-auto"
+          class="flex flex-wrap items-center justify-between w-full gap-3 pt-6 pb-4 mx-auto"
+          :class="
+            activeTab === 'opportunities' ? 'max-w-[110rem]' : 'max-w-6xl'
+          "
         >
           <span class="text-xl font-medium truncate text-n-slate-12">
             {{ t('OUTSIDER_CRM.TITLE') }}
@@ -84,7 +87,12 @@ onMounted(async () => {
       </header>
 
       <main class="flex-1 px-6 overflow-y-auto">
-        <div class="w-full max-w-6xl pb-8 mx-auto">
+        <div
+          class="w-full pb-8 mx-auto"
+          :class="
+            activeTab === 'opportunities' ? 'max-w-[110rem]' : 'max-w-6xl'
+          "
+        >
           <div v-if="isLoading" class="flex justify-center p-8">
             <Spinner class="text-n-slate-10" />
           </div>

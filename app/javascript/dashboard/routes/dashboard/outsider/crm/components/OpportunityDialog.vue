@@ -136,6 +136,7 @@ watch(
   () => {
     if (editing.value) return;
     const stages = currentPipeline.value?.stages || [];
+    if (stages.some(stage => stage.id === form.value.stage_id)) return;
     form.value.stage_id =
       (stages.find(stage => stage.kind === 'open') || stages[0])?.id ?? '';
   }
@@ -186,8 +187,11 @@ const open = async (opportunity = null, defaults = {}) => {
       { value: opportunity.contact.id, label: opportunity.contact.name },
     ];
   } else {
+    // defaults vem do Kanban (unidade, pipeline e etapa da coluna) e é mantido se for válido
     form.value = { ...emptyForm(), ...defaults };
-    form.value.pipeline_id = unitPipelines.value[0]?.id ?? '';
+    if (!unitPipelines.value.some(p => p.id === form.value.pipeline_id)) {
+      form.value.pipeline_id = unitPipelines.value[0]?.id ?? '';
+    }
   }
   dialogRef.value?.open();
   try {

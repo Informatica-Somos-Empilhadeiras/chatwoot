@@ -110,4 +110,86 @@ RSpec.describe 'Outsider CRM opportunities API', type: :request do
       expect(response.parsed_body['meta']['count']).to eq(2)
     end
   end
+
+  describe 'Kanban' do
+    let(:first_stage) { pipeline.first_open_stage }
+    let(:second_stage) { pipeline.stages.second }
+    let!(:cards) do
+      Array.new(3) do |index|
+        crm_opportunity(account, unit, owner: seller, pipeline: pipeline, position: index, value_cents: (index + 1) * 10_000)
+      end
+    end
+
+    it 'returns the open stages with count, total and ordered cards' do
+      get "#{url}/board", params: { pipeline_id: pipeline.id }, headers: seller.create_new_auth_token
+
+      stages = response.parsed_body['stages']
+      expect(stages.pluck('name')).to eq(%w[Qualificação Proposta])
+      expect(stages.first).to include('count' => 3, 'total_cents' => 60_000)
+      expect(stages.first['opportunities'].pluck('id')).to eq(cards.map(&:id))
+    end
+
+    it 'hides the pipeline of a unit the agent is not part of' do
+      other_pipeline = crm_pipeline(account, crm_unit(account, name: 'Seminovos'))
+      get "#{url}/board", params: { pipeline_id: other_pipeline.id }, headers: seller.create_new_auth_token
+
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it 'reorders inside the stage' do
+      patch "#{url}/#{cards.last.id}/move", params: { stage_id: first_stage.id, index: 0 }, headers: seller.create_new_auth_token, as: :json
+
+      expect(response).to have_http_status(:ok)
+      expect(first_stage.opportunities.order(:position).pluck(:id)).to eq([cards[2].id, cards[0].id, cards[1].id])
+    end
+
+    it 'moves to another stage at the given position and records it on the timeline' do
+      other = crm_opportunity(account, unit, owner: seller, pipeline: pipeline, stage: second_stage)
+      patch "#{url}/#{cards.first.id}/move", params: { stage_id: second_stage.id, index: 0 }, headers: seller.create_new_auth_token, as: :json
+
+      expect(response.parsed_body['stage_id']).to eq(second_stage.id)
+      expect(second_stage.opportunities.order(:position).pluck(:id)).to eq([cards.first.id, other.id])
+      expect(cards.first.activities.where(kind: :stage_changed)).to exist
+    end
+
+    it 'closes the deal when dropped on the won stage' do
+      won_stage = pipeline.stages.find_by(kind: :won)
+      patch "#{url}/#{cards.first.id}/move", params: { stage_id: won_stage.id, index: 0 }, headers: seller.create_new_auth_token, as: :json
+
+      expect(response.parsed_body['status']).to eq('won')
+    end
+
+    it 'refuses a stage from another pipeline' do
+      other_stage = crm_pipeline(account, unit, name: 'Outro').first_open_stage
+      patch "#{url}/#{cards.first.id}/move", params: { stage_id: other_stage.id, index: 0 }, headers: seller.create_new_auth_token, as: :json
+
+      expect(response).to have_http_status(:unprocessable_entity)
+    end
+
+    it "does not let a seller move a colleague's card" do
+      patch "#{url}/#{cards.first.id}/move", params: { stage_id: second_stage.id, index: 0 }, headers: colleague.create_new_auth_token, as: :json
+
+      expect(response).to have_http_status(:forbidden)
+    end
+
+    it 'summarizes open value, weighted forecast and conversion' do
+      cards.first.update!(status: :won)
+      get "#{url}/summary", params: { pipeline_id: pipeline.id, period: 'month' }, headers: seller.create_new_auth_token
+
+      expect(response.parsed_body).to include(
+        'open_count' => 2, 'open_value_cents' => 50_000, 'weighted_value_cents' => 15_000,
+        'won_count' => 1, 'won_value_cents' => 10_000, 'lost_count' => 0, 'conversion_rate' => 100.0
+      )
+    end
+
+    it 'exports the visible deals as CSV' do
+      get "#{url}/export", headers: seller.create_new_auth_token
+
+      expect(response.headers['Content-Type']).to include('text/csv')
+      lines = response.body.delete_prefix("\uFEFF").lines
+      expect(lines.first).to start_with('codigo;negocio;contato')
+      expect(lines.size).to eq(4)
+      expect(lines.last).to include('aberto')
+    end
+  end
 end

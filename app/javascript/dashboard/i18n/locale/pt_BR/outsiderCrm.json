@@ -34,7 +34,8 @@
       "CLOSE_DATE": "Previsão",
       "OWNER": "Responsável",
       "STATUS": "Status",
-      "SUMMARY": "{count} negócios · {total} nesta página"
+      "SUMMARY": "{count} negócios · {total} nesta página",
+      "EXPORT": "Exportar CSV"
     },
     "OPPORTUNITY": {
       "NEW": "Novo negócio",
@@ -162,6 +163,52 @@
       "IN_USE": "Está em uso e não pode ser apagado. Desative em vez de apagar.",
       "NOT_FOUND": "Não encontrado. Talvez tenha sido apagado.",
       "GENERIC": "Não foi possível concluir. Tente de novo."
+    },
+    "VIEWS": {
+      "BOARD": "Quadro",
+      "TABLE": "Tabela"
+    },
+    "SORT": {
+      "LABEL": "Ordenar por",
+      "RECENT": "Atualizados recentemente",
+      "VALUE": "Maior valor",
+      "CLOSE": "Previsão mais próxima",
+      "CREATED": "Criados recentemente"
+    },
+    "METRICS": {
+      "PERIOD": "Período dos ganhos e da conversão",
+      "PERIODS": {
+        "MONTH": "Este mês",
+        "QUARTER": "Este trimestre",
+        "YEAR": "Este ano"
+      },
+      "OPEN": "Em aberto",
+      "WEIGHTED": "Previsão ponderada",
+      "WON": "Ganhos no período",
+      "CONVERSION": "Conversão",
+      "AVERAGE_DAYS": "Tempo médio até ganhar",
+      "DEALS": "{count} negócios",
+      "WEIGHTED_HINT": "Valor × probabilidade",
+      "CONVERSION_HINT": "{won} ganhos de {closed} fechados",
+      "DAYS": "{days} dias",
+      "AVERAGE_DAYS_HINT": "Da criação até o ganho"
+    },
+    "BOARD": {
+      "ADD": "Adicionar negócio",
+      "HIDDEN": "Mais {count} negócios nesta etapa. Use a tabela para ver todos.",
+      "NO_STAGES": "Este pipeline não tem etapas abertas.",
+      "READ_ONLY": "Negócio de outro vendedor: só leitura",
+      "OVERDUE": "Previsão de fechamento vencida",
+      "SLA": "Parado na etapa",
+      "SLA_HOURS": "prazo de {hours}h",
+      "DROP_WON": "Solte aqui: Ganho",
+      "DROP_LOST": "Solte aqui: Perdido",
+      "LOST_TITLE": "Marcar \"{title}\" como perdido",
+      "LOST_DESCRIPTION": "O negócio sai do quadro e continua na tabela com a situação Perdido.",
+      "MARK_LOST": "Marcar como perdido",
+      "CHOOSE_REASON": "Escolha o motivo",
+      "WON_DONE": "\"{title}\" marcado como ganho",
+      "LOST_DONE": "\"{title}\" marcado como perdido"
     }
   }
 }

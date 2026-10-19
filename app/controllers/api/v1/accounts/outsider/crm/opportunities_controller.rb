@@ -5,8 +5,10 @@ class Api::V1::Accounts::Outsider::Crm::OpportunitiesController < Api::V1::Accou
   SORTS = { 'recent' => { updated_at: :desc }, 'value' => { value_cents: :desc }, 'close' => { expected_close_on: :asc },
             'created' => { created_at: :desc } }.freeze
 
-  before_action :fetch_opportunity, only: [:show, :update, :destroy]
-  before_action :ensure_can_edit, only: [:update]
+  BOARD_LIMIT = 100
+
+  before_action :fetch_opportunity, only: [:show, :update, :destroy, :move]
+  before_action :ensure_can_edit, only: [:update, :move]
   before_action :ensure_crm_admin, only: [:destroy]
 
   def index
@@ -20,6 +22,32 @@ class Api::V1::Accounts::Outsider::Crm::OpportunitiesController < Api::V1::Accou
 
   def show
     render json: serialize(@opportunity)
+  end
+
+  # Kanban: colunas são as etapas abertas do pipeline, com os negócios abertos de cada uma
+  def board
+    pipeline = crm_scope(::Outsider::Crm::Pipeline).where(business_unit_id: crm_access.visible_unit_ids).find(params.require(:pipeline_id))
+    scope = filtered.open.where(pipeline_id: pipeline.id).includes(:contact, :owner, :stage)
+    totals = scope.group(:stage_id).pluck(:stage_id, Arel.sql('COUNT(*)'), Arel.sql('SUM(value_cents)')).index_by(&:first)
+    render json: { pipeline_id: pipeline.id, stages: pipeline.stages.select(&:kind_open?).map { |stage| board_column(stage, scope, totals) } }
+  end
+
+  def summary
+    scope = filtered.unscope(where: :status)
+    render json: ::Outsider::Crm::Metrics.new(scope, period: params[:period]).to_h
+  end
+
+  def export
+    csv = ::Outsider::Crm::OpportunitiesCsv.new(filtered.order(SORTS.fetch(params[:sort], SORTS['recent']))).generate
+    send_data "\uFEFF#{csv}", filename: "negocios-#{Time.zone.today}.csv", type: 'text/csv; charset=utf-8'
+  end
+
+  def move
+    stage = crm_scope(::Outsider::Crm::Stage).find_by(id: params.require(:stage_id), pipeline_id: @opportunity.pipeline_id)
+    return render json: { error: 'invalid_stage' }, status: :unprocessable_entity if stage.nil?
+
+    ::Outsider::Crm::OpportunityMover.new(@opportunity, stage: stage, index: params[:index]).perform
+    render json: serialize(@opportunity.reload)
   end
 
   def create
@@ -107,6 +135,14 @@ class Api::V1::Accounts::Outsider::Crm::OpportunitiesController < Api::V1::Accou
   # A etapa precisa ser do mesmo pipeline; senão o modelo recusa (stage inválido)
   def valid_stage_id(stage_id)
     stage_id.presence && crm_scope(::Outsider::Crm::Stage).find_by(id: stage_id)&.id
+  end
+
+  def board_column(stage, scope, totals)
+    _id, count, total = totals[stage.id]
+    ::Outsider::Crm::Serializer.stage(stage).merge(
+      count: count.to_i, total_cents: total.to_i,
+      opportunities: scope.where(stage_id: stage.id).order(:position, :id).limit(BOARD_LIMIT).map { |opportunity| serialize(opportunity) }
+    )
   end
 
   def serialize(opportunity)

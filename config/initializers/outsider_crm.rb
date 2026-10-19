@@ -14,7 +14,14 @@ Rails.application.routes.prepend do
               resources :pipelines, only: [:index, :show, :create, :update, :destroy]
               resources :lost_reasons, only: [:index, :create, :update, :destroy]
               resources :custom_fields, only: [:index, :create, :update, :destroy]
-              resources :opportunities, only: [:index, :show, :create, :update, :destroy]
+              resources :opportunities, only: [:index, :show, :create, :update, :destroy] do
+                collection do
+                  get :board
+                  get :summary
+                  get :export
+                end
+                member { patch :move }
+              end
             end
           end
         end

@@ -129,6 +129,28 @@ class CrmAPI extends ApiClient {
   deleteOpportunity(id) {
     return axios.delete(`${this.url}/opportunities/${id}`);
   }
+
+  getBoard(params) {
+    return axios.get(`${this.url}/opportunities/board`, { params });
+  }
+
+  getSummary(params = {}) {
+    return axios.get(`${this.url}/opportunities/summary`, { params });
+  }
+
+  exportOpportunities(params = {}) {
+    return axios.get(`${this.url}/opportunities/export`, {
+      params,
+      responseType: 'blob',
+    });
+  }
+
+  moveOpportunity(id, stageId, index) {
+    return axios.patch(`${this.url}/opportunities/${id}/move`, {
+      stage_id: stageId,
+      index,
+    });
+  }
 }
 
 export default new CrmAPI();

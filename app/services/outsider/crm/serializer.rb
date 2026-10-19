@@ -27,10 +27,17 @@ module Outsider::Crm::Serializer
     ).merge(
       code: opportunity.code,
       effective_probability: opportunity.effective_probability,
+      overdue: opportunity.open? && opportunity.expected_close_on.present? && opportunity.expected_close_on < Time.zone.today,
+      sla_exceeded: sla_exceeded?(opportunity),
       contact: contact(opportunity.contact),
       owner: user(opportunity.owner),
       can_edit: access&.edit_opportunity?(opportunity)
     )
+  end
+
+  def sla_exceeded?(opportunity)
+    hours = opportunity.stage&.sla_hours
+    opportunity.open? && hours.present? && opportunity.stage_changed_at.present? && opportunity.stage_changed_at < hours.hours.ago
   end
 
   def contact(contact)
