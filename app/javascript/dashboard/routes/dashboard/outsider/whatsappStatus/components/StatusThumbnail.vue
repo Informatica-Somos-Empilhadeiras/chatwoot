@@ -8,6 +8,8 @@ import { colorFor, durationLabel, fetchMedia } from '../helpers';
 const props = defineProps({
   status: { type: Object, required: true },
   large: { type: Boolean, default: false },
+  // na grade dos contatos o nome fica no rodapé, no lugar da duração do vídeo
+  hideDuration: { type: Boolean, default: false },
   // com a caixa, a foto inteira é baixada quando aparece na tela (a miniatura do WhatsApp é pequena)
   inboxId: { type: Number, default: null },
 });
@@ -65,7 +67,7 @@ if (props.inboxId && props.status.type === 'image' && !props.status.deleted) {
         <Icon icon="i-lucide-play" :class="large ? 'size-5' : 'size-3'" />
       </span>
       <span
-        v-if="large && status.seconds"
+        v-if="large && !hideDuration && status.seconds"
         class="absolute px-1.5 py-0.5 text-xs text-white rounded bottom-2 ltr:right-2 rtl:left-2 bg-n-black/50"
       >
         {{ durationLabel(status.seconds) }}

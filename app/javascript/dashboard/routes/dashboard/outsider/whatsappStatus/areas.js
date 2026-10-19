@@ -152,6 +152,15 @@ export const buildAreaTree = counts => {
   };
 };
 
+// área de um telefone ('+5562999990000') ou jid, como o servidor calcula: o DDD, FOREIGN ou UNKNOWN
+export const areaOfPhone = value => {
+  const digits = value?.endsWith('@lid')
+    ? ''
+    : (value || '').split('@')[0].replace(/\D/g, '');
+  if (!digits) return UNKNOWN;
+  return digits.match(/^55([1-9]\d)\d{8,9}$/)?.[1] || FOREIGN;
+};
+
 export const areaLabel = area => {
   if (DDDS[area]) return `${area} · ${DDDS[area][0]}`;
   return null;

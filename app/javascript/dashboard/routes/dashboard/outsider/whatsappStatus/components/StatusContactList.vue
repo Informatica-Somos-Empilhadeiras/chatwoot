@@ -1,9 +1,12 @@
 <script setup>
-// OUTSIDER: lista de status como no WhatsApp: o meu no topo, depois Recentes e Vistos.
+// OUTSIDER: status dos contatos como no WhatsApp: o meu no topo, depois Recentes e Vistos,
+// em grade (prévia de cada contato) ou em lista.
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import Button from 'dashboard/components-next/button/Button.vue';
 import StatusRing from './StatusRing.vue';
+import StatusContactCard from './StatusContactCard.vue';
+import StatusThumbnail from './StatusThumbnail.vue';
 import { timeLabel } from '../helpers';
 
 const props = defineProps({
@@ -15,6 +18,11 @@ const props = defineProps({
   seen: { type: Object, default: () => ({}) },
   canPublish: { type: Boolean, default: false },
   isLoading: { type: Boolean, default: false },
+  // 'cards' ou 'list'
+  layout: { type: String, default: 'cards' },
+  inboxId: { type: Number, required: true },
+  // com busca ou filtro, a lista vazia tem outra mensagem
+  isFiltered: { type: Boolean, default: false },
 });
 
 const emit = defineEmits(['openAuthor', 'openMine', 'publish']);
@@ -82,10 +90,23 @@ const myDescription = computed(() => {
     </div>
 
     <section v-for="section in sections" :key="section.key">
-      <h3 class="px-2 mb-1 text-xs font-medium uppercase text-n-teal-11">
+      <h3 class="px-2 mb-2 text-xs font-medium uppercase text-n-teal-11">
         {{ section.title }}
       </h3>
-      <ul class="flex flex-col list-none">
+      <ul
+        v-if="layout === 'cards'"
+        class="grid grid-cols-2 gap-3 list-none sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"
+      >
+        <li v-for="author in section.authors" :key="author.jid">
+          <StatusContactCard
+            :author="author"
+            :seen="seen"
+            :inbox-id="inboxId"
+            @click="emit('openAuthor', author)"
+          />
+        </li>
+      </ul>
+      <ul v-else class="grid list-none gap-x-4 gap-y-1 md:grid-cols-2">
         <li v-for="author in section.authors" :key="author.jid">
           <button
             type="button"
@@ -97,14 +118,18 @@ const myDescription = computed(() => {
               :src="author.avatar_url"
               :seen-flags="author.statuses.map(status => !!seen[status.id])"
             />
-            <span class="flex flex-col min-w-0">
+            <span class="flex flex-col flex-1 min-w-0">
               <span class="text-sm font-medium truncate text-n-slate-12">
                 {{ author.name }}
               </span>
               <span class="text-xs truncate text-n-slate-11">
-                {{ timeLabel(t, author.last_timestamp) }}
+                {{ timeLabel(t, author.statuses.at(-1).timestamp) }}
               </span>
             </span>
+            <StatusThumbnail
+              :status="author.statuses.at(-1)"
+              class="flex-shrink-0 rounded-md size-11"
+            />
           </button>
         </li>
       </ul>
@@ -114,7 +139,11 @@ const myDescription = computed(() => {
       v-if="!sections.length && !isLoading"
       class="px-2 text-sm text-n-slate-11"
     >
-      {{ t('OUTSIDER_WHATSAPP_STATUS.CONTACTS.EMPTY') }}
+      {{
+        isFiltered
+          ? t('OUTSIDER_WHATSAPP_STATUS.CONTACTS.EMPTY_FILTER')
+          : t('OUTSIDER_WHATSAPP_STATUS.CONTACTS.EMPTY')
+      }}
     </p>
   </div>
 </template>

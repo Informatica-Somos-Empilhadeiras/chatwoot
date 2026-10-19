@@ -37,9 +37,12 @@
       "RECENT": "Recent",
       "SEEN": "Viewed",
       "EMPTY": "No contact posted a status in the last 24 hours.",
-      "HINT_TITLE": "Your contacts' status",
-      "HINT": "Click a contact to see their status updates. They disappear 24 hours after being posted, just like on WhatsApp.",
-      "READ_STATUS_OFF": "\"Read status\" is off for this inbox, so Evolution drops your contacts' statuses. To see them, turn it on in Evolution Manager → Settings → Read status. Statuses posted before that will not come back."
+      "READ_STATUS_OFF": "\"Read status\" is off for this inbox, so Evolution drops your contacts' statuses. To see them, turn it on in Evolution Manager → Settings → Read status. Statuses posted before that will not come back.",
+      "SEARCH": "Search by name or number",
+      "ALL_AREAS": "All regions",
+      "WHOLE_REGION": "Whole region",
+      "OTHER_AREAS": "Others",
+      "EMPTY_FILTER": "No contacts match this filter."
     },
     "VIEWER": {
       "OPEN_CONTACT": "Open contact",

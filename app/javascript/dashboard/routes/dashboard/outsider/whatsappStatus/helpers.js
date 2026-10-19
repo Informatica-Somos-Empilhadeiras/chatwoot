@@ -29,6 +29,7 @@ export const BACKGROUND_COLORS = [
 
 const SEEN_STORE = 'outsider_whatsapp_status_seen';
 const LAYOUT_STORE = 'outsider_whatsapp_status_layout';
+const CONTACTS_LAYOUT_STORE = 'outsider_whatsapp_status_contacts_layout';
 
 const nowInSeconds = () => Math.floor(Date.now() / 1000);
 
@@ -209,6 +210,13 @@ export const loadLayout = () =>
   LocalStorage.get(LAYOUT_STORE) === 'cards' ? 'cards' : 'list';
 
 export const saveLayout = layout => LocalStorage.set(LAYOUT_STORE, layout);
+
+// a aba dos contatos abre em grade, a não ser que a pessoa tenha escolhido a lista
+export const loadContactsLayout = () =>
+  LocalStorage.get(CONTACTS_LAYOUT_STORE) === 'list' ? 'list' : 'cards';
+
+export const saveContactsLayout = layout =>
+  LocalStorage.set(CONTACTS_LAYOUT_STORE, layout);
 
 // a mídia vem da Evolution pelo nosso servidor; cada uma é baixada uma vez por visita à página
 const mediaCache = new Map();

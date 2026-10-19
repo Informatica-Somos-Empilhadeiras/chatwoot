@@ -37,9 +37,12 @@
       "RECENT": "Recentes",
       "SEEN": "Vistos",
       "EMPTY": "Nenhum contato publicou status nas últimas 24 horas.",
-      "HINT_TITLE": "Status dos seus contatos",
-      "HINT": "Clique em um contato para ver os status. Eles somem 24 horas depois de publicados, como no WhatsApp.",
-      "READ_STATUS_OFF": "A opção \"Ler status\" está desligada nesta caixa, então a Evolution descarta os status dos contatos. Para ver os status, ligue em Evolution Manager → Configurações → Ler status. Os status publicados antes disso não voltam."
+      "READ_STATUS_OFF": "A opção \"Ler status\" está desligada nesta caixa, então a Evolution descarta os status dos contatos. Para ver os status, ligue em Evolution Manager → Configurações → Ler status. Os status publicados antes disso não voltam.",
+      "SEARCH": "Buscar por nome ou número",
+      "ALL_AREAS": "Todas as regiões",
+      "WHOLE_REGION": "Toda a região",
+      "OTHER_AREAS": "Outros",
+      "EMPTY_FILTER": "Nenhum contato com este filtro."
     },
     "VIEWER": {
       "OPEN_CONTACT": "Abrir contato",

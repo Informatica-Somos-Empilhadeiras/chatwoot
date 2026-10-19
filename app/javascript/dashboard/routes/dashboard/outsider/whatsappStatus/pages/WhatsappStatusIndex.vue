@@ -9,7 +9,7 @@ import Select from 'dashboard/components-next/select/Select.vue';
 import TabBar from 'dashboard/components-next/tabbar/TabBar.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
-import StatusContactList from '../components/StatusContactList.vue';
+import StatusContactsPanel from '../components/StatusContactsPanel.vue';
 import MyStatusPanel from '../components/MyStatusPanel.vue';
 import StatusViewer from '../components/StatusViewer.vue';
 import StatusPublishDialog from '../components/StatusPublishDialog.vue';
@@ -57,13 +57,6 @@ const myName = computed(
 );
 // os meus que ainda estão no ar, do mais antigo para o mais novo (como o WhatsApp mostra)
 const myActive = computed(() => mine.value.statuses.filter(isActive).reverse());
-
-const isViewed = author =>
-  author.statuses.every(status => seen.value[status.id]);
-const recent = computed(() =>
-  feed.value.authors.filter(author => !isViewed(author))
-);
-const viewed = computed(() => feed.value.authors.filter(isViewed));
 
 const tabs = computed(() => [
   {
@@ -141,13 +134,8 @@ const myStory = statuses => ({
   statuses,
 });
 
-const openAuthor = author => {
-  const stories = [...recent.value, ...viewed.value];
-  viewer.value = {
-    stories,
-    startIndex: stories.indexOf(author),
-    isMine: false,
-  };
+const openAuthor = (stories, startIndex) => {
+  viewer.value = { stories, startIndex, isMine: false };
 };
 
 const openMine = () => {
@@ -255,35 +243,19 @@ const openInteractions = status =>
               <Icon icon="i-lucide-triangle-alert" class="flex-shrink-0 size-5" />
               {{ t('OUTSIDER_WHATSAPP_STATUS.CONTACTS.READ_STATUS_OFF') }}
             </p>
-            <div v-if="activeTab === 'contacts'" class="flex gap-6">
-              <StatusContactList
-                class="w-full lg:flex-shrink-0 lg:w-96"
-                :me="me"
-                :my-statuses="myActive"
-                :recent="recent"
-                :viewed="viewed"
-                :seen="seen"
-                :can-publish="can.publish"
-                :is-loading="isLoading"
-                @open-author="openAuthor"
-                @open-mine="openMine"
-                @publish="openPublish"
-              />
-              <div
-                class="flex-col items-center justify-center flex-1 hidden gap-3 p-10 text-center lg:flex rounded-xl bg-n-alpha-1 min-h-[24rem]"
-              >
-                <Icon
-                  icon="i-lucide-circle-dashed"
-                  class="size-12 text-n-slate-9"
-                />
-                <h3 class="text-base font-medium text-n-slate-12">
-                  {{ t('OUTSIDER_WHATSAPP_STATUS.CONTACTS.HINT_TITLE') }}
-                </h3>
-                <p class="max-w-sm mb-0 text-sm text-n-slate-11">
-                  {{ t('OUTSIDER_WHATSAPP_STATUS.CONTACTS.HINT') }}
-                </p>
-              </div>
-            </div>
+            <StatusContactsPanel
+              v-if="activeTab === 'contacts'"
+              :authors="feed.authors"
+              :me="me"
+              :my-statuses="myActive"
+              :seen="seen"
+              :can-publish="can.publish"
+              :is-loading="isLoading"
+              :inbox-id="inboxId"
+              @open-author="openAuthor"
+              @open-mine="openMine"
+              @publish="openPublish"
+            />
             <MyStatusPanel
               v-else-if="activeTab === 'mine'"
               v-model:period="period"
