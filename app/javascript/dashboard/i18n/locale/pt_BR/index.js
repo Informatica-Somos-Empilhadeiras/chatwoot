@@ -1,5 +1,6 @@
 import advancedFilters from './advancedFilters.json';
 import outsiderWhatsappStatus from './outsiderWhatsappStatus.json'; // OUTSIDER: página Status do WhatsApp
+import outsiderCrm from './outsiderCrm.json'; // OUTSIDER: CRM de vendas
 import agentBots from './agentBots.json';
 import agentMgmt from './agentMgmt.json';
 import attributesMgmt from './attributesMgmt.json';
@@ -48,6 +49,7 @@ import yearInReview from './yearInReview.json';
 export default {
   ...advancedFilters,
   ...outsiderWhatsappStatus, // OUTSIDER
+  ...outsiderCrm, // OUTSIDER
   ...agentBots,
   ...agentMgmt,
   ...attributesMgmt,

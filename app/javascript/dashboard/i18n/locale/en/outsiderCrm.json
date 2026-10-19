@@ -1,0 +1,167 @@
+{
+  "OUTSIDER_CRM": {
+    "SIDEBAR": "CRM",
+    "TITLE": "Sales CRM",
+    "SAVE": "Save",
+    "TABS": {
+      "OPPORTUNITIES": "Deals",
+      "SETTINGS": "Settings"
+    },
+    "STATES": {
+      "NO_ACCESS": "You are not part of any CRM business unit yet. Ask an administrator to add you.",
+      "NO_PIPELINES": "There is no pipeline in your business units yet. An administrator or manager needs to create one in Settings > Pipelines.",
+      "EMPTY": "No deals match these filters."
+    },
+    "STATUS": {
+      "OPEN": "Open",
+      "WON": "Won",
+      "LOST": "Lost",
+      "FORWARDED": "Forwarded"
+    },
+    "FILTERS": {
+      "SEARCH": "Search by deal, contact or phone",
+      "ALL_UNITS": "All units",
+      "ALL_PIPELINES": "All pipelines",
+      "ALL_STATUS": "All statuses",
+      "ALL_OWNERS": "All owners",
+      "MINE": "Only mine"
+    },
+    "TABLE": {
+      "OPPORTUNITY": "Deal",
+      "CONTACT": "Contact",
+      "STAGE": "Stage",
+      "VALUE": "Value",
+      "CLOSE_DATE": "Expected close",
+      "OWNER": "Owner",
+      "STATUS": "Status",
+      "SUMMARY": "{count} deals · {total} on this page"
+    },
+    "OPPORTUNITY": {
+      "NEW": "New deal",
+      "CREATED": "Deal {code} created",
+      "UPDATED": "Deal updated",
+      "CONTACT": "Contact",
+      "CONTACT_PLACEHOLDER": "Pick a Chatwoot contact",
+      "CONTACT_SEARCH": "Type name, phone or email",
+      "CONTACT_EMPTY": "No contacts found",
+      "TITLE": "Deal name",
+      "TITLE_PLACEHOLDER": "E.g. Parts contract renewal",
+      "UNIT": "Business unit",
+      "PIPELINE": "Pipeline",
+      "NO_PIPELINE": "No pipeline in this unit",
+      "STAGE": "Stage",
+      "OWNER": "Owner",
+      "VALUE": "Value (R$)",
+      "VALUE_INVALID": "Use numbers only, like 68,000.00",
+      "CLOSE_DATE": "Expected close date",
+      "PROBABILITY": "Probability (%)",
+      "PROBABILITY_FROM_STAGE": "{value}% (from stage)",
+      "STATUS": "Status",
+      "LOST_REASON": "Lost reason"
+    },
+    "SETTINGS": {
+      "ACTIVE": "Active",
+      "INACTIVE": "inactive",
+      "SECTIONS": {
+        "UNITS": "Units",
+        "PIPELINES": "Pipelines",
+        "REASONS": "Reasons",
+        "FIELDS": "Fields",
+        "GENERAL": "General"
+      },
+      "UNITS": {
+        "TITLE": "Business units",
+        "DESCRIPTION": "Companies or brands of the group. Only members of a unit see its deals. Sellers edit their own deals; managers edit all of them and configure pipelines.",
+        "NEW": "New unit",
+        "EDIT": "Edit unit",
+        "EMPTY": "No units yet. Start by creating the companies of the group.",
+        "NAME": "Name",
+        "NAME_PLACEHOLDER": "E.g. Rentals",
+        "UNIT_DESCRIPTION": "Description (optional)",
+        "ADD_MEMBER": "Pick an agent",
+        "ADD": "Add",
+        "REMOVE": "Remove from unit",
+        "NO_MEMBERS": "No agents in this unit yet.",
+        "ROLES": {
+          "SELLER": "Seller",
+          "MANAGER": "Manager"
+        }
+      },
+      "PIPELINES": {
+        "TITLE": "Pipelines and stages",
+        "DESCRIPTION": "Each unit can have several pipelines. Won and lost stages close the deal automatically.",
+        "NEW": "New pipeline",
+        "EDIT": "Edit pipeline",
+        "EMPTY": "No pipelines in this unit.",
+        "NO_UNITS": "You don't manage any unit.",
+        "NAME": "Pipeline name",
+        "NAME_PLACEHOLDER": "E.g. Direct sales",
+        "STAGES": "Stages",
+        "ADD_STAGE": "Add stage",
+        "STAGE_NAME": "Stage name",
+        "STAGES_HELP": "This order is the column order on the Kanban. At least one open stage is required. A stage with deals can't be removed.",
+        "KINDS": {
+          "OPEN": "Open",
+          "WON": "Won",
+          "LOST": "Lost"
+        },
+        "DEFAULT_STAGES": {
+          "LEAD": "Lead / Not contacted",
+          "QUALIFIED": "Qualification",
+          "PROPOSAL": "Proposal sent",
+          "NEGOTIATION": "Negotiation",
+          "WON": "Won",
+          "LOST": "Lost"
+        }
+      },
+      "REASONS": {
+        "TITLE": "Lost and forwarding reasons",
+        "DESCRIPTION": "Once a lost reason exists, marking a deal as lost requires picking one.",
+        "PLACEHOLDER": "E.g. Price above budget",
+        "ADD": "Add",
+        "EMPTY": "No reasons yet.",
+        "IN_USE": "This reason was already used. Deactivate it instead.",
+        "KINDS": {
+          "LOST": "Lost",
+          "FORWARD": "Forwarding",
+          "BOTH": "Lost and forwarding"
+        }
+      },
+      "FIELDS": {
+        "TITLE": "Custom fields",
+        "DESCRIPTION": "Extra deal information, like tax ID, segment or fleet size. Deactivating hides the field without deleting saved values.",
+        "NEW": "New field",
+        "EDIT": "Edit field",
+        "EMPTY": "No custom fields.",
+        "LABEL": "Field name",
+        "LABEL_PLACEHOLDER": "E.g. Tax ID",
+        "TYPE": "Type",
+        "OPTIONS": "Options (one per line)",
+        "OPTIONS_PLACEHOLDER": "Rental\nSale\nParts",
+        "REQUIRED": "Required",
+        "TYPES": {
+          "TEXT": "Text",
+          "NUMBER": "Number",
+          "CURRENCY": "Amount (R$)",
+          "DATE": "Date",
+          "LIST": "List",
+          "CHECKBOX": "Yes/No"
+        }
+      },
+      "GENERAL": {
+        "TITLE": "General",
+        "DESCRIPTION": "Rules for the whole CRM of this account.",
+        "MAX_ATTEMPTS": "Forwarding attempts per lead",
+        "MAX_ATTEMPTS_HELP": "How many times the same lead can be forwarded between units before the journey closes (used by forwarding).",
+        "SAVED": "Settings saved"
+      }
+    },
+    "ERRORS": {
+      "NO_PERMISSION": "You don't have permission for this.",
+      "NO_ACCESS": "You are not part of any CRM business unit.",
+      "IN_USE": "It is in use and can't be deleted. Deactivate it instead.",
+      "NOT_FOUND": "Not found. It may have been deleted.",
+      "GENERIC": "Something went wrong. Try again."
+    }
+  }
+}

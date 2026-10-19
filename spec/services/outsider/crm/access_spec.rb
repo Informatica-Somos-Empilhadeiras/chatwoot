@@ -2,8 +2,8 @@ require 'rails_helper'
 
 RSpec.describe Outsider::Crm::Access do
   let(:account) { create(:account) }
-  let(:locacao) { Outsider::Crm::BusinessUnit.create!(account: account, name: 'Locação') }
-  let(:seminovos) { Outsider::Crm::BusinessUnit.create!(account: account, name: 'Seminovos') }
+  let(:locacao) { crm_unit(account, name: 'Locação') }
+  let(:seminovos) { crm_unit(account, name: 'Seminovos') }
   let(:seller) { create(:user, account: account, role: :agent) }
   let(:manager) { create(:user, account: account, role: :agent) }
   let(:outsider) { create(:user, account: account, role: :agent) }
@@ -11,15 +11,6 @@ RSpec.describe Outsider::Crm::Access do
 
   def access_for(user)
     described_class.new(account.account_users.find_by(user: user))
-  end
-
-  def opportunity_in(unit, owner: nil, contact: create(:contact, account: account))
-    pipeline = Outsider::Crm::Pipeline.create!(account: account, business_unit: unit, name: 'P')
-    Outsider::Crm::Opportunity.create!(
-      account: account, business_unit: unit, pipeline: pipeline, contact: contact, owner: owner, title: 'Op',
-      stage: Outsider::Crm::Stage.create!(account: account, pipeline: pipeline, name: 'S'),
-      journey: Outsider::Crm::Journey.create!(account: account, contact: contact)
-    )
   end
 
   before do
@@ -33,8 +24,8 @@ RSpec.describe Outsider::Crm::Access do
   end
 
   it 'lets sellers see their unit and edit only their own opportunities' do
-    own = opportunity_in(locacao, owner: seller)
-    others = opportunity_in(seminovos)
+    own = crm_opportunity(account, locacao, owner: seller)
+    others = crm_opportunity(account, seminovos)
     access = access_for(seller)
 
     expect(access.view_opportunity?(own)).to be(true)
@@ -44,10 +35,8 @@ RSpec.describe Outsider::Crm::Access do
   end
 
   it 'lets managers edit every opportunity in their unit' do
-    opportunity = opportunity_in(locacao, owner: seller)
-
-    expect(access_for(manager).edit_opportunity?(opportunity)).to be(true)
-    expect(access_for(seller).edit_opportunity?(opportunity_in(locacao, owner: manager))).to be(false)
+    expect(access_for(manager).edit_opportunity?(crm_opportunity(account, locacao, owner: seller))).to be(true)
+    expect(access_for(seller).edit_opportunity?(crm_opportunity(account, locacao, owner: manager))).to be(false)
   end
 
   it 'lets administrators see everything' do

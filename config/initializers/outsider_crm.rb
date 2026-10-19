@@ -11,6 +11,10 @@ Rails.application.routes.prepend do
               resources :business_units, only: [:index, :show, :create, :update, :destroy] do
                 resources :members, controller: 'business_unit_members', only: [:create, :update, :destroy]
               end
+              resources :pipelines, only: [:index, :show, :create, :update, :destroy]
+              resources :lost_reasons, only: [:index, :create, :update, :destroy]
+              resources :custom_fields, only: [:index, :create, :update, :destroy]
+              resources :opportunities, only: [:index, :show, :create, :update, :destroy]
             end
           end
         end

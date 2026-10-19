@@ -7,8 +7,8 @@ class Outsider::Crm::Activity < ApplicationRecord
   belongs_to :user, optional: true
   belongs_to :message, optional: true
 
-  enum kind: { note: 0, created: 1, stage_changed: 2, status_changed: 3, owner_changed: 4,
-               task_created: 5, task_completed: 6, forwarded: 7, received: 8, message_linked: 9 }
+  enum :kind, { note: 0, created: 1, stage_changed: 2, status_changed: 3, owner_changed: 4,
+                task_created: 5, task_completed: 6, forwarded: 7, received: 8, message_linked: 9 }, validate: true
 
   validates :body, presence: true, if: :note?
   validates :body, length: { maximum: 20_000 }

@@ -2,6 +2,8 @@
 # copiado: nome e telefone vêm sempre de contacts.
 class Outsider::Crm::Opportunity < ApplicationRecord
   include Outsider::Crm::AccountScoped
+  include Outsider::Crm::OpportunityLifecycle
+  include Outsider::Crm::OpportunityTimeline
 
   # Chave do pg_advisory_xact_lock que numera as oportunidades de cada conta
   DISPLAY_ID_LOCK = 7_210_420
@@ -21,7 +23,7 @@ class Outsider::Crm::Opportunity < ApplicationRecord
   has_many :tasks, class_name: 'Outsider::Crm::Task', dependent: :destroy
   has_many :activities, class_name: 'Outsider::Crm::Activity', dependent: :destroy
 
-  enum status: { open: 0, won: 1, lost: 2, forwarded: 3 }
+  enum :status, { open: 0, won: 1, lost: 2, forwarded: 3 }, validate: true
 
   validates :title, presence: true, length: { maximum: 255 }
   validates :value_cents, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
@@ -32,6 +34,7 @@ class Outsider::Crm::Opportunity < ApplicationRecord
   validate :consistent_contact
   validate :owner_in_account
   validate :one_open_per_contact_and_unit, if: :open?
+  validates_with Outsider::Crm::CustomFieldsValidator
 
   before_save :track_stage_change
   before_create :assign_display_id
@@ -42,6 +45,10 @@ class Outsider::Crm::Opportunity < ApplicationRecord
 
   def effective_probability
     probability || stage&.probability
+  end
+
+  def value
+    value_cents / 100.0
   end
 
   private

@@ -2,7 +2,7 @@
 class Outsider::Crm::LostReason < ApplicationRecord
   include Outsider::Crm::AccountScoped
 
-  enum kind: { lost: 0, forward: 1, both: 2 }, _prefix: :for
+  enum :kind, { lost: 0, forward: 1, both: 2 }, prefix: :for, validate: true
 
   validates :name, presence: true, length: { maximum: 255 }
 

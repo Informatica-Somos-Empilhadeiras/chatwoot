@@ -8,7 +8,9 @@ class Outsider::Crm::Stage < ApplicationRecord
   belongs_to :pipeline, class_name: 'Outsider::Crm::Pipeline'
   has_many :opportunities, class_name: 'Outsider::Crm::Opportunity', dependent: :restrict_with_error
 
-  enum kind: { open: 0, won: 1, lost: 2 }, _prefix: :kind
+  enum :kind, { open: 0, won: 1, lost: 2 }, prefix: :kind, validate: true
+
+  before_validation { self.account_id ||= pipeline&.account_id }
 
   validates :name, presence: true, length: { maximum: 255 }
   validates :probability, numericality: { only_integer: true, in: 0..100 }

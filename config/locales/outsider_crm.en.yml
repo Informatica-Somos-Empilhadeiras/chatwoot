@@ -2,3 +2,4 @@ en:
   outsider_crm:
     errors:
       duplicate_open_opportunity: This contact already has an open opportunity in this business unit
+      stage_in_use: Move the opportunities out of this stage before removing it

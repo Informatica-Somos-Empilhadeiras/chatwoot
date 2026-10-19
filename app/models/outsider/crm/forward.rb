@@ -14,7 +14,7 @@ class Outsider::Crm::Forward < ApplicationRecord
   belongs_to :requested_by, class_name: 'User', optional: true
   belongs_to :decided_by, class_name: 'User', optional: true
 
-  enum status: { pending: 0, accepted: 1, declined: 2 }
+  enum :status, { pending: 0, accepted: 1, declined: 2 }, validate: true
 
   validates :attempt_number, numericality: { only_integer: true, greater_than: 0 }
   validates_same_account :journey, :from_opportunity, :to_opportunity, :from_business_unit, :to_business_unit, :reason

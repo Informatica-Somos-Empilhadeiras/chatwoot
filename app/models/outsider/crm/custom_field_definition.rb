@@ -3,7 +3,7 @@
 class Outsider::Crm::CustomFieldDefinition < ApplicationRecord
   include Outsider::Crm::AccountScoped
 
-  enum field_type: { text: 0, number: 1, currency: 2, date: 3, list: 4, checkbox: 5 }
+  enum :field_type, { text: 0, number: 1, currency: 2, date: 3, list: 4, checkbox: 5 }, validate: true
 
   validates :key, presence: true, uniqueness: { scope: :account_id }, format: { with: /\A[a-z][a-z0-9_]*\z/ }
   validates :label, presence: true, length: { maximum: 255 }

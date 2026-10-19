@@ -2,3 +2,145 @@ pt_BR:
   outsider_crm:
     errors:
       duplicate_open_opportunity: Este contato já tem uma oportunidade aberta nesta unidade
+      stage_in_use: Mova as oportunidades desta etapa antes de removê-la
+  # Mensagens de validação dos modelos do CRM (o Chatwoot não traduz as mensagens padrão do Rails)
+  activerecord:
+    attributes:
+      outsider/crm/opportunity:
+        title: Nome do negócio
+        value_cents: Valor
+        probability: Probabilidade
+        stage: Etapa
+        pipeline: Pipeline
+        business_unit: Unidade
+        contact: Contato
+        conversation: Conversa
+        owner: Responsável
+        lost_reason: Motivo da perda
+        journey: Jornada
+        custom_fields: Campos personalizados
+        status: Situação
+        currency: Moeda
+      outsider/crm/pipeline:
+        name: Nome do pipeline
+        stages: Etapas
+        business_unit: Unidade
+      outsider/crm/stage:
+        name: Nome da etapa
+        probability: Probabilidade
+        kind: Tipo
+        sla_hours: Prazo
+      outsider/crm/business_unit:
+        name: Nome da unidade
+      outsider/crm/business_unit_member:
+        user: Agente
+        role: Papel
+        business_unit: Unidade
+      outsider/crm/lost_reason:
+        name: Nome do motivo
+        kind: Tipo
+      outsider/crm/custom_field_definition:
+        key: Chave
+        label: Nome do campo
+        field_type: Tipo
+        options: Opções
+    errors:
+      models:
+        outsider/crm/opportunity:
+          blank: "não pode ficar em branco"
+          invalid: "não é válido"
+          taken: "já está em uso"
+          inclusion: "não é uma opção válida"
+          not_a_number: "não é um número"
+          greater_than_or_equal_to: "deve ser maior ou igual a %{count}"
+          greater_than: "deve ser maior que %{count}"
+          in: "deve estar entre %{count}"
+          not_an_integer: "deve ser um número inteiro"
+          too_long: "é muito longo (máximo de %{count} caracteres)"
+          required: "é obrigatório"
+          restrict_dependent_destroy:
+            has_many: "Não é possível apagar porque existem %{record} ligados"
+        outsider/crm/pipeline:
+          blank: "não pode ficar em branco"
+          invalid: "não é válido"
+          taken: "já está em uso"
+          inclusion: "não é uma opção válida"
+          not_a_number: "não é um número"
+          greater_than_or_equal_to: "deve ser maior ou igual a %{count}"
+          greater_than: "deve ser maior que %{count}"
+          in: "deve estar entre %{count}"
+          not_an_integer: "deve ser um número inteiro"
+          too_long: "é muito longo (máximo de %{count} caracteres)"
+          required: "é obrigatório"
+          restrict_dependent_destroy:
+            has_many: "Não é possível apagar porque existem %{record} ligados"
+        outsider/crm/stage:
+          blank: "não pode ficar em branco"
+          invalid: "não é válido"
+          taken: "já está em uso"
+          inclusion: "não é uma opção válida"
+          not_a_number: "não é um número"
+          greater_than_or_equal_to: "deve ser maior ou igual a %{count}"
+          greater_than: "deve ser maior que %{count}"
+          in: "deve estar entre %{count}"
+          not_an_integer: "deve ser um número inteiro"
+          too_long: "é muito longo (máximo de %{count} caracteres)"
+          required: "é obrigatório"
+          restrict_dependent_destroy:
+            has_many: "Não é possível apagar porque existem %{record} ligados"
+        outsider/crm/business_unit:
+          blank: "não pode ficar em branco"
+          invalid: "não é válido"
+          taken: "já está em uso"
+          inclusion: "não é uma opção válida"
+          not_a_number: "não é um número"
+          greater_than_or_equal_to: "deve ser maior ou igual a %{count}"
+          greater_than: "deve ser maior que %{count}"
+          in: "deve estar entre %{count}"
+          not_an_integer: "deve ser um número inteiro"
+          too_long: "é muito longo (máximo de %{count} caracteres)"
+          required: "é obrigatório"
+          restrict_dependent_destroy:
+            has_many: "Não é possível apagar porque existem %{record} ligados"
+        outsider/crm/business_unit_member:
+          blank: "não pode ficar em branco"
+          invalid: "não é válido"
+          taken: "já está em uso"
+          inclusion: "não é uma opção válida"
+          not_a_number: "não é um número"
+          greater_than_or_equal_to: "deve ser maior ou igual a %{count}"
+          greater_than: "deve ser maior que %{count}"
+          in: "deve estar entre %{count}"
+          not_an_integer: "deve ser um número inteiro"
+          too_long: "é muito longo (máximo de %{count} caracteres)"
+          required: "é obrigatório"
+          restrict_dependent_destroy:
+            has_many: "Não é possível apagar porque existem %{record} ligados"
+        outsider/crm/lost_reason:
+          blank: "não pode ficar em branco"
+          invalid: "não é válido"
+          taken: "já está em uso"
+          inclusion: "não é uma opção válida"
+          not_a_number: "não é um número"
+          greater_than_or_equal_to: "deve ser maior ou igual a %{count}"
+          greater_than: "deve ser maior que %{count}"
+          in: "deve estar entre %{count}"
+          not_an_integer: "deve ser um número inteiro"
+          too_long: "é muito longo (máximo de %{count} caracteres)"
+          required: "é obrigatório"
+          restrict_dependent_destroy:
+            has_many: "Não é possível apagar porque existem %{record} ligados"
+        outsider/crm/custom_field_definition:
+          blank: "não pode ficar em branco"
+          invalid: "não é válido"
+          taken: "já está em uso"
+          inclusion: "não é uma opção válida"
+          not_a_number: "não é um número"
+          greater_than_or_equal_to: "deve ser maior ou igual a %{count}"
+          greater_than: "deve ser maior que %{count}"
+          in: "deve estar entre %{count}"
+          not_an_integer: "deve ser um número inteiro"
+          too_long: "é muito longo (máximo de %{count} caracteres)"
+          required: "é obrigatório"
+          restrict_dependent_destroy:
+            has_many: "Não é possível apagar porque existem %{record} ligados"

@@ -1,0 +1,167 @@
+{
+  "OUTSIDER_CRM": {
+    "SIDEBAR": "CRM",
+    "TITLE": "CRM de Vendas",
+    "SAVE": "Salvar",
+    "TABS": {
+      "OPPORTUNITIES": "Negócios",
+      "SETTINGS": "Configurações"
+    },
+    "STATES": {
+      "NO_ACCESS": "Você ainda não faz parte de nenhuma unidade comercial do CRM. Peça a um administrador para incluir você.",
+      "NO_PIPELINES": "Ainda não há pipeline nas suas unidades. Um administrador ou gestor precisa criar um em Configurações > Pipelines.",
+      "EMPTY": "Nenhum negócio encontrado com esses filtros."
+    },
+    "STATUS": {
+      "OPEN": "Aberto",
+      "WON": "Ganho",
+      "LOST": "Perdido",
+      "FORWARDED": "Encaminhado"
+    },
+    "FILTERS": {
+      "SEARCH": "Buscar por negócio, contato ou telefone",
+      "ALL_UNITS": "Todas as unidades",
+      "ALL_PIPELINES": "Todos os pipelines",
+      "ALL_STATUS": "Todos os status",
+      "ALL_OWNERS": "Todos os responsáveis",
+      "MINE": "Só os meus"
+    },
+    "TABLE": {
+      "OPPORTUNITY": "Negócio",
+      "CONTACT": "Contato",
+      "STAGE": "Etapa",
+      "VALUE": "Valor",
+      "CLOSE_DATE": "Previsão",
+      "OWNER": "Responsável",
+      "STATUS": "Status",
+      "SUMMARY": "{count} negócios · {total} nesta página"
+    },
+    "OPPORTUNITY": {
+      "NEW": "Novo negócio",
+      "CREATED": "Negócio {code} criado",
+      "UPDATED": "Negócio atualizado",
+      "CONTACT": "Contato",
+      "CONTACT_PLACEHOLDER": "Escolha um contato do Chatwoot",
+      "CONTACT_SEARCH": "Digite nome, telefone ou e-mail",
+      "CONTACT_EMPTY": "Nenhum contato encontrado",
+      "TITLE": "Nome do negócio",
+      "TITLE_PLACEHOLDER": "Ex.: Renovação do contrato de peças",
+      "UNIT": "Unidade",
+      "PIPELINE": "Pipeline",
+      "NO_PIPELINE": "Sem pipeline nesta unidade",
+      "STAGE": "Etapa",
+      "OWNER": "Responsável",
+      "VALUE": "Valor (R$)",
+      "VALUE_INVALID": "Use só números, como 68.000,00",
+      "CLOSE_DATE": "Previsão de fechamento",
+      "PROBABILITY": "Probabilidade (%)",
+      "PROBABILITY_FROM_STAGE": "{value}% (da etapa)",
+      "STATUS": "Situação",
+      "LOST_REASON": "Motivo da perda"
+    },
+    "SETTINGS": {
+      "ACTIVE": "Ativo",
+      "INACTIVE": "inativa",
+      "SECTIONS": {
+        "UNITS": "Unidades",
+        "PIPELINES": "Pipelines",
+        "REASONS": "Motivos",
+        "FIELDS": "Campos",
+        "GENERAL": "Geral"
+      },
+      "UNITS": {
+        "TITLE": "Unidades comerciais",
+        "DESCRIPTION": "Empresas ou marcas do grupo. Só os membros de uma unidade veem os negócios dela. Vendedores editam os próprios negócios; gestores editam todos e configuram os pipelines.",
+        "NEW": "Nova unidade",
+        "EDIT": "Editar unidade",
+        "EMPTY": "Nenhuma unidade cadastrada. Comece criando as empresas do grupo.",
+        "NAME": "Nome",
+        "NAME_PLACEHOLDER": "Ex.: Somos Locação",
+        "UNIT_DESCRIPTION": "Descrição (opcional)",
+        "ADD_MEMBER": "Escolha um agente",
+        "ADD": "Adicionar",
+        "REMOVE": "Tirar da unidade",
+        "NO_MEMBERS": "Nenhum agente nesta unidade ainda.",
+        "ROLES": {
+          "SELLER": "Vendedor",
+          "MANAGER": "Gestor"
+        }
+      },
+      "PIPELINES": {
+        "TITLE": "Pipelines e etapas",
+        "DESCRIPTION": "Cada unidade pode ter vários funis. As etapas de ganho e de perda fecham o negócio automaticamente.",
+        "NEW": "Novo pipeline",
+        "EDIT": "Editar pipeline",
+        "EMPTY": "Nenhum pipeline nesta unidade.",
+        "NO_UNITS": "Você não gerencia nenhuma unidade.",
+        "NAME": "Nome do pipeline",
+        "NAME_PLACEHOLDER": "Ex.: Vendas diretas",
+        "STAGES": "Etapas",
+        "ADD_STAGE": "Adicionar etapa",
+        "STAGE_NAME": "Nome da etapa",
+        "STAGES_HELP": "A ordem aqui é a ordem das colunas no Kanban. Precisa ter pelo menos uma etapa aberta. Etapa com negócios não pode ser removida.",
+        "KINDS": {
+          "OPEN": "Aberta",
+          "WON": "Ganho",
+          "LOST": "Perda"
+        },
+        "DEFAULT_STAGES": {
+          "LEAD": "Lead / Sem contato",
+          "QUALIFIED": "Qualificação",
+          "PROPOSAL": "Proposta enviada",
+          "NEGOTIATION": "Negociação",
+          "WON": "Ganho",
+          "LOST": "Perdido"
+        }
+      },
+      "REASONS": {
+        "TITLE": "Motivos de perda e de encaminhamento",
+        "DESCRIPTION": "Quando houver algum motivo de perda cadastrado, marcar um negócio como perdido passa a exigir o motivo.",
+        "PLACEHOLDER": "Ex.: Preço acima do orçamento",
+        "ADD": "Adicionar",
+        "EMPTY": "Nenhum motivo cadastrado.",
+        "IN_USE": "Este motivo já foi usado. Desative em vez de apagar.",
+        "KINDS": {
+          "LOST": "Perda",
+          "FORWARD": "Encaminhamento",
+          "BOTH": "Perda e encaminhamento"
+        }
+      },
+      "FIELDS": {
+        "TITLE": "Campos personalizados",
+        "DESCRIPTION": "Informações extras dos negócios, como CNPJ, segmento ou tamanho da frota. Desativar esconde o campo sem apagar o que já foi preenchido.",
+        "NEW": "Novo campo",
+        "EDIT": "Editar campo",
+        "EMPTY": "Nenhum campo personalizado.",
+        "LABEL": "Nome do campo",
+        "LABEL_PLACEHOLDER": "Ex.: CNPJ",
+        "TYPE": "Tipo",
+        "OPTIONS": "Opções (uma por linha)",
+        "OPTIONS_PLACEHOLDER": "Locação\nVenda\nPeças",
+        "REQUIRED": "Obrigatório",
+        "TYPES": {
+          "TEXT": "Texto",
+          "NUMBER": "Número",
+          "CURRENCY": "Valor (R$)",
+          "DATE": "Data",
+          "LIST": "Lista",
+          "CHECKBOX": "Sim/Não"
+        }
+      },
+      "GENERAL": {
+        "TITLE": "Geral",
+        "DESCRIPTION": "Regras que valem para todo o CRM da conta.",
+        "MAX_ATTEMPTS": "Tentativas de encaminhamento por lead",
+        "MAX_ATTEMPTS_HELP": "Quantas vezes o mesmo lead pode ser encaminhado entre unidades antes de a jornada ser encerrada (usado na etapa de encaminhamento).",
+        "SAVED": "Configurações salvas"
+      }
+    },
+    "ERRORS": {
+      "NO_PERMISSION": "Você não tem permissão para isso.",
+      "NO_ACCESS": "Você não faz parte de nenhuma unidade do CRM.",
+      "IN_USE": "Está em uso e não pode ser apagado. Desative em vez de apagar.",
+      "NOT_FOUND": "Não encontrado. Talvez tenha sido apagado.",
+      "GENERIC": "Não foi possível concluir. Tente de novo."
+    }
+  }
+}

@@ -8,7 +8,7 @@ class Outsider::Crm::Journey < ApplicationRecord
   has_many :opportunities, class_name: 'Outsider::Crm::Opportunity', dependent: :restrict_with_error
   has_many :forwards, class_name: 'Outsider::Crm::Forward', dependent: :restrict_with_error
 
-  enum status: { open: 0, won: 1, closed: 2 }
+  enum :status, { open: 0, won: 1, closed: 2 }, validate: true
 
   validates_same_account :contact, :company
 end

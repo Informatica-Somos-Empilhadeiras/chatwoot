@@ -491,6 +491,13 @@ const menuItems = computed(() => {
       icon: 'i-lucide-circle-dashed',
       to: accountScopedRoute('outsider_whatsapp_status'),
     },
+    // OUTSIDER: CRM de vendas
+    {
+      name: 'OutsiderCrm',
+      label: t('OUTSIDER_CRM.SIDEBAR'),
+      icon: 'i-lucide-handshake',
+      to: accountScopedRoute('outsider_crm'),
+    },
     {
       name: 'Captain',
       icon: 'i-woot-captain',

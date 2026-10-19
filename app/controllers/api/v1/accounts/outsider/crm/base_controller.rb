@@ -22,6 +22,10 @@ class Api::V1::Accounts::Outsider::Crm::BaseController < Api::V1::Accounts::Base
     render json: { error: 'crm_admin_only' }, status: :forbidden unless crm_access.administrator?
   end
 
+  def render_forbidden
+    render json: { error: 'crm_forbidden' }, status: :forbidden
+  end
+
   def crm_scope(model)
     model.where(account_id: Current.account.id)
   end

@@ -8,7 +8,7 @@ class Outsider::Crm::BusinessUnitMember < ApplicationRecord
   belongs_to :business_unit, class_name: 'Outsider::Crm::BusinessUnit'
   belongs_to :user
 
-  enum role: { seller: 0, manager: 1 }
+  enum :role, { seller: 0, manager: 1 }, validate: true
 
   validates :user_id, uniqueness: { scope: :business_unit_id }
   validates_same_account :business_unit
