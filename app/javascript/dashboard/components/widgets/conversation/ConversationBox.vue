@@ -5,6 +5,9 @@ import DashboardAppFrame from '../DashboardApp/Frame.vue';
 import EmptyState from './EmptyState/EmptyState.vue';
 import MessagesView from './MessagesView.vue';
 import ConversationSearchPanel from './outsider/ConversationSearchPanel.vue'; // OUTSIDER: busca na conversa
+import outsiderCrmTabMixin, {
+  CrmConversationTab,
+} from 'dashboard/routes/dashboard/outsider/crm/conversation/crmTabMixin'; // OUTSIDER: aba CRM
 
 export default {
   components: {
@@ -13,7 +16,9 @@ export default {
     EmptyState,
     MessagesView,
     ConversationSearchPanel, // OUTSIDER
+    CrmConversationTab, // OUTSIDER: aba CRM
   },
+  mixins: [outsiderCrmTabMixin], // OUTSIDER: aba CRM
   props: {
     inboxId: {
       type: [Number, String],
@@ -53,6 +58,7 @@ export default {
           index: index + 1,
           name: dashboardApp.title,
         })),
+        ...this.outsiderCrmTabs, // OUTSIDER: aba CRM
       ];
     },
     showContactPanel() {
@@ -101,16 +107,22 @@ export default {
       'border-l rtl:border-l-0 rtl:border-r border-n-weak': !isOnExpandedLayout,
     }"
   >
-    <!-- OUTSIDER: relative z-40 deixa os menus do cabeçalho por cima do card da busca -->
+    <!-- OUTSIDER: relative z-40 deixa os menus do cabeçalho por cima do card da busca; outsiderCrmTabs = aba CRM -->
     <ConversationHeader
       v-if="currentChat.id"
       :chat="currentChat"
       :show-back-button="isOnExpandedLayout && !isInboxView"
       class="relative z-40"
-      :class="[{ 'border-b border-b-n-weak !pt-2': !dashboardApps.length }]"
+      :class="[
+        {
+          'border-b border-b-n-weak !pt-2':
+            !dashboardApps.length && !outsiderCrmTabs.length,
+        },
+      ]"
     />
+    <!-- OUTSIDER: abas também aparecem só com a aba CRM; selo com os negócios abertos -->
     <woot-tabs
-      v-if="dashboardApps.length && currentChat.id"
+      v-if="(dashboardApps.length || outsiderCrmTabs.length) && currentChat.id"
       :index="activeIndex"
       class="h-10"
       @change="onDashboardAppTabChange"
@@ -120,7 +132,8 @@ export default {
         :key="tab.key"
         :index="tab.index"
         :name="tab.name"
-        :show-badge="false"
+        :show-badge="!!tab.showBadge"
+        :count="tab.count || 0"
         is-compact
       />
     </woot-tabs>
@@ -150,5 +163,7 @@ export default {
       :position="index"
       :current-chat="currentChat"
     />
+    <!-- OUTSIDER: aba CRM -->
+    <CrmConversationTab v-if="outsiderCrmTabActive" :chat="currentChat" />
   </div>
 </template>

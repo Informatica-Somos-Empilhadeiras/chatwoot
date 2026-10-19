@@ -2,4 +2,5 @@ en:
   outsider_crm:
     errors:
       duplicate_open_opportunity: This contact already has an open opportunity in this business unit
+      group_contact: WhatsApp groups cannot have opportunities
       stage_in_use: Move the opportunities out of this stage before removing it

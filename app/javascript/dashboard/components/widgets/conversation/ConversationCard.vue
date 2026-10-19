@@ -13,6 +13,7 @@ import SLACardLabel from './components/SLACardLabel.vue';
 import VoiceCallStatus from './VoiceCallStatus.vue';
 import Checkbox from 'dashboard/components-next/checkbox/Checkbox.vue';
 import { useConversationPins } from 'dashboard/composables/outsider/useConversationPins'; // OUTSIDER
+import CrmValueChip from 'dashboard/routes/dashboard/outsider/crm/conversation/CrmValueChip.vue'; // OUTSIDER: valor no CRM
 
 const props = defineProps({
   chat: { type: Object, required: true },
@@ -249,6 +250,8 @@ watch(
           <SLACardLabel :chat="chat" class="ltr:mr-1 rtl:ml-1" />
         </template>
       </CardLabels>
+      <!-- OUTSIDER: valor em aberto do contato no CRM -->
+      <CrmValueChip :contact-id="chat.meta?.sender?.id" class="mt-1 mx-2" />
     </div>
   </div>
 </template>

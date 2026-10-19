@@ -7,6 +7,29 @@ const money = new Intl.NumberFormat('pt-BR', {
 
 export const formatMoney = cents => money.format((cents || 0) / 100);
 
+const shortMoney = new Intl.NumberFormat('pt-BR', {
+  style: 'currency',
+  currency: 'BRL',
+  notation: 'compact',
+  maximumFractionDigits: 1,
+});
+
+// "R$ 82,5 mil", para selos e abas
+export const formatMoneyShort = cents => shortMoney.format((cents || 0) / 100);
+
+// dias inteiros entre hoje e uma data "AAAA-MM-DD" (negativo = já passou)
+export const daysUntil = date => {
+  if (!date) return null;
+  const today = new Date();
+  today.setHours(12, 0, 0, 0);
+  return Math.round((new Date(`${date}T12:00:00`) - today) / 86400000);
+};
+
+export const daysSince = timestamp =>
+  timestamp
+    ? Math.max(0, Math.floor((Date.now() - new Date(timestamp)) / 86400000))
+    : null;
+
 // "68.000,50" ou "68000.5" viram 68000.5; vazio vira 0
 export const parseMoney = text => {
   const value = String(text ?? '').trim();

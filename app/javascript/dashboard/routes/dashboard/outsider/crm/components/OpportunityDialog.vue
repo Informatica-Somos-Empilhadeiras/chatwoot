@@ -31,9 +31,13 @@ const editing = ref(null);
 const contactOptions = ref([]);
 const customFields = ref([]);
 const lostReasons = ref([]);
+// vindo da conversa: contato fixo e só as unidades onde o contato ainda não tem negócio aberto
+const lockedContact = ref(false);
+const allowedUnitIds = ref(null);
 
 const emptyForm = () => ({
   contact_id: '',
+  conversation_id: '',
   business_unit_id: props.access.units[0]?.id ?? '',
   pipeline_id: '',
   stage_id: '',
@@ -50,7 +54,14 @@ const emptyForm = () => ({
 const form = ref(emptyForm());
 
 const unitOptions = computed(() =>
-  props.access.units.map(unit => ({ value: unit.id, label: unit.name }))
+  props.access.units
+    .filter(
+      unit =>
+        editing.value ||
+        !allowedUnitIds.value ||
+        allowedUnitIds.value.includes(unit.id)
+    )
+    .map(unit => ({ value: unit.id, label: unit.name }))
 );
 
 const unitPipelines = computed(() =>
@@ -131,16 +142,15 @@ watch(
   }
 );
 
-watch(
-  () => form.value.pipeline_id,
-  () => {
-    if (editing.value) return;
-    const stages = currentPipeline.value?.stages || [];
-    if (stages.some(stage => stage.id === form.value.stage_id)) return;
-    form.value.stage_id =
-      (stages.find(stage => stage.kind === 'open') || stages[0])?.id ?? '';
-  }
-);
+const ensureStage = () => {
+  if (editing.value) return;
+  const stages = currentPipeline.value?.stages || [];
+  if (stages.some(stage => stage.id === form.value.stage_id)) return;
+  form.value.stage_id =
+    (stages.find(stage => stage.kind === 'open') || stages[0])?.id ?? '';
+};
+
+watch(() => form.value.pipeline_id, ensureStage);
 
 const searchContacts = async query => {
   if (!query?.trim()) return;
@@ -169,8 +179,16 @@ const loadSupportData = async () => {
     });
 };
 
+const contactLabel = contact =>
+  [contact.name, contact.phone_number].filter(Boolean).join(' · ');
+
+// defaults pode trazer: business_unit_id, pipeline_id, stage_id (Kanban) ou
+// contact, conversation_id e unit_ids (aba CRM da conversa)
 const open = async (opportunity = null, defaults = {}) => {
   editing.value = opportunity;
+  const { contact, unit_ids: unitIds, ...initial } = defaults;
+  lockedContact.value = !!contact;
+  allowedUnitIds.value = unitIds || null;
   if (opportunity) {
     form.value = {
       ...emptyForm(),
@@ -188,10 +206,21 @@ const open = async (opportunity = null, defaults = {}) => {
     ];
   } else {
     // defaults vem do Kanban (unidade, pipeline e etapa da coluna) e é mantido se for válido
-    form.value = { ...emptyForm(), ...defaults };
+    form.value = { ...emptyForm(), ...initial };
+    if (contact) {
+      form.value.contact_id = contact.id;
+      contactOptions.value = [
+        { value: contact.id, label: contactLabel(contact) },
+      ];
+    }
+    if (unitIds?.length && !unitIds.includes(form.value.business_unit_id)) {
+      form.value.business_unit_id = unitIds[0];
+    }
     if (!unitPipelines.value.some(p => p.id === form.value.pipeline_id)) {
       form.value.pipeline_id = unitPipelines.value[0]?.id ?? '';
     }
+    // o watch não dispara quando o pipeline é o mesmo da última vez
+    ensureStage();
   }
   dialogRef.value?.open();
   try {
@@ -226,6 +255,7 @@ const payload = () => {
   return {
     ...data,
     contact_id: form.value.contact_id,
+    conversation_id: form.value.conversation_id || null,
     business_unit_id: form.value.business_unit_id,
     pipeline_id: form.value.pipeline_id,
   };
@@ -280,7 +310,7 @@ defineExpose({ open });
           v-model="form.contact_id"
           :options="contactOptions"
           use-api-results
-          :disabled="!!editing"
+          :disabled="!!editing || lockedContact"
           :placeholder="t('OUTSIDER_CRM.OPPORTUNITY.CONTACT_PLACEHOLDER')"
           :search-placeholder="t('OUTSIDER_CRM.OPPORTUNITY.CONTACT_SEARCH')"
           :empty-state="t('OUTSIDER_CRM.OPPORTUNITY.CONTACT_EMPTY')"

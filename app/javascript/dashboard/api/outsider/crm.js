@@ -130,6 +130,18 @@ class CrmAPI extends ApiClient {
     return axios.delete(`${this.url}/opportunities/${id}`);
   }
 
+  getContactSummary(contactId, conversationId) {
+    return axios.get(`${this.url}/contacts/${contactId}`, {
+      params: conversationId ? { conversation_id: conversationId } : {},
+    });
+  }
+
+  getContactSummaries(contactIds) {
+    return axios.get(`${this.url}/contacts/summaries`, {
+      params: { ids: contactIds.join(',') },
+    });
+  }
+
   getBoard(params) {
     return axios.get(`${this.url}/opportunities/board`, { params });
   }

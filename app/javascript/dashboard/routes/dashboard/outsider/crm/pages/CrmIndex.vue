@@ -12,6 +12,7 @@ import Icon from 'dashboard/components-next/icon/Icon.vue';
 import OpportunityList from '../components/OpportunityList.vue';
 import CrmSettingsPanel from '../components/settings/CrmSettingsPanel.vue';
 import { errorMessage } from '../helpers';
+import { invalidateCrmContext } from '../crmStore';
 
 const { t } = useI18n();
 const route = useRoute();
@@ -55,6 +56,7 @@ const loadStructure = async () => {
 };
 
 const reload = async () => {
+  invalidateCrmContext();
   try {
     const { data } = await CrmAPI.getAccess();
     access.value = data;

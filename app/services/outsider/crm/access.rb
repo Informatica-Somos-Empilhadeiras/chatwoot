@@ -24,6 +24,10 @@ class Outsider::Crm::Access
     memberships.select(&:manager?).map(&:business_unit_id)
   end
 
+  def member_unit_ids
+    memberships.map(&:business_unit_id)
+  end
+
   def member_of?(unit_id)
     administrator? || memberships.any? { |membership| membership.business_unit_id == unit_id }
   end

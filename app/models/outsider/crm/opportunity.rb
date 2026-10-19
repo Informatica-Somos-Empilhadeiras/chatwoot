@@ -34,6 +34,7 @@ class Outsider::Crm::Opportunity < ApplicationRecord
   validate :consistent_contact
   validate :owner_in_account
   validate :one_open_per_contact_and_unit, if: :open?
+  validate :contact_not_group, on: :create
   validates_with Outsider::Crm::CustomFieldsValidator
 
   before_save :track_stage_change
@@ -74,6 +75,13 @@ class Outsider::Crm::Opportunity < ApplicationRecord
     others = self.class.open.where(account_id: account_id, contact_id: contact_id, business_unit_id: business_unit_id)
     others = others.where.not(id: id) if persisted?
     errors.add(:base, :duplicate_open_opportunity, message: I18n.t('outsider_crm.errors.duplicate_open_opportunity')) if others.exists?
+  end
+
+  # Grupo do WhatsApp (identifier @g.us) não é cliente: não abre negócio
+  def contact_not_group
+    return unless contact && Outsider::Crm::ContactSummary.group?(contact)
+
+    errors.add(:contact, :group_contact, message: I18n.t('outsider_crm.errors.group_contact'))
   end
 
   def assign_display_id

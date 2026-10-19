@@ -2,6 +2,7 @@ pt_BR:
   outsider_crm:
     errors:
       duplicate_open_opportunity: Este contato já tem uma oportunidade aberta nesta unidade
+      group_contact: Grupos do WhatsApp não podem ter negócios
       stage_in_use: Mova as oportunidades desta etapa antes de removê-la
   # Mensagens de validação dos modelos do CRM (o Chatwoot não traduz as mensagens padrão do Rails)
   activerecord:

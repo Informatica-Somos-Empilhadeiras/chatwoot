@@ -1,5 +1,5 @@
 # OUTSIDER: rotas do CRM (ver app/models/outsider/crm.rb e app/controllers/api/v1/accounts/outsider/crm/)
-Rails.application.routes.prepend do
+Rails.application.routes.prepend do # rubocop:disable Metrics/BlockLength
   namespace :api, defaults: { format: 'json' } do
     namespace :v1 do
       resources :accounts, only: [] do
@@ -14,6 +14,9 @@ Rails.application.routes.prepend do
               resources :pipelines, only: [:index, :show, :create, :update, :destroy]
               resources :lost_reasons, only: [:index, :create, :update, :destroy]
               resources :custom_fields, only: [:index, :create, :update, :destroy]
+              resources :contacts, only: [:show] do
+                collection { get :summaries }
+              end
               resources :opportunities, only: [:index, :show, :create, :update, :destroy] do
                 collection do
                   get :board

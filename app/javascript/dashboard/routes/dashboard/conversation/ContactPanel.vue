@@ -24,6 +24,7 @@ import ShopifyOrdersList from 'dashboard/components/widgets/conversation/Shopify
 import SidebarActionsHeader from 'dashboard/components-next/SidebarActionsHeader.vue';
 import LinearIssuesList from 'dashboard/components/widgets/conversation/linear/IssuesList.vue';
 import LinearSetupCTA from 'dashboard/components/widgets/conversation/linear/LinearSetupCTA.vue';
+import CrmContactPanelSection from 'dashboard/routes/dashboard/outsider/crm/conversation/CrmContactPanelSection.vue'; // OUTSIDER: bloco do CRM
 
 const props = defineProps({
   conversationId: {
@@ -309,6 +310,13 @@ onMounted(() => {
             >
               <SharedFiles />
             </AccordionItem>
+          </div>
+          <!-- OUTSIDER: bloco do CRM (some quando o agente não usa o CRM) -->
+          <div v-else-if="element.name === 'outsider_crm'" class="empty:hidden">
+            <CrmContactPanelSection
+              :contact-id="contactId"
+              :conversation-id="conversationId"
+            />
           </div>
         </template>
       </Draggable>
