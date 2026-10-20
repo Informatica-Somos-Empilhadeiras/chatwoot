@@ -1,7 +1,7 @@
 # OUTSIDER: limpa os negócios de teste do CRM antes de liberar para a equipe. Só mexe nas
 # tabelas outsider_crm_* (e no histórico de auditoria delas); nada do Chatwoot é apagado.
 #   bin/rails outsider_crm:limpar_negocios CONFIRMAR=sim            # negócios, jornadas, tarefas, atividades
-#   bin/rails outsider_crm:limpar_negocios CONFIRMAR=sim TUDO=sim   # também unidades, pipelines, motivos, campos e regras
+#   bin/rails outsider_crm:limpar_negocios CONFIRMAR=sim TUDO=sim   # também unidades, pipelines, motivos, campos, regras, metas e comissão
 namespace :outsider_crm do
   desc 'Apaga os negócios do CRM (CONFIRMAR=sim; TUDO=sim apaga também a configuração)'
   task limpar_negocios: :environment do
@@ -15,12 +15,13 @@ namespace :outsider_crm do
     ActiveRecord::Base.transaction do
       Audited::Audit.where(auditable_type: models.map(&:name)).delete_all
       models.each { |model| puts "#{model.table_name}: #{model.delete_all} apagados" }
-      # as regras de automação apontam para unidades, pipelines e etapas: saem junto com elas
+      # regras, metas e comissão apontam para unidades, pipelines, etapas e pessoas: saem junto
       if ENV['TUDO'] == 'sim'
-        key = crm::AutomationRules::KEY
-        Account.where("internal_attributes -> '#{key}' IS NOT NULL").find_each do |account|
-          account.update_columns(internal_attributes: account.internal_attributes.except(key)) # rubocop:disable Rails/SkipsModelValidations
-          puts "regras de automação apagadas na conta #{account.id}"
+        [crm::AutomationRules::KEY, crm::Goals::KEY, crm::Commission::KEY].each do |key|
+          Account.where("internal_attributes -> '#{key}' IS NOT NULL").find_each do |account|
+            account.update_columns(internal_attributes: account.internal_attributes.except(key)) # rubocop:disable Rails/SkipsModelValidations
+            puts "#{key} apagado na conta #{account.id}"
+          end
         end
       end
     end

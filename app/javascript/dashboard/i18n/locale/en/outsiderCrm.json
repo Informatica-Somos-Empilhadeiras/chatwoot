@@ -7,7 +7,8 @@
       "OPPORTUNITIES": "Deals",
       "SETTINGS": "Settings",
       "TASKS": "Tasks",
-      "REPORTS": "Reports"
+      "REPORTS": "Reports",
+      "GOALS": "Goals"
     },
     "STATES": {
       "NO_ACCESS": "You are not part of any CRM business unit yet. Ask an administrator to add you.",
@@ -71,7 +72,9 @@
         "REASONS": "Reasons",
         "FIELDS": "Fields",
         "GENERAL": "General",
-        "AUTOMATIONS": "Automations"
+        "AUTOMATIONS": "Automations",
+        "GOALS": "Goals",
+        "COMMISSION": "Commission"
       },
       "UNITS": {
         "TITLE": "Business units",
@@ -157,7 +160,9 @@
         "DESCRIPTION": "Rules for the whole CRM of this account.",
         "MAX_ATTEMPTS": "Forwarding attempts per lead",
         "MAX_ATTEMPTS_HELP": "How many times the same lead can be forwarded between units before the journey closes (used by forwarding).",
-        "SAVED": "Settings saved"
+        "SAVED": "Settings saved",
+        "OWN_DEALS": "Sellers see only their own deals",
+        "OWN_DEALS_HELP": "When on, those who are only sellers in a unit see, in the list, the board and the conversation tab, only their deals and the ones without an owner. Managers and administrators still see everything. Seller indicators count only their deals either way."
       },
       "AUTOMATIONS": {
         "TITLE": "Ready-made automations",
@@ -299,6 +304,45 @@
           "NOTES": "Note for the receiver (optional)",
           "HELP": "The lost deal becomes forwarded and a new deal opens in the destination unit, in the first stage, with the same contact, conversation, value and fields. It does not forward if the contact already has an open deal there or the journey reached the forwarding limit; the timeline shows why."
         }
+      },
+      "GOALS": {
+        "TITLE": "Sales goals",
+        "DESCRIPTION": "How much each unit and each seller should win in the month. A month's goal also applies to the following months until you change it.",
+        "NONE_YET": "No goal set up to this month.",
+        "SET_HERE": "Goals set in this month.",
+        "INHERITED": "No change this month: the goals of {month} apply. Save to change from here on.",
+        "UNITS": "Companies (units)",
+        "SELLERS": "Sellers",
+        "TOTAL": "Sum: {value}",
+        "PLACEHOLDER": "No goal",
+        "NO_PEOPLE": "Nobody added to the units yet.",
+        "ADMIN": "Administrator",
+        "HELP": "Values in reais; leave empty for no goal. The change applies to the chosen month and the following ones; earlier months stay as they were.",
+        "SAVED": "Goals saved from {month} on."
+      },
+      "COMMISSION": {
+        "TITLE": "Seller commission",
+        "DESCRIPTION": "Commission = value of the deals won in the month × percent. Start with the general percent; use specific ones only for those paid differently.",
+        "GENERAL": "General percent",
+        "PERCENT_PLACEHOLDER": "0",
+        "EXAMPLE": "Example: R$ 1,000.00 sold at {percent} = {value} commission.",
+        "GENERAL_HELP": "Applies to every seller and unit without a specific percent.",
+        "SPECIFIC": "Specific percents",
+        "ADD": "Add percent",
+        "NO_SPECIFIC": "No specific percent: everybody gets the general one.",
+        "ANY_SELLER": "Any seller",
+        "ANY_UNIT": "Any unit",
+        "REMOVE": "Remove",
+        "ORDER": "When more than one applies, the most specific wins: seller + unit, then seller, then unit, then general.",
+        "SINCE": "In effect since {month}.",
+        "NEVER": "Not set up yet.",
+        "MONTHS": "Each change applies from the current month on; earlier months keep the percent of their time.",
+        "SAVED": "Commission saved. It applies from this month on.",
+        "ERRORS": {
+          "TARGET": "Choose a seller, a unit or both.",
+          "PERCENT": "Use a percent from 0 to 100.",
+          "DUPLICATE": "There is already a percent for this combination."
+        }
       }
     },
     "ERRORS": {
@@ -337,7 +381,8 @@
       "WEIGHTED_HINT": "Value × probability",
       "CONVERSION_HINT": "{won} won of {closed} closed",
       "DAYS": "{days} days",
-      "AVERAGE_DAYS_HINT": "From creation to win"
+      "AVERAGE_DAYS_HINT": "From creation to win",
+      "OWN_ONLY": "In the units where you are a seller, the numbers count only your deals."
     },
     "BOARD": {
       "ADD": "Add deal",
@@ -760,6 +805,44 @@
       "CLOSE": "Close",
       "DOT": "{n} forwarded deal not opened yet | {n} forwarded deals not opened yet",
       "NEW": "New"
+    },
+    "GOALS": {
+      "PREVIOUS": "Previous month",
+      "NEXT": "Next month",
+      "THIS_MONTH": "Back to this month",
+      "SET_GOALS": "Set goals",
+      "SET_COMMISSION": "Commission",
+      "EMPTY": "There is no goal for this month yet. Talk to the CRM administrator.",
+      "EMPTY_ADMIN": "There is no goal for this month yet. Use “Set goals” to add unit and seller goals.",
+      "MINE": "My month",
+      "SOLD": "Sold",
+      "GOAL": "Goal",
+      "COMMISSION": "Commission",
+      "DEALS": "{n} deal won | {n} deals won",
+      "FUTURE": "This month has not started yet.",
+      "HOW_COMMISSION": "How the commission was calculated",
+      "NO_DEALS": "No deal won this month yet.",
+      "TABLE": {
+        "DEAL": "Deal",
+        "WON_AT": "Won on",
+        "VALUE": "Value",
+        "PERCENT": "Percent",
+        "COMMISSION": "Commission",
+        "TOTAL": "Month total",
+        "SELLER": "Seller",
+        "PROGRESS": "Goal reached"
+      },
+      "FORMULA": "Commission = value of each deal won in the month × percent. Example: R$ 1,000.00 at 1% = R$ 10.00. Counts the deals you own, in the month they were won.",
+      "TEAM_SOLD": "Sold by the team",
+      "TEAM_GOAL": "Units goal",
+      "TEAM_COMMISSION": "Month commissions",
+      "UNITS": "Companies",
+      "SELLERS": "Sellers",
+      "OF": "{won} of {goal}",
+      "SELLERS_HELP": "Each seller adds up the deals they own that were won in the month, in the units you follow.",
+      "NO_GOAL": "No goal",
+      "REACHED": "Goal reached: {percent}%",
+      "MISSING": "{percent}% of the goal · {value} to go"
     }
   }
 }

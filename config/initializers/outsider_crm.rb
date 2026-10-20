@@ -10,6 +10,9 @@ Rails.application.routes.prepend do
               resource :access, only: [:show]
               resource :settings, only: [:show, :update]
               resource :reports, only: [:show]
+              resource :performance, only: [:show]
+              resource :goals, only: [:show, :update]
+              resource :commission, only: [:show, :update]
               resource :automations, only: [] do
                 post :stalled
               end

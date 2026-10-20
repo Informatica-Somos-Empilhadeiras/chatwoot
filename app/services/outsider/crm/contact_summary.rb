@@ -27,7 +27,7 @@ class Outsider::Crm::ContactSummary
       won_count: won.size,
       won_value_cents: won.sum(&:value_cents),
       primary_id: primary(open)&.id,
-      creatable_unit_ids: creatable_unit_ids(open),
+      creatable_unit_ids: creatable_unit_ids,
       opportunities: Outsider::Crm::Serializer.opportunities(opportunities, access: @access)
     }
   end
@@ -55,12 +55,13 @@ class Outsider::Crm::ContactSummary
 
   # Unidades com pipeline ativo em que o usuário pode abrir negócio para o contato
   # (uma oportunidade aberta por unidade; grupos não têm negócio)
-  def creatable_unit_ids(open)
+  def creatable_unit_ids
     return [] if self.class.group?(@contact)
 
     member_units = @access.administrator? ? @access.visible_unit_ids : @access.member_unit_ids
     with_pipeline = Outsider::Crm::Pipeline.active.where(account_id: @contact.account_id, business_unit_id: member_units)
                                            .distinct.pluck(:business_unit_id)
-    with_pipeline - open.map(&:business_unit_id)
+    # conta também o negócio aberto de colega que o usuário não enxerga (vendedor vê só os seus)
+    with_pipeline - Outsider::Crm::Opportunity.open.where(account_id: @contact.account_id, contact_id: @contact.id).pluck(:business_unit_id)
   end
 end

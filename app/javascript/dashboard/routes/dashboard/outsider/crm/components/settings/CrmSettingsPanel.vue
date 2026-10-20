@@ -1,7 +1,8 @@
 <script setup>
 // OUTSIDER: configurações do CRM. Administradores veem tudo; gestores de unidade só os
-// pipelines das suas unidades.
+// pipelines das suas unidades. ?secao=goals abre direto numa seção (botões da aba Metas).
 import { ref, computed } from 'vue';
+import { useRoute } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import UnitsSettings from './UnitsSettings.vue';
 import PipelinesSettings from './PipelinesSettings.vue';
@@ -9,6 +10,8 @@ import ReasonsSettings from './ReasonsSettings.vue';
 import FieldsSettings from './FieldsSettings.vue';
 import GeneralSettings from './GeneralSettings.vue';
 import AutomationsSettings from './AutomationsSettings.vue';
+import GoalsSettings from './GoalsSettings.vue';
+import CommissionSettings from './CommissionSettings.vue';
 
 const props = defineProps({
   access: { type: Object, required: true },
@@ -19,6 +22,7 @@ const props = defineProps({
 const emit = defineEmits(['changed']);
 
 const { t } = useI18n();
+const route = useRoute();
 
 const sections = computed(() =>
   [
@@ -27,6 +31,8 @@ const sections = computed(() =>
     { key: 'reasons', icon: 'i-lucide-circle-x', admin: true },
     { key: 'fields', icon: 'i-lucide-text-cursor-input', admin: true },
     { key: 'automations', icon: 'i-lucide-bot', admin: true },
+    { key: 'goals', icon: 'i-lucide-target', admin: true },
+    { key: 'commission', icon: 'i-lucide-percent', admin: true },
     { key: 'general', icon: 'i-lucide-settings-2', admin: true },
   ]
     .filter(section => props.access.administrator || !section.admin)
@@ -36,7 +42,11 @@ const sections = computed(() =>
     }))
 );
 
-const active = ref(props.access.administrator ? 'units' : 'pipelines');
+const active = ref(
+  sections.value.some(section => section.key === route.query.secao)
+    ? route.query.secao
+    : sections.value[0].key
+);
 </script>
 
 <template>
@@ -80,6 +90,8 @@ const active = ref(props.access.administrator ? 'units' : 'pipelines');
         :pipelines="pipelines"
         @changed="emit('changed')"
       />
+      <GoalsSettings v-else-if="active === 'goals'" :units="units" />
+      <CommissionSettings v-else-if="active === 'commission'" :units="units" />
       <GeneralSettings v-else :access="access" @changed="emit('changed')" />
     </div>
   </div>

@@ -44,6 +44,49 @@ export const parseMoney = text => {
 export const centsToInput = cents =>
   cents ? (cents / 100).toFixed(2).replace('.', ',') : '';
 
+// metas e comissão: mês "AAAA-MM"
+export const currentMonth = () => {
+  const today = new Date();
+  return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+};
+
+export const shiftMonth = (month, step) => {
+  const [year, number] = month.split('-').map(Number);
+  const date = new Date(year, number - 1 + step, 1);
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+};
+
+// "outubro de 2026"
+export const formatMonth = month =>
+  month
+    ? new Date(`${month}-15T12:00:00`).toLocaleDateString('pt-BR', {
+        month: 'long',
+        year: 'numeric',
+      })
+    : '';
+
+// percentual em centésimos de ponto: "1,5" vira 150; vazio vira 0; inválido vira NaN
+export const percentToBp = text => {
+  const value = String(text ?? '')
+    .trim()
+    .replace('%', '')
+    .replace(',', '.');
+  if (!value) return 0;
+  const number = Number(value);
+  return Number.isFinite(number) && number >= 0 && number <= 100
+    ? Math.round(number * 100)
+    : NaN;
+};
+
+export const bpToInput = bp => (bp ? String(bp / 100).replace('.', ',') : '');
+
+export const formatPercent = bp =>
+  `${String(Math.round(bp || 0) / 100).replace('.', ',')}%`;
+
+// quanto da meta foi atingido, em %, ou null sem meta
+export const attainment = (won, goal) =>
+  goal ? Math.round(((won || 0) * 100) / goal) : null;
+
 export const formatDate = date =>
   date ? new Date(`${date}T12:00:00`).toLocaleDateString('pt-BR') : '';
 

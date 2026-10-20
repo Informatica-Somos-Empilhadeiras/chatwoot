@@ -43,6 +43,13 @@ const managesAnyUnit = computed(
     props.access.units.some(unit => unit.role === 'manager')
 );
 
+// vendedor em alguma unidade: lá os números são só dos negócios dele (o servidor filtra)
+const sellerUnits = computed(
+  () =>
+    !props.access.administrator &&
+    props.access.units.some(unit => unit.role === 'seller')
+);
+
 const unitOptions = computed(() => [
   { value: '', label: t('OUTSIDER_CRM.FILTERS.ALL_UNITS') },
   ...props.units.map(unit => ({ value: unit.id, label: unit.name })),
@@ -226,6 +233,14 @@ onMounted(() => {
       </span>
       <Spinner v-if="isLoading" :size="16" class="text-n-slate-10" />
     </div>
+
+    <p
+      v-if="sellerUnits"
+      class="flex items-center gap-1.5 -mt-2 mb-0 text-xs text-n-slate-11"
+    >
+      <span class="i-lucide-user-round size-3.5" />
+      {{ t('OUTSIDER_CRM.METRICS.OWN_ONLY') }}
+    </p>
 
     <LoadError v-if="loadError" :message="loadError" @retry="load" />
 

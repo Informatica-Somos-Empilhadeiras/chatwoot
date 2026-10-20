@@ -1,6 +1,10 @@
 # OUTSIDER: quem pode o quê no CRM. Administradores podem tudo. Os demais só entram no CRM se
 # forem membros de alguma unidade: seller vê as oportunidades da unidade e edita as suas,
 # manager edita todas da unidade. Não depende de custom roles (recurso pago do Chatwoot).
+#
+# Nas unidades em que a pessoa é só vendedor, os indicadores (topo do Kanban, Relatórios, Metas)
+# contam só os negócios dela. Com a opção "vendedor vê só os próprios negócios" ligada, a lista,
+# o Kanban e a conversa também mostram só os dela e os que estão sem responsável.
 class Outsider::Crm::Access
   attr_reader :account_user
 
@@ -28,6 +32,20 @@ class Outsider::Crm::Access
     memberships.map(&:business_unit_id)
   end
 
+  # Unidades em que a pessoa vê só o que é seu (vendedor, sem ser gestor nem administrador)
+  def seller_unit_ids
+    administrator? ? [] : member_unit_ids - manager_unit_ids
+  end
+
+  # Unidades em que a pessoa acompanha todos os números (administrador ou gestor)
+  def full_unit_ids
+    administrator? ? visible_unit_ids : manager_unit_ids
+  end
+
+  def manager?
+    administrator? || manager_unit_ids.any?
+  end
+
   def member_of?(unit_id)
     administrator? || memberships.any? { |membership| membership.business_unit_id == unit_id }
   end
@@ -37,11 +55,22 @@ class Outsider::Crm::Access
   end
 
   def opportunities(scope = Outsider::Crm::Opportunity.where(account_id: account_user.account_id))
-    administrator? ? scope : scope.where(business_unit_id: visible_unit_ids)
+    return scope if administrator?
+
+    scope = scope.where(business_unit_id: visible_unit_ids)
+    own_deals_only? ? own(scope, unowned: true) : scope
+  end
+
+  # Base dos indicadores: nas unidades em que é só vendedor, só os negócios dele
+  def metrics(scope)
+    own(scope, unowned: false)
   end
 
   def view_opportunity?(opportunity)
-    member_of?(opportunity.business_unit_id)
+    return false unless member_of?(opportunity.business_unit_id)
+    return true unless own_deals_only? && seller_unit_ids.include?(opportunity.business_unit_id)
+
+    [nil, account_user.user_id].include?(opportunity.owner_id)
   end
 
   # Negócio encaminhado não muda mais, nem pelo administrador: a continuação está no destino
@@ -89,6 +118,7 @@ class Outsider::Crm::Access
   def as_json(*)
     {
       administrator: administrator?,
+      manager: manager?,
       enabled: enabled?,
       units: visible_units.map { |unit| { id: unit.id, name: unit.name, role: role_in(unit.id) } }
     }
@@ -108,6 +138,21 @@ class Outsider::Crm::Access
     return 'administrator' if administrator?
 
     memberships.find { |membership| membership.business_unit_id == unit_id }&.role
+  end
+
+  def own(scope, unowned:)
+    units = seller_unit_ids
+    return scope if units.empty?
+
+    sql = 'outsider_crm_opportunities.business_unit_id NOT IN (:units) OR outsider_crm_opportunities.owner_id = :user'
+    sql += ' OR outsider_crm_opportunities.owner_id IS NULL' if unowned
+    scope.where(sql, units: units, user: account_user.user_id)
+  end
+
+  def own_deals_only?
+    return @own_deals_only if defined?(@own_deals_only)
+
+    @own_deals_only = Outsider::Crm::Settings.new(account_user.account)[:sellers_see_own_deals]
   end
 
   def memberships

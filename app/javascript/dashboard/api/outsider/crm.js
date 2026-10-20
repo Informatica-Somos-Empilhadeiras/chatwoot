@@ -256,6 +256,31 @@ class CrmAPI extends ApiClient {
     });
   }
 
+  // aba Metas: vendido, meta e comissão do mês (AAAA-MM)
+  getPerformance(month) {
+    return axios.get(`${this.url}/performance`, { params: { month } });
+  }
+
+  // metas e comissão (só administrador)
+  getGoals(month) {
+    return axios.get(`${this.url}/goals`, { params: { month } });
+  }
+
+  updateGoals(month, units, users) {
+    return axios.put(`${this.url}/goals`, { month, units, users });
+  }
+
+  getCommission() {
+    return axios.get(`${this.url}/commission`);
+  }
+
+  updateCommission(generalBp, rules) {
+    return axios.put(`${this.url}/commission`, {
+      general_bp: generalBp,
+      rules,
+    });
+  }
+
   getReceivedForwards() {
     return axios.get(`${this.url}/received_forwards`);
   }

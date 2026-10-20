@@ -7,7 +7,8 @@
       "OPPORTUNITIES": "Negócios",
       "SETTINGS": "Configurações",
       "TASKS": "Tarefas",
-      "REPORTS": "Relatórios"
+      "REPORTS": "Relatórios",
+      "GOALS": "Metas"
     },
     "STATES": {
       "NO_ACCESS": "Você ainda não faz parte de nenhuma unidade comercial do CRM. Peça a um administrador para incluir você.",
@@ -71,7 +72,9 @@
         "REASONS": "Motivos",
         "FIELDS": "Campos",
         "GENERAL": "Geral",
-        "AUTOMATIONS": "Automações"
+        "AUTOMATIONS": "Automações",
+        "GOALS": "Metas",
+        "COMMISSION": "Comissão"
       },
       "UNITS": {
         "TITLE": "Unidades comerciais",
@@ -157,7 +160,9 @@
         "DESCRIPTION": "Regras que valem para todo o CRM da conta.",
         "MAX_ATTEMPTS": "Tentativas de encaminhamento por lead",
         "MAX_ATTEMPTS_HELP": "Quantas vezes o mesmo lead pode ser encaminhado entre unidades antes de a jornada ser encerrada (usado na etapa de encaminhamento).",
-        "SAVED": "Configurações salvas"
+        "SAVED": "Configurações salvas",
+        "OWN_DEALS": "Vendedor vê só os próprios negócios",
+        "OWN_DEALS_HELP": "Ligado, quem é só vendedor numa unidade vê, na lista, no Kanban e na aba da conversa, só os negócios dele e os que estão sem responsável. Gestores e administradores continuam vendo todos. Os indicadores do vendedor contam só os negócios dele, com esta opção ligada ou não."
       },
       "AUTOMATIONS": {
         "TITLE": "Automações prontas",
@@ -299,6 +304,45 @@
           "NOTES": "Recado para quem recebe (opcional)",
           "HELP": "O negócio perdido passa a encaminhado e um negócio novo abre na unidade de destino, na primeira etapa, com o mesmo contato, conversa, valor e campos. Não encaminha se o contato já tem negócio aberto lá ou se a jornada chegou ao limite de encaminhamentos; a linha do tempo mostra o motivo."
         }
+      },
+      "GOALS": {
+        "TITLE": "Metas de venda",
+        "DESCRIPTION": "Quanto cada unidade e cada vendedor deve ganhar no mês, em negócios ganhos. A meta de um mês vale também para os seguintes, até você mudar.",
+        "NONE_YET": "Nenhuma meta cadastrada até este mês.",
+        "SET_HERE": "Metas definidas neste mês.",
+        "INHERITED": "Sem mudança neste mês: valem as metas de {month}. Salve para mudar a partir daqui.",
+        "UNITS": "Empresas (unidades)",
+        "SELLERS": "Vendedores",
+        "TOTAL": "Soma: {value}",
+        "PLACEHOLDER": "Sem meta",
+        "NO_PEOPLE": "Ninguém cadastrado nas unidades ainda.",
+        "ADMIN": "Administrador",
+        "HELP": "Valores em reais; deixe vazio para não ter meta. A mudança vale para o mês escolhido e os seguintes; os meses anteriores continuam como estavam.",
+        "SAVED": "Metas salvas a partir de {month}."
+      },
+      "COMMISSION": {
+        "TITLE": "Comissão dos vendedores",
+        "DESCRIPTION": "Comissão = valor dos negócios ganhos no mês × percentual. Comece pelo percentual geral; use os específicos só para quem recebe diferente.",
+        "GENERAL": "Percentual geral",
+        "PERCENT_PLACEHOLDER": "0",
+        "EXAMPLE": "Exemplo: R$ 1.000,00 vendidos a {percent} = {value} de comissão.",
+        "GENERAL_HELP": "Vale para todos os vendedores e unidades sem percentual específico.",
+        "SPECIFIC": "Percentuais específicos",
+        "ADD": "Adicionar percentual",
+        "NO_SPECIFIC": "Nenhum percentual específico: todos recebem o geral.",
+        "ANY_SELLER": "Qualquer vendedor",
+        "ANY_UNIT": "Qualquer unidade",
+        "REMOVE": "Remover",
+        "ORDER": "Quando mais de um vale, conta o mais específico: vendedor + unidade, depois vendedor, depois unidade, depois o geral.",
+        "SINCE": "Em vigor desde {month}.",
+        "NEVER": "Ainda não configurada.",
+        "MONTHS": "Cada alteração vale a partir do mês atual; os meses anteriores mantêm o percentual da época.",
+        "SAVED": "Comissão salva. Vale a partir deste mês.",
+        "ERRORS": {
+          "TARGET": "Escolha um vendedor, uma unidade ou os dois.",
+          "PERCENT": "Use um percentual de 0 a 100.",
+          "DUPLICATE": "Já existe um percentual para esta combinação."
+        }
       }
     },
     "ERRORS": {
@@ -337,7 +381,8 @@
       "WEIGHTED_HINT": "Valor × probabilidade",
       "CONVERSION_HINT": "{won} ganhos de {closed} fechados",
       "DAYS": "{days} dias",
-      "AVERAGE_DAYS_HINT": "Da criação até o ganho"
+      "AVERAGE_DAYS_HINT": "Da criação até o ganho",
+      "OWN_ONLY": "Nas unidades em que você é vendedor, os números contam só os seus negócios."
     },
     "BOARD": {
       "ADD": "Adicionar negócio",
@@ -760,6 +805,44 @@
       "CLOSE": "Fechar",
       "DOT": "{n} negócio encaminhado ainda não aberto | {n} negócios encaminhados ainda não abertos",
       "NEW": "Novo"
+    },
+    "GOALS": {
+      "PREVIOUS": "Mês anterior",
+      "NEXT": "Próximo mês",
+      "THIS_MONTH": "Voltar para este mês",
+      "SET_GOALS": "Definir metas",
+      "SET_COMMISSION": "Comissão",
+      "EMPTY": "Ainda não há meta para este mês. Fale com o administrador do CRM.",
+      "EMPTY_ADMIN": "Ainda não há meta para este mês. Use “Definir metas” para cadastrar as metas das unidades e dos vendedores.",
+      "MINE": "Meu mês",
+      "SOLD": "Vendido",
+      "GOAL": "Meta",
+      "COMMISSION": "Comissão",
+      "DEALS": "{n} negócio ganho | {n} negócios ganhos",
+      "FUTURE": "Este mês ainda não começou.",
+      "HOW_COMMISSION": "Como a comissão foi calculada",
+      "NO_DEALS": "Nenhum negócio ganho neste mês ainda.",
+      "TABLE": {
+        "DEAL": "Negócio",
+        "WON_AT": "Ganho em",
+        "VALUE": "Valor",
+        "PERCENT": "Percentual",
+        "COMMISSION": "Comissão",
+        "TOTAL": "Total do mês",
+        "SELLER": "Vendedor",
+        "PROGRESS": "Meta atingida"
+      },
+      "FORMULA": "Comissão = valor de cada negócio ganho no mês × percentual. Exemplo: R$ 1.000,00 a 1% = R$ 10,00. Conta o negócio em que você é o responsável, no mês em que ele foi ganho.",
+      "TEAM_SOLD": "Vendido pela equipe",
+      "TEAM_GOAL": "Meta das unidades",
+      "TEAM_COMMISSION": "Comissões do mês",
+      "UNITS": "Empresas",
+      "SELLERS": "Vendedores",
+      "OF": "{won} de {goal}",
+      "SELLERS_HELP": "Cada vendedor soma os negócios ganhos no mês em que é o responsável, nas unidades que você acompanha.",
+      "NO_GOAL": "Sem meta",
+      "REACHED": "Meta batida: {percent}%",
+      "MISSING": "{percent}% da meta · faltam {value}"
     }
   }
 }

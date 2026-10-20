@@ -1,5 +1,6 @@
 # OUTSIDER: aba Relatórios do CRM. Cada um vê os números das unidades que acompanha (as mesmas do
-# Kanban). Unidade, responsável e período valem para tudo; o funil é de um pipeline por vez
+# Kanban); nas unidades em que é só vendedor, só os dos próprios negócios. Unidade, responsável e
+# período valem para tudo; o funil é de um pipeline por vez
 # (pipeline_id, ou o primeiro pipeline ativo das unidades filtradas).
 class Api::V1::Accounts::Outsider::Crm::ReportsController < Api::V1::Accounts::Outsider::Crm::BaseController
   def show
@@ -13,7 +14,7 @@ class Api::V1::Accounts::Outsider::Crm::ReportsController < Api::V1::Accounts::O
   private
 
   def filtered
-    scope = crm_access.opportunities(crm_scope(::Outsider::Crm::Opportunity))
+    scope = crm_access.metrics(crm_access.opportunities(crm_scope(::Outsider::Crm::Opportunity)))
     scope = scope.where(business_unit_id: params[:business_unit_id]) if params[:business_unit_id].present?
     scope = scope.where(owner_id: params[:owner_id]) if params[:owner_id].present?
     scope

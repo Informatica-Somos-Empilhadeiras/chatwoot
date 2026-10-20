@@ -11,7 +11,9 @@ class Outsider::Crm::Settings
     'automation_close_tasks' => [:boolean, false],
     'automation_stalled_task' => [:boolean, false],
     'automation_stalled_days' => [:integer, 7, 1..90],
-    'highlight_no_next_task' => [:boolean, false]
+    'highlight_no_next_task' => [:boolean, false],
+    # vendedor vê só os próprios negócios e os sem responsável (gestor e administrador veem todos)
+    'sellers_see_own_deals' => [:boolean, false]
   }.freeze
   DEFAULTS = FIELDS.transform_values(&:second).freeze
   INVALID = Object.new.freeze

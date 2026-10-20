@@ -98,6 +98,13 @@ const pipelineOptions = computed(() => [
   })),
 ]);
 
+// vendedor (sem ser gestor) em alguma unidade: os indicadores de lá contam só os negócios dele
+const sellerUnits = computed(
+  () =>
+    !props.access.administrator &&
+    props.access.units.some(unit => unit.role === 'seller')
+);
+
 const boardPipeline = computed(() =>
   props.pipelines.find(pipeline => pipeline.id === filters.value.pipeline_id)
 );
@@ -363,6 +370,7 @@ onMounted(async () => {
       v-if="pipelines.length"
       :filters="filters"
       :refresh-key="refreshKey"
+      :own-only="sellerUnits"
     />
 
     <KanbanBoard

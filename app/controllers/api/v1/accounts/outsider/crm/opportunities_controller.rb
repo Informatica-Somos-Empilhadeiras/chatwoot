@@ -34,7 +34,7 @@ class Api::V1::Accounts::Outsider::Crm::OpportunitiesController < Api::V1::Accou
   end
 
   def summary
-    scope = filtered.unscope(where: :status)
+    scope = crm_access.metrics(filtered.unscope(where: :status))
     render json: ::Outsider::Crm::Metrics.new(scope, period: params[:period]).to_h
   end
 

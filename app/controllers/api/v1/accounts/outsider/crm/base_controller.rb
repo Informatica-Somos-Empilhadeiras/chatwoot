@@ -35,6 +35,16 @@ class Api::V1::Accounts::Outsider::Crm::BaseController < Api::V1::Accounts::Base
     ::Outsider::Crm::Remover.new(Current.account)
   end
 
+  # Quem pode ter meta e comissão (Metas e Comissão): membros das unidades e administradores da conta
+  def crm_people
+    admins = Current.account.account_users.where(role: :administrator).pluck(:user_id)
+    units = crm_scope(::Outsider::Crm::BusinessUnitMember).includes(:business_unit).group_by(&:user_id)
+                                                          .transform_values { |list| list.map { |member| member.business_unit.name }.sort }
+    User.where(id: (units.keys + admins).uniq).order(:name).map do |user|
+      { id: user.id, name: user.name, thumbnail: user.avatar_url, units: units.fetch(user.id, []), administrator: admins.include?(user.id) }
+    end
+  end
+
   def crm_scope(model)
     model.where(account_id: Current.account.id)
   end
