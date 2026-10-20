@@ -1,8 +1,9 @@
 <script setup>
-// OUTSIDER: aba "CRM" da conversa. Mostra o negócio principal do contato (o aberto ligado a esta
-// conversa ou, sem ele, o aberto mais recente), a barra de etapas, as tarefas, a linha do tempo e
-// a auditoria dele, o histórico multiempresa (encaminhamentos entre unidades) e os outros negócios do
-// contato. "Encaminhar" leva o negócio para outra unidade do grupo.
+// OUTSIDER: aba "CRM" da conversa. Mostra um negócio do contato por vez: de início o aberto ligado a
+// esta conversa (sem ele, o aberto do próprio usuário; sem ele, o aberto mais recente). Com mais de
+// um negócio aberto, uma faixa no topo troca entre eles; clicar num negócio da lista "Outros
+// negócios" ou do histórico também troca. Para o negócio mostrado: barra de etapas, tarefas, linha do
+// tempo, auditoria e histórico multiempresa. "Encaminhar" leva o negócio para outra unidade do grupo.
 // Usa o contato do Chatwoot: nada de cadastro duplicado. Grupos do WhatsApp não têm negócio.
 import { ref, computed, watch, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -22,7 +23,9 @@ import StageProgress from './StageProgress.vue';
 import {
   crmState,
   findPipeline,
+  isReceived,
   loadContactSummary,
+  markReceived,
   refreshContact,
   summaryKey,
   unitName,
@@ -43,24 +46,44 @@ const props = defineProps({
 const { t } = useI18n();
 const store = useStore();
 const agents = useMapGetter('agents/getAgents');
+const currentUserId = useMapGetter('getCurrentUserID');
 const { accountScopedRoute } = useAccount();
 
 const dialogRef = ref(null);
 const lostDialogRef = ref(null);
 const forwardDialogRef = ref(null);
+const scrollRef = ref(null);
 const isLoading = ref(false);
 const isSaving = ref(false);
+// negócio escolhido na faixa ou na lista; vazio = o principal que a API indicou
+const selectedId = ref(null);
 
 const contact = computed(() => props.chat.meta?.sender || {});
 const summary = computed(
   () => crmState.summaries[summaryKey(contact.value.id, props.chat.id)]
 );
 const opportunities = computed(() => summary.value?.opportunities || []);
-const primary = computed(() =>
-  opportunities.value.find(item => item.id === summary.value?.primary_id)
+const primary = computed(
+  () =>
+    opportunities.value.find(item => item.id === selectedId.value) ||
+    opportunities.value.find(item => item.id === summary.value?.primary_id)
 );
 const others = computed(() =>
-  opportunities.value.filter(item => item.id !== summary.value?.primary_id)
+  opportunities.value.filter(item => item.id !== primary.value?.id)
+);
+// faixa de troca: os abertos, o principal da API primeiro
+const openDeals = computed(() => {
+  const open = opportunities.value.filter(item => item.status === 'open');
+  const main = open.filter(item => item.id === summary.value?.primary_id);
+  return [
+    ...main,
+    ...open.filter(item => item.id !== summary.value?.primary_id),
+  ];
+});
+const showSwitcher = computed(
+  () =>
+    openDeals.value.length > 1 ||
+    (openDeals.value.length === 1 && primary.value?.status !== 'open')
 );
 const primaryPipeline = computed(
   () => primary.value && findPipeline(primary.value.pipeline_id)
@@ -135,9 +158,14 @@ const markWon = () =>
     t('OUTSIDER_CRM.BOARD.WON_DONE', { title: primary.value.title })
   );
 
+const select = opportunity => {
+  selectedId.value = opportunity.id;
+  scrollRef.value?.scrollTo({ top: 0, behavior: 'smooth' });
+};
+
 const openFromHistory = item => {
   const opportunity = opportunities.value.find(entry => entry.id === item.id);
-  if (opportunity) openEdit(opportunity);
+  if (opportunity) select(opportunity);
 };
 
 const markLost = (opportunity, reasonId) =>
@@ -147,7 +175,22 @@ const markLost = (opportunity, reasonId) =>
     t('OUTSIDER_CRM.BOARD.LOST_DONE', { title: opportunity.title })
   );
 
-watch(() => [contact.value.id, props.chat.id], load);
+watch(
+  () => [contact.value.id, props.chat.id],
+  () => {
+    selectedId.value = null;
+    load();
+  }
+);
+
+// abrir aqui um negócio recebido por encaminhamento tira o aviso dele
+watch(
+  () => primary.value?.id,
+  id => {
+    if (id) markReceived([id], true);
+  },
+  { immediate: true }
+);
 
 onMounted(async () => {
   await load();
@@ -161,7 +204,10 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="h-full min-h-0 px-4 py-4 overflow-y-auto bg-n-surface-1">
+  <div
+    ref="scrollRef"
+    class="h-full min-h-0 px-4 py-4 overflow-y-auto bg-n-surface-1"
+  >
     <div class="flex flex-col w-full max-w-4xl gap-4 mx-auto">
       <div class="flex flex-wrap items-center gap-2">
         <div class="flex flex-col flex-1 min-w-0">
@@ -236,6 +282,56 @@ onMounted(async () => {
             :label="t('OUTSIDER_CRM.CONVERSATION.CREATE')"
             @click="openNew"
           />
+        </div>
+
+        <div v-if="showSwitcher" class="flex flex-col gap-1.5">
+          <span class="text-xs font-medium text-n-slate-11">
+            {{ t('OUTSIDER_CRM.CONVERSATION.SWITCH', openDeals.length) }}
+          </span>
+          <div class="flex gap-2 pb-1 overflow-x-auto">
+            <button
+              v-for="deal in openDeals"
+              :key="deal.id"
+              type="button"
+              class="flex flex-col gap-0.5 px-3 py-2 text-start rounded-xl shrink-0 w-56 outline outline-1 -outline-offset-1 transition-colors"
+              :class="
+                deal.id === primary?.id
+                  ? 'bg-n-solid-2 outline-n-brand'
+                  : 'bg-n-alpha-1 outline-transparent hover:outline-n-weak'
+              "
+              :aria-pressed="deal.id === primary?.id"
+              @click="select(deal)"
+            >
+              <span
+                class="flex items-center gap-1 text-xs truncate text-n-slate-11"
+              >
+                <span
+                  v-if="isReceived(deal.id)"
+                  class="px-1 text-[11px] font-semibold rounded bg-n-ruby-9 text-white"
+                >
+                  {{ t('OUTSIDER_CRM.NOTICE.NEW') }}
+                </span>
+                {{ deal.code }} · {{ unitName(deal.business_unit_id) }}
+              </span>
+              <span class="text-sm font-medium truncate text-n-slate-12">
+                {{ deal.title }}
+              </span>
+              <span class="flex items-center gap-1 text-xs text-n-slate-11">
+                <span class="font-medium text-n-teal-11">
+                  {{ formatMoney(deal.value_cents) }}
+                </span>
+                ·
+                <span class="truncate">
+                  {{
+                    deal.owner?.id === currentUserId
+                      ? t('OUTSIDER_CRM.CONVERSATION.YOURS')
+                      : deal.owner?.name ||
+                        t('OUTSIDER_CRM.CONVERSATION.NO_OWNER')
+                  }}
+                </span>
+              </span>
+            </button>
+          </div>
         </div>
 
         <section
@@ -477,7 +573,7 @@ onMounted(async () => {
               :key="opportunity.id"
               type="button"
               class="flex items-center w-full gap-3 px-4 py-3 text-sm border-b text-start border-n-weak last:border-0 hover:bg-n-alpha-1"
-              @click="openEdit(opportunity)"
+              @click="select(opportunity)"
             >
               <div class="flex flex-col flex-1 min-w-0">
                 <span class="font-medium truncate text-n-slate-12">

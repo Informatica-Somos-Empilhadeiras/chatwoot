@@ -256,6 +256,17 @@ class CrmAPI extends ApiClient {
     });
   }
 
+  getReceivedForwards() {
+    return axios.get(`${this.url}/received_forwards`);
+  }
+
+  markReceivedForwards(opportunityIds, opened) {
+    return axios.post(`${this.url}/received_forwards/mark`, {
+      opportunity_ids: opportunityIds,
+      opened,
+    });
+  }
+
   getContactHistory(contactId) {
     return axios.get(`${this.url}/contacts/${contactId}/history`);
   }

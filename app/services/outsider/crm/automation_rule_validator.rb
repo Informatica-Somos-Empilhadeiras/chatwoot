@@ -51,8 +51,13 @@ class Outsider::Crm::AutomationRuleValidator
       'business_unit_id' => unit&.id || pipeline&.business_unit_id,
       'pipeline_id' => pipeline&.id,
       'stage_id' => stage(raw['stage_id'], pipeline)&.id,
-      'min_value_cents' => min_value(raw['min_value_cents'])
+      'min_value_cents' => min_value(raw['min_value_cents']),
+      'lost_reason_id' => (reason(raw['lost_reason_id'], %w[lost both], 'conditions.lost_reason_id')&.id if lost?)
     }
+  end
+
+  def lost?
+    RULES::LOST_ONLY.include?(@attributes['trigger'].to_s)
   end
 
   # O pipeline precisa ser da unidade escolhida
@@ -85,6 +90,7 @@ class Outsider::Crm::AutomationRuleValidator
     list = Array(@attributes['actions']).first(RULES::MAX_ACTIONS + 1)
     @errors << 'actions_blank' if list.empty?
     @errors << 'too_many_actions' if list.size > RULES::MAX_ACTIONS
+    @errors << 'too_many_forwards' if list.count { |action| action.to_h['type'] == 'forward' } > 1
     list.first(RULES::MAX_ACTIONS).each_with_index.map { |action, index| action(action.to_h, "actions.#{index}") }
   end
 
@@ -94,6 +100,7 @@ class Outsider::Crm::AutomationRuleValidator
     when 'set_owner' then { 'type' => 'set_owner', 'user_id' => user_id(raw['user_id'], "#{prefix}.user_id") }
     when 'add_label' then { 'type' => 'add_label', 'label' => label(raw['label'], "#{prefix}.label") }
     when 'add_note' then { 'type' => 'add_note', 'body' => text(raw['body'], 2000, "#{prefix}.body") }
+    when 'forward' then forward_action(raw, prefix)
     else
       @errors << "#{prefix}.type"
       {}
@@ -109,6 +116,45 @@ class Outsider::Crm::AutomationRuleValidator
       'due_in_hours' => hours(raw['due_in_hours'].presence || 0, "#{prefix}.due_in_hours", min: 0),
       'assignee' => assignee, 'user_id' => assignee == 'user' ? user_id(raw['user_id'], "#{prefix}.user_id") : nil
     }
+  end
+
+  # Encaminhar só existe em "quando perder". Responsável vazio: o negócio chega sem dono e os gestores
+  # da unidade destino recebem o aviso. Motivo vazio: usa o motivo da perda, se ele também servir
+  # para encaminhamento.
+  def forward_action(raw, prefix)
+    @errors << "#{prefix}.forward_trigger" unless lost?
+    unit = Outsider::Crm::BusinessUnit.active.find_by(account_id: @account.id, id: raw['to_business_unit_id'])
+    @errors << "#{prefix}.to_business_unit_id" if unit.nil?
+    {
+      'type' => 'forward', 'to_business_unit_id' => unit&.id, 'pipeline_id' => forward_pipeline(raw['pipeline_id'], unit, prefix),
+      'reason_id' => reason(raw['reason_id'], %w[forward both], "#{prefix}.reason_id")&.id,
+      'owner_id' => forward_owner(raw['owner_id'], unit, prefix), 'create_task' => boolean(raw['create_task']),
+      'notes' => raw['notes'].to_s.strip.first(2000).presence
+    }
+  end
+
+  def forward_pipeline(id, unit, prefix)
+    return if id.blank? || unit.nil?
+
+    found = Outsider::Crm::Pipeline.active.find_by(account_id: @account.id, business_unit_id: unit.id, id: id)
+    @errors << "#{prefix}.pipeline_id" if found.nil?
+    found&.id
+  end
+
+  def forward_owner(id, unit, prefix)
+    return if id.blank? || unit.nil?
+    return id.to_i if Outsider::Crm::Access.assignable_user_ids(@account.id, unit.id).include?(id.to_i)
+
+    @errors << "#{prefix}.owner_id"
+    nil
+  end
+
+  def reason(id, kinds, field)
+    return if id.blank?
+
+    found = Outsider::Crm::LostReason.active.find_by(account_id: @account.id, id: id, kind: kinds)
+    @errors << field if found.nil?
+    found
   end
 
   def text(value, limit, field)

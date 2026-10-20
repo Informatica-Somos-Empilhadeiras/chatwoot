@@ -26,6 +26,7 @@ const agents = useMapGetter('agents/getAgents');
 const labels = useMapGetter('labels/getLabels');
 
 const rules = ref([]);
+const lostReasons = ref([]);
 const isLoading = ref(true);
 const dialogRef = ref(null);
 const deleteRef = ref(null);
@@ -40,8 +41,12 @@ const labelOptions = computed(() =>
 
 const load = async () => {
   try {
-    const { data } = await CrmAPI.getAutomationRules();
-    rules.value = data;
+    const [rulesResponse, reasonsResponse] = await Promise.all([
+      CrmAPI.getAutomationRules(),
+      CrmAPI.getLostReasons(),
+    ]);
+    rules.value = rulesResponse.data;
+    lostReasons.value = reasonsResponse.data;
   } catch (error) {
     useAlert(errorMessage(t, error));
   } finally {
@@ -77,6 +82,8 @@ const whereText = rule => {
     props.units.find(unit => unit.id === conditions.business_unit_id)?.name,
     pipeline?.name,
     pipeline?.stages.find(stage => stage.id === conditions.stage_id)?.name,
+    lostReasons.value.find(reason => reason.id === conditions.lost_reason_id)
+      ?.name,
     conditions.min_value_cents !== null &&
       conditions.min_value_cents !== undefined &&
       t('OUTSIDER_CRM.SETTINGS.RULES.SUMMARY.MIN_VALUE', {
@@ -105,6 +112,12 @@ const actionText = action => {
       });
     case 'add_label':
       return action.label;
+    case 'forward':
+      return t('OUTSIDER_CRM.SETTINGS.RULES.SUMMARY.FORWARD', {
+        unit:
+          props.units.find(unit => unit.id === action.to_business_unit_id)
+            ?.name || '—',
+      });
     default:
       return t('OUTSIDER_CRM.SETTINGS.RULES.ACTIONS.ADD_NOTE');
   }
@@ -230,6 +243,7 @@ onMounted(() => {
       :pipelines="pipelines"
       :agent-options="agentOptions"
       :label-options="labelOptions"
+      :lost-reasons="lostReasons"
       @saved="load"
     />
     <Dialog

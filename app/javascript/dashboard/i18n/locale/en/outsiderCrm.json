@@ -208,7 +208,7 @@
           "CREATED": "Applies to every new opportunity, including one forwarded from another unit.",
           "STAGE_ENTERED": "Pick the stage below to create its template tasks. With no stage, it runs on every stage change. A new opportunity counts as entering the first stage.",
           "WON": "Runs right after the ready-made win automations.",
-          "LOST": "Runs right after the ready-made loss automations.",
+          "LOST": "Runs right after the built-in lost automations. Here you can filter by lost reason and forward the deal to another unit.",
           "STALLED": "Checked every hour. Runs once per stage visit.",
           "NO_NEXT_TASK": "Checked every hour, counting from the last completed task (or from creation). Runs again only after the opportunity completes another task."
         },
@@ -223,10 +223,11 @@
           "CREATE_TASK": "Create task",
           "SET_OWNER": "Change owner",
           "ADD_LABEL": "Label on the conversation",
-          "ADD_NOTE": "Write a note"
+          "ADD_NOTE": "Write a note",
+          "FORWARD": "Forward to another unit"
         },
         "ADD_ACTION": "Add action",
-        "ACTIONS_HELP": "Up to 5 actions per rule. No action changes the stage, so one rule never triggers another.",
+        "ACTIONS_HELP": "Up to 5 actions per rule. No action changes the deal stage. \"Forward\" runs last and the new deal in the destination can trigger the \"Deal created\" rules there.",
         "TASK_TITLE": "Task title",
         "TASK_DESCRIPTION": "Description (optional)",
         "DUE_IN": "Due in",
@@ -247,7 +248,8 @@
           "EVERYWHERE": "All units",
           "MIN_VALUE": "from {value}",
           "TASK_MANAGERS": "{title} (managers)",
-          "OWNER": "Owner: {name}"
+          "OWNER": "Owner: {name}",
+          "FORWARD": "Forward to {unit}"
         },
         "PRESETS": {
           "TITLE": "Start from a template",
@@ -259,7 +261,8 @@
           "STALLED_MANAGERS": "Alert managers about stalled opportunities",
           "STALLED_MANAGERS_TASK": "Review the stalled opportunity with the seller",
           "NEXT_TASK": "Chase the next task",
-          "NEXT_TASK_TASK": "Define the next step of the opportunity"
+          "NEXT_TASK_TASK": "Define the next step of the opportunity",
+          "LOST_FORWARD": "Forward lost deals to another unit"
         },
         "ERRORS": {
           "NAME": "Give the rule a name (up to 80 characters).",
@@ -274,7 +277,27 @@
           "LABEL": "choose an existing label.",
           "NOTE": "write the note (up to 2000 characters).",
           "ACTION": "Action {number}: {message}",
-          "GENERIC": "Check the rule fields."
+          "GENERIC": "Check the rule fields.",
+          "TOO_MANY_FORWARDS": "Use only one forward per rule.",
+          "FORWARD_TRIGGER": "Forwarding only works on “when the deal is lost”.",
+          "FORWARD_UNIT": "choose an active destination unit.",
+          "FORWARD_PIPELINE": "the pipeline must belong to the destination unit.",
+          "FORWARD_REASON": "choose a forwarding reason from the list.",
+          "FORWARD_OWNER": "the owner must belong to the destination unit."
+        },
+        "LOST_REASON": "Lost reason",
+        "ANY_LOST_REASON": "Any reason",
+        "FORWARD": {
+          "UNIT": "Destination unit",
+          "CHOOSE_UNIT": "Choose the unit",
+          "OWNER": "Owner in the destination",
+          "NO_OWNER": "No owner (managers get the notice)",
+          "REASON": "Forwarding reason",
+          "USE_LOST_REASON": "Use the lost reason",
+          "FIRST_PIPELINE": "First pipeline of the unit",
+          "CREATE_TASK": "Create the “Contact the customer” task for the owner (due in 30 minutes)",
+          "NOTES": "Note for the receiver (optional)",
+          "HELP": "The lost deal becomes forwarded and a new deal opens in the destination unit, in the first stage, with the same contact, conversation, value and fields. It does not forward if the contact already has an open deal there or the journey reached the forwarding limit; the timeline shows why."
         }
       }
     },
@@ -370,7 +393,10 @@
       "OTHERS": "Other deals and history",
       "WON": "Won",
       "CHIP_TOOLTIP": "Open CRM deals: {count}",
-      "DEALS": "Deals: {count}"
+      "DEALS": "Deals: {count}",
+      "SWITCH": "{n} open deal for this contact | {n} open deals for this contact: pick one to view",
+      "YOURS": "Yours",
+      "NO_OWNER": "No owner"
     },
     "CANCEL": "Cancel",
     "DATES": {
@@ -483,7 +509,21 @@
       "RULE_SKIPPED": {
         "OWNER_NOT_MEMBER": "Owner not changed: the person is not in the unit",
         "NO_CONVERSATION": "Label not applied: no linked conversation",
-        "LABEL_MISSING": "Label not applied: it no longer exists"
+        "LABEL_MISSING": "Label not applied: it no longer exists",
+        "SAME_UNIT": "Not forwarded: the deal already belongs to the destination unit"
+      },
+      "BY_RULE": "The rule “{rule}”",
+      "RULE_FORWARDED": "Forwarded to {unit} ({code})",
+      "RULE_FORWARD_FAILED": "Not forwarded: {reason}",
+      "FORWARD_ERRORS": {
+        "LIMIT_REACHED": "the journey reached the forwarding limit",
+        "DUPLICATE_OPEN": "the contact already has an open deal in the destination unit",
+        "NO_PIPELINE": "the destination unit has no active pipeline",
+        "INVALID_UNIT": "the destination unit does not exist or is inactive",
+        "REASON_REQUIRED": "the forwarding reason is missing (choose one in the rule)",
+        "INVALID_REASON": "the chosen reason no longer exists",
+        "INVALID_OWNER": "the chosen owner is no longer in the destination unit",
+        "GENERIC": "the forward was refused"
       }
     },
     "AUDIT": {
@@ -597,7 +637,8 @@
       "CLOSED_ON": "closed on {date}",
       "OPEN_SINCE": "open since {date}",
       "FORWARDED_LINE": "Forwarded to {unit} by {name}, {date}",
-      "REASON": "Reason: {reason}"
+      "REASON": "Reason: {reason}",
+      "AUTOMATIC": "automation rule"
     },
     "REPORTS": {
       "PERIODS": {
@@ -705,6 +746,20 @@
         "HAS_VALUES": "Cannot delete: the field is filled in on opportunities ({count}). Turn the field off to hide it.",
         "FORWARDED_OUT": "Cannot delete: this opportunity was forwarded to {unit} ({code}). Delete {code} first, then this one."
       }
+    },
+    "NOTICE": {
+      "TITLE": "You received a forwarded deal | You received {n} forwarded deals",
+      "SUBTITLE": "Another unit of the group passed these customers to you.",
+      "BY_PERSON": "From {unit}, by {name}",
+      "BY_RULE": "From {unit}, by the rule “{rule}”",
+      "FROM_UNIT": "From {unit}",
+      "REASON": "Reason: {reason}",
+      "NO_OWNER": "Arrived without an owner: you were notified as a manager of the unit.",
+      "OPEN_DEAL": "View deal",
+      "OPEN_CONVERSATION": "Open conversation",
+      "CLOSE": "Close",
+      "DOT": "{n} forwarded deal not opened yet | {n} forwarded deals not opened yet",
+      "NEW": "New"
     }
   }
 }

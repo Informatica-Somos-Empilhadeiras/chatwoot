@@ -24,7 +24,7 @@ RSpec.describe Outsider::Crm::AutomationRules do
 
     expect(rule).to include('id' => 1, 'name' => 'Tarefas da proposta', 'active' => true, 'trigger' => 'stage_entered', 'wait_hours' => nil,
                             'conditions' => { 'business_unit_id' => unit.id, 'pipeline_id' => pipeline.id, 'stage_id' => proposal.id,
-                                              'min_value_cents' => 100_000 })
+                                              'min_value_cents' => 100_000, 'lost_reason_id' => nil })
     expect(rule['actions']).to eq([{ 'type' => 'create_task', 'title' => 'Enviar proposta', 'kind' => 'proposal', 'description' => nil,
                                      'due_in_hours' => 24, 'assignee' => 'owner', 'user_id' => nil }])
     expect(account.reload.internal_attributes['outsider_crm_rules']).to eq([rule])

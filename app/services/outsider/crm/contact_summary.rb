@@ -1,6 +1,6 @@
 # OUTSIDER: resumo do CRM de um contato do Chatwoot (aba CRM da conversa e painel do contato).
 # Só entram oportunidades das unidades que o usuário enxerga. A principal é a aberta ligada à
-# conversa atual; sem ela, a aberta atualizada por último. A conversa chega pelo número que o
+# conversa atual; sem ela, a aberta do próprio usuário; sem ela, a aberta atualizada por último. A conversa chega pelo número que o
 # Chatwoot mostra (display_id).
 class Outsider::Crm::ContactSummary
   GROUP_SUFFIX = '@g.us'.freeze
@@ -43,8 +43,14 @@ class Outsider::Crm::ContactSummary
   end
 
   def primary(open)
-    open.find { |opportunity| @conversation_display_id && opportunity.conversation&.display_id == @conversation_display_id } ||
+    from_conversation(open) || open.select { |opportunity| opportunity.owner_id == @access.account_user.user_id }.max_by(&:updated_at) ||
       open.max_by(&:updated_at)
+  end
+
+  def from_conversation(open)
+    return if @conversation_display_id.nil?
+
+    open.find { |opportunity| opportunity.conversation&.display_id == @conversation_display_id }
   end
 
   # Unidades com pipeline ativo em que o usuário pode abrir negócio para o contato

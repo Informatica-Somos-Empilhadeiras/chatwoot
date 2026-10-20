@@ -20,7 +20,9 @@ class Outsider::Crm::RuleRunner
 
   def matches?
     conditions = @rule['conditions'] || {}
-    same_place = %w[business_unit_id pipeline_id stage_id].all? { |field| conditions[field].nil? || conditions[field] == @opportunity[field] }
+    same_place = %w[business_unit_id pipeline_id stage_id lost_reason_id].all? do |field|
+      conditions[field].nil? || conditions[field] == @opportunity[field]
+    end
     same_place && (conditions['min_value_cents'].nil? || @opportunity.value_cents >= conditions['min_value_cents'])
   end
 
@@ -29,7 +31,9 @@ class Outsider::Crm::RuleRunner
     summary = {}
     Outsider::Crm::Opportunity.transaction do
       Outsider::Crm::Automations.as_system(@opportunity) do
-        @rule['actions'].each { |action| run_action(action, summary) }
+        # encaminhar por último: depois dele o negócio já está fechado como encaminhado
+        forwards, others = @rule['actions'].partition { |action| action['type'] == 'forward' }
+        (others + forwards).each { |action| run_action(action, summary) }
       end
       Outsider::Crm::Automations.log(@opportunity, 'custom', rule_id: @rule['id'], rule_name: @rule['name'], key: @key, **summary)
     end
@@ -47,6 +51,7 @@ class Outsider::Crm::RuleRunner
     when 'set_owner' then set_owner(action, summary)
     when 'add_label' then add_label(action, summary)
     when 'add_note' then add_note(action, summary)
+    when 'forward' then forward(action, summary)
     end
   end
 
@@ -95,6 +100,41 @@ class Outsider::Crm::RuleRunner
 
     conversation.add_labels([title]) unless conversation.label_list.include?(title)
     summary[:label] = title
+  end
+
+  # Quem pode ser responsável no destino, sem depender de um usuário logado
+  SystemAccess = Struct.new(:account_id) do
+    def assignable_user_ids(unit_id)
+      Outsider::Crm::Access.assignable_user_ids(account_id, unit_id)
+    end
+  end
+
+  # Encaminhar o perdido: se o encaminhamento é recusado (limite de tentativas, já existe negócio
+  # aberto lá, unidade sem pipeline, motivo obrigatório), o negócio continua perdido e a linha do
+  # tempo mostra o porquê
+  def forward(action, summary)
+    return summary[:skipped] = (Array(summary[:skipped]) + ['same_unit']) if action['to_business_unit_id'] == @opportunity.business_unit_id
+
+    forwarder = Outsider::Crm::OpportunityForwarder.new(@opportunity, access: SystemAccess.new(@opportunity.account_id), user: nil,
+                                                                      params: forward_params(action), allow_lost: true)
+    forwarder.perform
+    summary[:forwarded] = { unit: forwarder.target.business_unit.name, code: forwarder.target.code }
+  rescue Outsider::Crm::OpportunityForwarder::Refused => e
+    summary[:forward_error] = e.code.to_s
+  end
+
+  def forward_params(action)
+    {
+      to_business_unit_id: action['to_business_unit_id'], pipeline_id: action['pipeline_id'], reason_id: forward_reason_id(action),
+      owner_id: action['owner_id'], notes: action['notes'], create_task: action['create_task'], complete_tasks: true,
+      rule_name: @rule['name']
+    }
+  end
+
+  def forward_reason_id(action)
+    return action['reason_id'] if action['reason_id']
+
+    @opportunity.lost_reason_id if @opportunity.lost_reason&.kind.in?(%w[forward both])
   end
 
   def add_note(action, summary)

@@ -15,7 +15,7 @@ import OpportunityActivity from '../activity/OpportunityActivity.vue';
 import ForwardDialog from './ForwardDialog.vue';
 import JourneyHistory from './JourneyHistory.vue';
 import ConfirmDelete from './ConfirmDelete.vue';
-import { refreshContact } from '../crmStore';
+import { markReceived, refreshContact } from '../crmStore';
 import {
   STATUS_COLORS,
   errorMessage,
@@ -60,6 +60,7 @@ const refresh = async () => {
 
 const open = item => {
   opportunity.value = item;
+  markReceived([item.id], true);
   refresh();
 };
 
@@ -72,6 +73,7 @@ const openOther = async item => {
   try {
     const { data } = await CrmAPI.getOpportunity(item.id);
     opportunity.value = data;
+    markReceived([data.id], true);
   } catch (error) {
     useAlert(errorMessage(t, error));
   }

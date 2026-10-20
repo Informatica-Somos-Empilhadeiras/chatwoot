@@ -35,6 +35,8 @@ export const crmState = reactive({
   myTasks: { pending: 0, overdue: 0 },
   // histórico multiempresa por contato (jornadas, negócios em todas as unidades e encaminhamentos)
   histories: {},
+  // negócios recebidos por encaminhamento que o usuário ainda não abriu (aviso e bolinha vermelha)
+  received: [],
 });
 
 let contextPromise = null;
@@ -58,6 +60,7 @@ const resetForAccount = accountId => {
   crmState.unitMembers = {};
   crmState.myTasks = { pending: 0, overdue: 0 };
   crmState.histories = {};
+  crmState.received = [];
   contextPromise = null;
 };
 
@@ -305,4 +308,47 @@ export const startTaskReminders = async t => {
   if (reminderTimer || !crmState.access.enabled) return;
   reminderTimer = setInterval(checkReminders, REMINDER_CHECK);
   checkReminders();
+};
+
+// Aviso de negócio recebido por encaminhamento: a lista é buscada a cada minuto enquanto o Chatwoot
+// está aberto (o ícone do CRM no menu lateral liga o relógio). Fechar o aviso marca "notified";
+// abrir o negócio (painel do CRM ou aba da conversa) marca "opened" e tira a bolinha.
+const RECEIVED_CHECK = 60 * 1000;
+let receivedTimer = null;
+
+export const refreshReceived = async () => {
+  if (!crmState.access.enabled) return;
+  try {
+    const { data } = await CrmAPI.getReceivedForwards();
+    crmState.received = data.payload;
+  } catch {
+    // sem aviso se a lista falhar; tenta de novo no próximo minuto
+  }
+};
+
+export const startReceivedWatch = async () => {
+  await ensureCrmContext();
+  if (receivedTimer || !crmState.access.enabled) return;
+  receivedTimer = setInterval(refreshReceived, RECEIVED_CHECK);
+  refreshReceived();
+};
+
+export const isReceived = opportunityId =>
+  crmState.received.some(item => item.opportunity_id === opportunityId);
+
+export const markReceived = async (opportunityIds, opened) => {
+  const ids = opportunityIds.filter(isReceived);
+  if (!ids.length) return;
+  // tira da tela na hora; a resposta traz a lista atualizada
+  crmState.received = crmState.received
+    .filter(item => !(opened && ids.includes(item.opportunity_id)))
+    .map(item =>
+      ids.includes(item.opportunity_id) ? { ...item, notified: true } : item
+    );
+  try {
+    const { data } = await CrmAPI.markReceivedForwards(ids, opened);
+    crmState.received = data.payload;
+  } catch {
+    // se falhar, o aviso volta na próxima busca
+  }
 };

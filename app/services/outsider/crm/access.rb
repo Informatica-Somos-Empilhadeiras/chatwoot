@@ -77,8 +77,12 @@ class Outsider::Crm::Access
 
   # Pode ser responsável por tarefa ou negócio da unidade: membros e administradores da conta
   def assignable_user_ids(unit_id)
-    admins = AccountUser.where(account_id: account_user.account_id, role: :administrator).pluck(:user_id)
-    members = Outsider::Crm::BusinessUnitMember.where(account_id: account_user.account_id, business_unit_id: unit_id).pluck(:user_id)
+    self.class.assignable_user_ids(account_user.account_id, unit_id)
+  end
+
+  def self.assignable_user_ids(account_id, unit_id)
+    admins = AccountUser.where(account_id: account_id, role: :administrator).pluck(:user_id)
+    members = Outsider::Crm::BusinessUnitMember.where(account_id: account_id, business_unit_id: unit_id).pluck(:user_id)
     (admins + members).uniq
   end
 

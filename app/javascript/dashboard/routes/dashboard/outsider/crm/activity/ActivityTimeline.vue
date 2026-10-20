@@ -48,6 +48,17 @@ const AUTOMATION_TEXTS = {
   custom: 'AUTOMATION_RULE',
 };
 
+// por que o encaminhamento automático não aconteceu (ver OpportunityForwarder::Refused)
+const FORWARD_ERRORS = [
+  'limit_reached',
+  'duplicate_open',
+  'no_pipeline',
+  'invalid_unit',
+  'reason_required',
+  'invalid_reason',
+  'invalid_owner',
+];
+
 // o que uma regra montada pelo administrador fez (ou deixou de fazer), na linha de detalhe
 const ruleDetail = meta =>
   [
@@ -55,6 +66,21 @@ const ruleDetail = meta =>
     meta.owner && t('OUTSIDER_CRM.TIMELINE.RULE_OWNER', { name: meta.owner }),
     meta.label && t('OUTSIDER_CRM.TIMELINE.RULE_LABEL', { label: meta.label }),
     meta.note && t('OUTSIDER_CRM.TIMELINE.RULE_NOTE'),
+    meta.forwarded &&
+      t('OUTSIDER_CRM.TIMELINE.RULE_FORWARDED', {
+        unit: meta.forwarded.unit,
+        code: meta.forwarded.code,
+      }),
+    meta.forward_error &&
+      t('OUTSIDER_CRM.TIMELINE.RULE_FORWARD_FAILED', {
+        reason: t(
+          `OUTSIDER_CRM.TIMELINE.FORWARD_ERRORS.${
+            FORWARD_ERRORS.includes(meta.forward_error)
+              ? meta.forward_error.toUpperCase()
+              : 'GENERIC'
+          }`
+        ),
+      }),
     ...(meta.skipped || []).map(code =>
       t(`OUTSIDER_CRM.TIMELINE.RULE_SKIPPED.${code.toUpperCase()}`)
     ),
@@ -134,8 +160,13 @@ const statusLabel = status =>
   status ? t(`OUTSIDER_CRM.STATUS.${String(status).toUpperCase()}`) : '—';
 
 const describe = item => {
-  const name = item.user?.name || t('OUTSIDER_CRM.TIMELINE.SYSTEM');
   const meta = item.metadata || {};
+  // encaminhamento feito por regra de automação: no lugar da pessoa, o nome da regra
+  const fallback =
+    meta.rule && FORWARD_KINDS.includes(item.kind)
+      ? t('OUTSIDER_CRM.TIMELINE.BY_RULE', { rule: meta.rule })
+      : t('OUTSIDER_CRM.TIMELINE.SYSTEM');
+  const name = item.user?.name || fallback;
   switch (item.kind) {
     case 'note':
       return t('OUTSIDER_CRM.TIMELINE.NOTE', { name });

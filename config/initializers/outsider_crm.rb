@@ -14,6 +14,9 @@ Rails.application.routes.prepend do
                 post :stalled
               end
               resources :automation_rules, only: [:index, :create, :update, :destroy]
+              resource :received_forwards, only: [:show] do
+                post :mark
+              end
               resources :business_units, only: [:index, :show, :create, :update, :destroy] do
                 resources :members, controller: 'business_unit_members', only: [:create, :update, :destroy]
               end

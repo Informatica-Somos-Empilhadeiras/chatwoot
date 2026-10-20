@@ -285,7 +285,9 @@ watch(
                   {{
                     t('OUTSIDER_CRM.HISTORY.FORWARDED_LINE', {
                       unit: forwardFrom(item.id).to_unit,
-                      name: forwardFrom(item.id).requested_by || '—',
+                      name:
+                        forwardFrom(item.id).requested_by ||
+                        t('OUTSIDER_CRM.HISTORY.AUTOMATIC'),
                       date: formatDateTime(forwardFrom(item.id).created_at, t),
                     })
                   }}

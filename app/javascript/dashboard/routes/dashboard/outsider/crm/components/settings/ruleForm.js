@@ -15,7 +15,10 @@ export const RULE_ACTIONS = [
   'set_owner',
   'add_label',
   'add_note',
+  'forward',
 ];
+// encaminhar e o filtro por motivo só existem em "quando perder"
+export const LOST_TRIGGER = 'lost';
 export const ASSIGNEES = ['owner', 'managers', 'user'];
 export const MAX_RULE_ACTIONS = 5;
 export const MAX_HOURS = 2160;
@@ -25,6 +28,7 @@ export const ACTION_ICONS = {
   set_owner: 'i-lucide-user-round-cog',
   add_label: 'i-lucide-tag',
   add_note: 'i-lucide-sticky-note',
+  forward: 'i-lucide-forward',
 };
 
 // 48 horas aparecem como 2 dias; o que não fecha em dias fica em horas
@@ -65,6 +69,12 @@ export const blankAction = (type = 'create_task') => ({
   user_id: '',
   label: '',
   body: '',
+  to_business_unit_id: '',
+  pipeline_id: '',
+  reason_id: '',
+  owner_id: '',
+  create_task: true,
+  notes: '',
 });
 
 export const blankForm = () => ({
@@ -77,6 +87,7 @@ export const blankForm = () => ({
   pipeline_id: '',
   stage_id: '',
   min_value: '',
+  lost_reason_id: '',
   actions: [blankAction()],
 });
 
@@ -89,6 +100,12 @@ const actionToForm = action => {
     due_amount: due.amount,
     due_unit: due.unit,
     user_id: action.user_id || '',
+    to_business_unit_id: action.to_business_unit_id || '',
+    pipeline_id: action.pipeline_id || '',
+    reason_id: action.reason_id || '',
+    owner_id: action.owner_id || '',
+    create_task: action.type === 'forward' ? !!action.create_task : true,
+    notes: action.notes || '',
   };
 };
 
@@ -105,6 +122,7 @@ export const ruleToForm = rule => {
     pipeline_id: conditions.pipeline_id || '',
     stage_id: conditions.stage_id || '',
     min_value: centsToInput(conditions.min_value_cents),
+    lost_reason_id: conditions.lost_reason_id || '',
     actions: rule.actions.map(actionToForm),
   };
 };
@@ -125,6 +143,16 @@ const formToAction = action => {
       return { type: action.type, user_id: action.user_id };
     case 'add_label':
       return { type: action.type, label: action.label };
+    case 'forward':
+      return {
+        type: action.type,
+        to_business_unit_id: action.to_business_unit_id,
+        pipeline_id: action.pipeline_id || null,
+        reason_id: action.reason_id || null,
+        owner_id: action.owner_id || null,
+        create_task: action.create_task,
+        notes: action.notes.trim(),
+      };
     default:
       return { type: action.type, body: action.body.trim() };
   }
@@ -142,13 +170,15 @@ export const formToRule = form => ({
     pipeline_id: form.pipeline_id || null,
     stage_id: form.stage_id || null,
     min_value_cents: inputToCents(form.min_value),
+    lost_reason_id:
+      form.trigger === LOST_TRIGGER ? form.lost_reason_id || null : null,
   },
   actions: form.actions.map(formToAction),
 });
 
 const hoursInRange = (hours, min) => hours >= min && hours <= MAX_HOURS;
 
-const actionValid = action => {
+const actionValid = (action, trigger) => {
   switch (action.type) {
     case 'create_task':
       return (
@@ -160,6 +190,8 @@ const actionValid = action => {
       return action.user_id;
     case 'add_label':
       return action.label;
+    case 'forward':
+      return trigger === LOST_TRIGGER && action.to_business_unit_id;
     default:
       return action.body.trim();
   }
@@ -173,7 +205,8 @@ export const isFormValid = form =>
         hoursInRange(joinHours(form.wait_amount, form.wait_unit), 1)) &&
       !Number.isNaN(inputToCents(form.min_value)) &&
       form.actions.length &&
-      form.actions.every(actionValid)
+      form.actions.filter(action => action.type === 'forward').length <= 1 &&
+      form.actions.every(action => actionValid(action, form.trigger))
   );
 
 // "actions.1.title_blank" → "Ação 2: ..."
@@ -192,6 +225,12 @@ const FIELD_ERRORS = {
   label: 'LABEL',
   body_blank: 'NOTE',
   body_too_long: 'NOTE',
+  too_many_forwards: 'TOO_MANY_FORWARDS',
+  forward_trigger: 'FORWARD_TRIGGER',
+  to_business_unit_id: 'FORWARD_UNIT',
+  pipeline_id: 'FORWARD_PIPELINE',
+  reason_id: 'FORWARD_REASON',
+  owner_id: 'FORWARD_OWNER',
 };
 
 export const ruleErrorMessage = (t, field) => {

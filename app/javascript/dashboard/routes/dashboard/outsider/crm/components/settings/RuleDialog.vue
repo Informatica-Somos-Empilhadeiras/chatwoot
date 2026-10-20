@@ -1,9 +1,11 @@
 <script setup>
 // OUTSIDER: criar e editar uma regra "quando acontecer X, faça Y" (ver ruleForm.js e
 // app/services/outsider/crm/automation_rules.rb). Na criação, modelos prontos preenchem o formulário.
+// "Encaminhar para outra unidade" só aparece em "quando perder".
 import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useAlert } from 'dashboard/composables';
+import { useMapGetter } from 'dashboard/composables/store';
 import CrmAPI from 'dashboard/api/outsider/crm';
 import Dialog from 'dashboard/components-next/dialog/Dialog.vue';
 import Input from 'dashboard/components-next/input/Input.vue';
@@ -12,9 +14,11 @@ import Button from 'dashboard/components-next/button/Button.vue';
 import Switch from 'dashboard/components-next/switch/Switch.vue';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
 import { TASK_KINDS, errorMessage } from '../../helpers';
+import { loadUnitMembers } from '../../crmStore';
 import {
   ACTION_ICONS,
   ASSIGNEES,
+  LOST_TRIGGER,
   MAX_RULE_ACTIONS,
   RULE_ACTIONS,
   RULE_TRIGGERS,
@@ -32,18 +36,23 @@ const props = defineProps({
   pipelines: { type: Array, required: true },
   agentOptions: { type: Array, required: true },
   labelOptions: { type: Array, required: true },
+  lostReasons: { type: Array, default: () => [] },
 });
 
 const emit = defineEmits(['saved']);
 
 const { t } = useI18n();
+const agents = useMapGetter('agents/getAgents');
 
 const dialogRef = ref(null);
 const isSaving = ref(false);
 const ruleId = ref(null);
 const form = ref(blankForm());
+// membros de cada unidade de destino, para escolher o responsável do encaminhamento
+const members = ref({});
 
 const isTimed = computed(() => TIMED_TRIGGERS.includes(form.value.trigger));
+const isLost = computed(() => form.value.trigger === LOST_TRIGGER);
 const isValid = computed(() => isFormValid(form.value));
 
 const options = (keys, path) =>
@@ -53,7 +62,73 @@ const options = (keys, path) =>
   }));
 
 const triggerOptions = computed(() => options(RULE_TRIGGERS, 'TRIGGERS'));
-const actionOptions = computed(() => options(RULE_ACTIONS, 'ACTIONS'));
+const actionOptions = computed(() =>
+  options(
+    RULE_ACTIONS.filter(type => type !== 'forward' || isLost.value),
+    'ACTIONS'
+  )
+);
+const reasonOptions = (kinds, emptyKey) => [
+  { value: '', label: t(`OUTSIDER_CRM.SETTINGS.RULES.${emptyKey}`) },
+  ...props.lostReasons
+    .filter(reason => reason.active !== false && kinds.includes(reason.kind))
+    .map(reason => ({ value: reason.id, label: reason.name })),
+];
+const lostReasonOptions = computed(() =>
+  reasonOptions(['lost', 'both'], 'ANY_LOST_REASON')
+);
+const forwardReasonOptions = computed(() =>
+  reasonOptions(['forward', 'both'], 'FORWARD.USE_LOST_REASON')
+);
+const forwardUnitOptions = computed(() =>
+  props.units
+    .filter(unit => unit.active !== false)
+    .map(unit => ({ value: unit.id, label: unit.name }))
+);
+const forwardPipelineOptions = action => [
+  { value: '', label: t('OUTSIDER_CRM.SETTINGS.RULES.FORWARD.FIRST_PIPELINE') },
+  ...props.pipelines
+    .filter(
+      pipeline =>
+        pipeline.business_unit_id === action.to_business_unit_id &&
+        pipeline.active !== false
+    )
+    .map(pipeline => ({ value: pipeline.id, label: pipeline.name })),
+];
+// responsável no destino: membros da unidade e administradores da conta (mesma regra da API)
+const ownerOptions = action => {
+  const unitMembers = members.value[action.to_business_unit_id] || [];
+  const ids = new Set(unitMembers.map(member => member.id));
+  const admins = agents.value.filter(
+    agent => agent.role === 'administrator' && !ids.has(agent.id)
+  );
+  return [
+    { value: '', label: t('OUTSIDER_CRM.SETTINGS.RULES.FORWARD.NO_OWNER') },
+    ...[...unitMembers, ...admins].map(person => ({
+      value: person.id,
+      label: person.name,
+    })),
+  ];
+};
+
+const loadMembers = async unitId => {
+  if (!unitId || members.value[unitId]) return;
+  try {
+    members.value = {
+      ...members.value,
+      [unitId]: await loadUnitMembers(unitId),
+    };
+  } catch {
+    // sem a lista, o encaminhamento ainda pode ir sem responsável
+  }
+};
+
+const changeForwardUnit = (action, unitId) => {
+  action.to_business_unit_id = unitId;
+  action.pipeline_id = '';
+  action.owner_id = '';
+  loadMembers(unitId);
+};
 const assigneeOptions = computed(() => options(ASSIGNEES, 'ASSIGNEES'));
 const unitOptions = computed(() => [
   { value: '', label: t('OUTSIDER_CRM.SETTINGS.RULES.ANY_UNIT') },
@@ -145,6 +220,14 @@ const PRESETS = [
     }),
   },
   {
+    key: 'LOST_FORWARD',
+    icon: 'i-lucide-forward',
+    build: () => ({
+      trigger: 'lost',
+      actions: [{ ...blankAction('forward') }],
+    }),
+  },
+  {
     key: 'NEXT_TASK',
     icon: 'i-lucide-calendar-x',
     build: () => ({
@@ -169,6 +252,9 @@ const applyPreset = preset => {
 const open = (rule = null) => {
   ruleId.value = rule?.id ?? null;
   form.value = rule ? ruleToForm(rule) : blankForm();
+  form.value.actions
+    .filter(action => action.type === 'forward')
+    .forEach(action => loadMembers(action.to_business_unit_id));
   dialogRef.value?.open();
 };
 
@@ -311,6 +397,17 @@ defineExpose({ open });
               class="!w-full [&>select]:w-full"
             />
           </label>
+          <label
+            v-if="isLost"
+            class="flex flex-col gap-1 text-xs text-n-slate-11"
+          >
+            {{ t('OUTSIDER_CRM.SETTINGS.RULES.LOST_REASON') }}
+            <Select
+              v-model="form.lost_reason_id"
+              :options="lostReasonOptions"
+              class="!w-full [&>select]:w-full"
+            />
+          </label>
           <label class="flex flex-col gap-1 text-xs text-n-slate-11">
             {{ t('OUTSIDER_CRM.SETTINGS.RULES.MIN_VALUE') }}
             <Input
@@ -426,6 +523,68 @@ defineExpose({ open });
             />
             <p class="mb-0 text-xs text-n-slate-11">
               {{ t('OUTSIDER_CRM.SETTINGS.RULES.LABEL_HELP') }}
+            </p>
+          </template>
+
+          <template v-else-if="action.type === 'forward'">
+            <p v-if="!isLost" class="mb-0 text-xs text-n-ruby-11">
+              {{ t('OUTSIDER_CRM.SETTINGS.RULES.ERRORS.FORWARD_TRIGGER') }}
+            </p>
+            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <label class="flex flex-col gap-1 text-xs text-n-slate-11">
+                {{ t('OUTSIDER_CRM.SETTINGS.RULES.FORWARD.UNIT') }}
+                <Select
+                  :model-value="action.to_business_unit_id"
+                  :options="forwardUnitOptions"
+                  :placeholder="
+                    t('OUTSIDER_CRM.SETTINGS.RULES.FORWARD.CHOOSE_UNIT')
+                  "
+                  class="!w-full [&>select]:w-full"
+                  @update:model-value="
+                    unitId => changeForwardUnit(action, unitId)
+                  "
+                />
+              </label>
+              <label class="flex flex-col gap-1 text-xs text-n-slate-11">
+                {{ t('OUTSIDER_CRM.SETTINGS.RULES.PIPELINE') }}
+                <Select
+                  v-model="action.pipeline_id"
+                  :options="forwardPipelineOptions(action)"
+                  :disabled="!action.to_business_unit_id"
+                  class="!w-full [&>select]:w-full"
+                />
+              </label>
+              <label class="flex flex-col gap-1 text-xs text-n-slate-11">
+                {{ t('OUTSIDER_CRM.SETTINGS.RULES.FORWARD.OWNER') }}
+                <Select
+                  v-model="action.owner_id"
+                  :options="ownerOptions(action)"
+                  :disabled="!action.to_business_unit_id"
+                  class="!w-full [&>select]:w-full"
+                />
+              </label>
+              <label class="flex flex-col gap-1 text-xs text-n-slate-11">
+                {{ t('OUTSIDER_CRM.SETTINGS.RULES.FORWARD.REASON') }}
+                <Select
+                  v-model="action.reason_id"
+                  :options="forwardReasonOptions"
+                  class="!w-full [&>select]:w-full"
+                />
+              </label>
+            </div>
+            <label class="flex items-center gap-2 text-sm text-n-slate-12">
+              <Switch v-model="action.create_task" />
+              {{ t('OUTSIDER_CRM.SETTINGS.RULES.FORWARD.CREATE_TASK') }}
+            </label>
+            <textarea
+              v-model="action.notes"
+              rows="2"
+              maxlength="2000"
+              class="!mb-0 w-full px-3 py-2 text-sm rounded-lg resize-y reset-base bg-n-solid-1 text-n-slate-12 outline outline-1 -outline-offset-1 outline-n-weak focus:outline-n-brand"
+              :placeholder="t('OUTSIDER_CRM.SETTINGS.RULES.FORWARD.NOTES')"
+            />
+            <p class="mb-0 text-xs text-n-slate-11">
+              {{ t('OUTSIDER_CRM.SETTINGS.RULES.FORWARD.HELP') }}
             </p>
           </template>
 

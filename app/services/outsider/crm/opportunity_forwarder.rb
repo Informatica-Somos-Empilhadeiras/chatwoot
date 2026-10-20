@@ -9,6 +9,9 @@
 # Tarefas na hora e o lembrete dispara no prazo);
 # assign_conversation atribui a conversa do Chatwoot a esse responsável, pelo serviço do próprio
 # Chatwoot. Nada é enviado ao cliente.
+#
+# allow_lost: usado pelas regras de automação ("quando perder, encaminhe"), que rodam logo depois da
+# perda. O negócio perdido passa a encaminhado, como se tivesse sido encaminhado em vez de perdido.
 class Outsider::Crm::OpportunityForwarder
   class Refused < StandardError
     attr_reader :code
@@ -33,11 +36,12 @@ class Outsider::Crm::OpportunityForwarder
     Outsider::Crm::LostReason.active.where(account_id: account_id, kind: [:forward, :both]).ordered
   end
 
-  def initialize(opportunity, access:, user:, params:)
+  def initialize(opportunity, access:, user:, params:, allow_lost: false)
     @origin = opportunity
     @access = access
     @user = user
     @params = params
+    @allow_lost = allow_lost
   end
 
   def perform
@@ -68,14 +72,17 @@ class Outsider::Crm::OpportunityForwarder
   private
 
   def validate!
-    raise Refused, :not_open unless @origin.open?
-
+    validate_status!
     validate_destination!
     validate_reason!
     raise Refused, :notes_too_long if notes.to_s.length > 2000
     raise Refused, :invalid_owner if owner_id.present? && owner.nil?
 
     validate_conversation! if flag?(:assign_conversation)
+  end
+
+  def validate_status!
+    raise Refused, :not_open unless @origin.open? || (@allow_lost && @origin.lost?)
   end
 
   def validate_destination!
@@ -166,7 +173,7 @@ class Outsider::Crm::OpportunityForwarder
   end
 
   def log_activities(forward)
-    shared = { reason: reason&.name, attempt: forward.attempt_number, max: max_attempts }
+    shared = { reason: reason&.name, attempt: forward.attempt_number, max: max_attempts, rule: @params[:rule_name] }
     log(@origin, :forwarded, shared.merge(to_unit: unit.name, to_code: @target.code, to_opportunity_id: @target.id, owner: owner&.name))
     log(@target, :received, shared.merge(from_unit: @origin.business_unit.name, from_code: @origin.code,
                                          from_opportunity_id: @origin.id, from_owner: @origin.owner&.name, stage: @target.stage.name))

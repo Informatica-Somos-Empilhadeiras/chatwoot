@@ -208,7 +208,7 @@
           "CREATED": "Vale para todo negócio novo, inclusive o que chega por encaminhamento de outra unidade.",
           "STAGE_ENTERED": "Escolha a etapa abaixo para criar as tarefas modelo dela. Sem etapa, roda a cada troca de etapa. Negócio novo conta como entrada na primeira etapa.",
           "WON": "Roda logo depois das automações prontas de ganho.",
-          "LOST": "Roda logo depois das automações prontas de perda.",
+          "LOST": "Roda logo depois das automações prontas de perda. Aqui dá para filtrar pelo motivo da perda e encaminhar o negócio para outra unidade.",
           "STALLED": "Conferido de hora em hora. Roda uma vez por passagem na etapa.",
           "NO_NEXT_TASK": "Conferido de hora em hora, contando da última tarefa concluída (ou da criação do negócio). Só roda de novo depois que o negócio concluir outra tarefa."
         },
@@ -223,10 +223,11 @@
           "CREATE_TASK": "Criar tarefa",
           "SET_OWNER": "Trocar responsável",
           "ADD_LABEL": "Etiqueta na conversa",
-          "ADD_NOTE": "Escrever nota"
+          "ADD_NOTE": "Escrever nota",
+          "FORWARD": "Encaminhar para outra unidade"
         },
         "ADD_ACTION": "Adicionar ação",
-        "ACTIONS_HELP": "Até 5 ações por regra. Nenhuma ação muda a etapa do negócio, então uma regra não dispara outra.",
+        "ACTIONS_HELP": "Até 5 ações por regra. Nenhuma ação muda a etapa do negócio. \"Encaminhar\" roda por último e o negócio novo no destino pode disparar as regras de \"Negócio criado\" de lá.",
         "TASK_TITLE": "Título da tarefa",
         "TASK_DESCRIPTION": "Descrição (opcional)",
         "DUE_IN": "Vence em",
@@ -247,7 +248,8 @@
           "EVERYWHERE": "Todas as unidades",
           "MIN_VALUE": "a partir de {value}",
           "TASK_MANAGERS": "{title} (gestores)",
-          "OWNER": "Responsável: {name}"
+          "OWNER": "Responsável: {name}",
+          "FORWARD": "Encaminhar para {unit}"
         },
         "PRESETS": {
           "TITLE": "Comece por um modelo",
@@ -259,7 +261,8 @@
           "STALLED_MANAGERS": "Avisar gestores de negócio parado",
           "STALLED_MANAGERS_TASK": "Ver com o vendedor o negócio parado",
           "NEXT_TASK": "Cobrar próxima tarefa",
-          "NEXT_TASK_TASK": "Definir o próximo passo do negócio"
+          "NEXT_TASK_TASK": "Definir o próximo passo do negócio",
+          "LOST_FORWARD": "Encaminhar o perdido para outra unidade"
         },
         "ERRORS": {
           "NAME": "Dê um nome à regra (até 80 letras).",
@@ -274,7 +277,27 @@
           "LABEL": "escolha uma etiqueta que existe.",
           "NOTE": "escreva a nota (até 2000 letras).",
           "ACTION": "Ação {number}: {message}",
-          "GENERIC": "Confira os campos da regra."
+          "GENERIC": "Confira os campos da regra.",
+          "TOO_MANY_FORWARDS": "Use só um encaminhamento por regra.",
+          "FORWARD_TRIGGER": "Encaminhar só funciona em “quando o negócio for perdido”.",
+          "FORWARD_UNIT": "escolha uma unidade de destino ativa.",
+          "FORWARD_PIPELINE": "o pipeline precisa ser da unidade de destino.",
+          "FORWARD_REASON": "escolha um motivo de encaminhamento da lista.",
+          "FORWARD_OWNER": "o responsável precisa ser da unidade de destino."
+        },
+        "LOST_REASON": "Motivo da perda",
+        "ANY_LOST_REASON": "Qualquer motivo",
+        "FORWARD": {
+          "UNIT": "Unidade de destino",
+          "CHOOSE_UNIT": "Escolha a unidade",
+          "OWNER": "Responsável no destino",
+          "NO_OWNER": "Sem responsável (os gestores recebem o aviso)",
+          "REASON": "Motivo do encaminhamento",
+          "USE_LOST_REASON": "Usar o motivo da perda",
+          "FIRST_PIPELINE": "Primeiro pipeline da unidade",
+          "CREATE_TASK": "Criar a tarefa “Contatar cliente” para o responsável (prazo de 30 minutos)",
+          "NOTES": "Recado para quem recebe (opcional)",
+          "HELP": "O negócio perdido passa a encaminhado e um negócio novo abre na unidade de destino, na primeira etapa, com o mesmo contato, conversa, valor e campos. Não encaminha se o contato já tem negócio aberto lá ou se a jornada chegou ao limite de encaminhamentos; a linha do tempo mostra o motivo."
         }
       }
     },
@@ -370,7 +393,10 @@
       "OTHERS": "Outros negócios e histórico",
       "WON": "Ganhos",
       "CHIP_TOOLTIP": "Negócios abertos no CRM: {count}",
-      "DEALS": "Negócios: {count}"
+      "DEALS": "Negócios: {count}",
+      "SWITCH": "{n} negócio aberto deste contato | {n} negócios abertos deste contato: escolha qual ver",
+      "YOURS": "Seu",
+      "NO_OWNER": "Sem responsável"
     },
     "CANCEL": "Cancelar",
     "DATES": {
@@ -483,7 +509,21 @@
       "RULE_SKIPPED": {
         "OWNER_NOT_MEMBER": "Responsável não trocado: a pessoa não é da unidade",
         "NO_CONVERSATION": "Etiqueta não aplicada: negócio sem conversa",
-        "LABEL_MISSING": "Etiqueta não aplicada: ela não existe mais"
+        "LABEL_MISSING": "Etiqueta não aplicada: ela não existe mais",
+        "SAME_UNIT": "Não encaminhado: o negócio já é da unidade de destino"
+      },
+      "BY_RULE": "A regra “{rule}”",
+      "RULE_FORWARDED": "Encaminhado para {unit} ({code})",
+      "RULE_FORWARD_FAILED": "Não encaminhado: {reason}",
+      "FORWARD_ERRORS": {
+        "LIMIT_REACHED": "a jornada já chegou ao limite de encaminhamentos",
+        "DUPLICATE_OPEN": "o contato já tem negócio aberto na unidade de destino",
+        "NO_PIPELINE": "a unidade de destino não tem pipeline ativo",
+        "INVALID_UNIT": "a unidade de destino não existe ou está inativa",
+        "REASON_REQUIRED": "falta o motivo do encaminhamento (escolha um na regra)",
+        "INVALID_REASON": "o motivo escolhido não existe mais",
+        "INVALID_OWNER": "o responsável escolhido não é mais da unidade de destino",
+        "GENERIC": "o encaminhamento foi recusado"
       }
     },
     "AUDIT": {
@@ -597,7 +637,8 @@
       "CLOSED_ON": "encerrado em {date}",
       "OPEN_SINCE": "aberto desde {date}",
       "FORWARDED_LINE": "Encaminhado para {unit} por {name}, {date}",
-      "REASON": "Motivo: {reason}"
+      "REASON": "Motivo: {reason}",
+      "AUTOMATIC": "regra de automação"
     },
     "REPORTS": {
       "PERIODS": {
@@ -705,6 +746,20 @@
         "HAS_VALUES": "Não dá para apagar: o campo está preenchido em negócios ({count}). Desative o campo para escondê-lo.",
         "FORWARDED_OUT": "Não dá para apagar: este negócio foi encaminhado para {unit} ({code}). Apague primeiro o {code}, depois este."
       }
+    },
+    "NOTICE": {
+      "TITLE": "Você recebeu um negócio encaminhado | Você recebeu {n} negócios encaminhados",
+      "SUBTITLE": "Outra unidade do grupo passou estes clientes para você atender.",
+      "BY_PERSON": "De {unit}, por {name}",
+      "BY_RULE": "De {unit}, pela regra “{rule}”",
+      "FROM_UNIT": "De {unit}",
+      "REASON": "Motivo: {reason}",
+      "NO_OWNER": "Chegou sem responsável: você recebeu o aviso por ser gestor da unidade.",
+      "OPEN_DEAL": "Ver negócio",
+      "OPEN_CONVERSATION": "Abrir conversa",
+      "CLOSE": "Fechar",
+      "DOT": "{n} negócio encaminhado ainda não aberto | {n} negócios encaminhados ainda não abertos",
+      "NEW": "Novo"
     }
   }
 }

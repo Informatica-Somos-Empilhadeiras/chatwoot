@@ -1,18 +1,23 @@
 <script setup>
 // OUTSIDER: card de um negócio no Kanban. Tarefa atrasada deixa o card com borda vermelha;
 // negócio recebido por encaminhamento mostra de qual unidade veio. Com o destaque ligado nas
-// automações, negócio aberto sem tarefa pendente mostra "Sem próxima tarefa".
+// automações, negócio aberto sem tarefa pendente mostra "Sem próxima tarefa". Recebido por
+// encaminhamento e ainda não aberto pelo usuário mostra "Novo" em vermelho.
+import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import Avatar from 'dashboard/components-next/avatar/Avatar.vue';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
 import { formatDate, formatDateTime, formatMoney } from '../helpers';
+import { isReceived } from '../crmStore';
 
-defineProps({
+const props = defineProps({
   opportunity: { type: Object, required: true },
   noNextTask: { type: Boolean, default: false },
 });
 
 const { t } = useI18n();
+
+const isNew = computed(() => isReceived(props.opportunity.id));
 </script>
 
 <template>
@@ -27,6 +32,12 @@ const { t } = useI18n();
   >
     <div class="flex items-start justify-between gap-2">
       <span class="font-medium leading-snug text-n-slate-12 line-clamp-2">
+        <span
+          v-if="isNew"
+          class="inline-flex items-center px-1.5 me-1 text-[11px] font-semibold rounded-md bg-n-ruby-9 text-white align-[1px]"
+        >
+          {{ t('OUTSIDER_CRM.NOTICE.NEW') }}
+        </span>
         {{ opportunity.title }}
       </span>
       <Icon

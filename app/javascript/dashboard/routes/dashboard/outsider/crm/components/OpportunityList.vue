@@ -2,6 +2,7 @@
 // OUTSIDER: tela de negócios. Indicadores no topo, filtros compartilhados e duas visualizações:
 // Kanban (um pipeline por vez, só negócios abertos) e tabela (com ordenação e exportação CSV).
 import { ref, computed, watch, onMounted } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { useDebounceFn } from '@vueuse/core';
 import { useAlert } from 'dashboard/composables';
@@ -25,6 +26,7 @@ import {
   formatMoney,
   needsNextTask,
 } from '../helpers';
+import { crmState, isReceived } from '../crmStore';
 
 const props = defineProps({
   access: { type: Object, required: true },
@@ -35,6 +37,8 @@ const props = defineProps({
 const VIEW_KEY = 'outsiderCrmView';
 
 const { t } = useI18n();
+const route = useRoute();
+const router = useRouter();
 const store = useStore();
 const agents = useMapGetter('agents/getAgents');
 const currentUser = useMapGetter('getCurrentUser');
@@ -249,7 +253,31 @@ const openNewInStage = stage =>
     stage_id: stage.id,
   });
 
+// ?negocio=ID (vindo do aviso de encaminhamento) abre o painel desse negócio
+const openFromRoute = async () => {
+  const id = Number(route.query.negocio);
+  if (!id) return;
+  router.replace({ query: { ...route.query, negocio: undefined } });
+  try {
+    const { data } = await CrmAPI.getOpportunity(id);
+    drawerRef.value?.open(data);
+  } catch (error) {
+    useAlert(errorMessage(t, error));
+  }
+};
+
+watch(() => route.query.negocio, openFromRoute);
+
+// chegou negócio encaminhado com a tela aberta: recarrega para ele aparecer com o selo "Novo"
+watch(
+  () => crmState.received.map(item => item.opportunity_id),
+  (now, before) => {
+    if (now.some(id => !before.includes(id))) refresh();
+  }
+);
+
 onMounted(async () => {
+  openFromRoute();
   ensureBoardPipeline();
   load(1);
   store.dispatch('agents/get');
@@ -414,6 +442,12 @@ onMounted(async () => {
               <td class="px-4 py-3">
                 <div class="flex flex-col min-w-0">
                   <span class="font-medium truncate text-n-slate-12">
+                    <span
+                      v-if="isReceived(opportunity.id)"
+                      class="inline-flex px-1.5 me-1 text-[11px] font-semibold rounded-md bg-n-ruby-9 text-white"
+                    >
+                      {{ t('OUTSIDER_CRM.NOTICE.NEW') }}
+                    </span>
                     {{ opportunity.title }}
                   </span>
                   <span class="text-xs text-n-slate-11">

@@ -1,8 +1,9 @@
 # OUTSIDER: regras de automação "quando acontecer X, faça Y" (Outsider::Crm::AutomationRules).
 # Só administradores do CRM veem e alteram.
 class Api::V1::Accounts::Outsider::Crm::AutomationRulesController < Api::V1::Accounts::Outsider::Crm::BaseController
-  CONDITIONS = %i[business_unit_id pipeline_id stage_id min_value_cents].freeze
-  ACTION_FIELDS = %i[type title kind description due_in_hours assignee user_id label body].freeze
+  CONDITIONS = %i[business_unit_id pipeline_id stage_id min_value_cents lost_reason_id].freeze
+  ACTION_FIELDS = %i[type title kind description due_in_hours assignee user_id label body
+                     to_business_unit_id pipeline_id reason_id owner_id create_task notes].freeze
 
   before_action :ensure_crm_admin
 
