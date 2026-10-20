@@ -14,6 +14,7 @@ import StageProgress from '../conversation/StageProgress.vue';
 import OpportunityActivity from '../activity/OpportunityActivity.vue';
 import ForwardDialog from './ForwardDialog.vue';
 import JourneyHistory from './JourneyHistory.vue';
+import ConfirmDelete from './ConfirmDelete.vue';
 import { refreshContact } from '../crmStore';
 import {
   STATUS_COLORS,
@@ -35,6 +36,7 @@ const { accountScopedRoute } = useAccount();
 const opportunity = ref(null);
 const isSaving = ref(false);
 const forwardDialogRef = ref(null);
+const confirmRef = ref(null);
 
 const pipeline = computed(() =>
   props.pipelines.find(item => item.id === opportunity.value?.pipeline_id)
@@ -84,6 +86,24 @@ const changed = async () => {
 const forwarded = async () => {
   await changed();
   refreshContact(opportunity.value.contact.id);
+};
+
+// apagar fecha o painel e recarrega a lista; tarefas e linha do tempo saem junto
+const askDelete = () => {
+  const current = opportunity.value;
+  confirmRef.value?.open(
+    t('OUTSIDER_CRM.DELETE.OPPORTUNITY_TITLE'),
+    t('OUTSIDER_CRM.DELETE.OPPORTUNITY_TEXT', {
+      code: current.code,
+      title: current.title,
+    }),
+    async () => {
+      await CrmAPI.deleteOpportunity(current.id);
+      close();
+      emit('changed');
+      refreshContact(current.contact.id);
+    }
+  );
 };
 
 const moveTo = async stage => {
@@ -293,6 +313,16 @@ defineExpose({ open, refresh, close });
               :label="t('OUTSIDER_CRM.FORWARD.BUTTON')"
               @click="forwardDialogRef?.open(opportunity)"
             />
+            <Button
+              v-if="opportunity.can_delete"
+              type="button"
+              size="sm"
+              variant="ghost"
+              color="ruby"
+              icon="i-lucide-trash-2"
+              :label="t('OUTSIDER_CRM.DELETE.OPPORTUNITY_BUTTON')"
+              @click="askDelete"
+            />
           </div>
 
           <OpportunityActivity :opportunity="opportunity" @changed="changed" />
@@ -310,5 +340,6 @@ defineExpose({ open, refresh, close });
       :unit-name="unitName"
       @forwarded="forwarded"
     />
+    <ConfirmDelete ref="confirmRef" />
   </Teleport>
 </template>

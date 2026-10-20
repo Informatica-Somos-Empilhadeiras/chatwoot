@@ -11,12 +11,14 @@ import Select from 'dashboard/components-next/select/Select.vue';
 import Switch from 'dashboard/components-next/switch/Switch.vue';
 import Dialog from 'dashboard/components-next/dialog/Dialog.vue';
 import SettingsSection from './SettingsSection.vue';
+import ConfirmDelete from '../ConfirmDelete.vue';
 import { errorMessage, normalize } from '../../helpers';
 
 const { t } = useI18n();
 
 const fields = ref([]);
 const dialogRef = ref(null);
+const confirmRef = ref(null);
 const isSaving = ref(false);
 const form = ref({});
 
@@ -105,6 +107,17 @@ const toggleActive = async field => {
   }
 };
 
+const askDelete = field => {
+  confirmRef.value?.open(
+    t('OUTSIDER_CRM.DELETE.FIELD_TITLE'),
+    t('OUTSIDER_CRM.DELETE.FIELD_TEXT', { name: field.label }),
+    async () => {
+      await CrmAPI.deleteCustomField(field.id);
+      await load();
+    }
+  );
+};
+
 onMounted(load);
 </script>
 
@@ -160,6 +173,14 @@ onMounted(load);
             color="slate"
             @click="openDialog(field)"
           />
+          <Button
+            v-tooltip.top="t('OUTSIDER_CRM.DELETE.FIELD_TITLE')"
+            icon="i-lucide-trash-2"
+            size="sm"
+            variant="ghost"
+            color="ruby"
+            @click="askDelete(field)"
+          />
         </div>
       </div>
     </div>
@@ -212,5 +233,6 @@ onMounted(load);
         </label>
       </div>
     </Dialog>
+    <ConfirmDelete ref="confirmRef" />
   </SettingsSection>
 </template>

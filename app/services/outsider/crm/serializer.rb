@@ -43,10 +43,16 @@ module Outsider::Crm::Serializer
       sla_exceeded: sla_exceeded?(opportunity),
       tasks: task_stats || Outsider::Crm::TaskStats.for([opportunity.id])[opportunity.id],
       contact: contact(opportunity.contact),
-      owner: user(opportunity.owner),
+      owner: user(opportunity.owner)
+    ).merge(permissions(opportunity, access)).merge(forward_links(opportunity))
+  end
+
+  def permissions(opportunity, access)
+    {
       can_edit: access&.edit_opportunity?(opportunity),
+      can_delete: access&.delete_opportunity?(opportunity),
       can_forward: access&.forward_opportunity?(opportunity)
-    ).merge(forward_links(opportunity))
+    }
   end
 
   # De onde veio e para onde foi um negócio encaminhado (a unidade pode ser uma que o usuário não vê)

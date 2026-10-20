@@ -13,6 +13,7 @@ import Switch from 'dashboard/components-next/switch/Switch.vue';
 import Avatar from 'dashboard/components-next/avatar/Avatar.vue';
 import Dialog from 'dashboard/components-next/dialog/Dialog.vue';
 import SettingsSection from './SettingsSection.vue';
+import ConfirmDelete from '../ConfirmDelete.vue';
 import { errorMessage } from '../../helpers';
 
 const props = defineProps({
@@ -28,6 +29,7 @@ const agents = useMapGetter('agents/getAgents');
 const selectedId = ref(null);
 const unit = ref(null);
 const dialogRef = ref(null);
+const confirmRef = ref(null);
 const unitForm = ref({ id: null, name: '', description: '' });
 const newMemberId = ref('');
 const newMemberRole = ref('seller');
@@ -90,6 +92,20 @@ const toggleActive = async () => {
   } catch (error) {
     useAlert(errorMessage(t, error));
   }
+};
+
+const askDelete = () => {
+  const current = unit.value;
+  confirmRef.value?.open(
+    t('OUTSIDER_CRM.DELETE.UNIT_TITLE'),
+    t('OUTSIDER_CRM.DELETE.UNIT_TEXT', { name: current.name }),
+    async () => {
+      await CrmAPI.deleteUnit(current.id);
+      unit.value = null;
+      selectedId.value = null;
+      emit('changed');
+    }
+  );
 };
 
 const addMember = async () => {
@@ -199,6 +215,14 @@ onMounted(() => {
               color="slate"
               @click="openUnitDialog(unit)"
             />
+            <Button
+              v-tooltip.top="t('OUTSIDER_CRM.DELETE.UNIT_TITLE')"
+              icon="i-lucide-trash-2"
+              size="sm"
+              variant="ghost"
+              color="ruby"
+              @click="askDelete"
+            />
           </div>
         </div>
 
@@ -281,5 +305,6 @@ onMounted(() => {
         />
       </div>
     </Dialog>
+    <ConfirmDelete ref="confirmRef" />
   </SettingsSection>
 </template>

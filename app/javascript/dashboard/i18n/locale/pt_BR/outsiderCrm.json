@@ -687,6 +687,24 @@
         "RECEIVED": "Recebidos",
         "CONVERSION": "Conversão"
       }
+    },
+    "DELETE": {
+      "CONFIRM": "Apagar",
+      "UNIT_TITLE": "Apagar unidade",
+      "UNIT_TEXT": "A unidade \"{name}\" sai com seus membros, pipelines e etapas. Só dá para apagar unidade sem negócios. Não tem como desfazer.",
+      "PIPELINE_TITLE": "Apagar pipeline",
+      "PIPELINE_TEXT": "O pipeline \"{name}\" sai com suas etapas. Só dá para apagar pipeline sem negócios. Não tem como desfazer.",
+      "FIELD_TITLE": "Apagar campo",
+      "FIELD_TEXT": "O campo \"{name}\" sai do formulário dos negócios. Só dá para apagar campo que nenhum negócio preencheu; se já foi usado, desative. Não tem como desfazer.",
+      "OPPORTUNITY_BUTTON": "Apagar",
+      "OPPORTUNITY_TITLE": "Apagar negócio",
+      "OPPORTUNITY_TEXT": "O negócio {code} ({title}) sai com suas tarefas, notas e linha do tempo. O contato e a conversa no Chatwoot não mudam. Não tem como desfazer.",
+      "BLOCKED": {
+        "HAS_OPPORTUNITIES": "Não dá para apagar: ainda tem negócios aqui ({count}). Apague ou mova os negócios antes.",
+        "USED_BY_RULES": "Não dá para apagar: usado nas regras de automação {names}. Mude ou apague essas regras antes.",
+        "HAS_VALUES": "Não dá para apagar: o campo está preenchido em negócios ({count}). Desative o campo para escondê-lo.",
+        "FORWARDED_OUT": "Não dá para apagar: este negócio foi encaminhado para {unit} ({code}). Apague primeiro o {code}, depois este."
+      }
     }
   }
 }

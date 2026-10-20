@@ -9,7 +9,7 @@ class Api::V1::Accounts::Outsider::Crm::OpportunitiesController < Api::V1::Accou
 
   before_action :fetch_opportunity, only: [:show, :update, :destroy, :move]
   before_action :ensure_can_edit, only: [:update, :move]
-  before_action :ensure_crm_admin, only: [:destroy]
+  before_action :ensure_can_delete, only: [:destroy]
 
   def index
     opportunities = filtered.includes(:contact, :owner, :stage).order(SORTS.fetch(params[:sort], SORTS['recent'])).order(id: :desc)
@@ -70,9 +70,8 @@ class Api::V1::Accounts::Outsider::Crm::OpportunitiesController < Api::V1::Accou
 
   # Negócio que entrou ou saiu por encaminhamento não se apaga (restrict_with_error no modelo)
   def destroy
-    return head :no_content if @opportunity.destroy
-
-    render json: { error: 'in_use', message: @opportunity.errors.full_messages.to_sentence }, status: :unprocessable_entity
+    remover.opportunity(@opportunity)
+    head :no_content
   end
 
   private
@@ -98,6 +97,10 @@ class Api::V1::Accounts::Outsider::Crm::OpportunitiesController < Api::V1::Accou
 
   def ensure_can_edit
     render_forbidden unless crm_access.edit_opportunity?(@opportunity)
+  end
+
+  def ensure_can_delete
+    render_forbidden unless crm_access.delete_opportunity?(@opportunity)
   end
 
   # Vendedor só fica com oportunidades no próprio nome; gestor e administrador escolhem o responsável

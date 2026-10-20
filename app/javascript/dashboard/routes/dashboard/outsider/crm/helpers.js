@@ -125,11 +125,16 @@ export const STAGE_COLORS = [
 
 export const errorMessage = (t, error) => {
   const status = error?.response?.status;
-  const { error: code, message } = error?.response?.data || {};
+  const data = error?.response?.data || {};
+  const { error: code, message } = data;
   if (status === 401 || code === 'crm_forbidden' || code === 'crm_admin_only') {
     return t('OUTSIDER_CRM.ERRORS.NO_PERMISSION');
   }
   if (code === 'crm_access_denied') return t('OUTSIDER_CRM.ERRORS.NO_ACCESS');
+  // apagar recusado: o motivo vem em reason (negócios, regras, campo preenchido, encaminhamento)
+  if (code === 'in_use' && data.reason) {
+    return t(`OUTSIDER_CRM.DELETE.BLOCKED.${data.reason.toUpperCase()}`, data);
+  }
   if (code === 'in_use') return message || t('OUTSIDER_CRM.ERRORS.IN_USE');
   // 404 sem JSON = o servidor não conhece a rota: atualização aplicada sem reiniciar o Rails
   if (status === 404 && typeof error?.response?.data !== 'object') {

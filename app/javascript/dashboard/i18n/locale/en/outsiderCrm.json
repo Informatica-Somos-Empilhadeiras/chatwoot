@@ -687,6 +687,24 @@
         "RECEIVED": "Received",
         "CONVERSION": "Conversion"
       }
+    },
+    "DELETE": {
+      "CONFIRM": "Delete",
+      "UNIT_TITLE": "Delete unit",
+      "UNIT_TEXT": "The unit \"{name}\" is removed with its members, pipelines and stages. Only units without opportunities can be deleted. This cannot be undone.",
+      "PIPELINE_TITLE": "Delete pipeline",
+      "PIPELINE_TEXT": "The pipeline \"{name}\" is removed with its stages. Only pipelines without opportunities can be deleted. This cannot be undone.",
+      "FIELD_TITLE": "Delete field",
+      "FIELD_TEXT": "The field \"{name}\" is removed from the opportunity form. Only fields no opportunity filled in can be deleted; if it was used, turn it off. This cannot be undone.",
+      "OPPORTUNITY_BUTTON": "Delete",
+      "OPPORTUNITY_TITLE": "Delete opportunity",
+      "OPPORTUNITY_TEXT": "Opportunity {code} ({title}) is removed with its tasks, notes and timeline. The Chatwoot contact and conversation do not change. This cannot be undone.",
+      "BLOCKED": {
+        "HAS_OPPORTUNITIES": "Cannot delete: there are still opportunities here ({count}). Delete or move them first.",
+        "USED_BY_RULES": "Cannot delete: used by the automation rules {names}. Change or delete those rules first.",
+        "HAS_VALUES": "Cannot delete: the field is filled in on opportunities ({count}). Turn the field off to hide it.",
+        "FORWARDED_OUT": "Cannot delete: this opportunity was forwarded to {unit} ({code}). Delete {code} first, then this one."
+      }
     }
   }
 }

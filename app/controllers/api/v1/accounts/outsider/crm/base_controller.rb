@@ -8,6 +8,11 @@ class Api::V1::Accounts::Outsider::Crm::BaseController < Api::V1::Accounts::Base
            status: :unprocessable_entity
   end
 
+  # Apagar recusado: reason diz o que impede (ver Outsider::Crm::Remover) e a tela traduz
+  rescue_from ::Outsider::Crm::Remover::Blocked do |error|
+    render json: { error: 'in_use', reason: error.reason }.merge(error.details), status: :unprocessable_entity
+  end
+
   private
 
   def crm_access
@@ -24,6 +29,10 @@ class Api::V1::Accounts::Outsider::Crm::BaseController < Api::V1::Accounts::Base
 
   def render_forbidden
     render json: { error: 'crm_forbidden' }, status: :forbidden
+  end
+
+  def remover
+    ::Outsider::Crm::Remover.new(Current.account)
   end
 
   def crm_scope(model)

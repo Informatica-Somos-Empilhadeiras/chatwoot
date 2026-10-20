@@ -45,6 +45,11 @@ class Outsider::Crm::Access
   end
 
   # Negócio encaminhado não muda mais, nem pelo administrador: a continuação está no destino
+  # Apagar negócio: administrador e gestor da unidade (vendedor não apaga, nem os próprios)
+  def delete_opportunity?(opportunity)
+    manage_unit?(opportunity.business_unit_id)
+  end
+
   def edit_opportunity?(opportunity)
     return false if opportunity.forwarded?
     return true if manage_unit?(opportunity.business_unit_id)

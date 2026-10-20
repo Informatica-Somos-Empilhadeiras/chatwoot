@@ -29,11 +29,8 @@ class Api::V1::Accounts::Outsider::Crm::PipelinesController < Api::V1::Accounts:
 
   # Pipeline com oportunidades não é apagado: desative (active: false)
   def destroy
-    if @pipeline.destroy
-      head :no_content
-    else
-      render json: { error: 'in_use', message: @pipeline.errors.full_messages.to_sentence }, status: :unprocessable_entity
-    end
+    remover.pipeline(@pipeline)
+    head :no_content
   end
 
   private

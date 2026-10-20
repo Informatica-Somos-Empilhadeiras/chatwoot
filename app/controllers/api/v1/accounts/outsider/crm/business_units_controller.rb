@@ -24,11 +24,8 @@ class Api::V1::Accounts::Outsider::Crm::BusinessUnitsController < Api::V1::Accou
 
   # Unidade com pipeline ou oportunidade não é apagada: desative (active: false)
   def destroy
-    if @unit.destroy
-      head :no_content
-    else
-      render json: { error: 'in_use', message: @unit.errors.full_messages.to_sentence }, status: :unprocessable_entity
-    end
+    remover.unit(@unit)
+    head :no_content
   end
 
   private

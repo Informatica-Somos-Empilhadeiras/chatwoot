@@ -8,6 +8,7 @@ import Button from 'dashboard/components-next/button/Button.vue';
 import Switch from 'dashboard/components-next/switch/Switch.vue';
 import SettingsSection from './SettingsSection.vue';
 import PipelineDialog from './PipelineDialog.vue';
+import ConfirmDelete from '../ConfirmDelete.vue';
 import { errorMessage } from '../../helpers';
 
 const props = defineProps({
@@ -20,6 +21,7 @@ const emit = defineEmits(['changed']);
 
 const { t } = useI18n();
 const dialogRef = ref(null);
+const confirmRef = ref(null);
 
 const manageableUnits = computed(() =>
   props.units.filter(
@@ -41,6 +43,17 @@ const groups = computed(() =>
     pipelines: props.pipelines.filter(p => p.business_unit_id === unit.id),
   }))
 );
+
+const askDelete = pipeline => {
+  confirmRef.value?.open(
+    t('OUTSIDER_CRM.DELETE.PIPELINE_TITLE'),
+    t('OUTSIDER_CRM.DELETE.PIPELINE_TEXT', { name: pipeline.name }),
+    async () => {
+      await CrmAPI.deletePipeline(pipeline.id);
+      emit('changed');
+    }
+  );
+};
 
 const toggleActive = async pipeline => {
   try {
@@ -106,6 +119,14 @@ const toggleActive = async pipeline => {
               color="slate"
               @click="dialogRef.open(pipeline)"
             />
+            <Button
+              v-tooltip.top="t('OUTSIDER_CRM.DELETE.PIPELINE_TITLE')"
+              icon="i-lucide-trash-2"
+              size="sm"
+              variant="ghost"
+              color="ruby"
+              @click="askDelete(pipeline)"
+            />
           </div>
         </div>
         <div class="flex flex-wrap gap-1.5">
@@ -130,5 +151,6 @@ const toggleActive = async pipeline => {
       :unit-options="unitOptions"
       @saved="emit('changed')"
     />
+    <ConfirmDelete ref="confirmRef" />
   </SettingsSection>
 </template>

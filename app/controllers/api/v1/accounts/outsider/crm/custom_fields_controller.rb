@@ -19,8 +19,9 @@ class Api::V1::Accounts::Outsider::Crm::CustomFieldsController < Api::V1::Accoun
   end
 
   # Apagar só esconde o campo; os valores continuam gravados nas oportunidades
+  # Campo preenchido em algum negócio não sai (os valores sumiriam da tela): desative (active: false)
   def destroy
-    @field.update!(active: false)
+    remover.custom_field(@field)
     head :no_content
   end
 
