@@ -2,6 +2,7 @@
 # na linha do tempo do negócio; adiar, editar e apagar ficam na auditoria.
 class Outsider::Crm::Task < ApplicationRecord
   include Outsider::Crm::AccountScoped
+  include Outsider::Crm::LiveBroadcast
 
   audited associated_with: :account
 

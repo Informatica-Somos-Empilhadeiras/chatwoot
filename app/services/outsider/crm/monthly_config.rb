@@ -48,6 +48,7 @@ class Outsider::Crm::MonthlyConfig
       # update_columns para não esbarrar nas validações de outros campos da conta
       @account.update_columns(internal_attributes: @account.internal_attributes.merge(self.class::KEY => merged)) # rubocop:disable Rails/SkipsModelValidations
     end
+    Outsider::Crm::LiveUpdates.broadcast(@account.id, 'config')
   end
 
   def unit_ids

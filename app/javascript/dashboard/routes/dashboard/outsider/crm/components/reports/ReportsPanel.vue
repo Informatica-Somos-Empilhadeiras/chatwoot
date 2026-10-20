@@ -6,6 +6,7 @@ import { ref, computed, watch, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useMapGetter, useStore } from 'dashboard/composables/store';
 import CrmAPI from 'dashboard/api/outsider/crm';
+import { useCrmChanges } from '../../live';
 import Select from 'dashboard/components-next/select/Select.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 import LoadError from '../../activity/LoadError.vue';
@@ -100,8 +101,9 @@ const params = () => {
   return query;
 };
 
-const load = async () => {
-  isLoading.value = true;
+// options.silent: recarga ao vivo, sem o indicador de carregando
+const load = async options => {
+  if (!options?.silent) isLoading.value = true;
   try {
     const { data } = await CrmAPI.getReport(params());
     report.value = data;
@@ -215,6 +217,11 @@ watch(
 onMounted(() => {
   store.dispatch('agents/get');
   load();
+});
+
+// negócio criado, movido, ganho ou perdido por alguém: os números recarregam na hora
+useCrmChanges(changes => {
+  if (changes.some(change => change.kind !== 'task')) load({ silent: true });
 });
 </script>
 

@@ -20,8 +20,8 @@ import ChannelLeaf from './ChannelLeaf.vue';
 import ChannelIcon from 'next/icon/ChannelIcon.vue';
 import SidebarAccountSwitcher from './SidebarAccountSwitcher.vue';
 import Logo from 'next/icon/Logo.vue';
-// OUTSIDER: ícone do CRM com aviso de negócio encaminhado
-import CrmSidebarIcon from 'dashboard/routes/dashboard/outsider/crm/components/CrmSidebarIcon.vue';
+// OUTSIDER: item do CRM (ícone com aviso de encaminhamento e as seções como subitens)
+import { crmSidebarItem } from 'dashboard/routes/dashboard/outsider/crm/sidebar';
 import ComposeConversation from 'dashboard/components-next/NewConversation/ComposeConversation.vue';
 import {
   SIDEBAR_SORT_SECTIONS,
@@ -493,13 +493,8 @@ const menuItems = computed(() => {
       icon: 'i-lucide-circle-dashed',
       to: accountScopedRoute('outsider_whatsapp_status'),
     },
-    // OUTSIDER: CRM de vendas (o ícone mostra a bolinha e o aviso de negócio encaminhado)
-    {
-      name: 'OutsiderCrm',
-      label: t('OUTSIDER_CRM.SIDEBAR'),
-      icon: h(CrmSidebarIcon),
-      to: accountScopedRoute('outsider_crm'),
-    },
+    // OUTSIDER: CRM de vendas
+    crmSidebarItem(t, accountScopedRoute),
     {
       name: 'Captain',
       icon: 'i-woot-captain',

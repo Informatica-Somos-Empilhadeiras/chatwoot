@@ -16,6 +16,7 @@ import ForwardDialog from './ForwardDialog.vue';
 import JourneyHistory from './JourneyHistory.vue';
 import ConfirmDelete from './ConfirmDelete.vue';
 import { markReceived, refreshContact } from '../crmStore';
+import { useCrmChanges } from '../live';
 import {
   STATUS_COLORS,
   errorMessage,
@@ -48,15 +49,33 @@ const unitName = computed(
     )?.name || ''
 );
 
-const refresh = async () => {
+// options.live: recarga porque alguém mudou o negócio; se ele sumiu (apagado), fecha sem erro
+const refresh = async (options = {}) => {
   if (!opportunity.value) return;
+  const { id } = opportunity.value;
   try {
-    const { data } = await CrmAPI.getOpportunity(opportunity.value.id);
-    opportunity.value = data;
+    const { data } = await CrmAPI.getOpportunity(id);
+    if (opportunity.value?.id === id) opportunity.value = data;
   } catch (error) {
-    useAlert(errorMessage(t, error));
+    if (!options.live) useAlert(errorMessage(t, error));
+    else if (error.response?.status === 404) opportunity.value = null;
   }
 };
+
+useCrmChanges(changes => {
+  const id = opportunity.value?.id;
+  if (
+    id &&
+    changes.some(
+      change =>
+        change.kind === 'reconnected' ||
+        (change.kind === 'opportunity' && change.id === id) ||
+        (change.kind === 'task' && change.opportunity_id === id)
+    )
+  ) {
+    refresh({ live: true });
+  }
+});
 
 const open = item => {
   opportunity.value = item;

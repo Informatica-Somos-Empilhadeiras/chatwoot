@@ -27,7 +27,8 @@
       "ALL_PIPELINES": "All pipelines",
       "ALL_STATUS": "All statuses",
       "ALL_OWNERS": "All owners",
-      "MINE": "Only mine"
+      "MINE": "My deals",
+      "NO_OWNER": "No owner"
     },
     "TABLE": {
       "OPPORTUNITY": "Deal",
@@ -162,7 +163,7 @@
         "MAX_ATTEMPTS_HELP": "How many times the same lead can be forwarded between units before the journey closes (used by forwarding).",
         "SAVED": "Settings saved",
         "OWN_DEALS": "Sellers see only their own deals",
-        "OWN_DEALS_HELP": "When on, those who are only sellers in a unit see, in the list, the board and the conversation tab, only their deals and the ones without an owner. Managers and administrators still see everything. Seller indicators count only their deals either way."
+        "OWN_DEALS_HELP": "When on, those who are only sellers in a unit see, in the conversation CRM tab and the contact panel, only their deals and the ones without an owner. The CRM main page already shows sellers only their deals either way; managers and administrators still see everything."
       },
       "AUTOMATIONS": {
         "TITLE": "Ready-made automations",
@@ -382,7 +383,8 @@
       "CONVERSION_HINT": "{won} won of {closed} closed",
       "DAYS": "{days} days",
       "AVERAGE_DAYS_HINT": "From creation to win",
-      "OWN_ONLY": "In the units where you are a seller, the numbers count only your deals."
+      "OWN_ONLY": "In the units where you are a seller, the numbers count only your deals.",
+      "MINE_ONLY": "You see here the deals you own."
     },
     "BOARD": {
       "ADD": "Add deal",
@@ -843,6 +845,16 @@
       "NO_GOAL": "No goal",
       "REACHED": "Goal reached: {percent}%",
       "MISSING": "{percent}% of the goal · {value} to go"
+    },
+    "MY_MONTH": {
+      "TITLE": "My month · {month}",
+      "SOLD": "Sold",
+      "GOAL": "Goal",
+      "OF_GOAL": "of {goal}",
+      "MISSING": "Missing",
+      "REACHED": "Goal reached",
+      "COMMISSION": "Commission",
+      "DETAILS": "See goals"
     }
   }
 }

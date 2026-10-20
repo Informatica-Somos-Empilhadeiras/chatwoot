@@ -8,6 +8,7 @@ import CrmAPI from 'dashboard/api/outsider/crm';
 import { useAlert } from 'dashboard/composables';
 import { frontendURL } from 'dashboard/helper/URLHelper';
 import { DEFAULT_CONVERSATION_SIDEBAR_ITEMS_ORDER } from 'dashboard/composables/useUISettings';
+import { onCrmChange, startLiveUpdates } from './live';
 
 export const OPEN_CRM_TAB_EVENT = 'outsider_crm_open_tab';
 
@@ -94,6 +95,7 @@ const fetchContext = async () => {
     crmState.access = data;
     if (!data.enabled) return;
     placeSidebarItem();
+    startLiveUpdates(crmState.accountId);
     const [pipelines, reasons] = await Promise.all([
       CrmAPI.getPipelines(),
       CrmAPI.getLostReasons(),
@@ -352,3 +354,31 @@ export const markReceived = async (opportunityIds, opened) => {
     // se falhar, o aviso volta na próxima busca
   }
 };
+
+// Atualização ao vivo (live.js): o que fica fora da tela do CRM também acompanha. Contagem de
+// tarefas do menu, aviso de negócio recebido e o resumo dos contatos já abertos na conversa.
+onCrmChange(changes => {
+  if (!crmState.access.enabled) return;
+  const all = changes.some(change => change.kind === 'reconnected');
+  if (all || changes.some(change => change.kind !== 'config')) refreshMyTasks();
+  if (all || changes.some(change => change.kind === 'opportunity')) {
+    refreshReceived();
+  }
+  const contactIds = all
+    ? Object.keys(crmState.histories)
+        .concat(Object.keys(crmState.summaries).map(key => key.split('-')[0]))
+        .map(Number)
+    : changes.map(change => change.contact_id).filter(Boolean);
+  changes.forEach(change => {
+    if (change.kind === 'opportunity') bumpActivity(change.id);
+    if (change.kind === 'task') bumpActivity(change.opportunity_id);
+  });
+  [...new Set(contactIds)]
+    .filter(
+      id =>
+        id in crmState.chips ||
+        crmState.histories[id] ||
+        Object.keys(crmState.summaries).some(key => key.startsWith(`${id}-`))
+    )
+    .forEach(id => refreshContact(id).catch(() => {}));
+});

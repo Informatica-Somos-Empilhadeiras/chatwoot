@@ -2,7 +2,7 @@
 // OUTSIDER: indicadores do topo (GET /opportunities/summary) com os mesmos filtros da tela.
 // Em aberto e previsão contam os negócios abertos; ganhos, conversão e tempo médio contam
 // os fechados no período escolhido. Nas unidades em que a pessoa é só vendedor, o servidor conta
-// só os negócios dela (ownOnly mostra o aviso).
+// só os negócios dela (note explica de quem são os números).
 import { ref, computed, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useAlert } from 'dashboard/composables';
@@ -12,7 +12,7 @@ import { errorMessage, formatMoney } from '../helpers';
 const props = defineProps({
   filters: { type: Object, required: true },
   refreshKey: { type: Number, default: 0 },
-  ownOnly: { type: Boolean, default: false },
+  note: { type: String, default: '' },
 });
 
 const { t } = useI18n();
@@ -41,7 +41,10 @@ const cards = computed(() => {
     },
     {
       key: 'CONVERSION',
-      value: data.conversion_rate === null ? '—' : `${data.conversion_rate}%`,
+      value:
+        data.conversion_rate === null
+          ? '—'
+          : `${String(data.conversion_rate).replace('.', ',')}%`,
       hint: t('OUTSIDER_CRM.METRICS.CONVERSION_HINT', {
         won: data.won_count,
         closed,
@@ -89,11 +92,11 @@ watch(
 
 <template>
   <p
-    v-if="ownOnly"
+    v-if="note"
     class="flex items-center gap-1.5 -mb-1 text-xs text-n-slate-11"
   >
     <span class="i-lucide-user-round size-3.5" />
-    {{ t('OUTSIDER_CRM.METRICS.OWN_ONLY') }}
+    {{ note }}
   </p>
   <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
     <div

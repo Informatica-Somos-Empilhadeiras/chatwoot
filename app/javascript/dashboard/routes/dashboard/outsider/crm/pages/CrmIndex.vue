@@ -1,12 +1,12 @@
 <script setup>
 // OUTSIDER: CRM de vendas (ver app/controllers/api/v1/accounts/outsider/crm/).
-// Quem não é administrador só entra se for membro de alguma unidade comercial.
+// Quem não é administrador só entra se for membro de alguma unidade comercial. A seção vem da rota
+// (crm/:tab), escolhida pelos subitens do CRM no menu lateral.
 import { ref, computed, onMounted } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { useRoute } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { useAlert } from 'dashboard/composables';
 import CrmAPI from 'dashboard/api/outsider/crm';
-import TabBar from 'dashboard/components-next/tabbar/TabBar.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
 import OpportunityList from '../components/OpportunityList.vue';
@@ -15,6 +15,7 @@ import CrmSettingsPanel from '../components/settings/CrmSettingsPanel.vue';
 import ReportsPanel from '../components/reports/ReportsPanel.vue';
 import GoalsPanel from '../components/goals/GoalsPanel.vue';
 import { errorMessage } from '../helpers';
+import { crmSections } from '../sections';
 import {
   crmState,
   invalidateCrmContext,
@@ -24,42 +25,24 @@ import {
 
 const { t } = useI18n();
 const route = useRoute();
-const router = useRouter();
 
 const isLoading = ref(true);
 const access = ref({ enabled: false, administrator: false, units: [] });
 const units = ref([]);
 const pipelines = ref([]);
 
-const canConfigure = computed(
-  () =>
-    access.value.administrator ||
-    access.value.units.some(unit => unit.role === 'manager')
-);
-
-const tabs = computed(() => [
-  { key: 'opportunities', label: t('OUTSIDER_CRM.TABS.OPPORTUNITIES') },
-  {
-    key: 'tasks',
-    label: t('OUTSIDER_CRM.TABS.TASKS'),
-    count: crmState.myTasks.pending || undefined,
-  },
-  { key: 'goals', label: t('OUTSIDER_CRM.TABS.GOALS') },
-  { key: 'reports', label: t('OUTSIDER_CRM.TABS.REPORTS') },
-  ...(canConfigure.value
-    ? [{ key: 'settings', label: t('OUTSIDER_CRM.TABS.SETTINGS') }]
-    : []),
-]);
+// as seções ficam no menu lateral do Chatwoot (sidebar.js); aqui só o título da seção aberta
+const sections = computed(() => crmSections(access.value));
 
 const activeTab = computed(() =>
-  tabs.value.some(tab => tab.key === route.params.tab)
+  sections.value.some(section => section.key === route.params.tab)
     ? route.params.tab
     : 'opportunities'
 );
 
-const changeTab = tab => {
-  router.replace({ params: { ...route.params, tab: tab.key } });
-};
+const activeSection = computed(() =>
+  sections.value.find(section => section.key === activeTab.value)
+);
 
 const loadStructure = async () => {
   const [unitsResponse, pipelinesResponse] = await Promise.all([
@@ -75,6 +58,8 @@ const reload = async () => {
   try {
     const { data } = await CrmAPI.getAccess();
     access.value = data;
+    // o menu lateral usa o mesmo acesso (seção Configurações, por exemplo)
+    crmState.access = data;
     if (data.enabled) await loadStructure();
   } catch (error) {
     useAlert(errorMessage(t, error));
@@ -101,9 +86,18 @@ onMounted(async () => {
             activeTab === 'opportunities' ? 'max-w-[110rem]' : 'max-w-6xl'
           "
         >
-          <span class="text-xl font-medium truncate text-n-slate-12">
-            {{ t('OUTSIDER_CRM.TITLE') }}
-          </span>
+          <div class="flex flex-col min-w-0 gap-0.5">
+            <span class="text-xs font-medium text-n-slate-11">
+              {{ t('OUTSIDER_CRM.TITLE') }}
+            </span>
+            <span class="text-xl font-medium truncate text-n-slate-12">
+              {{
+                access.enabled && activeSection
+                  ? t(activeSection.label)
+                  : t('OUTSIDER_CRM.SIDEBAR')
+              }}
+            </span>
+          </div>
         </div>
       </header>
 
@@ -127,15 +121,6 @@ onMounted(async () => {
             </p>
           </div>
           <template v-else>
-            <div class="p-px mb-6 overflow-x-auto">
-              <TabBar
-                :tabs="tabs"
-                :initial-active-tab="
-                  tabs.findIndex(tab => tab.key === activeTab)
-                "
-                @tab-changed="changeTab"
-              />
-            </div>
             <OpportunityList
               v-if="activeTab === 'opportunities'"
               :access="access"

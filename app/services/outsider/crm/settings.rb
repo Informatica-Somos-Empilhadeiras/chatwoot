@@ -42,6 +42,7 @@ class Outsider::Crm::Settings
       # update_columns para não esbarrar nas validações de outros campos da conta
       @account.update_columns(internal_attributes: merged) # rubocop:disable Rails/SkipsModelValidations
     end
+    Outsider::Crm::LiveUpdates.broadcast(@account.id, 'config')
     to_h
   end
 

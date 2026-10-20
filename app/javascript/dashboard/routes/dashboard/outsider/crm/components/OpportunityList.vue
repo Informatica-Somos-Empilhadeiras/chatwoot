@@ -1,6 +1,9 @@
 <script setup>
-// OUTSIDER: tela de negócios. Indicadores no topo, filtros compartilhados e duas visualizações:
-// Kanban (um pipeline por vez, só negócios abertos) e tabela (com ordenação e exportação CSV).
+// OUTSIDER: tela de negócios. Resumo do mês da pessoa, indicadores no topo, filtros compartilhados e
+// duas visualizações: Kanban (um pipeline por vez, só negócios abertos) e tabela (com ordenação e
+// exportação CSV). Abre com os negócios abertos da própria pessoa; administrador e gestor podem ver os
+// dos outros pelo filtro de responsável (o servidor aplica a mesma regra). Recarrega sozinha quando
+// alguém muda um negócio ou uma tarefa (live.js).
 import { ref, computed, watch, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
@@ -19,6 +22,7 @@ import OpportunityDialog from './OpportunityDialog.vue';
 import OpportunityDrawer from './OpportunityDrawer.vue';
 import KanbanBoard from './KanbanBoard.vue';
 import MetricsBar from './MetricsBar.vue';
+import MyMonthSummary from './goals/MyMonthSummary.vue';
 import {
   STATUS_COLORS,
   errorMessage,
@@ -27,6 +31,7 @@ import {
   needsNextTask,
 } from '../helpers';
 import { crmState, isReceived } from '../crmStore';
+import { useCrmChanges } from '../live';
 
 const props = defineProps({
   access: { type: Object, required: true },
@@ -66,7 +71,7 @@ const filters = ref({
   business_unit_id: '',
   pipeline_id: '',
   status: 'open',
-  owner_id: '',
+  owner_id: currentUser.value?.id ?? '',
   period: 'month',
   sort: 'recent',
   q: '',
@@ -105,6 +110,16 @@ const sellerUnits = computed(
     props.access.units.some(unit => unit.role === 'seller')
 );
 
+// administrador e gestor escolhem o responsável; o vendedor vê sempre só os seus
+const allDeals = computed(() => !!props.access.all_deals);
+
+const metricsNote = computed(() => {
+  if (!allDeals.value) return t('OUTSIDER_CRM.METRICS.MINE_ONLY');
+  return sellerUnits.value && filters.value.owner_id !== currentUser.value.id
+    ? t('OUTSIDER_CRM.METRICS.OWN_ONLY')
+    : '';
+});
+
 const boardPipeline = computed(() =>
   props.pipelines.find(pipeline => pipeline.id === filters.value.pipeline_id)
 );
@@ -117,20 +132,13 @@ const statusOptions = computed(() => [
   })),
 ]);
 
-const managesAnyUnit = computed(
-  () =>
-    props.access.administrator ||
-    props.access.units.some(unit => unit.role === 'manager')
-);
-
 const ownerOptions = computed(() => [
-  { value: '', label: t('OUTSIDER_CRM.FILTERS.ALL_OWNERS') },
   { value: currentUser.value.id, label: t('OUTSIDER_CRM.FILTERS.MINE') },
-  ...(managesAnyUnit.value
-    ? agents.value
-        .filter(agent => agent.id !== currentUser.value.id)
-        .map(agent => ({ value: agent.id, label: agent.name }))
-    : []),
+  { value: '', label: t('OUTSIDER_CRM.FILTERS.ALL_OWNERS') },
+  { value: 'none', label: t('OUTSIDER_CRM.FILTERS.NO_OWNER') },
+  ...agents.value
+    .filter(agent => agent.id !== currentUser.value.id)
+    .map(agent => ({ value: agent.id, label: agent.name })),
 ]);
 
 const periodOptions = computed(() =>
@@ -176,9 +184,10 @@ const tableParams = (extra = {}) =>
     )
   );
 
-const load = async (page = 1) => {
+// options.silent: recarga ao vivo, sem o indicador de carregando
+const load = async (page = 1, options = {}) => {
   if (isBoard.value) return;
-  isLoading.value = true;
+  if (!options.silent) isLoading.value = true;
   try {
     const { data } = await CrmAPI.getOpportunities(tableParams({ page }));
     opportunities.value = data.payload;
@@ -225,6 +234,14 @@ const refresh = () => {
   if (isBoard.value) boardRef.value?.reload();
   else load(meta.value.page);
 };
+
+// alguém mudou um negócio ou uma tarefa (ou as metas): números, resumo e lista recarregam na hora
+useCrmChanges(changes => {
+  refreshKey.value += 1;
+  if (changes.every(change => change.kind === 'config')) return;
+  if (isBoard.value) boardRef.value?.liveReload();
+  else load(meta.value.page, { silent: true });
+});
 
 const applySearch = useDebounceFn(() => {
   filters.value.q = searchText.value.trim();
@@ -342,7 +359,11 @@ onMounted(async () => {
         v-model="filters.status"
         :options="statusOptions"
       />
-      <Select v-model="filters.owner_id" :options="ownerOptions" />
+      <Select
+        v-if="allDeals"
+        v-model="filters.owner_id"
+        :options="ownerOptions"
+      />
       <Select
         v-model="filters.period"
         v-tooltip="t('OUTSIDER_CRM.METRICS.PERIOD')"
@@ -366,11 +387,13 @@ onMounted(async () => {
       {{ t('OUTSIDER_CRM.STATES.NO_PIPELINES') }}
     </p>
 
+    <MyMonthSummary v-if="pipelines.length" :refresh-key="refreshKey" />
+
     <MetricsBar
       v-if="pipelines.length"
       :filters="filters"
       :refresh-key="refreshKey"
-      :own-only="sellerUnits"
+      :note="metricsNote"
     />
 
     <KanbanBoard

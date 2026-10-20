@@ -76,11 +76,14 @@ class Api::V1::Accounts::Outsider::Crm::OpportunitiesController < Api::V1::Accou
 
   private
 
+  # Lista, Kanban, indicadores e CSV da tela principal: o vendedor vê só os seus; o gestor, também os
+  # das unidades que gerencia (Access#main_list). owner_id=none filtra os negócios sem responsável.
   def filtered
-    scope = crm_access.opportunities(crm_scope(::Outsider::Crm::Opportunity))
-    %i[business_unit_id pipeline_id stage_id owner_id contact_id conversation_id status].each do |filter|
+    scope = crm_access.main_list(crm_access.opportunities(crm_scope(::Outsider::Crm::Opportunity)))
+    %i[business_unit_id pipeline_id stage_id contact_id conversation_id status].each do |filter|
       scope = scope.where(filter => params[filter]) if params[filter].present?
     end
+    scope = scope.where(owner_id: params[:owner_id] == 'none' ? nil : params[:owner_id]) if params[:owner_id].present?
     scope = search(scope) if params[:q].present?
     scope
   end

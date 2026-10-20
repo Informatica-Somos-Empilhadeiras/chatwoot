@@ -6,6 +6,7 @@ import { useI18n } from 'vue-i18n';
 import { useAlert } from 'dashboard/composables';
 import { useMapGetter, useStore } from 'dashboard/composables/store';
 import CrmAPI from 'dashboard/api/outsider/crm';
+import { useCrmChanges } from '../live';
 import Select from 'dashboard/components-next/select/Select.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
@@ -30,7 +31,11 @@ const isLoading = ref(false);
 const busyId = ref(null);
 const tasks = ref([]);
 const meta = ref({ pending: 0, overdue: 0 });
-const filters = ref({ assignee_id: 'me', status: 'pending', business_unit_id: '' });
+const filters = ref({
+  assignee_id: 'me',
+  status: 'pending',
+  business_unit_id: '',
+});
 
 const canSeeOthers = computed(
   () =>
@@ -74,7 +79,15 @@ const groupOf = task => {
   return 'later';
 };
 
-const GROUPS = ['overdue', 'today', 'tomorrow', 'week', 'later', 'no_date', 'done'];
+const GROUPS = [
+  'overdue',
+  'today',
+  'tomorrow',
+  'week',
+  'later',
+  'no_date',
+  'done',
+];
 
 const groups = computed(() =>
   GROUPS.map(key => ({
@@ -83,8 +96,9 @@ const groups = computed(() =>
   })).filter(group => group.tasks.length)
 );
 
-const load = async () => {
-  isLoading.value = true;
+// options.silent: recarga ao vivo, sem o indicador de carregando
+const load = async options => {
+  if (!options?.silent) isLoading.value = true;
   try {
     const { data } = await CrmAPI.getTaskList(filters.value);
     tasks.value = data.payload;
@@ -134,7 +148,12 @@ const onSaved = () => {
   reload();
 };
 
-watch(filters, load, { deep: true });
+watch(filters, () => load(), { deep: true });
+
+// alguém criou, concluiu ou mudou uma tarefa (ou o negócio dela): a lista recarrega na hora
+useCrmChanges(changes => {
+  if (changes.some(change => change.kind !== 'config')) load({ silent: true });
+});
 
 onMounted(() => {
   load();
@@ -154,7 +173,9 @@ onMounted(() => {
       />
       <div class="flex-1" />
       <span class="flex items-center gap-3 text-sm text-n-slate-11">
-        <span>{{ t('OUTSIDER_CRM.TASKS.PENDING_COUNT', { count: meta.pending }) }}</span>
+        <span>{{
+          t('OUTSIDER_CRM.TASKS.PENDING_COUNT', { count: meta.pending })
+        }}</span>
         <span v-if="meta.overdue" class="font-medium text-n-ruby-11">
           {{ t('OUTSIDER_CRM.TASKS.OVERDUE_COUNT', { count: meta.overdue }) }}
         </span>
@@ -179,7 +200,11 @@ onMounted(() => {
       </p>
     </div>
 
-    <section v-for="group in groups" :key="group.key" class="flex flex-col gap-2">
+    <section
+      v-for="group in groups"
+      :key="group.key"
+      class="flex flex-col gap-2"
+    >
       <h3
         class="flex items-center gap-2 mb-0 text-sm font-medium"
         :class="group.key === 'overdue' ? 'text-n-ruby-11' : 'text-n-slate-12'"
@@ -214,7 +239,11 @@ onMounted(() => {
             "
             @click.stop="toggle(task)"
           >
-            <Icon v-if="task.completed_at" icon="i-lucide-check" class="size-3" />
+            <Icon
+              v-if="task.completed_at"
+              icon="i-lucide-check"
+              class="size-3"
+            />
           </button>
           <div class="flex flex-col flex-1 min-w-0 gap-0.5">
             <span class="flex items-center gap-1.5 text-sm text-n-slate-12">
@@ -233,7 +262,9 @@ onMounted(() => {
               {{ task.opportunity.code }} · {{ task.opportunity.title }}
             </span>
           </div>
-          <span class="items-center hidden gap-1.5 min-w-0 text-sm sm:flex w-48 text-n-slate-11">
+          <span
+            class="items-center hidden gap-1.5 min-w-0 text-sm sm:flex w-48 text-n-slate-11"
+          >
             <Avatar
               :name="task.opportunity.contact?.name || ''"
               :src="task.opportunity.contact?.thumbnail"
@@ -250,7 +281,9 @@ onMounted(() => {
           </span>
           <span
             class="text-xs text-right w-28 shrink-0"
-            :class="task.overdue ? 'font-medium text-n-ruby-11' : 'text-n-slate-11'"
+            :class="
+              task.overdue ? 'font-medium text-n-ruby-11' : 'text-n-slate-11'
+            "
           >
             {{
               task.completed_at

@@ -257,8 +257,9 @@ class CrmAPI extends ApiClient {
   }
 
   // aba Metas: vendido, meta e comissão do mês (AAAA-MM)
-  getPerformance(month) {
-    return axios.get(`${this.url}/performance`, { params: { month } });
+  // only = 'me': só os números da própria pessoa (resumo da tela principal)
+  getPerformance(month, only) {
+    return axios.get(`${this.url}/performance`, { params: { month, only } });
   }
 
   // metas e comissão (só administrador)

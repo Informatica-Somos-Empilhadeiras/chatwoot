@@ -6,6 +6,7 @@ import { ref, computed, watch, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter, useRoute } from 'vue-router';
 import CrmAPI from 'dashboard/api/outsider/crm';
+import { useCrmChanges } from '../../live';
 import Button from 'dashboard/components-next/button/Button.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 import Avatar from 'dashboard/components-next/avatar/Avatar.vue';
@@ -44,8 +45,9 @@ const hasGoals = computed(
       data.value.sellers.some(seller => seller.goal_cents))
 );
 
-const load = async () => {
-  isLoading.value = true;
+// options.silent: recarga ao vivo, sem o indicador de carregando
+const load = async options => {
+  if (!options?.silent) isLoading.value = true;
   try {
     const response = await CrmAPI.getPerformance(month.value);
     data.value = response.data;
@@ -63,8 +65,13 @@ const openSettings = section =>
     query: { secao: section },
   });
 
-watch(month, load);
+watch(month, () => load());
 onMounted(load);
+
+// negócio ganho, valor ou responsável mudou, ou as metas e a comissão: os números mudam na hora
+useCrmChanges(changes => {
+  if (changes.some(change => change.kind !== 'task')) load({ silent: true });
+});
 </script>
 
 <template>

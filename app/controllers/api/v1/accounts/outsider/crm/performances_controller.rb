@@ -2,6 +2,6 @@
 class Api::V1::Accounts::Outsider::Crm::PerformancesController < Api::V1::Accounts::Outsider::Crm::BaseController
   def show
     month = ::Outsider::Crm::MonthlyConfig.month(params[:month])
-    render json: ::Outsider::Crm::Performance.new(crm_access, month).to_h
+    render json: ::Outsider::Crm::Performance.new(crm_access, month, mine_only: params[:only] == 'me').to_h
   end
 end

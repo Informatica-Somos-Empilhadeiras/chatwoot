@@ -4,16 +4,20 @@
 # o cálculo da comissão dele ("me").
 #
 # Conta o negócio ganho no mês (closed_at), pelo responsável atual. O vendedor visto por um gestor
-# soma só os negócios das unidades que esse gestor acompanha.
+# soma só os negócios das unidades que esse gestor acompanha. mine_only (resumo da tela principal)
+# devolve só os números da própria pessoa.
 class Outsider::Crm::Performance
-  def initialize(access, month)
+  def initialize(access, month, mine_only: false)
     @access = access
     @month = month
+    @mine_only = mine_only
     @account = access.account_user.account
     @user_id = access.account_user.user_id
   end
 
   def to_h
+    return { month: @month, from: range.begin.to_date, to: range.end.to_date, me: me } if @mine_only
+
     {
       month: @month, from: range.begin.to_date, to: range.end.to_date, manager: @access.manager?,
       goals_from: goals['from'], commission_from: commission['from'], general_bp: commission['general_bp'],

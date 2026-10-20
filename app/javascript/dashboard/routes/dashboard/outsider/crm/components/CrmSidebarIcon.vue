@@ -2,11 +2,11 @@
 // OUTSIDER: ícone do CRM no menu lateral. Mostra uma bolinha vermelha enquanto houver negócio
 // recebido por encaminhamento que a pessoa ainda não abriu, e é quem liga o aviso (ForwardNotice),
 // já que o menu está em todas as páginas. Se o ícone aparecer em mais de um lugar ao mesmo tempo,
-// só o primeiro mostra a janela.
+// só o primeiro mostra a janela. Também liga o lembrete de tarefas e a contagem de tarefas do menu.
 import { computed, onMounted, onBeforeUnmount, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import ForwardNotice from './ForwardNotice.vue';
-import { crmState, startReceivedWatch } from '../crmStore';
+import { crmState, startReceivedWatch, startTaskReminders } from '../crmStore';
 
 const { t } = useI18n();
 const isOwner = ref(false);
@@ -21,6 +21,7 @@ onMounted(() => {
     isOwner.value = true;
   }
   startReceivedWatch();
+  startTaskReminders(t);
 });
 
 onBeforeUnmount(() => {

@@ -27,7 +27,8 @@
       "ALL_PIPELINES": "Todos os pipelines",
       "ALL_STATUS": "Todos os status",
       "ALL_OWNERS": "Todos os responsáveis",
-      "MINE": "Só os meus"
+      "MINE": "Meus negócios",
+      "NO_OWNER": "Sem responsável"
     },
     "TABLE": {
       "OPPORTUNITY": "Negócio",
@@ -162,7 +163,7 @@
         "MAX_ATTEMPTS_HELP": "Quantas vezes o mesmo lead pode ser encaminhado entre unidades antes de a jornada ser encerrada (usado na etapa de encaminhamento).",
         "SAVED": "Configurações salvas",
         "OWN_DEALS": "Vendedor vê só os próprios negócios",
-        "OWN_DEALS_HELP": "Ligado, quem é só vendedor numa unidade vê, na lista, no Kanban e na aba da conversa, só os negócios dele e os que estão sem responsável. Gestores e administradores continuam vendo todos. Os indicadores do vendedor contam só os negócios dele, com esta opção ligada ou não."
+        "OWN_DEALS_HELP": "Ligado, quem é só vendedor numa unidade vê, na aba CRM da conversa e no painel do contato, só os negócios dele e os que estão sem responsável. A tela principal do CRM já mostra ao vendedor só os negócios dele, com esta opção ligada ou não; gestores e administradores continuam vendo todos."
       },
       "AUTOMATIONS": {
         "TITLE": "Automações prontas",
@@ -382,7 +383,8 @@
       "CONVERSION_HINT": "{won} ganhos de {closed} fechados",
       "DAYS": "{days} dias",
       "AVERAGE_DAYS_HINT": "Da criação até o ganho",
-      "OWN_ONLY": "Nas unidades em que você é vendedor, os números contam só os seus negócios."
+      "OWN_ONLY": "Nas unidades em que você é vendedor, os números contam só os seus negócios.",
+      "MINE_ONLY": "Você vê aqui os negócios em que é o responsável."
     },
     "BOARD": {
       "ADD": "Adicionar negócio",
@@ -843,6 +845,16 @@
       "NO_GOAL": "Sem meta",
       "REACHED": "Meta batida: {percent}%",
       "MISSING": "{percent}% da meta · faltam {value}"
+    },
+    "MY_MONTH": {
+      "TITLE": "Meu mês · {month}",
+      "SOLD": "Vendido",
+      "GOAL": "Meta",
+      "OF_GOAL": "de {goal}",
+      "MISSING": "Falta",
+      "REACHED": "Meta batida",
+      "COMMISSION": "Comissão",
+      "DETAILS": "Ver metas"
     }
   }
 }

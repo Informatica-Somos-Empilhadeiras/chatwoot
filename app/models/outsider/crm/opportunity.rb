@@ -4,6 +4,7 @@ class Outsider::Crm::Opportunity < ApplicationRecord
   include Outsider::Crm::AccountScoped
   include Outsider::Crm::OpportunityLifecycle
   include Outsider::Crm::OpportunityTimeline
+  include Outsider::Crm::LiveBroadcast
 
   # Chave do pg_advisory_xact_lock que numera as oportunidades de cada conta
   DISPLAY_ID_LOCK = 7_210_420

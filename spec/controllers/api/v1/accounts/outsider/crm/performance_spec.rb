@@ -58,15 +58,33 @@ RSpec.describe 'Outsider CRM goals, commission and seller-only numbers', type: :
     expect(get_json(seller, 'reports')['owners'].pluck('id')).to eq([seller.id])
   end
 
-  it 'hides colleagues deals from sellers when the account turns on "sellers see own deals"' do
-    expect(get_json(seller, 'opportunities')['meta']['count']).to eq(3)
-    Outsider::Crm::Settings.new(account).update(sellers_see_own_deals: true)
+  it 'opens the main page with each seller own deals and lets managers filter the team' do
     unowned = crm_opportunity(account, unit, pipeline: pipeline)
 
-    ids = get_json(seller, 'opportunities')['payload'].pluck('id')
-    expect(ids).to include(unowned.id)
-    expect(Outsider::Crm::Opportunity.where(id: ids).pluck(:owner_id).uniq).to contain_exactly(seller.id, nil)
+    expect(get_json(seller, 'opportunities')['meta']['count']).to eq(1)
+    expect(get_json(seller, 'opportunities', owner_id: colleague.id)['meta']['count']).to eq(0)
     expect(get_json(manager, 'opportunities')['meta']['count']).to eq(4)
+    expect(get_json(manager, 'opportunities', owner_id: 'none')['payload'].pluck('id')).to eq([unowned.id])
+    expect(get_json(seller, 'access')).to include('all_deals' => false)
+    expect(get_json(manager, 'access')).to include('all_deals' => true)
+  end
+
+  it 'hides colleagues deals in the conversation views when the account turns on "sellers see own deals"' do
+    other = Outsider::Crm::Opportunity.find_by!(owner: colleague, status: :open)
+    expect(get_json(seller, "opportunities/#{other.id}")).to include('id' => other.id)
+
+    Outsider::Crm::Settings.new(account).update(sellers_see_own_deals: true)
+    unowned = crm_opportunity(account, unit, pipeline: pipeline)
+    get "#{base}/opportunities/#{other.id}", headers: seller.create_new_auth_token, as: :json
+    expect(response).to have_http_status(:not_found)
+    expect(get_json(seller, "opportunities/#{unowned.id}")).to include('id' => unowned.id)
+  end
+
+  it 'gives the main page summary only the person own month' do
+    data = get_json(seller, 'performance', only: 'me')
+
+    expect(data.keys).to contain_exactly('month', 'from', 'to', 'me')
+    expect(data['me']).to include('won_cents' => 100_000, 'goal_cents' => 400_000, 'commission_cents' => 1_000)
   end
 
   it 'lets only administrators read and change goals and commission' do

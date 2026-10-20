@@ -127,13 +127,29 @@ const onLostDrop = event => {
 
 const canMove = ({ draggedContext }) => !!draggedContext.element.can_edit;
 
+// recarga ao vivo (alguém mudou um negócio): espera terminar de arrastar para não tirar o card da mão
+let reloadAfterDrag = false;
+const liveReload = () => {
+  if (isDragging.value) {
+    reloadAfterDrag = true;
+    return;
+  }
+  load();
+};
+
+watch(isDragging, dragging => {
+  if (dragging || !reloadAfterDrag) return;
+  reloadAfterDrag = false;
+  load();
+});
+
 watch(
   () => [props.pipeline.id, props.filters.owner_id, props.filters.q],
   load,
   { immediate: true }
 );
 
-defineExpose({ reload: load });
+defineExpose({ reload: load, liveReload });
 </script>
 
 <template>

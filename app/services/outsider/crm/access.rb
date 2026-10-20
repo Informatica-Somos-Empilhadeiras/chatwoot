@@ -4,7 +4,9 @@
 #
 # Nas unidades em que a pessoa é só vendedor, os indicadores (topo do Kanban, Relatórios, Metas)
 # contam só os negócios dela. Com a opção "vendedor vê só os próprios negócios" ligada, a lista,
-# o Kanban e a conversa também mostram só os dela e os que estão sem responsável.
+# o Kanban e a conversa também mostram só os dela e os que estão sem responsável. A tela principal
+# (main_list) mostra ao vendedor só os negócios em que é o responsável; gestor e administrador veem
+# os das unidades que acompanham.
 class Outsider::Crm::Access
   attr_reader :account_user
 
@@ -59,6 +61,20 @@ class Outsider::Crm::Access
 
     scope = scope.where(business_unit_id: visible_unit_ids)
     own_deals_only? ? own(scope, unowned: true) : scope
+  end
+
+  # Tela principal do CRM (lista, Kanban, indicadores do topo e CSV): o vendedor vê só os negócios em
+  # que é o responsável; o gestor vê também todos os das unidades que gerencia (inclusive os sem
+  # responsável) e o administrador vê todos. Quem vê os dos outros escolhe pelo filtro de responsável.
+  def all_deals?
+    manager?
+  end
+
+  def main_list(scope)
+    return scope if administrator?
+
+    scope.where('outsider_crm_opportunities.business_unit_id IN (:units) OR outsider_crm_opportunities.owner_id = :user',
+                units: manager_unit_ids.presence || [0], user: account_user.user_id)
   end
 
   # Base dos indicadores: nas unidades em que é só vendedor, só os negócios dele
@@ -119,6 +135,7 @@ class Outsider::Crm::Access
     {
       administrator: administrator?,
       manager: manager?,
+      all_deals: all_deals?,
       enabled: enabled?,
       units: visible_units.map { |unit| { id: unit.id, name: unit.name, role: role_in(unit.id) } }
     }
