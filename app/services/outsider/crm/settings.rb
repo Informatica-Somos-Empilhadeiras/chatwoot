@@ -10,7 +10,8 @@ class Outsider::Crm::Settings
     'automation_lost_label' => [:label, nil],
     'automation_close_tasks' => [:boolean, false],
     'automation_stalled_task' => [:boolean, false],
-    'automation_stalled_days' => [:integer, 7, 1..90]
+    'automation_stalled_days' => [:integer, 7, 1..90],
+    'highlight_no_next_task' => [:boolean, false]
   }.freeze
   DEFAULTS = FIELDS.transform_values(&:second).freeze
   INVALID = Object.new.freeze

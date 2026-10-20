@@ -1,6 +1,7 @@
 <script setup>
 // OUTSIDER: card de um negócio no Kanban. Tarefa atrasada deixa o card com borda vermelha;
-// negócio recebido por encaminhamento mostra de qual unidade veio.
+// negócio recebido por encaminhamento mostra de qual unidade veio. Com o destaque ligado nas
+// automações, negócio aberto sem tarefa pendente mostra "Sem próxima tarefa".
 import { useI18n } from 'vue-i18n';
 import Avatar from 'dashboard/components-next/avatar/Avatar.vue';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
@@ -8,6 +9,7 @@ import { formatDate, formatDateTime, formatMoney } from '../helpers';
 
 defineProps({
   opportunity: { type: Object, required: true },
+  noNextTask: { type: Boolean, default: false },
 });
 
 const { t } = useI18n();
@@ -109,6 +111,13 @@ const { t } = useI18n();
             ? formatDateTime(opportunity.tasks.next_due_at, t)
             : opportunity.tasks.pending
         }}
+      </span>
+      <span
+        v-if="noNextTask"
+        class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-n-amber-3 text-n-amber-11"
+      >
+        <Icon icon="i-lucide-calendar-x" class="size-3" />
+        {{ t('OUTSIDER_CRM.BOARD.NO_NEXT_TASK') }}
       </span>
       <span
         v-if="opportunity.sla_exceeded"

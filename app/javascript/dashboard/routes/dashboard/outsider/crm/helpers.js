@@ -98,6 +98,12 @@ export const TASK_KINDS = [
   { value: 'follow_up', icon: 'i-lucide-repeat' },
 ];
 
+// "Sem próxima tarefa": negócio aberto sem nenhuma tarefa pendente, quando a conta liga o destaque
+export const needsNextTask = (opportunity, access) =>
+  Boolean(access?.settings?.highlight_no_next_task) &&
+  opportunity.status === 'open' &&
+  !opportunity.tasks?.pending;
+
 export const taskKindIcon = kind =>
   TASK_KINDS.find(item => item.value === kind)?.icon || 'i-lucide-square-check';
 

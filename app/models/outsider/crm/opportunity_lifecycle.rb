@@ -1,7 +1,8 @@
 # OUTSIDER: mantém status e etapa da oportunidade coerentes. Ir para uma etapa de ganho ou
 # perda fecha a oportunidade; marcar como ganha ou perdida leva para a etapa final do
-# pipeline, quando existir. Reabrir volta para a primeira etapa aberta. Depois de gravar um ganho ou
-# uma perda, roda as automações da conta (Outsider::Crm::Automations).
+# pipeline, quando existir. Reabrir volta para a primeira etapa aberta. Depois de gravar, roda as
+# automações da conta: as de ganho e perda (Outsider::Crm::Automations) e as regras montadas pelo
+# administrador para os eventos criado, entrou numa etapa, ganho e perdido (Outsider::Crm::RuleRunner).
 module Outsider::Crm::OpportunityLifecycle
   extend ActiveSupport::Concern
 
@@ -12,7 +13,10 @@ module Outsider::Crm::OpportunityLifecycle
     before_validation :sync_status_and_stage
     before_save :track_closing
     after_save :sync_journey_status, if: -> { saved_change_to_status? || saved_change_to_id? }
-    after_commit :run_closing_automations, on: [:create, :update], if: -> { saved_change_to_status? && (won? || lost?) }
+    # dois callbacks e não previously_new_record?: um negócio criado e alterado na mesma transação
+    # perderia o evento "criado"
+    after_commit -> { run_automations(created: true) }, on: :create
+    after_commit -> { run_automations(created: false) }, on: :update
   end
 
   private
@@ -47,8 +51,23 @@ module Outsider::Crm::OpportunityLifecycle
     journey.sync_status!
   end
 
-  def run_closing_automations
-    Outsider::Crm::Automations.new(self).closed
+  # As de ganho e perda primeiro: assim "concluir tarefas pendentes" não fecha as tarefas que uma
+  # regra de ganho acabou de criar
+  def run_automations(created:)
+    events = automation_events(created)
+    return if events.empty?
+
+    Outsider::Crm::Automations.new(self).closed if events.intersect?(CLOSED)
+    Outsider::Crm::RuleRunner.on_events(self, events)
+  end
+
+  def automation_events(created)
+    return ['created', open? ? 'stage_entered' : status] if created
+
+    events = []
+    events << 'stage_entered' if open? && saved_change_to_stage_id?
+    events << status if CLOSED.include?(status) && saved_change_to_status?
+    events
   end
 
   # Só exige motivo se a conta cadastrou algum motivo de perda

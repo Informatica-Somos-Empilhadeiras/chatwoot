@@ -76,6 +76,8 @@ const active = ref(props.access.administrator ? 'units' : 'pipelines');
       <AutomationsSettings
         v-else-if="active === 'automations'"
         :access="access"
+        :units="units"
+        :pipelines="pipelines"
         @changed="emit('changed')"
       />
       <GeneralSettings v-else :access="access" @changed="emit('changed')" />

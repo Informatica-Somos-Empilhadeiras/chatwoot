@@ -69,7 +69,7 @@ RSpec.describe Outsider::Crm::StalledOpportunities do
 
       post url, headers: admin.create_new_auth_token, as: :json
 
-      expect(response.parsed_body).to eq('created' => 1)
+      expect(response.parsed_body).to eq('created' => 1, 'rules' => 0)
       expect(Outsider::Crm::Task.last.opportunity.activities.task_created.last.user_id).to be_nil
     end
 

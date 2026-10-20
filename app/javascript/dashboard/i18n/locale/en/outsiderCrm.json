@@ -160,7 +160,7 @@
         "SAVED": "Settings saved"
       },
       "AUTOMATIONS": {
-        "TITLE": "Automations",
+        "TITLE": "Ready-made automations",
         "DESCRIPTION": "Actions the CRM takes on its own. All start turned off and each one is recorded on the opportunity timeline. Nothing is sent to the customer.",
         "LABELS_TITLE": "Label on the conversation when the opportunity closes",
         "LABEL_HELP": "Applies to opportunities with a linked conversation. The label is added as Automation System, like Chatwoot automations.",
@@ -173,8 +173,109 @@
         "STALLED_HELP": "The follow-up task goes to the owner, once per stage visit. A stage with its own deadline uses that deadline. The check runs every hour.",
         "STALLED_DAYS": "Days stalled",
         "CHECK_NOW": "Check now",
-        "CHECKED": "Check done. Tasks created: {count}",
-        "SAVED": "Automations saved"
+        "CHECKED": "Check done. Stalled-opportunity tasks: {count}. Rules that ran: {rules}",
+        "SAVED": "Automations saved",
+        "HIGHLIGHT_NO_TASK": "Highlight opportunities with no next task",
+        "HIGHLIGHT_NO_TASK_HELP": "On the board and in the table, an open opportunity with no pending task shows \"No next task\". To chase the seller, create a \"No next task\" rule."
+      },
+      "RULES": {
+        "TITLE": "Rules: when this happens, do that",
+        "DESCRIPTION": "Build rules like \"when the opportunity enters the Proposal stage, create these tasks\". They run as System, are recorded on the opportunity timeline and never send anything to the customer.",
+        "NEW": "New rule",
+        "EDIT": "Edit rule",
+        "DELETE": "Delete rule",
+        "DELETE_TITLE": "Delete the rule?",
+        "DELETE_DESCRIPTION": "The rule \"{name}\" stops running. What it already did stays on the timeline.",
+        "EMPTY": "No rules yet. Click New rule and start from a template.",
+        "NAME": "Rule name",
+        "NAME_PLACEHOLDER": "E.g. Proposal stage tasks",
+        "WHEN": "When",
+        "DO": "Do",
+        "FOR_MORE_THAN": "for more than",
+        "HOURS_UNIT": "hours",
+        "DAYS_UNIT": "days",
+        "HOURS": "{n} hour | {n} hours",
+        "DAYS": "{n} day | {n} days",
+        "TRIGGERS": {
+          "CREATED": "Opportunity created",
+          "STAGE_ENTERED": "Opportunity entered a stage",
+          "WON": "Opportunity won",
+          "LOST": "Opportunity lost",
+          "STALLED": "Opportunity stalled in the same stage",
+          "NO_NEXT_TASK": "Opportunity with no next task"
+        },
+        "TRIGGER_HELP": {
+          "CREATED": "Applies to every new opportunity, including one forwarded from another unit.",
+          "STAGE_ENTERED": "Pick the stage below to create its template tasks. With no stage, it runs on every stage change. A new opportunity counts as entering the first stage.",
+          "WON": "Runs right after the ready-made win automations.",
+          "LOST": "Runs right after the ready-made loss automations.",
+          "STALLED": "Checked every hour. Runs once per stage visit.",
+          "NO_NEXT_TASK": "Checked every hour, counting from the last completed task (or from creation). Runs again only after the opportunity completes another task."
+        },
+        "PIPELINE": "Pipeline",
+        "STAGE": "Stage",
+        "ANY_UNIT": "All units",
+        "ANY_PIPELINE": "All pipelines",
+        "ANY_STAGE": "Any stage",
+        "MIN_VALUE": "Minimum value",
+        "MIN_VALUE_PLACEHOLDER": "Any value",
+        "ACTIONS": {
+          "CREATE_TASK": "Create task",
+          "SET_OWNER": "Change owner",
+          "ADD_LABEL": "Label on the conversation",
+          "ADD_NOTE": "Write a note"
+        },
+        "ADD_ACTION": "Add action",
+        "ACTIONS_HELP": "Up to 5 actions per rule. No action changes the stage, so one rule never triggers another.",
+        "TASK_TITLE": "Task title",
+        "TASK_DESCRIPTION": "Description (optional)",
+        "DUE_IN": "Due in",
+        "FOR": "for",
+        "ASSIGNEES": {
+          "OWNER": "the opportunity owner",
+          "MANAGERS": "the unit managers",
+          "USER": "a person"
+        },
+        "CHOOSE_PERSON": "Choose the person",
+        "CHOOSE_LABEL": "Choose the label",
+        "SET_OWNER_HELP": "Only changes when the person belongs to the unit or is an administrator; otherwise the timeline says so.",
+        "LABEL_HELP": "Applies to opportunities with a linked conversation. The label is added as Automation System.",
+        "NOTE_PLACEHOLDER": "Note text added to the opportunity timeline",
+        "SUMMARY": {
+          "WHEN": "When: {when}",
+          "WAIT": "{trigger} for more than {time}",
+          "EVERYWHERE": "All units",
+          "MIN_VALUE": "from {value}",
+          "TASK_MANAGERS": "{title} (managers)",
+          "OWNER": "Owner: {name}"
+        },
+        "PRESETS": {
+          "TITLE": "Start from a template",
+          "STAGE_TASKS": "Tasks when entering a stage",
+          "STAGE_TASK_1": "Send the proposal",
+          "STAGE_TASK_2": "Call to confirm the proposal",
+          "NEW_DEAL": "First contact on a new opportunity",
+          "NEW_DEAL_TASK": "Make the first contact",
+          "STALLED_MANAGERS": "Alert managers about stalled opportunities",
+          "STALLED_MANAGERS_TASK": "Review the stalled opportunity with the seller",
+          "NEXT_TASK": "Chase the next task",
+          "NEXT_TASK_TASK": "Define the next step of the opportunity"
+        },
+        "ERRORS": {
+          "NAME": "Give the rule a name (up to 80 characters).",
+          "TRIGGER": "Choose when the rule runs.",
+          "WAIT": "The waiting time goes from 1 hour to 90 days.",
+          "ACTIONS": "Use 1 to 5 actions.",
+          "TOO_MANY": "The account reached the limit of 30 rules.",
+          "CONDITIONS": "The chosen unit, pipeline or stage no longer exists.",
+          "TASK_TITLE": "write the task title.",
+          "TASK_DUE": "the due time goes from 0 to 90 days.",
+          "USER": "choose a person from the account.",
+          "LABEL": "choose an existing label.",
+          "NOTE": "write the note (up to 2000 characters).",
+          "ACTION": "Action {number}: {message}",
+          "GENERIC": "Check the rule fields."
+        }
       }
     },
     "ERRORS": {
@@ -232,7 +333,8 @@
       "WON_DONE": "\"{title}\" marked as won",
       "LOST_DONE": "\"{title}\" marked as lost",
       "TASKS_LATE": "Overdue task: {count}",
-      "TASKS_PENDING": "Pending tasks: {count}"
+      "TASKS_PENDING": "Pending tasks: {count}",
+      "NO_NEXT_TASK": "No next task"
     },
     "CONVERSATION": {
       "TAB": "CRM",
@@ -372,7 +474,17 @@
       "AUTOMATION_LABEL": "Automation added the label {label} to the conversation",
       "AUTOMATION_LABEL_MISSING": "Automation did not add the label {label}: it no longer exists in Chatwoot",
       "AUTOMATION_CLOSE_TASKS": "Automation completed the pending tasks: {count}",
-      "AUTOMATION_STALLED_TASK": "Automation created a task: opportunity stalled for {days} days in {stage}"
+      "AUTOMATION_STALLED_TASK": "Automation created a task: opportunity stalled for {days} days in {stage}",
+      "AUTOMATION_RULE": "Rule \"{rule}\" ran",
+      "RULE_TASKS": "Tasks created: {count}",
+      "RULE_OWNER": "New owner: {name}",
+      "RULE_LABEL": "Label: {label}",
+      "RULE_NOTE": "Note written",
+      "RULE_SKIPPED": {
+        "OWNER_NOT_MEMBER": "Owner not changed: the person is not in the unit",
+        "NO_CONVERSATION": "Label not applied: no linked conversation",
+        "LABEL_MISSING": "Label not applied: it no longer exists"
+      }
     },
     "AUDIT": {
       "HINT": "Every change to the deal and its tasks, with who and when.",

@@ -12,7 +12,12 @@ import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
 import OpportunityCard from './OpportunityCard.vue';
 import LostReasonDialog from './LostReasonDialog.vue';
-import { STAGE_COLORS, errorMessage, formatMoney } from '../helpers';
+import {
+  STAGE_COLORS,
+  errorMessage,
+  formatMoney,
+  needsNextTask,
+} from '../helpers';
 
 const props = defineProps({
   access: { type: Object, required: true },
@@ -189,6 +194,7 @@ defineExpose({ reload: load });
           <template #item="{ element }">
             <OpportunityCard
               :opportunity="element"
+              :no-next-task="needsNextTask(element, access)"
               :class="{ 'crm-locked': !element.can_edit }"
               @click="emit('open', element)"
             />

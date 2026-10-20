@@ -19,9 +19,30 @@ class CrmAPI extends ApiClient {
     return axios.get(`${this.url}/reports`, { params });
   }
 
-  // automação "negócio parado": roda a verificação na hora (só administrador)
+  // automação "negócio parado" e regras com gatilho de tempo: roda a verificação na hora (só administrador)
   checkStalled() {
     return axios.post(`${this.url}/automations/stalled`);
+  }
+
+  // regras "quando acontecer X, faça Y" (só administrador)
+  getAutomationRules() {
+    return axios.get(`${this.url}/automation_rules`);
+  }
+
+  createAutomationRule(automationRule) {
+    return axios.post(`${this.url}/automation_rules`, {
+      automation_rule: automationRule,
+    });
+  }
+
+  updateAutomationRule(id, automationRule) {
+    return axios.patch(`${this.url}/automation_rules/${id}`, {
+      automation_rule: automationRule,
+    });
+  }
+
+  deleteAutomationRule(id) {
+    return axios.delete(`${this.url}/automation_rules/${id}`);
   }
 
   getUnits() {

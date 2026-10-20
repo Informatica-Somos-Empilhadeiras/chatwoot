@@ -45,7 +45,22 @@ const AUTOMATION_TEXTS = {
   lost_label: 'AUTOMATION_LABEL',
   close_tasks: 'AUTOMATION_CLOSE_TASKS',
   stalled_task: 'AUTOMATION_STALLED_TASK',
+  custom: 'AUTOMATION_RULE',
 };
+
+// o que uma regra montada pelo administrador fez (ou deixou de fazer), na linha de detalhe
+const ruleDetail = meta =>
+  [
+    meta.tasks && t('OUTSIDER_CRM.TIMELINE.RULE_TASKS', { count: meta.tasks }),
+    meta.owner && t('OUTSIDER_CRM.TIMELINE.RULE_OWNER', { name: meta.owner }),
+    meta.label && t('OUTSIDER_CRM.TIMELINE.RULE_LABEL', { label: meta.label }),
+    meta.note && t('OUTSIDER_CRM.TIMELINE.RULE_NOTE'),
+    ...(meta.skipped || []).map(code =>
+      t(`OUTSIDER_CRM.TIMELINE.RULE_SKIPPED.${code.toUpperCase()}`)
+    ),
+  ]
+    .filter(Boolean)
+    .join(' · ');
 
 // encaminhamento: a observação de quem encaminhou aparece como a nota, em âmbar
 const FORWARD_KINDS = ['forwarded', 'received'];
@@ -178,6 +193,7 @@ const describe = item => {
           count: meta.count,
           days: meta.days,
           stage: meta.stage,
+          rule: meta.rule_name,
         }
       );
     default:
@@ -187,6 +203,9 @@ const describe = item => {
 
 const detail = item => {
   const meta = item.metadata || {};
+  if (item.kind === 'automation' && meta.rule === 'custom') {
+    return ruleDetail(meta);
+  }
   if (item.kind === 'status_changed' && meta.lost_reason) {
     return t('OUTSIDER_CRM.TIMELINE.LOST_REASON', { reason: meta.lost_reason });
   }

@@ -160,7 +160,7 @@
         "SAVED": "Configurações salvas"
       },
       "AUTOMATIONS": {
-        "TITLE": "Automações",
+        "TITLE": "Automações prontas",
         "DESCRIPTION": "Ações que o CRM faz sozinho. Todas começam desligadas e cada uma fica registrada na linha do tempo do negócio. Nada é enviado ao cliente.",
         "LABELS_TITLE": "Etiqueta na conversa ao fechar o negócio",
         "LABEL_HELP": "Vale para negócios com conversa ligada. A etiqueta entra como Sistema de Automação, igual às automações do Chatwoot.",
@@ -173,8 +173,109 @@
         "STALLED_HELP": "A tarefa de follow-up vai para o responsável, uma vez por passagem na etapa. Etapa com prazo próprio usa o prazo dela. A verificação roda de hora em hora.",
         "STALLED_DAYS": "Dias parado",
         "CHECK_NOW": "Verificar agora",
-        "CHECKED": "Verificação feita. Tarefas criadas: {count}",
-        "SAVED": "Automações salvas"
+        "CHECKED": "Verificação feita. Tarefas de negócio parado: {count}. Regras que rodaram: {rules}",
+        "SAVED": "Automações salvas",
+        "HIGHLIGHT_NO_TASK": "Destacar negócios sem próxima tarefa",
+        "HIGHLIGHT_NO_TASK_HELP": "No Kanban e na tabela, negócio aberto sem nenhuma tarefa pendente ganha o aviso \"Sem próxima tarefa\". Para cobrar o vendedor, crie uma regra \"Negócio sem próxima tarefa\"."
+      },
+      "RULES": {
+        "TITLE": "Regras: quando acontecer, faça",
+        "DESCRIPTION": "Monte regras como \"quando o negócio entrar na etapa Proposta, crie estas tarefas\". Elas rodam como Sistema, ficam na linha do tempo do negócio e nunca enviam nada ao cliente.",
+        "NEW": "Nova regra",
+        "EDIT": "Editar regra",
+        "DELETE": "Excluir regra",
+        "DELETE_TITLE": "Excluir a regra?",
+        "DELETE_DESCRIPTION": "A regra \"{name}\" para de rodar. O que ela já fez nos negócios continua na linha do tempo.",
+        "EMPTY": "Nenhuma regra ainda. Clique em Nova regra e comece por um dos modelos.",
+        "NAME": "Nome da regra",
+        "NAME_PLACEHOLDER": "Ex.: Tarefas da etapa Proposta",
+        "WHEN": "Quando",
+        "DO": "Faça",
+        "FOR_MORE_THAN": "por mais de",
+        "HOURS_UNIT": "horas",
+        "DAYS_UNIT": "dias",
+        "HOURS": "{n} hora | {n} horas",
+        "DAYS": "{n} dia | {n} dias",
+        "TRIGGERS": {
+          "CREATED": "Negócio criado",
+          "STAGE_ENTERED": "Negócio entrou numa etapa",
+          "WON": "Negócio ganho",
+          "LOST": "Negócio perdido",
+          "STALLED": "Negócio parado na mesma etapa",
+          "NO_NEXT_TASK": "Negócio sem próxima tarefa"
+        },
+        "TRIGGER_HELP": {
+          "CREATED": "Vale para todo negócio novo, inclusive o que chega por encaminhamento de outra unidade.",
+          "STAGE_ENTERED": "Escolha a etapa abaixo para criar as tarefas modelo dela. Sem etapa, roda a cada troca de etapa. Negócio novo conta como entrada na primeira etapa.",
+          "WON": "Roda logo depois das automações prontas de ganho.",
+          "LOST": "Roda logo depois das automações prontas de perda.",
+          "STALLED": "Conferido de hora em hora. Roda uma vez por passagem na etapa.",
+          "NO_NEXT_TASK": "Conferido de hora em hora, contando da última tarefa concluída (ou da criação do negócio). Só roda de novo depois que o negócio concluir outra tarefa."
+        },
+        "PIPELINE": "Pipeline",
+        "STAGE": "Etapa",
+        "ANY_UNIT": "Todas as unidades",
+        "ANY_PIPELINE": "Todos os pipelines",
+        "ANY_STAGE": "Qualquer etapa",
+        "MIN_VALUE": "Valor mínimo (R$)",
+        "MIN_VALUE_PLACEHOLDER": "Qualquer valor",
+        "ACTIONS": {
+          "CREATE_TASK": "Criar tarefa",
+          "SET_OWNER": "Trocar responsável",
+          "ADD_LABEL": "Etiqueta na conversa",
+          "ADD_NOTE": "Escrever nota"
+        },
+        "ADD_ACTION": "Adicionar ação",
+        "ACTIONS_HELP": "Até 5 ações por regra. Nenhuma ação muda a etapa do negócio, então uma regra não dispara outra.",
+        "TASK_TITLE": "Título da tarefa",
+        "TASK_DESCRIPTION": "Descrição (opcional)",
+        "DUE_IN": "Vence em",
+        "FOR": "para",
+        "ASSIGNEES": {
+          "OWNER": "o responsável do negócio",
+          "MANAGERS": "os gestores da unidade",
+          "USER": "uma pessoa"
+        },
+        "CHOOSE_PERSON": "Escolha a pessoa",
+        "CHOOSE_LABEL": "Escolha a etiqueta",
+        "SET_OWNER_HELP": "Só troca se a pessoa for da unidade do negócio ou administradora; senão a linha do tempo avisa.",
+        "LABEL_HELP": "Vale para negócio com conversa ligada. A etiqueta entra como Sistema de Automação.",
+        "NOTE_PLACEHOLDER": "Texto da nota que entra na linha do tempo do negócio",
+        "SUMMARY": {
+          "WHEN": "Quando: {when}",
+          "WAIT": "{trigger} há mais de {time}",
+          "EVERYWHERE": "Todas as unidades",
+          "MIN_VALUE": "a partir de {value}",
+          "TASK_MANAGERS": "{title} (gestores)",
+          "OWNER": "Responsável: {name}"
+        },
+        "PRESETS": {
+          "TITLE": "Comece por um modelo",
+          "STAGE_TASKS": "Tarefas ao entrar numa etapa",
+          "STAGE_TASK_1": "Enviar a proposta",
+          "STAGE_TASK_2": "Ligar para confirmar a proposta",
+          "NEW_DEAL": "Primeiro contato no negócio novo",
+          "NEW_DEAL_TASK": "Fazer o primeiro contato",
+          "STALLED_MANAGERS": "Avisar gestores de negócio parado",
+          "STALLED_MANAGERS_TASK": "Ver com o vendedor o negócio parado",
+          "NEXT_TASK": "Cobrar próxima tarefa",
+          "NEXT_TASK_TASK": "Definir o próximo passo do negócio"
+        },
+        "ERRORS": {
+          "NAME": "Dê um nome à regra (até 80 letras).",
+          "TRIGGER": "Escolha quando a regra roda.",
+          "WAIT": "O tempo de espera vai de 1 hora a 90 dias.",
+          "ACTIONS": "Use de 1 a 5 ações.",
+          "TOO_MANY": "A conta chegou ao limite de 30 regras.",
+          "CONDITIONS": "A unidade, o pipeline ou a etapa escolhidos não existem mais.",
+          "TASK_TITLE": "escreva o título da tarefa.",
+          "TASK_DUE": "o prazo vai de 0 a 90 dias.",
+          "USER": "escolha uma pessoa da conta.",
+          "LABEL": "escolha uma etiqueta que existe.",
+          "NOTE": "escreva a nota (até 2000 letras).",
+          "ACTION": "Ação {number}: {message}",
+          "GENERIC": "Confira os campos da regra."
+        }
       }
     },
     "ERRORS": {
@@ -232,7 +333,8 @@
       "WON_DONE": "\"{title}\" marcado como ganho",
       "LOST_DONE": "\"{title}\" marcado como perdido",
       "TASKS_LATE": "Tarefa atrasada: {count}",
-      "TASKS_PENDING": "Tarefas pendentes: {count}"
+      "TASKS_PENDING": "Tarefas pendentes: {count}",
+      "NO_NEXT_TASK": "Sem próxima tarefa"
     },
     "CONVERSATION": {
       "TAB": "CRM",
@@ -372,7 +474,17 @@
       "AUTOMATION_LABEL": "Automação aplicou a etiqueta {label} na conversa",
       "AUTOMATION_LABEL_MISSING": "Automação não aplicou a etiqueta {label}: ela não existe mais no Chatwoot",
       "AUTOMATION_CLOSE_TASKS": "Automação concluiu as tarefas pendentes: {count}",
-      "AUTOMATION_STALLED_TASK": "Automação criou tarefa: negócio parado há {days} dias em {stage}"
+      "AUTOMATION_STALLED_TASK": "Automação criou tarefa: negócio parado há {days} dias em {stage}",
+      "AUTOMATION_RULE": "Regra \"{rule}\" rodou",
+      "RULE_TASKS": "Tarefas criadas: {count}",
+      "RULE_OWNER": "Novo responsável: {name}",
+      "RULE_LABEL": "Etiqueta: {label}",
+      "RULE_NOTE": "Nota escrita",
+      "RULE_SKIPPED": {
+        "OWNER_NOT_MEMBER": "Responsável não trocado: a pessoa não é da unidade",
+        "NO_CONVERSATION": "Etiqueta não aplicada: negócio sem conversa",
+        "LABEL_MISSING": "Etiqueta não aplicada: ela não existe mais"
+      }
     },
     "AUDIT": {
       "HINT": "Toda alteração do negócio e das tarefas, com quem fez e quando.",

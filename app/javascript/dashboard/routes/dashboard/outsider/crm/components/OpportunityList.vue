@@ -23,6 +23,7 @@ import {
   errorMessage,
   formatDate,
   formatMoney,
+  needsNextTask,
 } from '../helpers';
 
 const props = defineProps({
@@ -430,6 +431,12 @@ onMounted(async () => {
                           count: opportunity.tasks.overdue,
                         })
                       }}
+                    </span>
+                    <span
+                      v-else-if="needsNextTask(opportunity, access)"
+                      class="font-medium text-n-amber-11"
+                    >
+                      · {{ t('OUTSIDER_CRM.BOARD.NO_NEXT_TASK') }}
                     </span>
                   </span>
                 </div>
