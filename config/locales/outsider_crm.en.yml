@@ -5,6 +5,9 @@ en:
       group_contact: WhatsApp groups cannot have opportunities
       stage_in_use: Move the opportunities out of this stage before removing it
       forwarded_locked: A forwarded opportunity can no longer change. Use the opportunity in the destination unit
+    automations:
+      stalled_task_title: "Follow up stalled deal in %{stage}"
+      stalled_task_description: "Created by automation: the deal has been in the same stage for %{days} days."
     forward:
       task_title: "Contact the customer forwarded by %{unit}"
       errors:

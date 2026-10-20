@@ -6,7 +6,8 @@
     "TABS": {
       "OPPORTUNITIES": "Negócios",
       "SETTINGS": "Configurações",
-      "TASKS": "Tarefas"
+      "TASKS": "Tarefas",
+      "REPORTS": "Relatórios"
     },
     "STATES": {
       "NO_ACCESS": "Você ainda não faz parte de nenhuma unidade comercial do CRM. Peça a um administrador para incluir você.",
@@ -69,7 +70,8 @@
         "PIPELINES": "Pipelines",
         "REASONS": "Motivos",
         "FIELDS": "Campos",
-        "GENERAL": "Geral"
+        "GENERAL": "Geral",
+        "AUTOMATIONS": "Automações"
       },
       "UNITS": {
         "TITLE": "Unidades comerciais",
@@ -156,6 +158,23 @@
         "MAX_ATTEMPTS": "Tentativas de encaminhamento por lead",
         "MAX_ATTEMPTS_HELP": "Quantas vezes o mesmo lead pode ser encaminhado entre unidades antes de a jornada ser encerrada (usado na etapa de encaminhamento).",
         "SAVED": "Configurações salvas"
+      },
+      "AUTOMATIONS": {
+        "TITLE": "Automações",
+        "DESCRIPTION": "Ações que o CRM faz sozinho. Todas começam desligadas e cada uma fica registrada na linha do tempo do negócio. Nada é enviado ao cliente.",
+        "LABELS_TITLE": "Etiqueta na conversa ao fechar o negócio",
+        "LABEL_HELP": "Vale para negócios com conversa ligada. A etiqueta entra como Sistema de Automação, igual às automações do Chatwoot.",
+        "WON_LABEL": "Ao ganhar",
+        "LOST_LABEL": "Ao perder",
+        "NO_LABEL": "Não aplicar",
+        "CLOSE_TASKS": "Concluir as tarefas pendentes ao ganhar ou perder",
+        "CLOSE_TASKS_HELP": "As tarefas abertas do negócio ficam concluídas pelo sistema.",
+        "STALLED_TASK": "Criar tarefa quando o negócio ficar parado na mesma etapa",
+        "STALLED_HELP": "A tarefa de follow-up vai para o responsável, uma vez por passagem na etapa. Etapa com prazo próprio usa o prazo dela. A verificação roda de hora em hora.",
+        "STALLED_DAYS": "Dias parado",
+        "CHECK_NOW": "Verificar agora",
+        "CHECKED": "Verificação feita. Tarefas criadas: {count}",
+        "SAVED": "Automações salvas"
       }
     },
     "ERRORS": {
@@ -348,7 +367,12 @@
       "CONFIRM_DELETE": "Confirmar exclusão",
       "FROM_CONVERSATION": "Na conversa #{id}",
       "LOAD_MORE": "Carregar mais",
-      "FORWARD_OWNER": "Responsável no destino: {name}"
+      "FORWARD_OWNER": "Responsável no destino: {name}",
+      "AUTOMATION": "Automação executada",
+      "AUTOMATION_LABEL": "Automação aplicou a etiqueta {label} na conversa",
+      "AUTOMATION_LABEL_MISSING": "Automação não aplicou a etiqueta {label}: ela não existe mais no Chatwoot",
+      "AUTOMATION_CLOSE_TASKS": "Automação concluiu as tarefas pendentes: {count}",
+      "AUTOMATION_STALLED_TASK": "Automação criou tarefa: negócio parado há {days} dias em {stage}"
     },
     "AUDIT": {
       "HINT": "Toda alteração do negócio e das tarefas, com quem fez e quando.",
@@ -462,6 +486,95 @@
       "OPEN_SINCE": "aberto desde {date}",
       "FORWARDED_LINE": "Encaminhado para {unit} por {name}, {date}",
       "REASON": "Motivo: {reason}"
+    },
+    "REPORTS": {
+      "PERIODS": {
+        "MONTH": "Este mês",
+        "LAST_MONTH": "Mês passado",
+        "QUARTER": "Este trimestre",
+        "YEAR": "Este ano",
+        "LAST_12_MONTHS": "Últimos 12 meses"
+      },
+      "PERIOD_RANGE": "De {from} a {to}",
+      "EMPTY": "Ainda não há negócios para estes filtros.",
+      "DAYS": "{days} dias",
+      "DEALS": "Negócios",
+      "COUNT_VALUE": "{count} · {value}",
+      "SHOW_TABLE": "Ver como tabela",
+      "SHOW_CHART": "Ver gráfico",
+      "TILES": {
+        "OPEN": "Em aberto",
+        "OPEN_HINT": "Negócios abertos: {count}",
+        "WEIGHTED": "Previsão ponderada",
+        "WEIGHTED_HINT": "Valor × probabilidade",
+        "WON": "Ganhos",
+        "WON_HINT": "Negócios ganhos: {count}",
+        "LOST": "Perdidos",
+        "LOST_HINT": "Negócios perdidos: {count}",
+        "CONVERSION": "Conversão",
+        "CONVERSION_HINT": "{won} ganhos de {closed} fechados",
+        "TICKET": "Ticket médio",
+        "TICKET_HINT": "Valor médio dos ganhos",
+        "DAYS_TO_WIN": "Tempo até ganhar",
+        "DAYS_TO_WIN_HINT": "Da criação até o ganho",
+        "FORWARDED": "Encaminhados",
+        "FORWARDED_HINT": "Recebidos de outras unidades: {received}"
+      },
+      "FUNNEL": {
+        "TITLE": "Funil por etapa",
+        "SUBTITLE": "Passaram e conversão: negócios criados no período. Agora: o que está no Kanban, com os mesmos filtros.",
+        "STAGE": "Etapa",
+        "REACHED": "Passaram",
+        "CONVERSION": "Conversão",
+        "NOW": "Agora",
+        "WEIGHTED": "Ponderado",
+        "AVERAGE_DAYS": "Tempo médio",
+        "CURRENT_DAYS": "Parados há",
+        "WON": "Ganhos",
+        "TOTAL_OPEN": "Total aberto no Kanban",
+        "REACHED_TOOLTIP": "Chegaram até aqui: {count} de {total} negócios do período",
+        "CONVERSION_TOOLTIP": "Seguiram da etapa anterior: {count} de {previous}",
+        "EXITS": "Saídas da etapa no período: {count}",
+        "COHORT": "Negócios criados no período: {count}",
+        "TRUNCATED": "Muitos negócios no período: o funil considerou os 5.000 mais recentes.",
+        "NO_PIPELINE": "Nenhum pipeline ativo para estes filtros."
+      },
+      "FORECAST": {
+        "TITLE": "Previsão de fechamento",
+        "SUBTITLE": "Negócios abertos pela data prevista de fechamento",
+        "TOTAL": "Valor total",
+        "WEIGHTED": "Ponderado",
+        "WHEN": "Quando",
+        "OVERDUE": "Atrasados",
+        "LATER": "Depois",
+        "NO_DATE": "Sem data",
+        "TOOLTIP_DEALS": "Negócios: {count}"
+      },
+      "REASONS": {
+        "LOST_TITLE": "Perdas por motivo",
+        "FORWARD_TITLE": "Encaminhamentos por motivo",
+        "NONE": "Sem motivo",
+        "EMPTY": "Nada no período.",
+        "TOOLTIP": "Negócios: {count} ({share}%) · {value}"
+      },
+      "UNITS": {
+        "TITLE": "Por unidade",
+        "NAME": "Unidade"
+      },
+      "OWNERS": {
+        "TITLE": "Por responsável",
+        "NAME": "Responsável",
+        "NONE": "Sem responsável"
+      },
+      "COLUMNS": {
+        "OPEN": "Em aberto",
+        "WEIGHTED": "Ponderado",
+        "WON": "Ganhos",
+        "LOST": "Perdidos",
+        "FORWARDED": "Encaminhados",
+        "RECEIVED": "Recebidos",
+        "CONVERSION": "Conversão"
+      }
     }
   }
 }

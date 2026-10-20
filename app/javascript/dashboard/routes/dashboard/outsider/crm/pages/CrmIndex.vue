@@ -12,6 +12,7 @@ import Icon from 'dashboard/components-next/icon/Icon.vue';
 import OpportunityList from '../components/OpportunityList.vue';
 import TasksPanel from '../components/TasksPanel.vue';
 import CrmSettingsPanel from '../components/settings/CrmSettingsPanel.vue';
+import ReportsPanel from '../components/reports/ReportsPanel.vue';
 import { errorMessage } from '../helpers';
 import {
   crmState,
@@ -42,6 +43,7 @@ const tabs = computed(() => [
     label: t('OUTSIDER_CRM.TABS.TASKS'),
     count: crmState.myTasks.pending || undefined,
   },
+  { key: 'reports', label: t('OUTSIDER_CRM.TABS.REPORTS') },
   ...(canConfigure.value
     ? [{ key: 'settings', label: t('OUTSIDER_CRM.TABS.SETTINGS') }]
     : []),
@@ -141,6 +143,12 @@ onMounted(async () => {
             <TasksPanel
               v-else-if="activeTab === 'tasks'"
               :access="access"
+              :pipelines="pipelines"
+            />
+            <ReportsPanel
+              v-else-if="activeTab === 'reports'"
+              :access="access"
+              :units="units"
               :pipelines="pipelines"
             />
             <CrmSettingsPanel

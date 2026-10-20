@@ -9,6 +9,10 @@ Rails.application.routes.prepend do
             namespace :crm do
               resource :access, only: [:show]
               resource :settings, only: [:show, :update]
+              resource :reports, only: [:show]
+              resource :automations, only: [] do
+                post :stalled
+              end
               resources :business_units, only: [:index, :show, :create, :update, :destroy] do
                 resources :members, controller: 'business_unit_members', only: [:create, :update, :destroy]
               end
@@ -40,3 +44,13 @@ Rails.application.routes.prepend do
   end
 end
 # rubocop:enable Metrics/BlockLength
+
+# OUTSIDER: automação "negócio parado" (Outsider::Crm::StalledOpportunitiesJob), de hora em hora.
+# Job.create e não load_from_hash!: o load_from_hash! apaga os jobs do config/schedule.yml que não
+# estiverem no hash passado. Para tirar o agendamento: Sidekiq::Cron::Job.destroy('outsider_crm_stalled_opportunities_job').
+Rails.application.reloader.to_prepare do
+  if Sidekiq.server?
+    Sidekiq::Cron::Job.create(name: 'outsider_crm_stalled_opportunities_job', cron: '20 * * * *',
+                              class: 'Outsider::Crm::StalledOpportunitiesJob', queue: 'scheduled_jobs')
+  end
+end

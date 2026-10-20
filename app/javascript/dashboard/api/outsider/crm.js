@@ -15,6 +15,15 @@ class CrmAPI extends ApiClient {
     return axios.patch(`${this.url}/settings`, { settings });
   }
 
+  getReport(params) {
+    return axios.get(`${this.url}/reports`, { params });
+  }
+
+  // automação "negócio parado": roda a verificação na hora (só administrador)
+  checkStalled() {
+    return axios.post(`${this.url}/automations/stalled`);
+  }
+
   getUnits() {
     return axios.get(`${this.url}/business_units`);
   }

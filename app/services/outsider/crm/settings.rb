@@ -1,9 +1,19 @@
 # OUTSIDER: configurações do CRM por conta. Ficam em accounts.internal_attributes, como as
 # permissões da página Status, para não precisar de coluna nova numa tabela do Chatwoot.
+# As automações (Outsider::Crm::Automations e StalledOpportunities) começam desligadas.
 class Outsider::Crm::Settings
   KEY = 'outsider_crm_settings'.freeze
-  DEFAULTS = { 'max_forward_attempts' => 3 }.freeze
-  LIMITS = { 'max_forward_attempts' => 1..10 }.freeze
+  # nome => [tipo, padrão, faixa aceita]
+  FIELDS = {
+    'max_forward_attempts' => [:integer, 3, 1..10],
+    'automation_won_label' => [:label, nil],
+    'automation_lost_label' => [:label, nil],
+    'automation_close_tasks' => [:boolean, false],
+    'automation_stalled_task' => [:boolean, false],
+    'automation_stalled_days' => [:integer, 7, 1..90]
+  }.freeze
+  DEFAULTS = FIELDS.transform_values(&:second).freeze
+  INVALID = Object.new.freeze
 
   class Invalid < StandardError; end
 
@@ -20,8 +30,8 @@ class Outsider::Crm::Settings
   end
 
   def update(values)
-    values = values.to_h.stringify_keys.slice(*DEFAULTS.keys).transform_values { |value| Integer(value, exception: false) }
-    invalid = values.reject { |name, value| value && LIMITS[name].cover?(value) }
+    values = values.to_h.stringify_keys.slice(*DEFAULTS.keys).to_h { |name, value| [name, cast(name, value)] }
+    invalid = values.select { |_name, value| value.equal?(INVALID) }
     raise Invalid, invalid.keys.join(', ') if invalid.any?
 
     @account.with_lock do
@@ -30,5 +40,26 @@ class Outsider::Crm::Settings
       @account.update_columns(internal_attributes: merged) # rubocop:disable Rails/SkipsModelValidations
     end
     to_h
+  end
+
+  private
+
+  def cast(name, value)
+    type, _default, range = FIELDS.fetch(name)
+    case type
+    when :integer
+      number = Integer(value, exception: false)
+      number && range.cover?(number) ? number : INVALID
+    when :boolean then ActiveModel::Type::Boolean.new.cast(value) || false
+    when :label then label(value)
+    end
+  end
+
+  # Etiqueta do Chatwoot pelo nome; vazio desliga a automação
+  def label(value)
+    title = value.to_s.strip.downcase.presence
+    return if title.nil?
+
+    @account.labels.exists?(title: title) ? title : INVALID
   end
 end

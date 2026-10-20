@@ -36,6 +36,15 @@ const KIND_ICONS = {
   forwarded: 'i-lucide-forward',
   received: 'i-lucide-inbox',
   message_linked: 'i-lucide-message-square',
+  automation: 'i-lucide-bot',
+};
+
+// texto de cada regra de automação (metadata.rule)
+const AUTOMATION_TEXTS = {
+  won_label: 'AUTOMATION_LABEL',
+  lost_label: 'AUTOMATION_LABEL',
+  close_tasks: 'AUTOMATION_CLOSE_TASKS',
+  stalled_task: 'AUTOMATION_STALLED_TASK',
 };
 
 // encaminhamento: a observação de quem encaminhou aparece como a nota, em âmbar
@@ -157,6 +166,20 @@ const describe = item => {
         unit: meta.from_unit || '—',
         code: meta.from_code || '',
       });
+    case 'automation':
+      return t(
+        `OUTSIDER_CRM.TIMELINE.${
+          meta.missing
+            ? 'AUTOMATION_LABEL_MISSING'
+            : AUTOMATION_TEXTS[meta.rule] || 'AUTOMATION'
+        }`,
+        {
+          label: meta.label,
+          count: meta.count,
+          days: meta.days,
+          stage: meta.stage,
+        }
+      );
     default:
       return t(`OUTSIDER_CRM.TIMELINE.${item.kind.toUpperCase()}`, { name });
   }

@@ -5,6 +5,9 @@ pt_BR:
       group_contact: Grupos do WhatsApp não podem ter negócios
       stage_in_use: Mova as oportunidades desta etapa antes de removê-la
       forwarded_locked: Negócio encaminhado não muda mais. Use o negócio da unidade de destino
+    automations:
+      stalled_task_title: "Retomar negócio parado em %{stage}"
+      stalled_task_description: "Criada pela automação: o negócio está há %{days} dias na mesma etapa."
     forward:
       task_title: "Contatar cliente encaminhado por %{unit}"
       errors:

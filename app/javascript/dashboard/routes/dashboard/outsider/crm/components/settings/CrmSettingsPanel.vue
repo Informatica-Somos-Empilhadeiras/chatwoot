@@ -8,6 +8,7 @@ import PipelinesSettings from './PipelinesSettings.vue';
 import ReasonsSettings from './ReasonsSettings.vue';
 import FieldsSettings from './FieldsSettings.vue';
 import GeneralSettings from './GeneralSettings.vue';
+import AutomationsSettings from './AutomationsSettings.vue';
 
 const props = defineProps({
   access: { type: Object, required: true },
@@ -25,6 +26,7 @@ const sections = computed(() =>
     { key: 'pipelines', icon: 'i-lucide-kanban', admin: false },
     { key: 'reasons', icon: 'i-lucide-circle-x', admin: true },
     { key: 'fields', icon: 'i-lucide-text-cursor-input', admin: true },
+    { key: 'automations', icon: 'i-lucide-bot', admin: true },
     { key: 'general', icon: 'i-lucide-settings-2', admin: true },
   ]
     .filter(section => props.access.administrator || !section.admin)
@@ -71,6 +73,11 @@ const active = ref(props.access.administrator ? 'units' : 'pipelines');
       />
       <ReasonsSettings v-else-if="active === 'reasons'" />
       <FieldsSettings v-else-if="active === 'fields'" />
+      <AutomationsSettings
+        v-else-if="active === 'automations'"
+        :access="access"
+        @changed="emit('changed')"
+      />
       <GeneralSettings v-else :access="access" @changed="emit('changed')" />
     </div>
   </div>

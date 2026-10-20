@@ -74,7 +74,7 @@ RSpec.describe 'Outsider CRM business units API', type: :request do
       expect(response).to have_http_status(:unprocessable_entity)
 
       patch "#{base_url}/settings", params: { settings: { max_forward_attempts: 2 } }, headers: admin.create_new_auth_token, as: :json
-      expect(response.parsed_body).to eq('max_forward_attempts' => 2)
+      expect(response.parsed_body).to include('max_forward_attempts' => 2)
     end
   end
 end

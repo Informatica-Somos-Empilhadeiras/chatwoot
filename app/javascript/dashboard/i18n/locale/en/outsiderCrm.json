@@ -6,7 +6,8 @@
     "TABS": {
       "OPPORTUNITIES": "Deals",
       "SETTINGS": "Settings",
-      "TASKS": "Tasks"
+      "TASKS": "Tasks",
+      "REPORTS": "Reports"
     },
     "STATES": {
       "NO_ACCESS": "You are not part of any CRM business unit yet. Ask an administrator to add you.",
@@ -69,7 +70,8 @@
         "PIPELINES": "Pipelines",
         "REASONS": "Reasons",
         "FIELDS": "Fields",
-        "GENERAL": "General"
+        "GENERAL": "General",
+        "AUTOMATIONS": "Automations"
       },
       "UNITS": {
         "TITLE": "Business units",
@@ -156,6 +158,23 @@
         "MAX_ATTEMPTS": "Forwarding attempts per lead",
         "MAX_ATTEMPTS_HELP": "How many times the same lead can be forwarded between units before the journey closes (used by forwarding).",
         "SAVED": "Settings saved"
+      },
+      "AUTOMATIONS": {
+        "TITLE": "Automations",
+        "DESCRIPTION": "Actions the CRM takes on its own. All start turned off and each one is recorded on the opportunity timeline. Nothing is sent to the customer.",
+        "LABELS_TITLE": "Label on the conversation when the opportunity closes",
+        "LABEL_HELP": "Applies to opportunities with a linked conversation. The label is added as Automation System, like Chatwoot automations.",
+        "WON_LABEL": "When won",
+        "LOST_LABEL": "When lost",
+        "NO_LABEL": "Don't apply",
+        "CLOSE_TASKS": "Complete pending tasks when won or lost",
+        "CLOSE_TASKS_HELP": "Open tasks of the opportunity are completed by the system.",
+        "STALLED_TASK": "Create a task when the opportunity stalls in the same stage",
+        "STALLED_HELP": "The follow-up task goes to the owner, once per stage visit. A stage with its own deadline uses that deadline. The check runs every hour.",
+        "STALLED_DAYS": "Days stalled",
+        "CHECK_NOW": "Check now",
+        "CHECKED": "Check done. Tasks created: {count}",
+        "SAVED": "Automations saved"
       }
     },
     "ERRORS": {
@@ -348,7 +367,12 @@
       "CONFIRM_DELETE": "Confirm delete",
       "FROM_CONVERSATION": "In conversation #{id}",
       "LOAD_MORE": "Load more",
-      "FORWARD_OWNER": "Destination owner: {name}"
+      "FORWARD_OWNER": "Destination owner: {name}",
+      "AUTOMATION": "Automation ran",
+      "AUTOMATION_LABEL": "Automation added the label {label} to the conversation",
+      "AUTOMATION_LABEL_MISSING": "Automation did not add the label {label}: it no longer exists in Chatwoot",
+      "AUTOMATION_CLOSE_TASKS": "Automation completed the pending tasks: {count}",
+      "AUTOMATION_STALLED_TASK": "Automation created a task: opportunity stalled for {days} days in {stage}"
     },
     "AUDIT": {
       "HINT": "Every change to the deal and its tasks, with who and when.",
@@ -462,6 +486,95 @@
       "OPEN_SINCE": "open since {date}",
       "FORWARDED_LINE": "Forwarded to {unit} by {name}, {date}",
       "REASON": "Reason: {reason}"
+    },
+    "REPORTS": {
+      "PERIODS": {
+        "MONTH": "This month",
+        "LAST_MONTH": "Last month",
+        "QUARTER": "This quarter",
+        "YEAR": "This year",
+        "LAST_12_MONTHS": "Last 12 months"
+      },
+      "PERIOD_RANGE": "From {from} to {to}",
+      "EMPTY": "No opportunities for these filters yet.",
+      "DAYS": "{days} days",
+      "DEALS": "Opportunities",
+      "COUNT_VALUE": "{count} · {value}",
+      "SHOW_TABLE": "Show as table",
+      "SHOW_CHART": "Show chart",
+      "TILES": {
+        "OPEN": "Open",
+        "OPEN_HINT": "Open opportunities: {count}",
+        "WEIGHTED": "Weighted forecast",
+        "WEIGHTED_HINT": "Value × probability",
+        "WON": "Won",
+        "WON_HINT": "Won opportunities: {count}",
+        "LOST": "Lost",
+        "LOST_HINT": "Lost opportunities: {count}",
+        "CONVERSION": "Conversion",
+        "CONVERSION_HINT": "{won} won of {closed} closed",
+        "TICKET": "Average deal",
+        "TICKET_HINT": "Average value of won deals",
+        "DAYS_TO_WIN": "Time to win",
+        "DAYS_TO_WIN_HINT": "From creation to win",
+        "FORWARDED": "Forwarded",
+        "FORWARDED_HINT": "Received from other units: {received}"
+      },
+      "FUNNEL": {
+        "TITLE": "Funnel by stage",
+        "SUBTITLE": "Reached and conversion: opportunities created in the period. Now: what is on the Kanban, with the same filters.",
+        "STAGE": "Stage",
+        "REACHED": "Reached",
+        "CONVERSION": "Conversion",
+        "NOW": "Now",
+        "WEIGHTED": "Weighted",
+        "AVERAGE_DAYS": "Average time",
+        "CURRENT_DAYS": "Stalled for",
+        "WON": "Won",
+        "TOTAL_OPEN": "Total open on the Kanban",
+        "REACHED_TOOLTIP": "Got this far: {count} of {total} opportunities of the period",
+        "CONVERSION_TOOLTIP": "Moved on from the previous stage: {count} of {previous}",
+        "EXITS": "Stage exits in the period: {count}",
+        "COHORT": "Opportunities created in the period: {count}",
+        "TRUNCATED": "Too many opportunities in the period: the funnel used the 5,000 most recent.",
+        "NO_PIPELINE": "No active pipeline for these filters."
+      },
+      "FORECAST": {
+        "TITLE": "Close forecast",
+        "SUBTITLE": "Open opportunities by expected close date",
+        "TOTAL": "Full value",
+        "WEIGHTED": "Weighted",
+        "WHEN": "When",
+        "OVERDUE": "Overdue",
+        "LATER": "Later",
+        "NO_DATE": "No date",
+        "TOOLTIP_DEALS": "Opportunities: {count}"
+      },
+      "REASONS": {
+        "LOST_TITLE": "Losses by reason",
+        "FORWARD_TITLE": "Forwards by reason",
+        "NONE": "No reason",
+        "EMPTY": "Nothing in the period.",
+        "TOOLTIP": "Opportunities: {count} ({share}%) · {value}"
+      },
+      "UNITS": {
+        "TITLE": "By unit",
+        "NAME": "Unit"
+      },
+      "OWNERS": {
+        "TITLE": "By owner",
+        "NAME": "Owner",
+        "NONE": "No owner"
+      },
+      "COLUMNS": {
+        "OPEN": "Open",
+        "WEIGHTED": "Weighted",
+        "WON": "Won",
+        "LOST": "Lost",
+        "FORWARDED": "Forwarded",
+        "RECEIVED": "Received",
+        "CONVERSION": "Conversion"
+      }
     }
   }
 }

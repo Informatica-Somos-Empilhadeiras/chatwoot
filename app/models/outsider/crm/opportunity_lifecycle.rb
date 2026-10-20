@@ -1,6 +1,7 @@
 # OUTSIDER: mantém status e etapa da oportunidade coerentes. Ir para uma etapa de ganho ou
 # perda fecha a oportunidade; marcar como ganha ou perdida leva para a etapa final do
-# pipeline, quando existir. Reabrir volta para a primeira etapa aberta.
+# pipeline, quando existir. Reabrir volta para a primeira etapa aberta. Depois de gravar um ganho ou
+# uma perda, roda as automações da conta (Outsider::Crm::Automations).
 module Outsider::Crm::OpportunityLifecycle
   extend ActiveSupport::Concern
 
@@ -11,6 +12,7 @@ module Outsider::Crm::OpportunityLifecycle
     before_validation :sync_status_and_stage
     before_save :track_closing
     after_save :sync_journey_status, if: -> { saved_change_to_status? || saved_change_to_id? }
+    after_commit :run_closing_automations, on: [:create, :update], if: -> { saved_change_to_status? && (won? || lost?) }
   end
 
   private
@@ -43,6 +45,10 @@ module Outsider::Crm::OpportunityLifecycle
 
   def sync_journey_status
     journey.sync_status!
+  end
+
+  def run_closing_automations
+    Outsider::Crm::Automations.new(self).closed
   end
 
   # Só exige motivo se a conta cadastrou algum motivo de perda
