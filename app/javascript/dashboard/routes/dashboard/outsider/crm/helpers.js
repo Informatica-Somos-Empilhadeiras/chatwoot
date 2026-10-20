@@ -125,6 +125,10 @@ export const errorMessage = (t, error) => {
   }
   if (code === 'crm_access_denied') return t('OUTSIDER_CRM.ERRORS.NO_ACCESS');
   if (code === 'in_use') return message || t('OUTSIDER_CRM.ERRORS.IN_USE');
+  // 404 sem JSON = o servidor não conhece a rota: atualização aplicada sem reiniciar o Rails
+  if (status === 404 && typeof error?.response?.data !== 'object') {
+    return t('OUTSIDER_CRM.ERRORS.SERVER_OUTDATED');
+  }
   if (status === 404) return t('OUTSIDER_CRM.ERRORS.NOT_FOUND');
   return message || t('OUTSIDER_CRM.ERRORS.GENERIC');
 };

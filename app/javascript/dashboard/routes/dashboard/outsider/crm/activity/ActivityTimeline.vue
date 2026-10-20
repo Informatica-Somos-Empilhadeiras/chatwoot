@@ -10,6 +10,7 @@ import CrmAPI from 'dashboard/api/outsider/crm';
 import Button from 'dashboard/components-next/button/Button.vue';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
+import LoadError from './LoadError.vue';
 import { crmState } from '../crmStore';
 import { errorMessage, formatDateTime } from '../helpers';
 
@@ -41,6 +42,7 @@ const items = ref([]);
 const hasMore = ref(false);
 const isLoading = ref(false);
 const isLoadingMore = ref(false);
+const loadError = ref('');
 const body = ref('');
 const isSaving = ref(false);
 const confirmingId = ref(null);
@@ -55,8 +57,10 @@ const load = async (more = false) => {
     const { data } = await CrmAPI.getActivities(props.opportunity.id, params);
     items.value = more ? [...items.value, ...data.payload] : data.payload;
     hasMore.value = data.meta.has_more;
+    loadError.value = '';
   } catch (error) {
-    useAlert(errorMessage(t, error));
+    if (more) useAlert(errorMessage(t, error));
+    else loadError.value = errorMessage(t, error);
   } finally {
     isLoading.value = false;
     isLoadingMore.value = false;
@@ -197,6 +201,8 @@ onMounted(() => load());
     <div v-if="isLoading" class="flex justify-center p-4 text-n-slate-10">
       <Spinner :size="18" />
     </div>
+
+    <LoadError v-else-if="loadError" :message="loadError" @retry="load()" />
 
     <ol v-else class="flex flex-col mb-0 list-none">
       <li

@@ -11,6 +11,7 @@ import Icon from 'dashboard/components-next/icon/Icon.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 import DropdownMenu from 'dashboard/components-next/dropdown-menu/DropdownMenu.vue';
 import TaskForm from './TaskForm.vue';
+import LoadError from './LoadError.vue';
 import {
   combineDateTime,
   errorMessage,
@@ -30,6 +31,7 @@ const { t } = useI18n();
 
 const tasks = ref([]);
 const isLoading = ref(false);
+const loadError = ref('');
 const showForm = ref(false);
 const showDone = ref(false);
 const menuFor = ref(null);
@@ -45,8 +47,9 @@ const load = async () => {
   try {
     const { data } = await CrmAPI.getTasks(props.opportunity.id);
     tasks.value = data;
+    loadError.value = '';
   } catch (error) {
-    useAlert(errorMessage(t, error));
+    loadError.value = errorMessage(t, error);
   } finally {
     isLoading.value = false;
   }
@@ -177,13 +180,14 @@ onMounted(load);
 <template>
   <div class="flex flex-col gap-3">
     <div class="flex items-center justify-between gap-2">
-      <span class="text-xs text-n-slate-11">
+      <span v-if="!loadError" class="text-xs text-n-slate-11">
         {{
           pending.length
             ? t('OUTSIDER_CRM.TASKS.PENDING_COUNT', { count: pending.length })
             : t('OUTSIDER_CRM.TASKS.NONE_PENDING')
         }}
       </span>
+      <span v-else />
       <Button
         v-if="canCreate && !showForm"
         type="button"
@@ -206,6 +210,8 @@ onMounted(load);
     <div v-if="isLoading" class="flex justify-center p-4 text-n-slate-10">
       <Spinner :size="18" />
     </div>
+
+    <LoadError v-else-if="loadError" :message="loadError" @retry="load" />
 
     <ul
       v-else-if="pending.length || (showDone && done.length)"
@@ -352,7 +358,7 @@ onMounted(load);
     </p>
 
     <button
-      v-if="done.length"
+      v-if="done.length && !loadError"
       type="button"
       class="self-start text-xs text-n-slate-11 hover:text-n-slate-12 hover:underline"
       @click="showDone = !showDone"

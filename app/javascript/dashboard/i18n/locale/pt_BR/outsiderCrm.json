@@ -163,7 +163,9 @@
       "NO_ACCESS": "Você não faz parte de nenhuma unidade do CRM.",
       "IN_USE": "Está em uso e não pode ser apagado. Desative em vez de apagar.",
       "NOT_FOUND": "Não encontrado. Talvez tenha sido apagado.",
-      "GENERIC": "Não foi possível concluir. Tente de novo."
+      "GENERIC": "Não foi possível concluir. Tente de novo.",
+      "RETRY": "Tentar de novo",
+      "SERVER_OUTDATED": "O servidor ainda não tem esta parte do CRM. Reinicie o Rails depois de aplicar a atualização."
     },
     "VIEWS": {
       "BOARD": "Quadro",

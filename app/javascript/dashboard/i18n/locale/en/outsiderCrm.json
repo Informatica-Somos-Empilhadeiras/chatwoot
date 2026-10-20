@@ -163,7 +163,9 @@
       "NO_ACCESS": "You are not part of any CRM business unit.",
       "IN_USE": "It is in use and can't be deleted. Deactivate it instead.",
       "NOT_FOUND": "Not found. It may have been deleted.",
-      "GENERIC": "Something went wrong. Try again."
+      "GENERIC": "Something went wrong. Try again.",
+      "RETRY": "Try again",
+      "SERVER_OUTDATED": "The server does not have this part of the CRM yet. Restart Rails after applying the update."
     },
     "VIEWS": {
       "BOARD": "Board",

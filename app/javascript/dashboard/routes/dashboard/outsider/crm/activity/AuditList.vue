@@ -3,10 +3,10 @@
 // com quem fez, quando e o valor antes e depois. Vem da tabela audits do Chatwoot.
 import { ref, watch, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useAlert } from 'dashboard/composables';
 import CrmAPI from 'dashboard/api/outsider/crm';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
+import LoadError from './LoadError.vue';
 import {
   errorMessage,
   formatDate,
@@ -22,14 +22,16 @@ const { t, te } = useI18n();
 
 const audits = ref([]);
 const isLoading = ref(false);
+const loadError = ref('');
 
 const load = async () => {
   isLoading.value = true;
   try {
     const { data } = await CrmAPI.getAudits(props.opportunity.id);
     audits.value = data;
+    loadError.value = '';
   } catch (error) {
-    useAlert(errorMessage(t, error));
+    loadError.value = errorMessage(t, error);
   } finally {
     isLoading.value = false;
   }
@@ -89,6 +91,7 @@ onMounted(load);
     <div v-if="isLoading" class="flex justify-center p-4 text-n-slate-10">
       <Spinner :size="18" />
     </div>
+    <LoadError v-else-if="loadError" :message="loadError" @retry="load" />
     <p
       v-else-if="!audits.length"
       class="px-3 py-4 mb-0 text-sm text-center rounded-lg text-n-slate-11 bg-n-alpha-1"
