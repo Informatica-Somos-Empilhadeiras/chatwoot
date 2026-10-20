@@ -4,6 +4,8 @@
 # Regras (as mesmas dos indicadores do Kanban):
 # - aberto, valor e previsão ponderada: retrato de agora, só negócios abertos;
 # - ganhos, perdidos e encaminhados: fechados dentro do período (closed_at);
+# - o perdido que o repasse em sequência mandou para outra unidade conta nos perdidos (com o motivo
+#   da perda) e também nos encaminhados (saiu da unidade); não entra nos motivos de encaminhamento;
 # - conversão: ganhos / (ganhos + perdidos). Encaminhado não entra: ele continua noutra unidade;
 # - previsão: negócios abertos pela data prevista de fechamento, em valor cheio e ponderado.
 class Outsider::Crm::Report
@@ -43,6 +45,10 @@ class Outsider::Crm::Report
     @scope.where(created_at: @period.range)
   end
 
+  def chain_handoffs
+    closed.lost.where(id: Outsider::Crm::Forward.select(:from_opportunity_id))
+  end
+
   def summary
     open_totals(open).merge(created_totals).merge(closed_totals)
   end
@@ -63,7 +69,7 @@ class Outsider::Crm::Report
     lost_count, lost_value = by_status.fetch('lost', [0, 0])
     {
       won_count: won_count, won_value_cents: won_value, lost_count: lost_count, lost_value_cents: lost_value,
-      forwarded_count: by_status.fetch('forwarded', [0]).first, conversion_rate: rate(won_count, won_count + lost_count),
+      forwarded_count: by_status.fetch('forwarded', [0]).first + chain_handoffs.count, conversion_rate: rate(won_count, won_count + lost_count),
       average_ticket_cents: won_count.zero? ? nil : won_value / won_count,
       average_days_to_win: Outsider::Crm::Metrics.average_days(closed.won)
     }
@@ -108,6 +114,10 @@ class Outsider::Crm::Report
   def add_closed(rows, column)
     closed.group(column, :status).pluck(column, :status, COUNT_SQL, VALUE_SQL).each do |id, status, count, value|
       rows[id].merge!("#{status}_count": count, "#{status}_value_cents": value.to_i)
+    end
+    chain_handoffs.group(column).pluck(column, COUNT_SQL, VALUE_SQL).each do |id, count, value|
+      rows[id][:forwarded_count] += count
+      rows[id][:forwarded_value_cents] += value.to_i
     end
   end
 

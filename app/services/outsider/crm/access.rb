@@ -5,8 +5,8 @@
 # Nas unidades em que a pessoa é só vendedor, os indicadores (topo do Kanban, Relatórios, Metas)
 # contam só os negócios dela. Com a opção "vendedor vê só os próprios negócios" ligada, a lista,
 # o Kanban e a conversa também mostram só os dela e os que estão sem responsável. A tela principal
-# (main_list) mostra ao vendedor só os negócios em que é o responsável; gestor e administrador veem
-# os das unidades que acompanham.
+# (main_list) mostra ao vendedor os negócios em que é o responsável e os sem responsável das suas
+# unidades (para pegar); gestor e administrador veem os das unidades que acompanham.
 class Outsider::Crm::Access
   attr_reader :account_user
 
@@ -63,9 +63,10 @@ class Outsider::Crm::Access
     own_deals_only? ? own(scope, unowned: true) : scope
   end
 
-  # Tela principal do CRM (lista, Kanban, indicadores do topo e CSV): o vendedor vê só os negócios em
-  # que é o responsável; o gestor vê também todos os das unidades que gerencia (inclusive os sem
-  # responsável) e o administrador vê todos. Quem vê os dos outros escolhe pelo filtro de responsável.
+  # Tela principal do CRM (lista, Kanban, indicadores do topo e CSV): o vendedor vê os negócios em
+  # que é o responsável e os sem responsável das unidades dele (a fila para pegar); o gestor vê
+  # também todos os das unidades que gerencia e o administrador vê todos. Quem vê os dos outros
+  # escolhe pelo filtro de responsável.
   def all_deals?
     manager?
   end
@@ -73,8 +74,14 @@ class Outsider::Crm::Access
   def main_list(scope)
     return scope if administrator?
 
-    scope.where('outsider_crm_opportunities.business_unit_id IN (:units) OR outsider_crm_opportunities.owner_id = :user',
-                units: manager_unit_ids.presence || [0], user: account_user.user_id)
+    scope.where('outsider_crm_opportunities.business_unit_id IN (:managed) OR outsider_crm_opportunities.owner_id = :user OR ' \
+                '(outsider_crm_opportunities.owner_id IS NULL AND outsider_crm_opportunities.business_unit_id IN (:member))',
+                managed: manager_unit_ids.presence || [0], member: member_unit_ids.presence || [0], user: account_user.user_id)
+  end
+
+  # Pegar para si um negócio aberto sem responsável: qualquer membro da unidade (e o administrador)
+  def claim_opportunity?(opportunity)
+    opportunity.open? && opportunity.owner_id.nil? && member_of?(opportunity.business_unit_id)
   end
 
   # Base dos indicadores: nas unidades em que é só vendedor, só os negócios dele
@@ -89,14 +96,15 @@ class Outsider::Crm::Access
     [nil, account_user.user_id].include?(opportunity.owner_id)
   end
 
-  # Negócio encaminhado não muda mais, nem pelo administrador: a continuação está no destino
+  # Negócio encaminhado (ou perdido e repassado) não muda mais, nem pelo administrador: a continuação
+  # está no destino
   # Apagar negócio: administrador e gestor da unidade (vendedor não apaga, nem os próprios)
   def delete_opportunity?(opportunity)
     manage_unit?(opportunity.business_unit_id)
   end
 
   def edit_opportunity?(opportunity)
-    return false if opportunity.forwarded?
+    return false if opportunity.handed_off?
     return true if manage_unit?(opportunity.business_unit_id)
 
     member_of?(opportunity.business_unit_id) && opportunity.owner_id == account_user.user_id
@@ -108,14 +116,17 @@ class Outsider::Crm::Access
   end
 
   # Quem edita o negócio mexe em todas as tarefas dele; o responsável pela tarefa pode
-  # concluir e adiar a sua mesmo sem editar o negócio
+  # concluir e adiar a sua mesmo sem editar o negócio. No negócio que saiu para outra unidade, nada
+  # muda (nem reabrir tarefa concluída no envio)
   def complete_task?(task)
+    return false if task.opportunity.handed_off?
+
     edit_opportunity?(task.opportunity) || task.assignee_id == account_user.user_id
   end
 
   # Só notas se apagam: quem escreveu, o gestor da unidade ou o administrador
   def delete_activity?(activity)
-    return false unless activity.note? && !activity.opportunity.forwarded?
+    return false unless activity.note? && !activity.opportunity.handed_off?
 
     activity.user_id == account_user.user_id || manage_unit?(activity.opportunity.business_unit_id)
   end

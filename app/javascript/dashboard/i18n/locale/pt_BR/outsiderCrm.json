@@ -28,7 +28,8 @@
       "ALL_STATUS": "Todos os status",
       "ALL_OWNERS": "Todos os responsáveis",
       "MINE": "Meus negócios",
-      "NO_OWNER": "Sem responsável"
+      "NO_OWNER": "Sem responsável",
+      "MINE_AND_UNOWNED": "Meus e sem responsável"
     },
     "TABLE": {
       "OPPORTUNITY": "Negócio",
@@ -344,6 +345,27 @@
           "PERCENT": "Use um percentual de 0 a 100.",
           "DUPLICATE": "Já existe um percentual para esta combinação."
         }
+      },
+      "CHAIN": {
+        "TITLE": "Repasse em sequência",
+        "DESCRIPTION": "Quando um negócio é perdido numa unidade, ele vai sozinho para a próxima unidade da ordem, e assim por diante até alguém ganhar ou acabarem as unidades. O perdido continua contando nas perdas da unidade dele. Nada é enviado ao cliente.",
+        "ENABLE": "Repassar o negócio perdido para a próxima unidade",
+        "ENABLE_HELP": "Pula as unidades por onde o cliente já passou nesta jornada, as que já têm negócio aberto dele e as sem pipeline ativo. Se uma regra de automação já encaminhou o negócio, o repasse não faz nada.",
+        "ORDER": "Unidades e ordem do repasse",
+        "ORDER_HELP": "Marque as unidades que entram no repasse e use as setas para mudar a ordem. Perdido numa unidade, vai para a seguinte; depois da última, volta para a primeira.",
+        "UP": "Subir",
+        "DOWN": "Descer",
+        "NEED_UNITS": "Escolha pelo menos duas unidades para ligar o repasse.",
+        "INACTIVE": "(inativa, fica de fora até ser reativada)",
+        "LIMIT": "O repasse para quando o cliente chega a {max} encaminhamentos na jornada (limite em Configurações > Geral).",
+        "ASSIGN": "Quem fica com o negócio na próxima unidade",
+        "ASSIGN_POOL": "Quem pegar primeiro",
+        "ASSIGN_POOL_HELP": "Chega sem responsável. Todos da unidade recebem o aviso e veem o negócio com o botão \"Pegar\".",
+        "ASSIGN_ROTATION": "Rodízio entre os vendedores",
+        "ASSIGN_ROTATION_HELP": "Vai para o próximo vendedor da unidade, um de cada vez, com a tarefa \"Contatar cliente\". Unidade sem vendedor: roda entre os gestores.",
+        "SKIP": "Não repassar quando o motivo da perda for",
+        "SKIP_HELP": "Por exemplo, quando o cliente desistiu da compra. Esses negócios ficam perdidos.",
+        "SAVED": "Repasse em sequência salvo"
       }
     },
     "ERRORS": {
@@ -384,7 +406,7 @@
       "DAYS": "{days} dias",
       "AVERAGE_DAYS_HINT": "Da criação até o ganho",
       "OWN_ONLY": "Nas unidades em que você é vendedor, os números contam só os seus negócios.",
-      "MINE_ONLY": "Você vê aqui os negócios em que é o responsável."
+      "MINE_ONLY": "Os números contam só os negócios em que você é o responsável."
     },
     "BOARD": {
       "ADD": "Adicionar negócio",
@@ -402,9 +424,14 @@
       "CHOOSE_REASON": "Escolha o motivo",
       "WON_DONE": "\"{title}\" marcado como ganho",
       "LOST_DONE": "\"{title}\" marcado como perdido",
+      "LOST_HANDED_OFF": "\"{title}\" marcado como perdido e enviado para {unit} ({code})",
       "TASKS_LATE": "Tarefa atrasada: {count}",
       "TASKS_PENDING": "Tarefas pendentes: {count}",
-      "NO_NEXT_TASK": "Sem próxima tarefa"
+      "NO_NEXT_TASK": "Sem próxima tarefa",
+      "STACK_COUNT": "nenhum negócio aberto | 1 negócio aberto | {n} negócios abertos",
+      "STACK_SHOW": "Mostrar quadro",
+      "STACK_HIDE": "Recolher",
+      "NO_PIPELINES_HERE": "Nenhum pipeline ativo para mostrar com estes filtros."
     },
     "CONVERSATION": {
       "TAB": "CRM",
@@ -570,8 +597,15 @@
         "REASON_REQUIRED": "falta o motivo do encaminhamento (escolha um na regra)",
         "INVALID_REASON": "o motivo escolhido não existe mais",
         "INVALID_OWNER": "o responsável escolhido não é mais da unidade de destino",
+        "ALREADY_FORWARDED": "o negócio já tinha sido enviado para outra unidade",
+        "NOT_OPEN": "o negócio foi reaberto ou mudou antes do envio",
         "GENERIC": "o encaminhamento foi recusado"
-      }
+      },
+      "CLAIMED": "{name} pegou o negócio",
+      "CHAIN_FORWARDED": "Repasse em sequência enviou para {unit} ({code})",
+      "CHAIN_FAILED": "Repasse em sequência não conseguiu enviar para {unit}",
+      "CHAIN_EXHAUSTED": "Repasse em sequência: não há mais unidades para tentar",
+      "CHAIN_NO_OWNER": "Chegou sem responsável: a unidade recebeu o aviso para alguém pegar"
     },
     "AUDIT": {
       "HINT": "Toda alteração do negócio e das tarefas, com quem fez e quando.",
@@ -662,10 +696,12 @@
       "NO_CUSTOMER_MESSAGE": "O cliente não recebe nenhuma mensagem. Nada é apagado: o negócio de origem fica no histórico.",
       "DONE": "{code} encaminhado para {unit}",
       "RECEIVED_FROM": "Recebido de {unit} ({code}) por encaminhamento",
-      "SENT_TO": "Encaminhado para {unit} ({code}). Este negócio não muda mais.",
+      "SENT_TO": "Enviado para {unit} ({code}). Este negócio não muda mais.",
       "FROM_UNIT": "De: {unit}",
       "TO_UNIT": "Para: {unit}",
-      "CONVERSATION_FORWARDED": "O negócio {code} desta conversa foi encaminhado para {unit}; o acompanhamento continua lá."
+      "CONVERSATION_FORWARDED": "O negócio {code} desta conversa foi encaminhado para {unit}; o acompanhamento continua lá.",
+      "ATTEMPT_HELP": "O limite conta os encaminhamentos do cliente desde o primeiro negócio desta jornada (que continua enquanto ele tiver negócio aberto em alguma unidade):",
+      "OPEN_BLOCKING": "Abrir {code}"
     },
     "HISTORY": {
       "TITLE": "Histórico multiempresa",
@@ -683,9 +719,7 @@
       "THIS_ONE": "Este negócio",
       "CLOSED_ON": "encerrado em {date}",
       "OPEN_SINCE": "aberto desde {date}",
-      "FORWARDED_LINE": "Encaminhado para {unit} por {name}, {date}",
-      "REASON": "Motivo: {reason}",
-      "AUTOMATIC": "regra de automação"
+      "REASON": "Motivo: {reason}"
     },
     "REPORTS": {
       "PERIODS": {
@@ -801,7 +835,7 @@
       "BY_RULE": "De {unit}, pela regra “{rule}”",
       "FROM_UNIT": "De {unit}",
       "REASON": "Motivo: {reason}",
-      "NO_OWNER": "Chegou sem responsável: você recebeu o aviso por ser gestor da unidade.",
+      "NO_OWNER": "Chegou sem responsável: quem pegar primeiro fica com ele.",
       "OPEN_DEAL": "Ver negócio",
       "OPEN_CONVERSATION": "Abrir conversa",
       "CLOSE": "Fechar",
@@ -855,6 +889,25 @@
       "REACHED": "Meta batida",
       "COMMISSION": "Comissão",
       "DETAILS": "Ver metas"
+    },
+    "CLAIM": {
+      "BUTTON": "Pegar",
+      "BUTTON_ME": "Pegar para mim",
+      "DONE": "{code} agora é seu",
+      "NO_OWNER": "Sem responsável",
+      "QUEUE": "{n} negócio sem responsável esperando alguém pegar | {n} negócios sem responsável esperando alguém pegar",
+      "SEE_QUEUE": "Ver e pegar",
+      "DRAWER_HINT": "Este negócio está sem responsável. Quem pegar primeiro fica com ele."
+    },
+    "JOURNEY": {
+      "TITLE": "Caminho entre unidades",
+      "SUBTITLE": "Por onde este cliente passou nesta jornada e para onde o negócio vai se for perdido.",
+      "BY": "por {name}",
+      "AUTOMATIC": "automático",
+      "IF_LOST": "se perder",
+      "THEN": "depois",
+      "UPCOMING": "Próxima no repasse",
+      "PARALLEL": "Na mesma jornada, aberto direto em outra unidade:"
     }
   }
 }

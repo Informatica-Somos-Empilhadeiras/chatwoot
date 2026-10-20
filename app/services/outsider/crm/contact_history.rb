@@ -3,7 +3,9 @@
 # Mostra só o resumo (unidade, código, título, situação, valor, datas, responsável, motivo e a
 # observação do encaminhamento), inclusive das unidades que o usuário não acompanha, para quem
 # encaminha saber onde o cliente já passou. Tarefas, notas e auditoria continuam só para a unidade
-# (can_view diz se o usuário pode abrir o negócio).
+# (can_view diz se o usuário pode abrir o negócio). Com o repasse em sequência ligado, a jornada em
+# andamento traz as próximas unidades para onde o negócio aberto vai se for perdido (upcoming, a
+# partir de upcoming_from), já cortadas pelo limite de encaminhamentos.
 class Outsider::Crm::ContactHistory
   JOURNEYS_LIMIT = 20
 
@@ -15,7 +17,7 @@ class Outsider::Crm::ContactHistory
   def to_h
     {
       contact_id: @contact.id,
-      max_forward_attempts: Outsider::Crm::Settings.new(@contact.account)[:max_forward_attempts],
+      max_forward_attempts: max_attempts,
       journeys: Outsider::Crm::ContactSummary.group?(@contact) ? [] : journeys.map { |journey| journey_json(journey) }
     }
   end
@@ -29,12 +31,33 @@ class Outsider::Crm::ContactHistory
                                     forwards: [:from_business_unit, :to_business_unit, :reason, :requested_by])
   end
 
+  def max_attempts
+    @max_attempts ||= Outsider::Crm::Settings.new(@contact.account)[:max_forward_attempts]
+  end
+
   def journey_json(journey)
     journey.slice(:id, :status, :origin, :created_at, :closed_at).merge(
       forwards_count: journey.forwards.size,
       opportunities: journey.opportunities.sort_by(&:id).map { |opportunity| opportunity_json(opportunity) },
       forwards: journey.forwards.sort_by(&:id).map { |forward| forward_json(forward) }
-    )
+    ).merge(upcoming(journey))
+  end
+
+  # Se o negócio aberto mais recente da jornada for perdido, para onde o repasse em sequência leva
+  # (em ordem)
+  def upcoming(journey)
+    current = journey.opportunities.select(&:open?).max_by(&:id)
+    { upcoming: upcoming_units(journey, current), upcoming_from: current&.id }
+  end
+
+  def upcoming_units(journey, current)
+    return [] if current.nil?
+
+    chain = Outsider::Crm::LostChain.new(current)
+    return [] unless chain.enabled?
+
+    left = [max_attempts - journey.forwards.size, 0].max
+    chain.upcoming_units.first(left).map { |unit| unit.slice(:id, :name) }
   end
 
   def opportunity_json(opportunity)

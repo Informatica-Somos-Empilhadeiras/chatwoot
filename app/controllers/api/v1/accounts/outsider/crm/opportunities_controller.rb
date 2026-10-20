@@ -7,7 +7,7 @@ class Api::V1::Accounts::Outsider::Crm::OpportunitiesController < Api::V1::Accou
 
   BOARD_LIMIT = 100
 
-  before_action :fetch_opportunity, only: [:show, :update, :destroy, :move]
+  before_action :fetch_opportunity, only: [:show, :update, :destroy, :move, :claim]
   before_action :ensure_can_edit, only: [:update, :move]
   before_action :ensure_can_delete, only: [:destroy]
 
@@ -38,6 +38,20 @@ class Api::V1::Accounts::Outsider::Crm::OpportunitiesController < Api::V1::Accou
     render json: ::Outsider::Crm::Metrics.new(scope, period: params[:period]).to_h
   end
 
+  # Quantos negócios abertos sem responsável a pessoa pode pegar (aviso no topo da tela principal)
+  def unowned
+    render json: { count: filtered.unscope(where: :owner_id).open.where(owner_id: nil).count }
+  end
+
+  # Pegar para si um negócio sem responsável da unidade (Outsider::Crm::OpportunityClaim)
+  def claim
+    claimed = ::Outsider::Crm::OpportunityClaim.new(@opportunity, access: crm_access, user: Current.user).perform
+    return render json: { error: 'already_taken', message: I18n.t('outsider_crm.claim.taken') }, status: :unprocessable_entity unless claimed
+
+    ::Outsider::Crm::ReceivedForwards.new(crm_access, Current.user).mark([@opportunity.id], opened: true)
+    render json: serialize(@opportunity.reload)
+  end
+
   def export
     csv = ::Outsider::Crm::OpportunitiesCsv.new(filtered.order(SORTS.fetch(params[:sort], SORTS['recent']))).generate
     send_data "\uFEFF#{csv}", filename: "negocios-#{Time.zone.today}.csv", type: 'text/csv; charset=utf-8'
@@ -47,7 +61,8 @@ class Api::V1::Accounts::Outsider::Crm::OpportunitiesController < Api::V1::Accou
     stage = crm_scope(::Outsider::Crm::Stage).find_by(id: params.require(:stage_id), pipeline_id: @opportunity.pipeline_id)
     return render json: { error: 'invalid_stage' }, status: :unprocessable_entity if stage.nil?
 
-    ::Outsider::Crm::OpportunityMover.new(@opportunity, stage: stage, index: params[:index]).perform
+    return render_forbidden unless edit_locked { ::Outsider::Crm::OpportunityMover.new(@opportunity, stage: stage, index: params[:index]).perform }
+
     render json: serialize(@opportunity.reload)
   end
 
@@ -64,7 +79,8 @@ class Api::V1::Accounts::Outsider::Crm::OpportunitiesController < Api::V1::Accou
     # encaminhar tem rota própria (opportunity_forwards), com destino, motivo e tentativa
     return render json: { error: 'use_forward' }, status: :unprocessable_entity if params[:opportunity][:status].to_s == 'forwarded'
 
-    @opportunity.update!(update_params)
+    return render_forbidden unless edit_locked { @opportunity.update!(update_params) }
+
     render json: serialize(@opportunity.reload)
   end
 
@@ -100,6 +116,20 @@ class Api::V1::Accounts::Outsider::Crm::OpportunitiesController < Api::V1::Accou
 
   def ensure_can_edit
     render_forbidden unless crm_access.edit_opportunity?(@opportunity)
+  end
+
+  # Trava o negócio e confere a permissão de novo antes de gravar: uma tela desatualizada não reabre
+  # nem perde de novo um negócio que acabou de sair para outra unidade. Trava a jornada antes, na
+  # mesma ordem do encaminhamento (OpportunityForwarder), para um não ficar esperando o outro
+  def edit_locked
+    ::Outsider::Crm::Opportunity.transaction do
+      @opportunity.journey.lock!
+      @opportunity.lock!
+      next false unless crm_access.edit_opportunity?(@opportunity)
+
+      yield
+      true
+    end
   end
 
   def ensure_can_delete

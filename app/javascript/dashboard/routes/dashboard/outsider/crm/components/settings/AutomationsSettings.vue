@@ -1,6 +1,7 @@
 <script setup>
-// OUTSIDER: automações do CRM: as regras montadas pelo administrador (AutomationRules.vue) e as
-// automações prontas (ver app/services/outsider/crm/automations.rb e stalled_opportunities.rb).
+// OUTSIDER: automações do CRM: o repasse em sequência do perdido (ChainSettings.vue), as regras
+// montadas pelo administrador (AutomationRules.vue) e as automações prontas (ver
+// app/services/outsider/crm/automations.rb e stalled_opportunities.rb).
 // Todas começam desligadas; cada ação fica na linha do tempo do negócio.
 import { ref, computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -13,6 +14,7 @@ import Select from 'dashboard/components-next/select/Select.vue';
 import Switch from 'dashboard/components-next/switch/Switch.vue';
 import SettingsSection from './SettingsSection.vue';
 import AutomationRules from './AutomationRules.vue';
+import ChainSettings from './ChainSettings.vue';
 import { errorMessage } from '../../helpers';
 import { refreshMyTasks } from '../../crmStore';
 
@@ -85,6 +87,7 @@ onMounted(() => store.dispatch('labels/get'));
 
 <template>
   <div class="flex flex-col gap-10">
+    <ChainSettings :access="access" :units="units" @changed="emit('changed')" />
     <AutomationRules :units="units" :pipelines="pipelines" />
     <SettingsSection
       :title="t('OUTSIDER_CRM.SETTINGS.AUTOMATIONS.TITLE')"

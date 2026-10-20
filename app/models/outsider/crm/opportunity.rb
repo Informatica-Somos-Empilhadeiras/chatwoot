@@ -58,6 +58,12 @@ class Outsider::Crm::Opportunity < ApplicationRecord
     value_cents / 100.0
   end
 
+  # Saiu para outra unidade e não muda mais: encaminhado, ou perdido e passado adiante pelo repasse
+  # em sequência (esse continua perdido, para contar nas perdas da unidade)
+  def handed_off?
+    forwarded? || (lost? && outgoing_forward.present?)
+  end
+
   private
 
   def consistent_pipeline_and_stage

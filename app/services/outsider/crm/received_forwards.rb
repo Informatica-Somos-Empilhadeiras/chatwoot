@@ -1,6 +1,7 @@
 # OUTSIDER: negócios que chegaram por encaminhamento para o usuário, para o aviso na tela (janela
 # que só fecha no botão e bolinha vermelha no menu do CRM). Recebe quem é o responsável do negócio
-# no destino; sem responsável, os gestores da unidade destino (sem gestor, os administradores).
+# no destino; sem responsável, todos da unidade destino, vendedores e gestores, para um deles pegar
+# (unidade sem ninguém: os administradores). Quando alguém pega, o aviso some para os outros.
 # Quem encaminhou não recebe o aviso do próprio encaminhamento.
 #
 # Sem tabela nova: quem já fechou o aviso (notified) e quem já abriu o negócio (opened) fica no
@@ -47,7 +48,7 @@ class Outsider::Crm::ReceivedForwards
 
   def recipient_sql
     owned = Outsider::Crm::Activity.sanitize_sql(['outsider_crm_opportunities.owner_id = ?', @user.id])
-    units = managed_unit_ids
+    units = pool_unit_ids
     return owned if units.empty?
 
     unowned = Outsider::Crm::Activity.sanitize_sql(['(outsider_crm_opportunities.owner_id IS NULL AND ' \
@@ -55,12 +56,14 @@ class Outsider::Crm::ReceivedForwards
     "(#{owned} OR #{unowned})"
   end
 
-  def managed_unit_ids
-    ids = @access.manager_unit_ids
+  def pool_unit_ids
+    ids = @access.member_unit_ids
     return ids unless @access.administrator?
 
-    with_manager = Outsider::Crm::BusinessUnitMember.where(account_id: @account_id, role: :manager).select(:business_unit_id)
-    ids + Outsider::Crm::BusinessUnit.where(account_id: @account_id).where.not(id: with_manager).pluck(:id)
+    # quem saiu da conta não conta: a unidade dele também cai no administrador
+    in_account = AccountUser.where(account_id: @account_id).select(:user_id)
+    with_members = Outsider::Crm::BusinessUnitMember.where(account_id: @account_id, user_id: in_account).select(:business_unit_id)
+    ids + Outsider::Crm::BusinessUnit.where(account_id: @account_id).where.not(id: with_members).pluck(:id)
   end
 
   def marked?(activity, field)
@@ -75,7 +78,8 @@ class Outsider::Crm::ReceivedForwards
       contact_name: opportunity.contact&.name, to_unit: opportunity.business_unit.name, owner_id: opportunity.owner_id,
       conversation_display_id: opportunity.conversation&.display_id,
       from_unit: metadata['from_unit'], from_owner: metadata['from_owner'], reason: metadata['reason'], rule: metadata['rule'],
-      notes: activity.body, by: activity.user&.name, received_at: activity.created_at, notified: marked?(activity, 'notified')
+      notes: activity.body, by: activity.user&.name, received_at: activity.created_at, notified: marked?(activity, 'notified'),
+      can_claim: @access.claim_opportunity?(opportunity)
     }
   end
 end

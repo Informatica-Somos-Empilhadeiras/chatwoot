@@ -12,7 +12,7 @@ import Icon from 'dashboard/components-next/icon/Icon.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 import LoadError from './LoadError.vue';
 import { crmState } from '../crmStore';
-import { errorMessage, formatDateTime } from '../helpers';
+import { errorMessage, formatDateTime, isHandedOff } from '../helpers';
 
 const props = defineProps({
   opportunity: { type: Object, required: true },
@@ -48,6 +48,20 @@ const AUTOMATION_TEXTS = {
   custom: 'AUTOMATION_RULE',
 };
 
+// repasse em sequência (LostChain): enviou, não conseguiu enviar ou acabaram as unidades
+const chainText = meta => {
+  if (meta.forwarded) {
+    return t('OUTSIDER_CRM.TIMELINE.CHAIN_FORWARDED', {
+      unit: meta.forwarded.unit,
+      code: meta.forwarded.code,
+    });
+  }
+  if (meta.forward_error) {
+    return t('OUTSIDER_CRM.TIMELINE.CHAIN_FAILED', { unit: meta.unit });
+  }
+  return t('OUTSIDER_CRM.TIMELINE.CHAIN_EXHAUSTED');
+};
+
 // por que o encaminhamento automático não aconteceu (ver OpportunityForwarder::Refused)
 const FORWARD_ERRORS = [
   'limit_reached',
@@ -57,6 +71,8 @@ const FORWARD_ERRORS = [
   'reason_required',
   'invalid_reason',
   'invalid_owner',
+  'already_forwarded',
+  'not_open',
 ];
 
 // o que uma regra montada pelo administrador fez (ou deixou de fazer), na linha de detalhe
@@ -185,6 +201,10 @@ const describe = item => {
         to: statusLabel(meta.to),
       });
     case 'owner_changed':
+      // pegou da fila: sem responsável antes, a pessoa passou para si mesma
+      if (!meta.from && item.user && meta.to === item.user.name) {
+        return t('OUTSIDER_CRM.TIMELINE.CLAIMED', { name });
+      }
       return t('OUTSIDER_CRM.TIMELINE.OWNER_CHANGED', {
         name,
         from: meta.from || '—',
@@ -213,6 +233,7 @@ const describe = item => {
         code: meta.from_code || '',
       });
     case 'automation':
+      if (meta.rule === 'chain') return chainText(meta);
       return t(
         `OUTSIDER_CRM.TIMELINE.${
           meta.missing
@@ -236,6 +257,20 @@ const detail = item => {
   const meta = item.metadata || {};
   if (item.kind === 'automation' && meta.rule === 'custom') {
     return ruleDetail(meta);
+  }
+  if (item.kind === 'automation' && meta.rule === 'chain') {
+    return [
+      meta.forwarded?.owner &&
+        t('OUTSIDER_CRM.TIMELINE.FORWARD_OWNER', {
+          name: meta.forwarded.owner,
+        }),
+      meta.forwarded &&
+        !meta.forwarded.owner &&
+        t('OUTSIDER_CRM.TIMELINE.CHAIN_NO_OWNER'),
+      meta.forward_error && ruleDetail({ forward_error: meta.forward_error }),
+    ]
+      .filter(Boolean)
+      .join(' · ');
   }
   if (item.kind === 'status_changed' && meta.lost_reason) {
     return t('OUTSIDER_CRM.TIMELINE.LOST_REASON', { reason: meta.lost_reason });
@@ -277,7 +312,7 @@ onMounted(() => load());
 <template>
   <div class="flex flex-col gap-3">
     <div
-      v-if="opportunity.status !== 'forwarded'"
+      v-if="!isHandedOff(opportunity)"
       class="flex flex-col gap-2 p-3 rounded-lg bg-n-violet-2 outline outline-1 -outline-offset-1 outline-n-violet-5"
     >
       <span

@@ -7,7 +7,7 @@ class Api::V1::Accounts::Outsider::Crm::TasksController < Api::V1::Accounts::Out
   def index
     scope = filtered
     tasks = params[:status] == 'done' ? done(scope) : pending(scope)
-    tasks = tasks.includes(:assignee, :created_by, :completed_by, opportunity: :contact).limit(LIMIT)
+    tasks = tasks.includes(:assignee, :created_by, :completed_by, opportunity: [:contact, :outgoing_forward]).limit(LIMIT)
     render json: {
       payload: tasks.map { |task| ::Outsider::Crm::Serializer.task_with_opportunity(task, access: crm_access) },
       meta: counts(scope)

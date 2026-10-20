@@ -1,6 +1,7 @@
 # OUTSIDER: o que a tela "Encaminhar para outra unidade" precisa saber antes de confirmar: para
-# quais unidades dá para mandar (e por que não, quando não dá), pipelines e possíveis responsáveis
-# de cada uma, motivos, tentativa atual contra o limite, tarefas pendentes e a conversa ligada.
+# quais unidades dá para mandar (e por que não, quando não dá, com o link do negócio que bloqueia),
+# pipelines e possíveis responsáveis de cada uma, motivos, tentativa atual contra o limite e o
+# caminho da jornada até aqui (por que a tentativa não é a primeira), tarefas pendentes e a conversa.
 class Outsider::Crm::ForwardOptions
   ROLE_ORDER = { 'manager' => 0, 'seller' => 1, 'administrator' => 2 }.freeze
 
@@ -17,6 +18,7 @@ class Outsider::Crm::ForwardOptions
     {
       opportunity_id: @opportunity.id,
       attempts: { used: used, max: max, next: used + 1, limit_reached: used >= max },
+      journey: journey_path,
       reason_required: Outsider::Crm::OpportunityForwarder.reason_required?(account_id),
       reasons: Outsider::Crm::OpportunityForwarder.reasons(account_id).map { |reason| reason.slice(:id, :name) },
       pending_tasks: @opportunity.tasks.pending.count,
@@ -38,12 +40,21 @@ class Outsider::Crm::ForwardOptions
   def unit_option(unit)
     pipelines = active_pipelines.fetch(unit.id, [])
     unavailable = unavailable_reason(unit, pipelines)
+    blocking = open_deals[unit.id]
     {
       id: unit.id, name: unit.name, available: unavailable.nil?, unavailable_reason: unavailable,
-      open_opportunity_code: open_deals[unit.id]&.code,
+      open_opportunity_code: blocking&.code, open_opportunity_id: blocking&.id,
+      open_opportunity_can_view: blocking.present? && @access.view_opportunity?(blocking),
       pipelines: pipelines.map { |pipeline| pipeline.slice(:id, :name) },
       members: members(unit.id)
     }
+  end
+
+  # Negócios da jornada em ordem (unidade, código, situação): o limite conta os encaminhamentos dela
+  def journey_path
+    @opportunity.journey.opportunities.includes(:business_unit).order(:id).map do |item|
+      { id: item.id, code: item.code, status: item.status, unit: item.business_unit.name, can_view: @access.view_opportunity?(item) }
+    end
   end
 
   def unavailable_reason(unit, pipelines)

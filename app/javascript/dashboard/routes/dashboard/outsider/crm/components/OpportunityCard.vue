@@ -2,10 +2,12 @@
 // OUTSIDER: card de um negócio no Kanban. Tarefa atrasada deixa o card com borda vermelha;
 // negócio recebido por encaminhamento mostra de qual unidade veio. Com o destaque ligado nas
 // automações, negócio aberto sem tarefa pendente mostra "Sem próxima tarefa". Recebido por
-// encaminhamento e ainda não aberto pelo usuário mostra "Novo" em vermelho.
+// encaminhamento e ainda não aberto pelo usuário mostra "Novo" em vermelho. Sem responsável, quem é
+// da unidade vê o botão "Pegar" (fica com o negócio).
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import Avatar from 'dashboard/components-next/avatar/Avatar.vue';
+import Button from 'dashboard/components-next/button/Button.vue';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
 import { formatDate, formatDateTime, formatMoney } from '../helpers';
 import { isReceived } from '../crmStore';
@@ -13,7 +15,10 @@ import { isReceived } from '../crmStore';
 const props = defineProps({
   opportunity: { type: Object, required: true },
   noNextTask: { type: Boolean, default: false },
+  isClaiming: { type: Boolean, default: false },
 });
+
+const emit = defineEmits(['claim']);
 
 const { t } = useI18n();
 
@@ -41,7 +46,7 @@ const isNew = computed(() => isReceived(props.opportunity.id));
         {{ opportunity.title }}
       </span>
       <Icon
-        v-if="!opportunity.can_edit"
+        v-if="!opportunity.can_edit && !opportunity.can_claim"
         v-tooltip="t('OUTSIDER_CRM.BOARD.READ_ONLY')"
         icon="i-lucide-lock"
         class="size-3.5 shrink-0 text-n-slate-9 mt-0.5"
@@ -146,6 +151,24 @@ const isNew = computed(() => isReceived(props.opportunity.id));
         :src="opportunity.owner.thumbnail"
         :size="18"
         rounded-full
+      />
+    </div>
+
+    <div
+      v-if="!opportunity.owner && opportunity.status === 'open'"
+      class="flex items-center justify-between gap-2 pt-2 border-t border-n-weak"
+    >
+      <span class="text-xs text-n-amber-11">
+        {{ t('OUTSIDER_CRM.CLAIM.NO_OWNER') }}
+      </span>
+      <Button
+        v-if="opportunity.can_claim"
+        type="button"
+        size="xs"
+        icon="i-lucide-hand"
+        :label="t('OUTSIDER_CRM.CLAIM.BUTTON')"
+        :is-loading="isClaiming"
+        @click.stop="emit('claim', opportunity)"
       />
     </div>
   </div>

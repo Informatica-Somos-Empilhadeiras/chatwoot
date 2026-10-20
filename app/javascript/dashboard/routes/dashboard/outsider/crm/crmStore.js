@@ -9,6 +9,7 @@ import { useAlert } from 'dashboard/composables';
 import { frontendURL } from 'dashboard/helper/URLHelper';
 import { DEFAULT_CONVERSATION_SIDEBAR_ITEMS_ORDER } from 'dashboard/composables/useUISettings';
 import { onCrmChange, startLiveUpdates } from './live';
+import { errorMessage } from './helpers';
 
 export const OPEN_CRM_TAB_EVENT = 'outsider_crm_open_tab';
 
@@ -352,6 +353,23 @@ export const markReceived = async (opportunityIds, opened) => {
     crmState.received = data.payload;
   } catch {
     // se falhar, o aviso volta na próxima busca
+  }
+};
+
+// "Pegar" um negócio sem responsável da unidade: devolve o negócio atualizado, ou null quando não
+// deu (outra pessoa pegou antes). O aviso de recebido some e o contador de tarefas acompanha.
+export const claimOpportunity = async (t, opportunity) => {
+  try {
+    const { data } = await CrmAPI.claimOpportunity(opportunity.id);
+    crmState.received = crmState.received.filter(
+      item => item.opportunity_id !== data.id
+    );
+    useAlert(t('OUTSIDER_CRM.CLAIM.DONE', { code: data.code }));
+    refreshMyTasks();
+    return data;
+  } catch (error) {
+    useAlert(errorMessage(t, error));
+    return null;
   }
 };
 

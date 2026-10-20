@@ -3,7 +3,7 @@ require 'csv'
 # OUTSIDER: exportação da tabela de negócios em CSV (separador ; para abrir direto no Excel em pt-BR).
 class Outsider::Crm::OpportunitiesCsv
   LIMIT = 5000
-  STATUS = { 'open' => 'aberto', 'won' => 'ganho', 'lost' => 'perdido' }.freeze
+  STATUS = { 'open' => 'aberto', 'won' => 'ganho', 'lost' => 'perdido', 'forwarded' => 'encaminhado' }.freeze
   HEADERS = %w[codigo negocio contato telefone unidade pipeline etapa valor probabilidade previsao responsavel status criado_em fechado_em].freeze
 
   def initialize(scope)

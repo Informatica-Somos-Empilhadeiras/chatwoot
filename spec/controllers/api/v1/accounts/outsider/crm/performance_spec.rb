@@ -58,10 +58,12 @@ RSpec.describe 'Outsider CRM goals, commission and seller-only numbers', type: :
     expect(get_json(seller, 'reports')['owners'].pluck('id')).to eq([seller.id])
   end
 
-  it 'opens the main page with each seller own deals and lets managers filter the team' do
+  it 'opens the main page with each seller own deals (plus the unowned queue) and lets managers filter the team' do
     unowned = crm_opportunity(account, unit, pipeline: pipeline)
 
-    expect(get_json(seller, 'opportunities')['meta']['count']).to eq(1)
+    own = Outsider::Crm::Opportunity.where(owner_id: seller.id).ids
+    expect(get_json(seller, 'opportunities')['payload'].pluck('id')).to contain_exactly(unowned.id, *own)
+    expect(get_json(seller, 'opportunities', owner_id: seller.id)['meta']['count']).to eq(1)
     expect(get_json(seller, 'opportunities', owner_id: colleague.id)['meta']['count']).to eq(0)
     expect(get_json(manager, 'opportunities')['meta']['count']).to eq(4)
     expect(get_json(manager, 'opportunities', owner_id: 'none')['payload'].pluck('id')).to eq([unowned.id])

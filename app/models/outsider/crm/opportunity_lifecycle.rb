@@ -1,8 +1,9 @@
 # OUTSIDER: mantém status e etapa da oportunidade coerentes. Ir para uma etapa de ganho ou
 # perda fecha a oportunidade; marcar como ganha ou perdida leva para a etapa final do
 # pipeline, quando existir. Reabrir volta para a primeira etapa aberta. Depois de gravar, roda as
-# automações da conta: as de ganho e perda (Outsider::Crm::Automations) e as regras montadas pelo
-# administrador para os eventos criado, entrou numa etapa, ganho e perdido (Outsider::Crm::RuleRunner).
+# automações da conta: as de ganho e perda (Outsider::Crm::Automations), as regras montadas pelo
+# administrador para os eventos criado, entrou numa etapa, ganho e perdido (Outsider::Crm::RuleRunner)
+# e, por último, o repasse em sequência do perdido (Outsider::Crm::LostChain).
 module Outsider::Crm::OpportunityLifecycle
   extend ActiveSupport::Concern
 
@@ -52,13 +53,16 @@ module Outsider::Crm::OpportunityLifecycle
   end
 
   # As de ganho e perda primeiro: assim "concluir tarefas pendentes" não fecha as tarefas que uma
-  # regra de ganho acabou de criar
+  # regra de ganho acabou de criar. O repasse em sequência por último: se uma regra já encaminhou o
+  # perdido, ele não faz nada.
   def run_automations(created:)
     events = automation_events(created)
     return if events.empty?
 
     Outsider::Crm::Automations.new(self).closed if events.intersect?(CLOSED)
     Outsider::Crm::RuleRunner.on_events(self, events)
+    # negócio já criado como perdido (cadastro de histórico) não sai repassando
+    Outsider::Crm::LostChain.new(self).perform if !created && events.include?('lost')
   end
 
   def automation_events(created)

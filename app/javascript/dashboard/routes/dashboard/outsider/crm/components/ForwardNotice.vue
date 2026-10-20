@@ -1,14 +1,15 @@
 <script setup>
 // OUTSIDER: janela "você recebeu um negócio encaminhado". Aparece no meio da tela, em qualquer
 // página do Chatwoot, e só fecha pelos botões (clicar fora ou Esc não fecha). Fechar marca o aviso
-// como visto; a bolinha vermelha no menu do CRM continua até a pessoa abrir o negócio.
-import { computed } from 'vue';
+// como visto; a bolinha vermelha no menu do CRM continua até a pessoa abrir o negócio. Negócio que
+// chegou sem responsável tem "Pegar para mim": quem pegar primeiro fica com ele.
+import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import Button from 'dashboard/components-next/button/Button.vue';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
 import { frontendURL } from 'dashboard/helper/URLHelper';
-import { crmState, markReceived } from '../crmStore';
+import { claimOpportunity, crmState, markReceived } from '../crmStore';
 import { formatMoney } from '../helpers';
 
 const { t } = useI18n();
@@ -46,6 +47,15 @@ const openDeal = item => {
     path: frontendURL(`accounts/${crmState.accountId}/crm/opportunities`),
     query: { negocio: item.opportunity_id },
   });
+};
+
+const claimingId = ref(null);
+
+const claim = async item => {
+  claimingId.value = item.opportunity_id;
+  const data = await claimOpportunity(t, { id: item.opportunity_id });
+  claimingId.value = null;
+  if (data) openDeal(item);
 };
 
 const openConversation = item => {
@@ -124,7 +134,17 @@ const openConversation = item => {
             </span>
             <div class="flex flex-wrap gap-2">
               <Button
+                v-if="item.can_claim"
                 size="sm"
+                icon="i-lucide-hand"
+                :label="t('OUTSIDER_CRM.CLAIM.BUTTON_ME')"
+                :is-loading="claimingId === item.opportunity_id"
+                @click="claim(item)"
+              />
+              <Button
+                size="sm"
+                :variant="item.can_claim ? 'faded' : 'solid'"
+                :color="item.can_claim ? 'slate' : 'blue'"
                 icon="i-lucide-handshake"
                 :label="t('OUTSIDER_CRM.NOTICE.OPEN_DEAL')"
                 @click="openDeal(item)"

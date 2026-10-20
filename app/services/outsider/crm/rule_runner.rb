@@ -116,7 +116,7 @@ class Outsider::Crm::RuleRunner
     return summary[:skipped] = (Array(summary[:skipped]) + ['same_unit']) if action['to_business_unit_id'] == @opportunity.business_unit_id
 
     forwarder = Outsider::Crm::OpportunityForwarder.new(@opportunity, access: SystemAccess.new(@opportunity.account_id), user: nil,
-                                                                      params: forward_params(action), allow_lost: true)
+                                                                      params: forward_params(action), lost: :forward)
     forwarder.perform
     summary[:forwarded] = { unit: forwarder.target.business_unit.name, code: forwarder.target.code }
   rescue Outsider::Crm::OpportunityForwarder::Refused => e

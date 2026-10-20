@@ -166,6 +166,22 @@ export const STAGE_COLORS = [
   '#64748B',
 ];
 
+// saiu para outra unidade e não muda mais: encaminhado, ou perdido e passado adiante pelo repasse em
+// sequência (esse continua com a situação "perdido")
+export const isHandedOff = item =>
+  item?.status === 'forwarded' || Boolean(item?.forwarded_to);
+
+// aviso depois de perder um negócio: diz para onde ele foi, se uma regra ou o repasse em sequência
+// o mandou para outra unidade (saved é a resposta do servidor)
+export const lostMessage = (t, title, saved) =>
+  saved?.forwarded_to
+    ? t('OUTSIDER_CRM.BOARD.LOST_HANDED_OFF', {
+        title,
+        unit: saved.forwarded_to.business_unit_name,
+        code: saved.forwarded_to.code,
+      })
+    : t('OUTSIDER_CRM.BOARD.LOST_DONE', { title });
+
 export const errorMessage = (t, error) => {
   const status = error?.response?.status;
   const data = error?.response?.data || {};

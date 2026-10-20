@@ -38,12 +38,26 @@ RSpec.describe 'Outsider CRM received forwards API', type: :request do
     expect(items(sender)).to be_empty
   end
 
-  it 'notifies the unit managers when the deal arrives without an owner' do
+  it 'notifies everybody in the unit when the deal arrives without an owner, so one of them takes it' do
     target = forward(owner: nil)
 
     expect(items(manager).pluck('opportunity_id')).to eq([target.id])
-    expect(items(receiver)).to be_empty
+    expect(items(receiver).pluck('opportunity_id', 'can_claim')).to eq([[target.id, true]])
     expect(items(admin)).to be_empty
+  end
+
+  it 'notifies the admins when the unit has nobody' do
+    unit.members.destroy_all
+    target = forward(owner: nil)
+
+    expect(items(admin).pluck('opportunity_id')).to eq([target.id])
+  end
+
+  it 'notifies the admins when everybody in the unit left the account' do
+    target = forward(owner: nil)
+    AccountUser.where(account: account, user: [receiver, manager]).destroy_all
+
+    expect(items(admin).pluck('opportunity_id')).to eq([target.id])
   end
 
   it 'keeps the dot after the notice is closed and clears it when the deal is opened' do

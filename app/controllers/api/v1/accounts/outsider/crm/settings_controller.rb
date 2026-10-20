@@ -7,7 +7,7 @@ class Api::V1::Accounts::Outsider::Crm::SettingsController < Api::V1::Accounts::
   end
 
   def update
-    render json: settings.update(params.require(:settings).permit(*::Outsider::Crm::Settings::DEFAULTS.keys))
+    render json: settings.update(params.require(:settings).permit(*::Outsider::Crm::Settings.permitted))
   rescue ::Outsider::Crm::Settings::Invalid => e
     render json: { error: 'invalid', fields: e.message.split(', ') }, status: :unprocessable_entity
   end

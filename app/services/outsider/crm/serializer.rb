@@ -51,15 +51,17 @@ module Outsider::Crm::Serializer
     {
       can_edit: access&.edit_opportunity?(opportunity),
       can_delete: access&.delete_opportunity?(opportunity),
-      can_forward: access&.forward_opportunity?(opportunity)
+      can_forward: access&.forward_opportunity?(opportunity),
+      can_claim: access&.claim_opportunity?(opportunity)
     }
   end
 
-  # De onde veio e para onde foi um negócio encaminhado (a unidade pode ser uma que o usuário não vê)
+  # De onde veio e para onde foi um negócio encaminhado ou repassado (a unidade pode ser uma que o
+  # usuário não vê)
   def forward_links(opportunity)
     {
       forwarded_from: forward_link(opportunity.forwarded_from),
-      forwarded_to: opportunity.forwarded? ? forward_link(opportunity.outgoing_forward&.to_opportunity) : nil
+      forwarded_to: forward_link(opportunity.outgoing_forward&.to_opportunity)
     }
   end
 

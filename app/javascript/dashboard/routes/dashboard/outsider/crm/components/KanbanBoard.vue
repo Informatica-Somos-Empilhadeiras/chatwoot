@@ -1,7 +1,10 @@
 <script setup>
 // OUTSIDER: Kanban de um pipeline. Colunas são as etapas abertas; arrastar troca etapa e ordem
 // (PATCH /move). Soltar em Ganho ou Perdido fecha o negócio; Perdido pede o motivo.
-// Cards de outros vendedores aparecem com cadeado e não se movem (a API também recusa).
+// Cards de outros vendedores aparecem com cadeado e não se movem (a API também recusa); os sem
+// responsável têm o botão "Pegar". Com "Todos os pipelines", a tela empilha um quadro por pipeline
+// (stacked): cada um ganha o título "Unidade · Pipeline" e, sem negócio aberto, fica recolhido.
+// O arrasto vale só dentro do mesmo quadro (cada pipeline tem as suas etapas).
 import { ref, computed, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import Draggable from 'vuedraggable';
@@ -12,10 +15,12 @@ import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
 import OpportunityCard from './OpportunityCard.vue';
 import LostReasonDialog from './LostReasonDialog.vue';
+import { claimOpportunity } from '../crmStore';
 import {
   STAGE_COLORS,
   errorMessage,
   formatMoney,
+  lostMessage,
   needsNextTask,
 } from '../helpers';
 
@@ -24,6 +29,9 @@ const props = defineProps({
   pipeline: { type: Object, required: true },
   filters: { type: Object, required: true },
   lostReasons: { type: Array, required: true },
+  // um entre vários quadros empilhados: mostra o título e recolhe quando está vazio
+  stacked: { type: Boolean, default: false },
+  title: { type: String, default: '' },
 });
 
 const emit = defineEmits(['open', 'new', 'changed']);
@@ -38,9 +46,24 @@ const columns = ref([]);
 const wonZone = [];
 const lostZone = [];
 const lostDialogRef = ref(null);
+const claimingId = ref(null);
+const expanded = ref(false);
+const loaded = ref(false);
+
+const group = computed(() => `crm-board-${props.pipeline.id}`);
 
 const canCreate = computed(() =>
   props.access.units.some(unit => unit.id === props.pipeline.business_unit_id)
+);
+
+const totalCount = computed(() =>
+  columns.value.reduce((sum, column) => sum + column.count, 0)
+);
+const totalCents = computed(() =>
+  columns.value.reduce((sum, column) => sum + column.total_cents, 0)
+);
+const collapsed = computed(
+  () => props.stacked && loaded.value && !totalCount.value && !expanded.value
 );
 
 const columnColor = (stage, index) =>
@@ -54,6 +77,7 @@ const load = async () => {
     if (props.filters.q) params.q = props.filters.q;
     const { data } = await CrmAPI.getBoard(params);
     columns.value = data.stages;
+    loaded.value = true;
   } catch (error) {
     useAlert(errorMessage(t, error));
   } finally {
@@ -98,14 +122,14 @@ const onColumnChange = (column, event) => {
 
 const close = async (opportunity, status, lostReasonId = null) => {
   try {
-    await CrmAPI.updateOpportunity(opportunity.id, {
+    const { data } = await CrmAPI.updateOpportunity(opportunity.id, {
       status,
       lost_reason_id: lostReasonId,
     });
     useAlert(
-      t(`OUTSIDER_CRM.BOARD.${status === 'won' ? 'WON_DONE' : 'LOST_DONE'}`, {
-        title: opportunity.title,
-      })
+      status === 'won'
+        ? t('OUTSIDER_CRM.BOARD.WON_DONE', { title: opportunity.title })
+        : lostMessage(t, opportunity.title, data)
     );
     emit('changed');
   } catch (error) {
@@ -126,6 +150,14 @@ const onLostDrop = event => {
 };
 
 const canMove = ({ draggedContext }) => !!draggedContext.element.can_edit;
+
+const claim = async opportunity => {
+  claimingId.value = opportunity.id;
+  const data = await claimOpportunity(t, opportunity);
+  claimingId.value = null;
+  if (data) emit('changed');
+  load();
+};
 
 // recarga ao vivo (alguém mudou um negócio): espera terminar de arrastar para não tirar o card da mão
 let reloadAfterDrag = false;
@@ -153,7 +185,32 @@ defineExpose({ reload: load, liveReload });
 </script>
 
 <template>
-  <div class="relative">
+  <div class="relative flex flex-col gap-2">
+    <div
+      v-if="stacked"
+      class="flex flex-wrap items-center gap-x-2 gap-y-1 px-1 text-sm"
+    >
+      <Icon icon="i-lucide-square-kanban" class="size-4 text-n-slate-10" />
+      <span class="font-medium text-n-slate-12">{{ title }}</span>
+      <span v-if="loaded" class="text-xs text-n-slate-11">
+        {{ t('OUTSIDER_CRM.BOARD.STACK_COUNT', totalCount) }}
+        <template v-if="totalCount"> · {{ formatMoney(totalCents) }}</template>
+      </span>
+      <Button
+        v-if="loaded && !totalCount"
+        type="button"
+        size="xs"
+        variant="link"
+        color="slate"
+        :label="
+          expanded
+            ? t('OUTSIDER_CRM.BOARD.STACK_HIDE')
+            : t('OUTSIDER_CRM.BOARD.STACK_SHOW')
+        "
+        @click="expanded = !expanded"
+      />
+    </div>
+
     <div
       v-if="isLoading && !columns.length"
       class="flex justify-center p-8 text-n-slate-10"
@@ -161,7 +218,7 @@ defineExpose({ reload: load, liveReload });
       <Spinner />
     </div>
 
-    <div class="flex items-start gap-3 pb-4 overflow-x-auto">
+    <div v-if="!collapsed" class="flex items-start gap-3 pb-4 overflow-x-auto">
       <div
         v-for="(column, index) in columns"
         :key="column.id"
@@ -196,7 +253,7 @@ defineExpose({ reload: load, liveReload });
         <Draggable
           :list="column.opportunities"
           item-key="id"
-          group="crm-board"
+          :group="group"
           :animation="150"
           :move="canMove"
           filter=".crm-locked"
@@ -211,8 +268,10 @@ defineExpose({ reload: load, liveReload });
             <OpportunityCard
               :opportunity="element"
               :no-next-task="needsNextTask(element, access)"
+              :is-claiming="claimingId === element.id"
               :class="{ 'crm-locked': !element.can_edit }"
               @click="emit('open', element)"
+              @claim="claim"
             />
           </template>
         </Draggable>
@@ -266,7 +325,7 @@ defineExpose({ reload: load, liveReload });
         <Draggable
           :list="wonZone"
           item-key="id"
-          :group="{ name: 'crm-board', pull: false, put: true }"
+          :group="{ name: group, pull: false, put: true }"
           class="absolute inset-0 overflow-hidden opacity-0"
           @change="onWonDrop"
         >
@@ -283,7 +342,7 @@ defineExpose({ reload: load, liveReload });
         <Draggable
           :list="lostZone"
           item-key="id"
-          :group="{ name: 'crm-board', pull: false, put: true }"
+          :group="{ name: group, pull: false, put: true }"
           class="absolute inset-0 overflow-hidden opacity-0"
           @change="onLostDrop"
         >

@@ -8,10 +8,15 @@ pt_BR:
     automations:
       stalled_task_title: "Retomar negócio parado em %{stage}"
       stalled_task_description: "Criada pela automação: o negócio está há %{days} dias na mesma etapa."
+    chain:
+      rule_name: Repasse em sequência
+    claim:
+      taken: Outra pessoa pegou este negócio antes de você
     forward:
       task_title: "Contatar cliente encaminhado por %{unit}"
       errors:
         not_open: Só negócios abertos podem ser encaminhados
+        already_forwarded: Este negócio já foi enviado para outra unidade
         invalid_unit: Escolha uma unidade de destino ativa, diferente da atual
         limit_reached: "Este lead já foi encaminhado %{max} vezes, o limite da conta. Marque o negócio como ganho ou perdido"
         duplicate_open: O contato já tem um negócio aberto na unidade de destino

@@ -1,7 +1,8 @@
 <script setup>
-// OUTSIDER: painel lateral de um negócio na tela do CRM: resumo, barra de etapas, tarefas, linha
-// do tempo, auditoria e histórico multiempresa. "Editar" abre o formulário de sempre
-// (OpportunityDialog); "Encaminhar" leva o negócio para outra unidade (ForwardDialog).
+// OUTSIDER: painel lateral de um negócio na tela do CRM: resumo, barra de etapas, caminho entre
+// unidades (diagrama horizontal da jornada), tarefas, linha do tempo, auditoria e histórico
+// multiempresa. "Editar" abre o formulário de sempre (OpportunityDialog); "Encaminhar" leva o
+// negócio para outra unidade (ForwardDialog); sem responsável, "Pegar para mim" fica com ele.
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useAlert } from 'dashboard/composables';
@@ -14,8 +15,14 @@ import StageProgress from '../conversation/StageProgress.vue';
 import OpportunityActivity from '../activity/OpportunityActivity.vue';
 import ForwardDialog from './ForwardDialog.vue';
 import JourneyHistory from './JourneyHistory.vue';
+import JourneyFlow from './JourneyFlow.vue';
 import ConfirmDelete from './ConfirmDelete.vue';
-import { markReceived, refreshContact } from '../crmStore';
+import {
+  claimOpportunity,
+  crmState,
+  markReceived,
+  refreshContact,
+} from '../crmStore';
 import { useCrmChanges } from '../live';
 import {
   STATUS_COLORS,
@@ -36,6 +43,7 @@ const { accountScopedRoute } = useAccount();
 
 const opportunity = ref(null);
 const isSaving = ref(false);
+const isClaiming = ref(false);
 const forwardDialogRef = ref(null);
 const confirmRef = ref(null);
 
@@ -47,6 +55,21 @@ const unitName = computed(
     props.access.units.find(
       unit => unit.id === opportunity.value?.business_unit_id
     )?.name || ''
+);
+
+// jornada deste negócio no histórico do contato (o JourneyHistory do rodapé carrega o histórico)
+const history = computed(
+  () => crmState.histories[opportunity.value?.contact.id]
+);
+const journey = computed(() =>
+  history.value?.journeys.find(item =>
+    item.opportunities.some(entry => entry.id === opportunity.value?.id)
+  )
+);
+const showFlow = computed(
+  () =>
+    !!journey.value &&
+    (journey.value.opportunities.length > 1 || !!journey.value.upcoming?.length)
 );
 
 // options.live: recarga porque alguém mudou o negócio; se ele sumiu (apagado), fecha sem erro
@@ -101,6 +124,16 @@ const openOther = async item => {
 const changed = async () => {
   await refresh();
   emit('changed');
+};
+
+const claim = async () => {
+  isClaiming.value = true;
+  const data = await claimOpportunity(t, opportunity.value);
+  isClaiming.value = false;
+  if (!data) return;
+  opportunity.value = data;
+  emit('changed');
+  refreshContact(data.contact.id);
 };
 
 // depois de encaminhar, o painel mostra a origem (agora encaminhada) e o histórico atualizado
@@ -285,6 +318,24 @@ defineExpose({ open, refresh, close });
             @move="moveTo"
           />
 
+          <div
+            v-if="opportunity.can_claim"
+            class="flex flex-wrap items-center gap-x-3 gap-y-2 px-3 py-2 text-sm rounded-lg bg-n-amber-2 text-n-amber-11"
+          >
+            <Icon icon="i-lucide-hand" class="size-4 shrink-0" />
+            <span class="flex-1 min-w-0">
+              {{ t('OUTSIDER_CRM.CLAIM.DRAWER_HINT') }}
+            </span>
+            <Button
+              type="button"
+              size="sm"
+              icon="i-lucide-hand"
+              :label="t('OUTSIDER_CRM.CLAIM.BUTTON_ME')"
+              :is-loading="isClaiming"
+              @click="claim"
+            />
+          </div>
+
           <p
             v-if="opportunity.forwarded_from"
             class="flex items-center gap-2 px-3 py-2 mb-0 text-sm rounded-lg bg-n-amber-2 text-n-amber-11"
@@ -346,11 +397,32 @@ defineExpose({ open, refresh, close });
             />
           </div>
 
+          <section v-if="showFlow" class="flex flex-col gap-2">
+            <div class="flex flex-col gap-0.5">
+              <span
+                class="flex items-center gap-1.5 text-sm font-medium text-n-slate-12"
+              >
+                <Icon icon="i-lucide-route" class="size-4 text-n-slate-10" />
+                {{ t('OUTSIDER_CRM.JOURNEY.TITLE') }}
+              </span>
+              <span class="text-xs text-n-slate-11">
+                {{ t('OUTSIDER_CRM.JOURNEY.SUBTITLE') }}
+              </span>
+            </div>
+            <JourneyFlow
+              :journey="journey"
+              :max-attempts="history.max_forward_attempts"
+              :opportunity-id="opportunity.id"
+              @open="openOther"
+            />
+          </section>
+
           <OpportunityActivity :opportunity="opportunity" @changed="changed" />
 
           <JourneyHistory
             :contact-id="opportunity.contact.id"
             :opportunity-id="opportunity.id"
+            skip-current
             @open="openOther"
           />
         </div>
@@ -360,6 +432,7 @@ defineExpose({ open, refresh, close });
       ref="forwardDialogRef"
       :unit-name="unitName"
       @forwarded="forwarded"
+      @open="openOther"
     />
     <ConfirmDelete ref="confirmRef" />
   </Teleport>

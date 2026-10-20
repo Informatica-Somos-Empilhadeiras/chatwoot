@@ -10,8 +10,13 @@
 # assign_conversation atribui a conversa do Chatwoot a esse responsável, pelo serviço do próprio
 # Chatwoot. Nada é enviado ao cliente.
 #
-# allow_lost: usado pelas regras de automação ("quando perder, encaminhe"), que rodam logo depois da
-# perda. O negócio perdido passa a encaminhado, como se tivesse sido encaminhado em vez de perdido.
+# lost: encaminha um negócio que acabou de ser perdido (sem a opção, só negócio aberto se encaminha;
+# com ela, só o perdido: se alguém reabriu antes da trava, é recusado).
+# :forward, usado pelas regras de automação ("quando perder, encaminhe"), que rodam logo depois da
+# perda: o negócio perdido passa a encaminhado, como se tivesse sido encaminhado em vez de perdido.
+# :keep, usado pelo repasse em sequência (LostChain): o negócio de origem continua perdido, com o
+# motivo da perda (conta nas perdas e na conversão da unidade), e fica travado como o encaminhado;
+# o motivo de encaminhamento não é exigido.
 class Outsider::Crm::OpportunityForwarder
   class Refused < StandardError
     attr_reader :code
@@ -36,12 +41,12 @@ class Outsider::Crm::OpportunityForwarder
     Outsider::Crm::LostReason.active.where(account_id: account_id, kind: [:forward, :both]).ordered
   end
 
-  def initialize(opportunity, access:, user:, params:, allow_lost: false)
+  def initialize(opportunity, access:, user:, params:, lost: nil)
     @origin = opportunity
     @access = access
     @user = user
     @params = params
-    @allow_lost = allow_lost
+    @lost = lost
   end
 
   def perform
@@ -52,7 +57,7 @@ class Outsider::Crm::OpportunityForwarder
       validate!
       @target = create_target
       complete_origin_tasks if flag?(:complete_tasks)
-      @origin.update!(status: :forwarded, lost_reason: reason)
+      @origin.update!(status: :forwarded, lost_reason: reason) unless keep_lost?
       forward = create_forward
       log_activities(forward)
       create_contact_task if flag?(:create_task) && @target.owner
@@ -81,8 +86,14 @@ class Outsider::Crm::OpportunityForwarder
     validate_conversation! if flag?(:assign_conversation)
   end
 
+  # Depois da trava: duas telas (ou uma regra e o repasse) não mandam o mesmo negócio duas vezes
   def validate_status!
-    raise Refused, :not_open unless @origin.open? || (@allow_lost && @origin.lost?)
+    raise Refused, :already_forwarded if Outsider::Crm::Forward.exists?(from_opportunity_id: @origin.id)
+    raise Refused, :not_open unless @lost ? @origin.lost? : @origin.open?
+  end
+
+  def keep_lost?
+    @lost == :keep
   end
 
   def validate_destination!
@@ -94,7 +105,7 @@ class Outsider::Crm::OpportunityForwarder
 
   def validate_reason!
     raise Refused, :invalid_reason if @params[:reason_id].present? && reason.nil?
-    raise Refused, :reason_required if reason.nil? && self.class.reason_required?(@origin.account_id)
+    raise Refused, :reason_required if reason.nil? && !keep_lost? && self.class.reason_required?(@origin.account_id)
   end
 
   def validate_conversation!

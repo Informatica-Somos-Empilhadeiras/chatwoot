@@ -1,8 +1,9 @@
 <script setup>
 // OUTSIDER: confirmação de "Encaminhar para outra unidade". Mostra origem e destino, a tentativa
-// contra o limite da conta e as unidades onde não dá para encaminhar (com o motivo). Ao confirmar,
-// a origem fecha como encaminhada e o negócio continua na unidade escolhida (OpportunityForwarder).
-// Nada é enviado ao cliente.
+// contra o limite da conta (com o caminho do cliente até aqui, que explica a contagem) e as
+// unidades onde não dá para encaminhar, com o motivo e o link do negócio que bloqueia. Ao
+// confirmar, a origem fecha como encaminhada e o negócio continua na unidade escolhida
+// (OpportunityForwarder). Nada é enviado ao cliente.
 import { ref, computed, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useAlert } from 'dashboard/composables';
@@ -20,7 +21,7 @@ defineProps({
   unitName: { type: String, default: '' },
 });
 
-const emit = defineEmits(['forwarded']);
+const emit = defineEmits(['forwarded', 'open']);
 
 const { t } = useI18n();
 
@@ -47,6 +48,8 @@ const limitReached = computed(() => !!attempts.value?.limit_reached);
 const nothingAvailable = computed(
   () => !!options.value && !units.value.some(unit => unit.available)
 );
+// os negócios do cliente desde o primeiro desta jornada: o limite conta os encaminhamentos dela
+const journeyPath = computed(() => options.value?.journey || []);
 
 const pipelineOptions = computed(() =>
   (selectedUnit.value?.pipelines || []).map(pipeline => ({
@@ -163,6 +166,15 @@ const open = item => {
   dialogRef.value?.open();
   loadOptions();
 };
+
+// abre outro negócio do cliente (o que bloqueia uma unidade ou um do caminho) no painel
+const openOther = id => {
+  dialogRef.value?.close();
+  emit('open', { id });
+};
+
+const statusLabel = status =>
+  t(`OUTSIDER_CRM.STATUS.${String(status).toUpperCase()}`);
 
 const confirm = async () => {
   if (!isValid.value || isSaving.value) return;
@@ -291,6 +303,38 @@ defineExpose({ open });
                 })
           }}
         </p>
+        <div
+          v-if="journeyPath.length > 1"
+          class="flex flex-col gap-1 -mt-2 text-xs text-n-slate-11"
+        >
+          <span>{{ t('OUTSIDER_CRM.FORWARD.ATTEMPT_HELP') }}</span>
+          <span class="flex flex-wrap items-center gap-x-1 gap-y-0.5">
+            <template v-for="(step, index) in journeyPath" :key="step.id">
+              <Icon
+                v-if="index"
+                icon="i-lucide-chevron-right"
+                class="size-3 text-n-slate-9"
+              />
+              <span>{{ step.unit }}</span>
+              <button
+                v-if="step.can_view && step.id !== opportunity?.id"
+                type="button"
+                class="text-xs text-n-blue-11 hover:underline"
+                @click="openOther(step.id)"
+              >
+                {{ step.code }}
+              </button>
+              <span v-else>{{ step.code }}</span>
+              <span class="text-n-slate-10">
+                ({{
+                  step.id === opportunity?.id
+                    ? t('OUTSIDER_CRM.HISTORY.THIS_ONE')
+                    : statusLabel(step.status)
+                }})
+              </span>
+            </template>
+          </span>
+        </div>
 
         <template v-if="!limitReached">
           <div class="flex flex-col gap-1.5">
@@ -301,47 +345,69 @@ defineExpose({ open });
               {{ t('OUTSIDER_CRM.FORWARD.NO_UNITS') }}
             </p>
             <div class="grid gap-2 sm:grid-cols-2">
-              <button
+              <div
                 v-for="unit in units"
                 :key="unit.id"
-                type="button"
-                class="flex flex-col gap-0.5 px-3 py-2 text-start rounded-lg outline outline-1 -outline-offset-1"
-                :class="[
+                class="flex flex-col rounded-lg outline outline-1 -outline-offset-1"
+                :class="
                   unit.id === form.to_business_unit_id
                     ? 'outline-n-blue-8 bg-n-blue-2'
-                    : 'outline-n-weak',
-                  unit.available
-                    ? 'hover:bg-n-alpha-1'
-                    : 'opacity-60 cursor-not-allowed',
-                ]"
-                :disabled="!unit.available"
-                @click="selectUnit(unit)"
+                    : 'outline-n-weak'
+                "
               >
-                <span
-                  class="flex items-center gap-1.5 text-sm font-medium text-n-slate-12"
+                <button
+                  type="button"
+                  class="flex flex-col gap-0.5 px-3 py-2 text-start rounded-lg"
+                  :class="
+                    unit.available
+                      ? 'hover:bg-n-alpha-1'
+                      : 'opacity-60 cursor-not-allowed'
+                  "
+                  :disabled="!unit.available"
+                  @click="selectUnit(unit)"
                 >
-                  <Icon
-                    :icon="
-                      unit.id === form.to_business_unit_id
-                        ? 'i-lucide-circle-check'
-                        : 'i-lucide-building-2'
-                    "
-                    class="size-4 shrink-0"
+                  <span
+                    class="flex items-center gap-1.5 text-sm font-medium text-n-slate-12"
+                  >
+                    <Icon
+                      :icon="
+                        unit.id === form.to_business_unit_id
+                          ? 'i-lucide-circle-check'
+                          : 'i-lucide-building-2'
+                      "
+                      class="size-4 shrink-0"
+                      :class="
+                        unit.id === form.to_business_unit_id
+                          ? 'text-n-blue-11'
+                          : 'text-n-slate-10'
+                      "
+                    />
+                    <span class="truncate">{{ unit.name }}</span>
+                  </span>
+                  <span
+                    class="text-xs"
                     :class="
-                      unit.id === form.to_business_unit_id
-                        ? 'text-n-blue-11'
-                        : 'text-n-slate-10'
+                      unit.available ? 'text-n-slate-11' : 'text-n-ruby-11'
                     "
-                  />
-                  <span class="truncate">{{ unit.name }}</span>
-                </span>
-                <span
-                  class="text-xs"
-                  :class="unit.available ? 'text-n-slate-11' : 'text-n-ruby-11'"
+                  >
+                    {{ unitHint(unit) }}
+                  </span>
+                </button>
+                <button
+                  v-if="
+                    unit.open_opportunity_id && unit.open_opportunity_can_view
+                  "
+                  type="button"
+                  class="self-start px-3 pb-2 -mt-1 text-xs text-n-blue-11 hover:underline"
+                  @click="openOther(unit.open_opportunity_id)"
                 >
-                  {{ unitHint(unit) }}
-                </span>
-              </button>
+                  {{
+                    t('OUTSIDER_CRM.FORWARD.OPEN_BLOCKING', {
+                      code: unit.open_opportunity_code,
+                    })
+                  }}
+                </button>
+              </div>
             </div>
             <p
               v-if="nothingAvailable && units.length"

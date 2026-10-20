@@ -28,7 +28,8 @@
       "ALL_STATUS": "All statuses",
       "ALL_OWNERS": "All owners",
       "MINE": "My deals",
-      "NO_OWNER": "No owner"
+      "NO_OWNER": "No owner",
+      "MINE_AND_UNOWNED": "Mine and unowned"
     },
     "TABLE": {
       "OPPORTUNITY": "Deal",
@@ -344,6 +345,27 @@
           "PERCENT": "Use a percent from 0 to 100.",
           "DUPLICATE": "There is already a percent for this combination."
         }
+      },
+      "CHAIN": {
+        "TITLE": "Sequential handoff",
+        "DESCRIPTION": "When a deal is lost in a unit, it moves on its own to the next unit in the order, and so on until someone wins it or the units run out. The lost deal still counts as lost in its own unit. Nothing is sent to the customer.",
+        "ENABLE": "Hand the lost deal to the next unit",
+        "ENABLE_HELP": "Skips units the customer already went through in this journey, units that already have an open deal for them and units without an active pipeline. If an automation rule already forwarded the deal, the handoff does nothing.",
+        "ORDER": "Units and handoff order",
+        "ORDER_HELP": "Check the units that take part and use the arrows to change the order. Lost in one unit, it goes to the next; after the last one, back to the first.",
+        "UP": "Move up",
+        "DOWN": "Move down",
+        "NEED_UNITS": "Choose at least two units to turn the handoff on.",
+        "INACTIVE": "(inactive, skipped until it is reactivated)",
+        "LIMIT": "The handoff stops when the customer reaches {max} forwards in the journey (limit in Settings > General).",
+        "ASSIGN": "Who gets the deal in the next unit",
+        "ASSIGN_POOL": "Whoever takes it first",
+        "ASSIGN_POOL_HELP": "Arrives without owner. Everybody in the unit is notified and sees the deal with the \"Take\" button.",
+        "ASSIGN_ROTATION": "Rotation among sellers",
+        "ASSIGN_ROTATION_HELP": "Goes to the next seller of the unit, one at a time, with the \"Contact customer\" task. Unit without sellers: rotates among managers.",
+        "SKIP": "Do not hand off when the lost reason is",
+        "SKIP_HELP": "For example, when the customer gave up buying. Those deals stay lost.",
+        "SAVED": "Sequential handoff saved"
       }
     },
     "ERRORS": {
@@ -384,7 +406,7 @@
       "DAYS": "{days} days",
       "AVERAGE_DAYS_HINT": "From creation to win",
       "OWN_ONLY": "In the units where you are a seller, the numbers count only your deals.",
-      "MINE_ONLY": "You see here the deals you own."
+      "MINE_ONLY": "The numbers count only the deals you own."
     },
     "BOARD": {
       "ADD": "Add deal",
@@ -402,9 +424,14 @@
       "CHOOSE_REASON": "Choose the reason",
       "WON_DONE": "\"{title}\" marked as won",
       "LOST_DONE": "\"{title}\" marked as lost",
+      "LOST_HANDED_OFF": "\"{title}\" marked as lost and sent to {unit} ({code})",
       "TASKS_LATE": "Overdue task: {count}",
       "TASKS_PENDING": "Pending tasks: {count}",
-      "NO_NEXT_TASK": "No next task"
+      "NO_NEXT_TASK": "No next task",
+      "STACK_COUNT": "no open deals | 1 open deal | {n} open deals",
+      "STACK_SHOW": "Show board",
+      "STACK_HIDE": "Collapse",
+      "NO_PIPELINES_HERE": "No active pipeline to show with these filters."
     },
     "CONVERSATION": {
       "TAB": "CRM",
@@ -570,8 +597,15 @@
         "REASON_REQUIRED": "the forwarding reason is missing (choose one in the rule)",
         "INVALID_REASON": "the chosen reason no longer exists",
         "INVALID_OWNER": "the chosen owner is no longer in the destination unit",
+        "ALREADY_FORWARDED": "the opportunity had already been sent to another unit",
+        "NOT_OPEN": "the opportunity was reopened or changed before it was sent",
         "GENERIC": "the forward was refused"
-      }
+      },
+      "CLAIMED": "{name} took the deal",
+      "CHAIN_FORWARDED": "Sequential handoff sent it to {unit} ({code})",
+      "CHAIN_FAILED": "Sequential handoff could not send it to {unit}",
+      "CHAIN_EXHAUSTED": "Sequential handoff: no units left to try",
+      "CHAIN_NO_OWNER": "Arrived without owner: the unit was notified so someone takes it"
     },
     "AUDIT": {
       "HINT": "Every change to the deal and its tasks, with who and when.",
@@ -662,10 +696,12 @@
       "NO_CUSTOMER_MESSAGE": "The customer gets no message. Nothing is deleted: the original opportunity stays in the history.",
       "DONE": "{code} forwarded to {unit}",
       "RECEIVED_FROM": "Received from {unit} ({code}) by forwarding",
-      "SENT_TO": "Forwarded to {unit} ({code}). This opportunity no longer changes.",
+      "SENT_TO": "Sent to {unit} ({code}). This opportunity no longer changes.",
       "FROM_UNIT": "From: {unit}",
       "TO_UNIT": "To: {unit}",
-      "CONVERSATION_FORWARDED": "Opportunity {code} from this conversation was forwarded to {unit}; follow-up continues there."
+      "CONVERSATION_FORWARDED": "Opportunity {code} from this conversation was forwarded to {unit}; follow-up continues there.",
+      "ATTEMPT_HELP": "The limit counts the customer forwards since the first deal of this journey (which lasts while they have an open deal in any unit):",
+      "OPEN_BLOCKING": "Open {code}"
     },
     "HISTORY": {
       "TITLE": "Multi-company history",
@@ -683,9 +719,7 @@
       "THIS_ONE": "This opportunity",
       "CLOSED_ON": "closed on {date}",
       "OPEN_SINCE": "open since {date}",
-      "FORWARDED_LINE": "Forwarded to {unit} by {name}, {date}",
-      "REASON": "Reason: {reason}",
-      "AUTOMATIC": "automation rule"
+      "REASON": "Reason: {reason}"
     },
     "REPORTS": {
       "PERIODS": {
@@ -801,7 +835,7 @@
       "BY_RULE": "From {unit}, by the rule “{rule}”",
       "FROM_UNIT": "From {unit}",
       "REASON": "Reason: {reason}",
-      "NO_OWNER": "Arrived without an owner: you were notified as a manager of the unit.",
+      "NO_OWNER": "Arrived without owner: whoever takes it first keeps it.",
       "OPEN_DEAL": "View deal",
       "OPEN_CONVERSATION": "Open conversation",
       "CLOSE": "Close",
@@ -855,6 +889,25 @@
       "REACHED": "Goal reached",
       "COMMISSION": "Commission",
       "DETAILS": "See goals"
+    },
+    "CLAIM": {
+      "BUTTON": "Take",
+      "BUTTON_ME": "Take it",
+      "DONE": "{code} is now yours",
+      "NO_OWNER": "No owner",
+      "QUEUE": "{n} unowned deal waiting for someone to take it | {n} unowned deals waiting for someone to take them",
+      "SEE_QUEUE": "See and take",
+      "DRAWER_HINT": "This deal has no owner. Whoever takes it first keeps it."
+    },
+    "JOURNEY": {
+      "TITLE": "Path between units",
+      "SUBTITLE": "Where this customer went in this journey and where the deal goes if it is lost.",
+      "BY": "by {name}",
+      "AUTOMATIC": "automatic",
+      "IF_LOST": "if lost",
+      "THEN": "then",
+      "PARALLEL": "In the same journey, opened directly in another unit:",
+      "UPCOMING": "Next in the handoff"
     }
   }
 }

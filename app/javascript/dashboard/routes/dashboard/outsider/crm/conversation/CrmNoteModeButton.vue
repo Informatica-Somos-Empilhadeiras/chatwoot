@@ -7,6 +7,7 @@ import { useI18n } from 'vue-i18n';
 import { useMapGetter } from 'dashboard/composables/store';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
 import { crmState, summaryKey } from '../crmStore';
+import { isHandedOff } from '../helpers';
 
 const { t } = useI18n();
 const chat = useMapGetter('getSelectedChat');
@@ -20,7 +21,7 @@ const visible = computed(
   () =>
     crmState.access.enabled &&
     !summary.value?.group &&
-    !!summary.value?.opportunities?.some(item => item.status !== 'forwarded')
+    !!summary.value?.opportunities?.some(item => !isHandedOff(item))
 );
 </script>
 

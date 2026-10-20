@@ -1,8 +1,10 @@
 <script setup>
 // OUTSIDER: tela de negócios. Resumo do mês da pessoa, indicadores no topo, filtros compartilhados e
-// duas visualizações: Kanban (um pipeline por vez, só negócios abertos) e tabela (com ordenação e
-// exportação CSV). Abre com os negócios abertos da própria pessoa; administrador e gestor podem ver os
-// dos outros pelo filtro de responsável (o servidor aplica a mesma regra). Recarrega sozinha quando
+// duas visualizações: Kanban (só negócios abertos; com "Todos os pipelines", um quadro por pipeline,
+// empilhados) e tabela (com ordenação e exportação CSV). Abre com os negócios abertos da própria
+// pessoa; administrador e gestor podem ver os dos outros pelo filtro de responsável e o vendedor, os
+// sem responsável das suas unidades, para pegar (o servidor aplica a mesma regra). Um aviso no topo
+// mostra quantos negócios sem responsável estão esperando alguém pegar. Recarrega sozinha quando
 // alguém muda um negócio ou uma tarefa (live.js).
 import { ref, computed, watch, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
@@ -30,7 +32,7 @@ import {
   formatMoney,
   needsNextTask,
 } from '../helpers';
-import { crmState, isReceived } from '../crmStore';
+import { claimOpportunity, crmState, isReceived } from '../crmStore';
 import { useCrmChanges } from '../live';
 
 const props = defineProps({
@@ -58,8 +60,10 @@ const readView = () => {
 
 const dialogRef = ref(null);
 const drawerRef = ref(null);
-const boardRef = ref(null);
+const boardRefs = ref([]);
 const isLoading = ref(false);
+const claimingId = ref(null);
+const unownedCount = ref(0);
 const isExporting = ref(false);
 const view = ref(readView());
 const opportunities = ref([]);
@@ -93,13 +97,34 @@ const visiblePipelines = computed(() =>
   )
 );
 
+const unitById = computed(() =>
+  Object.fromEntries(
+    props.units.map((unit, index) => [unit.id, { unit, index }])
+  )
+);
+
+// com várias unidades na tela, o nome da unidade vem junto (toda unidade pode ter "Vendas Diretas")
+const pipelineLabel = pipeline => {
+  const unit = unitById.value[pipeline.business_unit_id]?.unit;
+  return unit && props.units.length > 1 && !filters.value.business_unit_id
+    ? `${unit.name} · ${pipeline.name}`
+    : pipeline.name;
+};
+
+const orderedPipelines = computed(() =>
+  [...visiblePipelines.value].sort(
+    (a, b) =>
+      (unitById.value[a.business_unit_id]?.index ?? 0) -
+        (unitById.value[b.business_unit_id]?.index ?? 0) ||
+      a.position - b.position
+  )
+);
+
 const pipelineOptions = computed(() => [
-  ...(isBoard.value
-    ? []
-    : [{ value: '', label: t('OUTSIDER_CRM.FILTERS.ALL_PIPELINES') }]),
-  ...visiblePipelines.value.map(pipeline => ({
+  { value: '', label: t('OUTSIDER_CRM.FILTERS.ALL_PIPELINES') },
+  ...orderedPipelines.value.map(pipeline => ({
     value: pipeline.id,
-    label: pipeline.name,
+    label: pipelineLabel(pipeline),
   })),
 ]);
 
@@ -124,6 +149,14 @@ const boardPipeline = computed(() =>
   props.pipelines.find(pipeline => pipeline.id === filters.value.pipeline_id)
 );
 
+// Kanban: o pipeline escolhido ou, em "Todos os pipelines", um quadro para cada um (empilhados)
+const boardPipelines = computed(() =>
+  boardPipeline.value
+    ? [boardPipeline.value]
+    : orderedPipelines.value.filter(pipeline => pipeline.active)
+);
+const stacked = computed(() => boardPipelines.value.length > 1);
+
 const statusOptions = computed(() => [
   { value: '', label: t('OUTSIDER_CRM.FILTERS.ALL_STATUS') },
   ...['open', 'won', 'lost', 'forwarded'].map(status => ({
@@ -132,14 +165,29 @@ const statusOptions = computed(() => [
   })),
 ]);
 
-const ownerOptions = computed(() => [
-  { value: currentUser.value.id, label: t('OUTSIDER_CRM.FILTERS.MINE') },
-  { value: '', label: t('OUTSIDER_CRM.FILTERS.ALL_OWNERS') },
-  { value: 'none', label: t('OUTSIDER_CRM.FILTERS.NO_OWNER') },
-  ...agents.value
-    .filter(agent => agent.id !== currentUser.value.id)
-    .map(agent => ({ value: agent.id, label: agent.name })),
-]);
+// vendedor: os seus, os sem responsável das suas unidades (para pegar) ou os dois juntos
+const ownerOptions = computed(() => {
+  const mine = {
+    value: currentUser.value.id,
+    label: t('OUTSIDER_CRM.FILTERS.MINE'),
+  };
+  const unowned = { value: 'none', label: t('OUTSIDER_CRM.FILTERS.NO_OWNER') };
+  if (!allDeals.value) {
+    return [
+      mine,
+      unowned,
+      { value: '', label: t('OUTSIDER_CRM.FILTERS.MINE_AND_UNOWNED') },
+    ];
+  }
+  return [
+    mine,
+    { value: '', label: t('OUTSIDER_CRM.FILTERS.ALL_OWNERS') },
+    unowned,
+    ...agents.value
+      .filter(agent => agent.id !== currentUser.value.id)
+      .map(agent => ({ value: agent.id, label: agent.name })),
+  ];
+});
 
 const periodOptions = computed(() =>
   ['month', 'quarter', 'year'].map(value => ({
@@ -212,12 +260,6 @@ const exportCsv = async () => {
   }
 };
 
-// o Kanban mostra um pipeline por vez: escolhe o primeiro visível quando não há nenhum
-const ensureBoardPipeline = () => {
-  if (!isBoard.value || boardPipeline.value) return;
-  filters.value.pipeline_id = visiblePipelines.value[0]?.id ?? '';
-};
-
 const setView = value => {
   view.value = value;
   try {
@@ -225,21 +267,53 @@ const setView = value => {
   } catch {
     // sem localStorage a escolha vale só nesta visita
   }
-  ensureBoardPipeline();
   load(1);
+};
+
+// negócios sem responsável que a pessoa pode pegar, com os mesmos filtros de unidade e pipeline
+const loadUnowned = async () => {
+  try {
+    const { data } = await CrmAPI.getUnownedCount(
+      tableParams({ owner_id: undefined, status: undefined, sort: undefined })
+    );
+    unownedCount.value = data.count;
+  } catch {
+    unownedCount.value = 0;
+  }
+};
+
+// a contagem é só de abertos: a lista também
+const showUnowned = () => {
+  filters.value.owner_id = 'none';
+  filters.value.status = 'open';
 };
 
 const refresh = () => {
   refreshKey.value += 1;
-  if (isBoard.value) boardRef.value?.reload();
+  loadUnowned();
+  if (isBoard.value) boardRefs.value.forEach(board => board?.reload());
   else load(meta.value.page);
+};
+
+// o quadro já se atualizou (arrastou, fechou, pegou): só os números e o aviso da fila recarregam
+const onBoardChanged = () => {
+  refreshKey.value += 1;
+  loadUnowned();
+};
+
+const claim = async opportunity => {
+  claimingId.value = opportunity.id;
+  const data = await claimOpportunity(t, opportunity);
+  claimingId.value = null;
+  if (data) refresh();
 };
 
 // alguém mudou um negócio ou uma tarefa (ou as metas): números, resumo e lista recarregam na hora
 useCrmChanges(changes => {
   refreshKey.value += 1;
   if (changes.every(change => change.kind === 'config')) return;
-  if (isBoard.value) boardRef.value?.liveReload();
+  loadUnowned();
+  if (isBoard.value) boardRefs.value.forEach(board => board?.liveReload());
   else load(meta.value.page, { silent: true });
 });
 
@@ -254,13 +328,19 @@ watch(
   { deep: true }
 );
 watch(
+  () => [
+    filters.value.business_unit_id,
+    filters.value.pipeline_id,
+    filters.value.q,
+  ],
+  loadUnowned
+);
+watch(
   () => filters.value.business_unit_id,
   () => {
     filters.value.pipeline_id = '';
-    ensureBoardPipeline();
   }
 );
-watch(() => props.pipelines, ensureBoardPipeline);
 
 const openNew = () => dialogRef.value?.open();
 const openEdit = opportunity => dialogRef.value?.open(opportunity);
@@ -272,7 +352,9 @@ const onSaved = () => {
 };
 const openNewInStage = stage =>
   dialogRef.value?.open(null, {
-    business_unit_id: boardPipeline.value.business_unit_id,
+    business_unit_id: props.pipelines.find(
+      pipeline => pipeline.id === stage.pipeline_id
+    )?.business_unit_id,
     pipeline_id: stage.pipeline_id,
     stage_id: stage.id,
   });
@@ -302,8 +384,8 @@ watch(
 
 onMounted(async () => {
   openFromRoute();
-  ensureBoardPipeline();
   load(1);
+  loadUnowned();
   store.dispatch('agents/get');
   try {
     const { data } = await CrmAPI.getLostReasons();
@@ -359,11 +441,7 @@ onMounted(async () => {
         v-model="filters.status"
         :options="statusOptions"
       />
-      <Select
-        v-if="allDeals"
-        v-model="filters.owner_id"
-        :options="ownerOptions"
-      />
+      <Select v-model="filters.owner_id" :options="ownerOptions" />
       <Select
         v-model="filters.period"
         v-tooltip="t('OUTSIDER_CRM.METRICS.PERIOD')"
@@ -389,6 +467,24 @@ onMounted(async () => {
 
     <MyMonthSummary v-if="pipelines.length" :refresh-key="refreshKey" />
 
+    <div
+      v-if="unownedCount && filters.owner_id !== 'none'"
+      class="flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2 text-sm rounded-xl bg-n-amber-2 text-n-amber-11"
+    >
+      <Icon icon="i-lucide-hand" class="size-4 shrink-0" />
+      <span class="flex-1 min-w-0">
+        {{ t('OUTSIDER_CRM.CLAIM.QUEUE', unownedCount) }}
+      </span>
+      <Button
+        type="button"
+        size="xs"
+        variant="faded"
+        color="amber"
+        :label="t('OUTSIDER_CRM.CLAIM.SEE_QUEUE')"
+        @click="showUnowned"
+      />
+    </div>
+
     <MetricsBar
       v-if="pipelines.length"
       :filters="filters"
@@ -396,17 +492,25 @@ onMounted(async () => {
       :note="metricsNote"
     />
 
-    <KanbanBoard
-      v-if="isBoard && boardPipeline"
-      ref="boardRef"
-      :access="access"
-      :pipeline="boardPipeline"
-      :filters="filters"
-      :lost-reasons="lostReasons"
-      @open="openDetails"
-      @new="openNewInStage"
-      @changed="refreshKey += 1"
-    />
+    <template v-if="isBoard && pipelines.length">
+      <KanbanBoard
+        v-for="pipeline in boardPipelines"
+        :key="pipeline.id"
+        ref="boardRefs"
+        :access="access"
+        :pipeline="pipeline"
+        :filters="filters"
+        :lost-reasons="lostReasons"
+        :stacked="stacked"
+        :title="pipelineLabel(pipeline)"
+        @open="openDetails"
+        @new="openNewInStage"
+        @changed="onBoardChanged"
+      />
+      <p v-if="!boardPipelines.length" class="p-6 mb-0 text-sm text-n-slate-11">
+        {{ t('OUTSIDER_CRM.BOARD.NO_PIPELINES_HERE') }}
+      </p>
+    </template>
 
     <template v-if="!isBoard">
       <div class="flex flex-wrap items-center justify-end gap-2">
@@ -549,7 +653,20 @@ onMounted(async () => {
                 {{ formatDate(opportunity.expected_close_on) }}
               </td>
               <td class="px-4 py-3 text-n-slate-11">
-                {{ opportunity.owner?.name }}
+                <Button
+                  v-if="opportunity.can_claim"
+                  type="button"
+                  size="xs"
+                  icon="i-lucide-hand"
+                  :label="t('OUTSIDER_CRM.CLAIM.BUTTON')"
+                  :is-loading="claimingId === opportunity.id"
+                  @click.stop="claim(opportunity)"
+                />
+                <template v-else>
+                  {{
+                    opportunity.owner?.name || t('OUTSIDER_CRM.CLAIM.NO_OWNER')
+                  }}
+                </template>
               </td>
               <td class="px-4 py-3">
                 <span

@@ -7,6 +7,7 @@
 // Usa o contato do Chatwoot: nada de cadastro duplicado. Grupos do WhatsApp não têm negócio.
 import { ref, computed, watch, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useRouter } from 'vue-router';
 import { useAlert } from 'dashboard/composables';
 import { useMapGetter, useStore } from 'dashboard/composables/store';
 import { useAccount } from 'dashboard/composables/useAccount';
@@ -37,6 +38,8 @@ import {
   errorMessage,
   formatDate,
   formatMoney,
+  isHandedOff,
+  lostMessage,
 } from '../helpers';
 
 const props = defineProps({
@@ -48,6 +51,7 @@ const store = useStore();
 const agents = useMapGetter('agents/getAgents');
 const currentUserId = useMapGetter('getCurrentUserID');
 const { accountScopedRoute } = useAccount();
+const router = useRouter();
 
 const dialogRef = ref(null);
 const lostDialogRef = ref(null);
@@ -89,12 +93,10 @@ const primaryPipeline = computed(
   () => primary.value && findPipeline(primary.value.pipeline_id)
 );
 const canCreate = computed(() => !!summary.value?.creatable_unit_ids?.length);
-// sem negócio aberto: o último desta conversa que foi encaminhado explica para onde foi
+// sem negócio aberto: o último desta conversa que saiu para outra unidade explica para onde foi
 const lastForwarded = computed(() =>
   opportunities.value.find(
-    item =>
-      item.status === 'forwarded' &&
-      item.conversation_display_id === props.chat.id
+    item => isHandedOff(item) && item.conversation_display_id === props.chat.id
   )
 );
 
@@ -131,11 +133,12 @@ const openNew = () =>
 
 const openEdit = opportunity => dialogRef.value?.open(opportunity);
 
+// message pode ser uma função da resposta (o aviso de perdido diz para onde o negócio foi)
 const update = async (opportunity, attributes, message) => {
   isSaving.value = true;
   try {
-    await CrmAPI.updateOpportunity(opportunity.id, attributes);
-    useAlert(message);
+    const { data } = await CrmAPI.updateOpportunity(opportunity.id, attributes);
+    useAlert(typeof message === 'function' ? message(data) : message);
     await afterChange();
   } catch (error) {
     useAlert(errorMessage(t, error));
@@ -168,11 +171,24 @@ const openFromHistory = item => {
   if (opportunity) select(opportunity);
 };
 
+// negócio de outra conversa (ex.: o que bloqueia o encaminhamento): abre no painel do CRM
+const openElsewhere = item => {
+  if (opportunities.value.some(entry => entry.id === item.id)) {
+    openFromHistory(item);
+    return;
+  }
+  router.push(
+    accountScopedRoute(
+      'outsider_crm',
+      { tab: 'opportunities' },
+      { negocio: item.id }
+    )
+  );
+};
+
 const markLost = (opportunity, reasonId) =>
-  update(
-    opportunity,
-    { status: 'lost', lost_reason_id: reasonId },
-    t('OUTSIDER_CRM.BOARD.LOST_DONE', { title: opportunity.title })
+  update(opportunity, { status: 'lost', lost_reason_id: reasonId }, saved =>
+    lostMessage(t, opportunity.title, saved)
   );
 
 watch(
@@ -630,6 +646,7 @@ onMounted(async () => {
       ref="forwardDialogRef"
       :unit-name="primary ? unitName(primary.business_unit_id) : ''"
       @forwarded="afterChange"
+      @open="openElsewhere"
     />
   </div>
 </template>

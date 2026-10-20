@@ -35,8 +35,12 @@ Rails.application.routes.prepend do
                   get :board
                   get :summary
                   get :export
+                  get :unowned
                 end
-                member { patch :move }
+                member do
+                  patch :move
+                  post :claim
+                end
                 resources :tasks, controller: 'opportunity_tasks', only: [:index, :create, :update, :destroy]
                 resources :activities, controller: 'opportunity_activities', only: [:index, :create, :destroy]
                 resources :audits, controller: 'opportunity_audits', only: [:index]

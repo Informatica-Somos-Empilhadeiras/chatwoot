@@ -187,6 +187,14 @@ class CrmAPI extends ApiClient {
     });
   }
 
+  getUnownedCount(params = {}) {
+    return axios.get(`${this.url}/opportunities/unowned`, { params });
+  }
+
+  claimOpportunity(id) {
+    return axios.post(`${this.url}/opportunities/${id}/claim`);
+  }
+
   moveOpportunity(id, stageId, index) {
     return axios.patch(`${this.url}/opportunities/${id}/move`, {
       stage_id: stageId,

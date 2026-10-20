@@ -9,7 +9,7 @@ import CrmAPI from 'dashboard/api/outsider/crm';
 import Button from 'dashboard/components-next/button/Button.vue';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
 import { bumpActivity, crmState, summaryKey } from '../crmStore';
-import { errorMessage } from '../helpers';
+import { errorMessage, isHandedOff } from '../helpers';
 
 const props = defineProps({
   chat: { type: Object, required: true },
@@ -26,11 +26,9 @@ const summary = computed(
   () =>
     crmState.summaries[summaryKey(props.chat.meta?.sender?.id, props.chat.id)]
 );
-// negócio encaminhado não recebe nota: a conversa segue no da unidade de destino
+// negócio que saiu para outra unidade não recebe nota: a conversa segue no da unidade de destino
 const opportunities = computed(() =>
-  (summary.value?.opportunities || []).filter(
-    item => item.status !== 'forwarded'
-  )
+  (summary.value?.opportunities || []).filter(item => !isHandedOff(item))
 );
 const selected = computed(() =>
   opportunities.value.find(item => item.id === opportunityId.value)
