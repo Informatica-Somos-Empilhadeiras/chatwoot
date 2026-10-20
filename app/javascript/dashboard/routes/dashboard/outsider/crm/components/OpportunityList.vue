@@ -488,6 +488,26 @@ onMounted(async () => {
                     t(`OUTSIDER_CRM.STATUS.${opportunity.status.toUpperCase()}`)
                   }}
                 </span>
+                <span
+                  v-if="opportunity.forwarded_to"
+                  class="block mt-0.5 text-xs text-n-slate-10"
+                >
+                  {{
+                    t('OUTSIDER_CRM.FORWARD.TO_UNIT', {
+                      unit: opportunity.forwarded_to.business_unit_name,
+                    })
+                  }}
+                </span>
+                <span
+                  v-else-if="opportunity.forwarded_from"
+                  class="block mt-0.5 text-xs text-n-slate-10"
+                >
+                  {{
+                    t('OUTSIDER_CRM.FORWARD.FROM_UNIT', {
+                      unit: opportunity.forwarded_from.business_unit_name,
+                    })
+                  }}
+                </span>
               </td>
             </tr>
           </tbody>

@@ -1,7 +1,8 @@
 <script setup>
 // OUTSIDER: aba "CRM" da conversa. Mostra o negócio principal do contato (o aberto ligado a esta
 // conversa ou, sem ele, o aberto mais recente), a barra de etapas, as tarefas, a linha do tempo e
-// a auditoria dele, e os outros negócios do contato.
+// a auditoria dele, o histórico multiempresa (encaminhamentos entre unidades) e os outros negócios do
+// contato. "Encaminhar" leva o negócio para outra unidade do grupo.
 // Usa o contato do Chatwoot: nada de cadastro duplicado. Grupos do WhatsApp não têm negócio.
 import { ref, computed, watch, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -14,6 +15,8 @@ import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
 import OpportunityDialog from '../components/OpportunityDialog.vue';
 import LostReasonDialog from '../components/LostReasonDialog.vue';
+import ForwardDialog from '../components/ForwardDialog.vue';
+import JourneyHistory from '../components/JourneyHistory.vue';
 import OpportunityActivity from '../activity/OpportunityActivity.vue';
 import StageProgress from './StageProgress.vue';
 import {
@@ -44,6 +47,7 @@ const { accountScopedRoute } = useAccount();
 
 const dialogRef = ref(null);
 const lostDialogRef = ref(null);
+const forwardDialogRef = ref(null);
 const isLoading = ref(false);
 const isSaving = ref(false);
 
@@ -62,6 +66,14 @@ const primaryPipeline = computed(
   () => primary.value && findPipeline(primary.value.pipeline_id)
 );
 const canCreate = computed(() => !!summary.value?.creatable_unit_ids?.length);
+// sem negócio aberto: o último desta conversa que foi encaminhado explica para onde foi
+const lastForwarded = computed(() =>
+  opportunities.value.find(
+    item =>
+      item.status === 'forwarded' &&
+      item.conversation_display_id === props.chat.id
+  )
+);
 
 const closeInfo = computed(() => {
   const days = daysUntil(primary.value?.expected_close_on);
@@ -122,6 +134,11 @@ const markWon = () =>
     { status: 'won' },
     t('OUTSIDER_CRM.BOARD.WON_DONE', { title: primary.value.title })
   );
+
+const openFromHistory = item => {
+  const opportunity = opportunities.value.find(entry => entry.id === item.id);
+  if (opportunity) openEdit(opportunity);
+};
 
 const markLost = (opportunity, reasonId) =>
   update(
@@ -196,6 +213,14 @@ onMounted(async () => {
           class="flex flex-col items-center gap-3 p-8 text-center rounded-xl bg-n-alpha-1"
         >
           <Icon icon="i-lucide-handshake" class="size-8 text-n-slate-9" />
+          <p v-if="lastForwarded" class="max-w-md mb-0 text-sm text-n-slate-11">
+            {{
+              t('OUTSIDER_CRM.FORWARD.CONVERSATION_FORWARDED', {
+                code: lastForwarded.code,
+                unit: lastForwarded.forwarded_to?.business_unit_name || '—',
+              })
+            }}
+          </p>
           <p class="max-w-md mb-0 text-sm text-n-slate-11">
             {{
               canCreate
@@ -217,6 +242,18 @@ onMounted(async () => {
           v-if="primary"
           class="flex flex-col gap-4 p-4 rounded-xl bg-n-solid-2 outline outline-1 -outline-offset-1 outline-n-container"
         >
+          <p
+            v-if="primary.forwarded_from"
+            class="flex items-center gap-2 px-3 py-2 mb-0 text-sm rounded-lg bg-n-amber-2 text-n-amber-11"
+          >
+            <Icon icon="i-lucide-inbox" class="size-4 shrink-0" />
+            {{
+              t('OUTSIDER_CRM.FORWARD.RECEIVED_FROM', {
+                unit: primary.forwarded_from.business_unit_name,
+                code: primary.forwarded_from.code,
+              })
+            }}
+          </p>
           <div class="flex flex-wrap items-start gap-3">
             <div class="flex flex-col flex-1 min-w-0 gap-1">
               <div class="flex flex-wrap items-center gap-1.5 text-xs">
@@ -301,6 +338,17 @@ onMounted(async () => {
                 @click="lostDialogRef?.open(primary)"
               />
             </template>
+            <Button
+              v-if="primary.can_forward"
+              type="button"
+              size="sm"
+              variant="faded"
+              color="amber"
+              icon="i-lucide-forward"
+              :label="t('OUTSIDER_CRM.FORWARD.BUTTON')"
+              :disabled="isSaving"
+              @click="forwardDialogRef?.open(primary)"
+            />
           </div>
 
           <div
@@ -409,6 +457,14 @@ onMounted(async () => {
           />
         </section>
 
+        <JourneyHistory
+          v-if="!summary.group"
+          :contact-id="contact.id"
+          :opportunity-id="primary?.id || null"
+          boxed
+          @open="openFromHistory"
+        />
+
         <section v-if="others.length" class="flex flex-col gap-2">
           <span class="text-sm font-medium text-n-slate-12">
             {{ t('OUTSIDER_CRM.CONVERSATION.OTHERS') }}
@@ -430,6 +486,14 @@ onMounted(async () => {
                 <span class="text-xs truncate text-n-slate-11">
                   {{ opportunity.code }} ·
                   {{ unitName(opportunity.business_unit_id) }}
+                  <template v-if="opportunity.forwarded_to">
+                    ·
+                    {{
+                      t('OUTSIDER_CRM.FORWARD.TO_UNIT', {
+                        unit: opportunity.forwarded_to.business_unit_name,
+                      })
+                    }}
+                  </template>
                   <template v-if="opportunity.closed_at">
                     · {{ formatDate(opportunity.closed_at.slice(0, 10)) }}
                   </template>
@@ -465,6 +529,11 @@ onMounted(async () => {
       ref="lostDialogRef"
       :lost-reasons="crmState.lostReasons"
       @confirm="markLost"
+    />
+    <ForwardDialog
+      ref="forwardDialogRef"
+      :unit-name="primary ? unitName(primary.business_unit_id) : ''"
+      @forwarded="afterChange"
     />
   </div>
 </template>

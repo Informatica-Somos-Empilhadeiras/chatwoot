@@ -1,5 +1,6 @@
 # OUTSIDER: linha do tempo de uma oportunidade e notas internas do CRM. Quem enxerga o negócio
-# escreve nota. A nota fica só no CRM: não vira mensagem do Chatwoot e nunca vai para o cliente.
+# escreve nota, menos no negócio já encaminhado (a conversa segue no destino). A nota fica só no
+# CRM: não vira mensagem do Chatwoot e nunca vai para o cliente.
 class Api::V1::Accounts::Outsider::Crm::OpportunityActivitiesController < Api::V1::Accounts::Outsider::Crm::OpportunityChildController
   PER_PAGE = 30
 
@@ -11,6 +12,10 @@ class Api::V1::Accounts::Outsider::Crm::OpportunityActivitiesController < Api::V
   end
 
   def create
+    if @opportunity.forwarded?
+      return render json: { error: 'forwarded_locked', message: I18n.t('outsider_crm.errors.forwarded_locked') }, status: :unprocessable_entity
+    end
+
     activity = @opportunity.activities.create!(
       account: Current.account, user: Current.user, kind: :note, body: params.require(:activity)[:body].to_s.strip, metadata: note_metadata
     )

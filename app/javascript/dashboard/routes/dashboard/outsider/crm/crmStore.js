@@ -33,10 +33,13 @@ export const crmState = reactive({
   activityVersion: {},
   unitMembers: {},
   myTasks: { pending: 0, overdue: 0 },
+  // histórico multiempresa por contato (jornadas, negócios em todas as unidades e encaminhamentos)
+  histories: {},
 });
 
 let contextPromise = null;
 const summaryRequests = {};
+const historyRequests = {};
 let chipQueue = new Set();
 let chipTimer = null;
 
@@ -54,6 +57,7 @@ const resetForAccount = accountId => {
   crmState.activityVersion = {};
   crmState.unitMembers = {};
   crmState.myTasks = { pending: 0, overdue: 0 };
+  crmState.histories = {};
   contextPromise = null;
 };
 
@@ -162,9 +166,29 @@ export const requestContactChip = async contactId => {
   if (!chipTimer) chipTimer = setTimeout(flushChips, CHIP_BATCH_DELAY);
 };
 
+export const loadContactHistory = async contactId => {
+  if (!contactId) return null;
+  await ensureCrmContext();
+  if (!crmState.access.enabled) return null;
+  if (!historyRequests[contactId]) {
+    historyRequests[contactId] = CrmAPI.getContactHistory(contactId)
+      .then(({ data }) => {
+        crmState.histories[contactId] = data;
+        return data;
+      })
+      .finally(() => {
+        delete historyRequests[contactId];
+      });
+  }
+  return historyRequests[contactId];
+};
+
 export const refreshContact = async contactId => {
   delete crmState.chips[contactId];
   requestContactChip(contactId);
+  if (crmState.histories[contactId]) {
+    loadContactHistory(contactId).catch(() => {});
+  }
   const keys = Object.keys(crmState.summaries).filter(key =>
     key.startsWith(`${contactId}-`)
   );

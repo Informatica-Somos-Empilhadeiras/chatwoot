@@ -20,7 +20,7 @@ const visible = computed(
   () =>
     crmState.access.enabled &&
     !summary.value?.group &&
-    !!summary.value?.opportunities?.length
+    !!summary.value?.opportunities?.some(item => item.status !== 'forwarded')
 );
 </script>
 

@@ -1,6 +1,7 @@
 <script setup>
-// OUTSIDER: bloco "CRM" no painel do contato dentro da conversa. Resume os negócios do contato
-// e leva para a aba CRM da conversa (o detalhe e as ações ficam lá).
+// OUTSIDER: bloco "CRM" no painel do contato dentro da conversa. Resume os negócios do contato,
+// mostra as unidades do grupo com quem ele já negociou (histórico multiempresa) e leva para a aba
+// CRM da conversa (o detalhe e as ações ficam lá).
 import { computed, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { emitter } from 'shared/helpers/mitt';
@@ -8,6 +9,7 @@ import { useUISettings } from 'dashboard/composables/useUISettings';
 import { useAccount } from 'dashboard/composables/useAccount';
 import AccordionItem from 'dashboard/components/Accordion/AccordionItem.vue';
 import Button from 'dashboard/components-next/button/Button.vue';
+import JourneyHistory from '../components/JourneyHistory.vue';
 import {
   OPEN_CRM_TAB_EVENT,
   crmState,
@@ -134,6 +136,8 @@ watch(
       <p v-if="!openDeals.length" class="mb-0 text-n-slate-11">
         {{ t('OUTSIDER_CRM.CONVERSATION.PANEL_EMPTY') }}
       </p>
+
+      <JourneyHistory :contact-id="contactId" compact />
 
       <div class="flex flex-wrap items-center gap-2">
         <Button

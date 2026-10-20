@@ -61,14 +61,18 @@ class Api::V1::Accounts::Outsider::Crm::OpportunitiesController < Api::V1::Accou
 
   def update
     return render_forbidden unless owner_allowed?(@opportunity.business_unit_id, @opportunity.owner_id)
+    # encaminhar tem rota própria (opportunity_forwards), com destino, motivo e tentativa
+    return render json: { error: 'use_forward' }, status: :unprocessable_entity if params[:opportunity][:status].to_s == 'forwarded'
 
     @opportunity.update!(update_params)
     render json: serialize(@opportunity.reload)
   end
 
+  # Negócio que entrou ou saiu por encaminhamento não se apaga (restrict_with_error no modelo)
   def destroy
-    @opportunity.destroy!
-    head :no_content
+    return head :no_content if @opportunity.destroy
+
+    render json: { error: 'in_use', message: @opportunity.errors.full_messages.to_sentence }, status: :unprocessable_entity
   end
 
   private

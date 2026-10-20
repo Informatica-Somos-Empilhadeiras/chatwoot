@@ -1,5 +1,6 @@
 # OUTSIDER: registra na linha do tempo da oportunidade a criação e as mudanças de etapa,
-# status e responsável, com quem fez (Current.user) e de onde para onde.
+# status e responsável, com quem fez (Current.user) e de onde para onde. O encaminhamento é
+# registrado pelo Outsider::Crm::OpportunityForwarder.
 module Outsider::Crm::OpportunityTimeline
   extend ActiveSupport::Concern
 
@@ -10,13 +11,17 @@ module Outsider::Crm::OpportunityTimeline
 
   private
 
+  # Negócio que nasce de um encaminhamento ganha o registro "recebido" (OpportunityForwarder)
   def log_created
+    return if forwarded_from_id.present?
+
     log_activity(:created, stage: stage.name, value_cents: value_cents)
   end
 
   def log_changes
     log_change(:stage_id, :stage_changed) { |id| Outsider::Crm::Stage.find_by(id: id)&.name }
-    log_change(:status, :status_changed) { |value| value }
+    # encaminhar registra "encaminhado", com destino e motivo, no lugar da mudança de situação
+    log_change(:status, :status_changed) { |value| value } unless forwarded?
     log_change(:owner_id, :owner_changed) { |id| User.find_by(id: id)&.name }
   end
 

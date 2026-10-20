@@ -26,7 +26,12 @@ const summary = computed(
   () =>
     crmState.summaries[summaryKey(props.chat.meta?.sender?.id, props.chat.id)]
 );
-const opportunities = computed(() => summary.value?.opportunities || []);
+// negócio encaminhado não recebe nota: a conversa segue no da unidade de destino
+const opportunities = computed(() =>
+  (summary.value?.opportunities || []).filter(
+    item => item.status !== 'forwarded'
+  )
+);
 const selected = computed(() =>
   opportunities.value.find(item => item.id === opportunityId.value)
 );

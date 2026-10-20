@@ -213,6 +213,22 @@ class CrmAPI extends ApiClient {
   getAudits(opportunityId) {
     return axios.get(`${this.url}/opportunities/${opportunityId}/audits`);
   }
+
+  getForwardOptions(opportunityId) {
+    return axios.get(`${this.url}/opportunities/${opportunityId}/forward`);
+  }
+
+  // to_business_unit_id, pipeline_id, owner_id, reason_id, notes, complete_tasks,
+  // create_task, assign_conversation
+  forwardOpportunity(opportunityId, forward) {
+    return axios.post(`${this.url}/opportunities/${opportunityId}/forward`, {
+      forward,
+    });
+  }
+
+  getContactHistory(contactId) {
+    return axios.get(`${this.url}/contacts/${contactId}/history`);
+  }
 }
 
 export default new CrmAPI();

@@ -87,4 +87,27 @@ RSpec.describe 'Outsider CRM contacts API', type: :request do
       expect(response).to have_http_status(:unprocessable_entity)
     end
   end
+
+  describe 'GET history' do
+    it 'shows the multi-company history with the forwards, even from units the user does not follow' do
+      crm_pipeline(account, other_unit, name: 'Seminovos')
+      reason = Outsider::Crm::LostReason.create!(account: account, name: 'Quer usado', kind: :forward)
+      origin = crm_opportunity(account, unit, contact: contact, pipeline: pipeline, owner: seller, value_cents: 70_000)
+      Outsider::Crm::OpportunityForwarder.new(origin, access: Outsider::Crm::Access.new(account.account_users.find_by(user: admin)),
+                                                      user: admin, params: { to_business_unit_id: other_unit.id, reason_id: reason.id,
+                                                                             notes: 'Ver seminovos' }).perform
+
+      get "#{url}/#{contact.id}/history", headers: seller.create_new_auth_token
+
+      body = response.parsed_body
+      expect(body['max_forward_attempts']).to eq(3)
+      journey = body['journeys'].sole
+      expect(journey).to include('status' => 'open', 'forwards_count' => 1)
+      expect(journey['opportunities'].map { |item| [item['business_unit']['name'], item['status'], item['can_view']] })
+        .to eq([['Locação', 'forwarded', true], ['Seminovos', 'open', false]])
+      expect(journey['opportunities'].first).to include('reason' => 'Quer usado', 'value_cents' => 70_000)
+      expect(journey['forwards'].sole).to include('attempt_number' => 1, 'from_unit' => 'Locação', 'to_unit' => 'Seminovos',
+                                                  'reason' => 'Quer usado', 'notes' => 'Ver seminovos', 'requested_by' => admin.name)
+    end
+  end
 end

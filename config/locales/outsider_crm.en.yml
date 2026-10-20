@@ -4,3 +4,20 @@ en:
       duplicate_open_opportunity: This contact already has an open opportunity in this business unit
       group_contact: WhatsApp groups cannot have opportunities
       stage_in_use: Move the opportunities out of this stage before removing it
+      forwarded_locked: A forwarded opportunity can no longer change. Use the opportunity in the destination unit
+    forward:
+      task_title: "Contact the customer forwarded by %{unit}"
+      errors:
+        not_open: Only open opportunities can be forwarded
+        invalid_unit: Choose an active destination unit other than the current one
+        limit_reached: "This lead was already forwarded %{max} times, the account limit. Mark the opportunity as won or lost"
+        duplicate_open: The contact already has an open opportunity in the destination unit
+        no_pipeline: The destination unit has no active pipeline
+        invalid_reason: Choose a forwarding reason from the list
+        reason_required: Choose the forwarding reason
+        notes_too_long: The note is longer than 2000 characters
+        invalid_owner: The owner must be a member of the destination unit
+        no_conversation: This opportunity has no linked conversation to assign
+        no_owner_to_assign: Choose the destination owner to assign the conversation
+        owner_not_in_inbox: "%{name} is not in this conversation's inbox"
+        conversation_forbidden: You are not in this conversation's inbox, so you cannot assign it

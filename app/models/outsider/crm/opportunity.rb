@@ -20,6 +20,11 @@ class Outsider::Crm::Opportunity < ApplicationRecord
   belongs_to :conversation, optional: true
   belongs_to :owner, class_name: 'User', optional: true
   belongs_to :created_by, class_name: 'User', optional: true
+  # Negócio que entrou ou saiu por encaminhamento não se apaga: o histórico multiempresa depende dele
+  has_one :outgoing_forward, class_name: 'Outsider::Crm::Forward', foreign_key: :from_opportunity_id,
+                             inverse_of: :from_opportunity, dependent: :restrict_with_error
+  has_one :incoming_forward, class_name: 'Outsider::Crm::Forward', foreign_key: :to_opportunity_id,
+                             inverse_of: :to_opportunity, dependent: :restrict_with_error
   has_many :tasks, class_name: 'Outsider::Crm::Task', dependent: :destroy
   has_many :activities, class_name: 'Outsider::Crm::Activity', dependent: :destroy
 

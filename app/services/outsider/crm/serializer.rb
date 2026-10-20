@@ -19,10 +19,12 @@ module Outsider::Crm::Serializer
     definition.slice(:id, :key, :label, :field_type, :options, :required, :active, :position)
   end
 
-  # Lista de negócios: tarefas pendentes e conversas numa consulta só para todos
+  LIST_PRELOAD = [:conversation, { forwarded_from: :business_unit, outgoing_forward: { to_opportunity: :business_unit } }].freeze
+
+  # Lista de negócios: tarefas pendentes, conversas e encaminhamentos numa consulta só para todos
   def opportunities(list, access: nil)
     list = list.to_a
-    ActiveRecord::Associations::Preloader.new(records: list, associations: :conversation).call
+    ActiveRecord::Associations::Preloader.new(records: list, associations: LIST_PRELOAD).call
     stats = Outsider::Crm::TaskStats.for(list.map(&:id))
     list.map { |opportunity| opportunity(opportunity, access: access, task_stats: stats[opportunity.id]) }
   end
@@ -42,8 +44,21 @@ module Outsider::Crm::Serializer
       tasks: task_stats || Outsider::Crm::TaskStats.for([opportunity.id])[opportunity.id],
       contact: contact(opportunity.contact),
       owner: user(opportunity.owner),
-      can_edit: access&.edit_opportunity?(opportunity)
-    )
+      can_edit: access&.edit_opportunity?(opportunity),
+      can_forward: access&.forward_opportunity?(opportunity)
+    ).merge(forward_links(opportunity))
+  end
+
+  # De onde veio e para onde foi um negócio encaminhado (a unidade pode ser uma que o usuário não vê)
+  def forward_links(opportunity)
+    {
+      forwarded_from: forward_link(opportunity.forwarded_from),
+      forwarded_to: opportunity.forwarded? ? forward_link(opportunity.outgoing_forward&.to_opportunity) : nil
+    }
+  end
+
+  def forward_link(opportunity)
+    opportunity && { id: opportunity.id, code: opportunity.code, business_unit_name: opportunity.business_unit.name }
   end
 
   def task(task, access: nil)

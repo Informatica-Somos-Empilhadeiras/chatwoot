@@ -17,6 +17,7 @@ Rails.application.routes.prepend do
               resources :custom_fields, only: [:index, :create, :update, :destroy]
               resources :contacts, only: [:show] do
                 collection { get :summaries }
+                member { get :history }
               end
               resources :opportunities, only: [:index, :show, :create, :update, :destroy] do
                 collection do
@@ -28,6 +29,7 @@ Rails.application.routes.prepend do
                 resources :tasks, controller: 'opportunity_tasks', only: [:index, :create, :update, :destroy]
                 resources :activities, controller: 'opportunity_activities', only: [:index, :create, :destroy]
                 resources :audits, controller: 'opportunity_audits', only: [:index]
+                resource :forward, controller: 'opportunity_forwards', only: [:show, :create]
               end
               resources :tasks, only: [:index]
             end

@@ -44,10 +44,17 @@ class Outsider::Crm::Access
     member_of?(opportunity.business_unit_id)
   end
 
+  # Negócio encaminhado não muda mais, nem pelo administrador: a continuação está no destino
   def edit_opportunity?(opportunity)
+    return false if opportunity.forwarded?
     return true if manage_unit?(opportunity.business_unit_id)
 
     member_of?(opportunity.business_unit_id) && opportunity.owner_id == account_user.user_id
+  end
+
+  # Encaminha quem edita o negócio, enquanto ele está aberto
+  def forward_opportunity?(opportunity)
+    opportunity.open? && edit_opportunity?(opportunity)
   end
 
   # Quem edita o negócio mexe em todas as tarefas dele; o responsável pela tarefa pode
@@ -58,7 +65,7 @@ class Outsider::Crm::Access
 
   # Só notas se apagam: quem escreveu, o gestor da unidade ou o administrador
   def delete_activity?(activity)
-    return false unless activity.note?
+    return false unless activity.note? && !activity.opportunity.forwarded?
 
     activity.user_id == account_user.user_id || manage_unit?(activity.opportunity.business_unit_id)
   end

@@ -4,6 +4,23 @@ pt_BR:
       duplicate_open_opportunity: Este contato já tem uma oportunidade aberta nesta unidade
       group_contact: Grupos do WhatsApp não podem ter negócios
       stage_in_use: Mova as oportunidades desta etapa antes de removê-la
+      forwarded_locked: Negócio encaminhado não muda mais. Use o negócio da unidade de destino
+    forward:
+      task_title: "Contatar cliente encaminhado por %{unit}"
+      errors:
+        not_open: Só negócios abertos podem ser encaminhados
+        invalid_unit: Escolha uma unidade de destino ativa, diferente da atual
+        limit_reached: "Este lead já foi encaminhado %{max} vezes, o limite da conta. Marque o negócio como ganho ou perdido"
+        duplicate_open: O contato já tem um negócio aberto na unidade de destino
+        no_pipeline: A unidade de destino não tem pipeline ativo
+        invalid_reason: Escolha um motivo de encaminhamento da lista
+        reason_required: Escolha o motivo do encaminhamento
+        notes_too_long: A observação passa de 2000 caracteres
+        invalid_owner: O responsável precisa ser membro da unidade de destino
+        no_conversation: Este negócio não tem conversa ligada para atribuir
+        no_owner_to_assign: Escolha o responsável no destino para atribuir a conversa
+        owner_not_in_inbox: "%{name} não está na caixa de entrada desta conversa"
+        conversation_forbidden: Você não está na caixa de entrada desta conversa para atribuí-la
   # Mensagens de validação dos modelos do CRM (o Chatwoot não traduz as mensagens padrão do Rails)
   activerecord:
     attributes:
@@ -72,6 +89,7 @@ pt_BR:
           required: "é obrigatório"
           restrict_dependent_destroy:
             has_many: "Não é possível apagar porque existem %{record} ligados"
+            has_one: "Este negócio faz parte de um encaminhamento entre unidades e não pode ser apagado"
         outsider/crm/pipeline:
           blank: "não pode ficar em branco"
           invalid: "não é válido"

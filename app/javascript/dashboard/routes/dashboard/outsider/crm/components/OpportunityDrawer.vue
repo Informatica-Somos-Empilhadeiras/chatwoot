@@ -1,6 +1,7 @@
 <script setup>
 // OUTSIDER: painel lateral de um negócio na tela do CRM: resumo, barra de etapas, tarefas, linha
-// do tempo e auditoria. "Editar" abre o formulário de sempre (OpportunityDialog).
+// do tempo, auditoria e histórico multiempresa. "Editar" abre o formulário de sempre
+// (OpportunityDialog); "Encaminhar" leva o negócio para outra unidade (ForwardDialog).
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useAlert } from 'dashboard/composables';
@@ -11,6 +12,9 @@ import Icon from 'dashboard/components-next/icon/Icon.vue';
 import Avatar from 'dashboard/components-next/avatar/Avatar.vue';
 import StageProgress from '../conversation/StageProgress.vue';
 import OpportunityActivity from '../activity/OpportunityActivity.vue';
+import ForwardDialog from './ForwardDialog.vue';
+import JourneyHistory from './JourneyHistory.vue';
+import { refreshContact } from '../crmStore';
 import {
   STATUS_COLORS,
   errorMessage,
@@ -30,6 +34,7 @@ const { accountScopedRoute } = useAccount();
 
 const opportunity = ref(null);
 const isSaving = ref(false);
+const forwardDialogRef = ref(null);
 
 const pipeline = computed(() =>
   props.pipelines.find(item => item.id === opportunity.value?.pipeline_id)
@@ -60,9 +65,25 @@ const close = () => {
   opportunity.value = null;
 };
 
+// negócio de outra unidade da mesma jornada (só os que o usuário enxerga têm link)
+const openOther = async item => {
+  try {
+    const { data } = await CrmAPI.getOpportunity(item.id);
+    opportunity.value = data;
+  } catch (error) {
+    useAlert(errorMessage(t, error));
+  }
+};
+
 const changed = async () => {
   await refresh();
   emit('changed');
+};
+
+// depois de encaminhar, o painel mostra a origem (agora encaminhada) e o histórico atualizado
+const forwarded = async () => {
+  await changed();
+  refreshContact(opportunity.value.contact.id);
 };
 
 const moveTo = async stage => {
@@ -82,7 +103,11 @@ const moveTo = async stage => {
 
 // Esc fecha o painel, menos quando um formulário (dialog) está aberto por cima
 const onKeydown = event => {
-  if (event.key === 'Escape' && opportunity.value && !document.querySelector('dialog[open]')) {
+  if (
+    event.key === 'Escape' &&
+    opportunity.value &&
+    !document.querySelector('dialog[open]')
+  ) {
     close();
   }
 };
@@ -100,17 +125,23 @@ defineExpose({ open, refresh, close });
       <aside
         class="relative flex flex-col w-full h-full max-w-2xl border-l shadow-xl bg-n-solid-1 border-n-weak"
       >
-        <header class="flex items-start gap-3 px-5 pt-5 pb-4 border-b border-n-weak">
+        <header
+          class="flex items-start gap-3 px-5 pt-5 pb-4 border-b border-n-weak"
+        >
           <div class="flex flex-col flex-1 min-w-0 gap-1">
             <div class="flex flex-wrap items-center gap-1.5 text-xs">
-              <span class="px-1.5 py-0.5 rounded-md bg-n-alpha-2 text-n-slate-11">
+              <span
+                class="px-1.5 py-0.5 rounded-md bg-n-alpha-2 text-n-slate-11"
+              >
                 {{ opportunity.code }}
               </span>
               <span
                 class="px-1.5 py-0.5 rounded-md"
                 :class="STATUS_COLORS[opportunity.status]"
               >
-                {{ t(`OUTSIDER_CRM.STATUS.${opportunity.status.toUpperCase()}`) }}
+                {{
+                  t(`OUTSIDER_CRM.STATUS.${opportunity.status.toUpperCase()}`)
+                }}
               </span>
               <span class="text-n-slate-11">
                 {{ unitName }}
@@ -120,7 +151,9 @@ defineExpose({ open, refresh, close });
             <h2 class="mb-0 text-lg font-medium text-n-slate-12">
               {{ opportunity.title }}
             </h2>
-            <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-n-slate-11">
+            <div
+              class="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-n-slate-11"
+            >
               <span class="inline-flex items-center gap-1.5 min-w-0">
                 <Avatar
                   :name="opportunity.contact.name"
@@ -159,7 +192,9 @@ defineExpose({ open, refresh, close });
           />
         </header>
 
-        <div class="flex flex-col flex-1 min-h-0 gap-5 px-5 py-4 overflow-y-auto">
+        <div
+          class="flex flex-col flex-1 min-h-0 gap-5 px-5 py-4 overflow-y-auto"
+        >
           <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <div class="flex flex-col gap-0.5">
               <span class="text-xs text-n-slate-11">
@@ -175,7 +210,9 @@ defineExpose({ open, refresh, close });
               </span>
               <span
                 class="text-sm font-medium"
-                :class="opportunity.overdue ? 'text-n-ruby-11' : 'text-n-slate-12'"
+                :class="
+                  opportunity.overdue ? 'text-n-ruby-11' : 'text-n-slate-12'
+                "
               >
                 {{ formatDate(opportunity.expected_close_on) || '—' }}
               </span>
@@ -207,7 +244,32 @@ defineExpose({ open, refresh, close });
             @move="moveTo"
           />
 
-          <div>
+          <p
+            v-if="opportunity.forwarded_from"
+            class="flex items-center gap-2 px-3 py-2 mb-0 text-sm rounded-lg bg-n-amber-2 text-n-amber-11"
+          >
+            <Icon icon="i-lucide-inbox" class="size-4 shrink-0" />
+            {{
+              t('OUTSIDER_CRM.FORWARD.RECEIVED_FROM', {
+                unit: opportunity.forwarded_from.business_unit_name,
+                code: opportunity.forwarded_from.code,
+              })
+            }}
+          </p>
+          <p
+            v-if="opportunity.forwarded_to"
+            class="flex items-center gap-2 px-3 py-2 mb-0 text-sm rounded-lg bg-n-amber-2 text-n-amber-11"
+          >
+            <Icon icon="i-lucide-forward" class="size-4 shrink-0" />
+            {{
+              t('OUTSIDER_CRM.FORWARD.SENT_TO', {
+                unit: opportunity.forwarded_to.business_unit_name,
+                code: opportunity.forwarded_to.code,
+              })
+            }}
+          </p>
+
+          <div class="flex flex-wrap gap-2">
             <Button
               type="button"
               size="sm"
@@ -221,11 +283,32 @@ defineExpose({ open, refresh, close });
               "
               @click="emit('edit', opportunity)"
             />
+            <Button
+              v-if="opportunity.can_forward"
+              type="button"
+              size="sm"
+              variant="faded"
+              color="amber"
+              icon="i-lucide-forward"
+              :label="t('OUTSIDER_CRM.FORWARD.BUTTON')"
+              @click="forwardDialogRef?.open(opportunity)"
+            />
           </div>
 
           <OpportunityActivity :opportunity="opportunity" @changed="changed" />
+
+          <JourneyHistory
+            :contact-id="opportunity.contact.id"
+            :opportunity-id="opportunity.id"
+            @open="openOther"
+          />
         </div>
       </aside>
     </div>
+    <ForwardDialog
+      ref="forwardDialogRef"
+      :unit-name="unitName"
+      @forwarded="forwarded"
+    />
   </Teleport>
 </template>

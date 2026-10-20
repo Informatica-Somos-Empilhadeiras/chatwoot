@@ -17,6 +17,7 @@ class Outsider::Crm::Forward < ApplicationRecord
   enum :status, { pending: 0, accepted: 1, declined: 2 }, validate: true
 
   validates :attempt_number, numericality: { only_integer: true, greater_than: 0 }
+  validates :notes, length: { maximum: 2000 }
   validates_same_account :journey, :from_opportunity, :to_opportunity, :from_business_unit, :to_business_unit, :reason
   validate :different_units
 

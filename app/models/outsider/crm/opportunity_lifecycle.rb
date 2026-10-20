@@ -10,6 +10,7 @@ module Outsider::Crm::OpportunityLifecycle
     validate :lost_reason_when_lost
     before_validation :sync_status_and_stage
     before_save :track_closing
+    after_save :sync_journey_status, if: -> { saved_change_to_status? || saved_change_to_id? }
   end
 
   private
@@ -38,6 +39,10 @@ module Outsider::Crm::OpportunityLifecycle
 
     self.closed_at = open? ? nil : Time.current
     self.lost_reason = nil unless lost? || forwarded?
+  end
+
+  def sync_journey_status
+    journey.sync_status!
   end
 
   # Só exige motivo se a conta cadastrou algum motivo de perda

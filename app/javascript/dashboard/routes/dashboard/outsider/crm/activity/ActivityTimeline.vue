@@ -38,6 +38,9 @@ const KIND_ICONS = {
   message_linked: 'i-lucide-message-square',
 };
 
+// encaminhamento: a observação de quem encaminhou aparece como a nota, em âmbar
+const FORWARD_KINDS = ['forwarded', 'received'];
+
 const items = ref([]);
 const hasMore = ref(false);
 const isLoading = ref(false);
@@ -142,6 +145,18 @@ const describe = item => {
         name,
         title: meta.title,
       });
+    case 'forwarded':
+      return t('OUTSIDER_CRM.TIMELINE.FORWARDED', {
+        name,
+        unit: meta.to_unit || '—',
+        code: meta.to_code || '',
+      });
+    case 'received':
+      return t('OUTSIDER_CRM.TIMELINE.RECEIVED', {
+        name,
+        unit: meta.from_unit || '—',
+        code: meta.from_code || '',
+      });
     default:
       return t(`OUTSIDER_CRM.TIMELINE.${item.kind.toUpperCase()}`, { name });
   }
@@ -152,22 +167,44 @@ const detail = item => {
   if (item.kind === 'status_changed' && meta.lost_reason) {
     return t('OUTSIDER_CRM.TIMELINE.LOST_REASON', { reason: meta.lost_reason });
   }
+  if (item.kind === 'forwarded' || item.kind === 'received') {
+    return [
+      meta.reason && t('OUTSIDER_CRM.HISTORY.REASON', { reason: meta.reason }),
+      meta.attempt &&
+        t('OUTSIDER_CRM.HISTORY.ATTEMPT', {
+          current: meta.attempt,
+          max: meta.max,
+        }),
+      item.kind === 'forwarded' &&
+        meta.owner &&
+        t('OUTSIDER_CRM.TIMELINE.FORWARD_OWNER', { name: meta.owner }),
+    ]
+      .filter(Boolean)
+      .join(' · ');
+  }
   if (item.kind === 'task_created' && meta.due_at) {
     const due = formatDateTime(meta.due_at, t);
     return meta.assignee
-      ? t('OUTSIDER_CRM.TIMELINE.TASK_DUE_FOR', { date: due, name: meta.assignee })
+      ? t('OUTSIDER_CRM.TIMELINE.TASK_DUE_FOR', {
+          date: due,
+          name: meta.assignee,
+        })
       : t('OUTSIDER_CRM.TIMELINE.TASK_DUE', { date: due });
   }
   return '';
 };
 
-watch(() => [props.opportunity.id, version.value], () => load());
+watch(
+  () => [props.opportunity.id, version.value],
+  () => load()
+);
 onMounted(() => load());
 </script>
 
 <template>
   <div class="flex flex-col gap-3">
     <div
+      v-if="opportunity.status !== 'forwarded'"
       class="flex flex-col gap-2 p-3 rounded-lg bg-n-violet-2 outline outline-1 -outline-offset-1 outline-n-violet-5"
     >
       <span
@@ -218,7 +255,9 @@ onMounted(() => load());
           :class="
             item.kind === 'note'
               ? 'bg-n-violet-3 text-n-violet-11'
-              : 'bg-n-alpha-2 text-n-slate-11'
+              : FORWARD_KINDS.includes(item.kind)
+                ? 'bg-n-amber-3 text-n-amber-11'
+                : 'bg-n-alpha-2 text-n-slate-11'
           "
         >
           <Icon
@@ -236,6 +275,12 @@ onMounted(() => load());
           <p
             v-if="item.kind === 'note'"
             class="px-3 py-2 mb-0 text-sm break-words whitespace-pre-wrap rounded-lg bg-n-violet-2 text-n-slate-12"
+          >
+            {{ item.body }}
+          </p>
+          <p
+            v-else-if="FORWARD_KINDS.includes(item.kind) && item.body"
+            class="px-3 py-2 mb-0 text-sm break-words whitespace-pre-wrap rounded-lg bg-n-amber-2 text-n-slate-12"
           >
             {{ item.body }}
           </p>

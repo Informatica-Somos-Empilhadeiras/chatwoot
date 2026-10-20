@@ -1,5 +1,6 @@
 <script setup>
-// OUTSIDER: card de um negócio no Kanban. Tarefa atrasada deixa o card com borda vermelha.
+// OUTSIDER: card de um negócio no Kanban. Tarefa atrasada deixa o card com borda vermelha;
+// negócio recebido por encaminhamento mostra de qual unidade veio.
 import { useI18n } from 'vue-i18n';
 import Avatar from 'dashboard/components-next/avatar/Avatar.vue';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
@@ -44,6 +45,19 @@ const { t } = useI18n();
       <span class="truncate">{{ opportunity.contact.name }}</span>
     </div>
 
+    <span
+      v-if="opportunity.forwarded_from"
+      class="inline-flex items-center self-start gap-1 px-1.5 py-0.5 text-xs rounded-md bg-n-amber-3 text-n-amber-11"
+      :title="opportunity.forwarded_from.code"
+    >
+      <Icon icon="i-lucide-inbox" class="size-3" />
+      {{
+        t('OUTSIDER_CRM.FORWARD.FROM_UNIT', {
+          unit: opportunity.forwarded_from.business_unit_name,
+        })
+      }}
+    </span>
+
     <div class="flex items-center justify-between gap-2">
       <span class="font-semibold text-n-slate-12">
         {{ formatMoney(opportunity.value_cents) }}
@@ -83,7 +97,11 @@ const { t } = useI18n();
       <span
         v-else-if="opportunity.tasks?.pending"
         class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-n-alpha-2 text-n-slate-11"
-        :title="t('OUTSIDER_CRM.BOARD.TASKS_PENDING', { count: opportunity.tasks.pending })"
+        :title="
+          t('OUTSIDER_CRM.BOARD.TASKS_PENDING', {
+            count: opportunity.tasks.pending,
+          })
+        "
       >
         <Icon icon="i-lucide-list-checks" class="size-3" />
         {{
