@@ -14,16 +14,18 @@ RSpec.describe 'Outsider CRM contacts API', type: :request do
 
   describe 'GET show' do
     it 'summarizes the visible opportunities, picking the one linked to the conversation' do
+      create_list(:conversation, 2) # o número da conversa na tela (display_id) deixa de ser igual ao id
       conversation = create(:conversation, account: account, contact: contact)
       linked = crm_opportunity(account, unit, contact: contact, pipeline: pipeline, conversation: conversation, value_cents: 50_000)
       crm_opportunity(account, unit, contact: contact, pipeline: pipeline, value_cents: 10_000, status: :won,
                                      stage: pipeline.stages.find_by(kind: :won))
       crm_opportunity(account, other_unit, contact: contact, value_cents: 99_000)
 
-      get "#{url}/#{contact.id}", params: { conversation_id: conversation.id }, headers: seller.create_new_auth_token
+      get "#{url}/#{contact.id}", params: { conversation_id: conversation.display_id }, headers: seller.create_new_auth_token
 
       body = response.parsed_body
       expect(body).to include('open_count' => 1, 'open_value_cents' => 50_000, 'won_count' => 1, 'primary_id' => linked.id)
+      expect(body['opportunities'].first).to include('conversation_display_id' => conversation.display_id)
       expect(body['opportunities'].size).to eq(2)
       expect(body['creatable_unit_ids']).to eq([])
     end
@@ -69,12 +71,14 @@ RSpec.describe 'Outsider CRM contacts API', type: :request do
   end
 
   describe 'creating from a conversation' do
-    it 'links the conversation and refuses a group contact' do
+    it 'links the conversation by the number shown on screen and refuses a group contact' do
+      create_list(:conversation, 2)
       conversation = create(:conversation, account: account, contact: contact)
       post "/api/v1/accounts/#{account.id}/outsider/crm/opportunities",
-           params: { opportunity: { business_unit_id: unit.id, contact_id: contact.id, conversation_id: conversation.id, title: 'Locação' } },
+           params: { opportunity: { business_unit_id: unit.id, contact_id: contact.id, conversation_display_id: conversation.display_id,
+                                    title: 'Locação' } },
            headers: seller.create_new_auth_token, as: :json
-      expect(response.parsed_body['conversation_id']).to eq(conversation.id)
+      expect(response.parsed_body).to include('conversation_id' => conversation.id, 'conversation_display_id' => conversation.display_id)
 
       group = create(:contact, account: account, identifier: '120363012345678901@g.us')
       post "/api/v1/accounts/#{account.id}/outsider/crm/opportunities",

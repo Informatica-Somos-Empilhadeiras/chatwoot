@@ -10,9 +10,15 @@ import TabBar from 'dashboard/components-next/tabbar/TabBar.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
 import OpportunityList from '../components/OpportunityList.vue';
+import TasksPanel from '../components/TasksPanel.vue';
 import CrmSettingsPanel from '../components/settings/CrmSettingsPanel.vue';
 import { errorMessage } from '../helpers';
-import { invalidateCrmContext } from '../crmStore';
+import {
+  crmState,
+  invalidateCrmContext,
+  refreshMyTasks,
+  startTaskReminders,
+} from '../crmStore';
 
 const { t } = useI18n();
 const route = useRoute();
@@ -31,6 +37,11 @@ const canConfigure = computed(
 
 const tabs = computed(() => [
   { key: 'opportunities', label: t('OUTSIDER_CRM.TABS.OPPORTUNITIES') },
+  {
+    key: 'tasks',
+    label: t('OUTSIDER_CRM.TABS.TASKS'),
+    count: crmState.myTasks.pending || undefined,
+  },
   ...(canConfigure.value
     ? [{ key: 'settings', label: t('OUTSIDER_CRM.TABS.SETTINGS') }]
     : []),
@@ -69,6 +80,10 @@ const reload = async () => {
 onMounted(async () => {
   await reload();
   isLoading.value = false;
+  if (access.value.enabled) {
+    refreshMyTasks();
+    startTaskReminders(t);
+  }
 });
 </script>
 
@@ -121,6 +136,11 @@ onMounted(async () => {
               v-if="activeTab === 'opportunities'"
               :access="access"
               :units="units"
+              :pipelines="pipelines"
+            />
+            <TasksPanel
+              v-else-if="activeTab === 'tasks'"
+              :access="access"
               :pipelines="pipelines"
             />
             <CrmSettingsPanel

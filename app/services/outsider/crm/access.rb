@@ -50,6 +50,26 @@ class Outsider::Crm::Access
     member_of?(opportunity.business_unit_id) && opportunity.owner_id == account_user.user_id
   end
 
+  # Quem edita o negócio mexe em todas as tarefas dele; o responsável pela tarefa pode
+  # concluir e adiar a sua mesmo sem editar o negócio
+  def complete_task?(task)
+    edit_opportunity?(task.opportunity) || task.assignee_id == account_user.user_id
+  end
+
+  # Só notas se apagam: quem escreveu, o gestor da unidade ou o administrador
+  def delete_activity?(activity)
+    return false unless activity.note?
+
+    activity.user_id == account_user.user_id || manage_unit?(activity.opportunity.business_unit_id)
+  end
+
+  # Pode ser responsável por tarefa ou negócio da unidade: membros e administradores da conta
+  def assignable_user_ids(unit_id)
+    admins = AccountUser.where(account_id: account_user.account_id, role: :administrator).pluck(:user_id)
+    members = Outsider::Crm::BusinessUnitMember.where(account_id: account_user.account_id, business_unit_id: unit_id).pluck(:user_id)
+    (admins + members).uniq
+  end
+
   def as_json(*)
     {
       administrator: administrator?,

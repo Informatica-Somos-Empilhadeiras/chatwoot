@@ -37,7 +37,7 @@ const allowedUnitIds = ref(null);
 
 const emptyForm = () => ({
   contact_id: '',
-  conversation_id: '',
+  conversation_display_id: '',
   business_unit_id: props.access.units[0]?.id ?? '',
   pipeline_id: '',
   stage_id: '',
@@ -183,7 +183,7 @@ const contactLabel = contact =>
   [contact.name, contact.phone_number].filter(Boolean).join(' · ');
 
 // defaults pode trazer: business_unit_id, pipeline_id, stage_id (Kanban) ou
-// contact, conversation_id e unit_ids (aba CRM da conversa)
+// contact, conversation_display_id e unit_ids (aba CRM da conversa)
 const open = async (opportunity = null, defaults = {}) => {
   editing.value = opportunity;
   const { contact, unit_ids: unitIds, ...initial } = defaults;
@@ -255,7 +255,7 @@ const payload = () => {
   return {
     ...data,
     contact_id: form.value.contact_id,
-    conversation_id: form.value.conversation_id || null,
+    conversation_display_id: form.value.conversation_display_id || null,
     business_unit_id: form.value.business_unit_id,
     pipeline_id: form.value.pipeline_id,
   };

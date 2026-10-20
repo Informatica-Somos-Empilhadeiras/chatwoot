@@ -5,7 +5,8 @@
     "SAVE": "Salvar",
     "TABS": {
       "OPPORTUNITIES": "Negócios",
-      "SETTINGS": "Configurações"
+      "SETTINGS": "Configurações",
+      "TASKS": "Tarefas"
     },
     "STATES": {
       "NO_ACCESS": "Você ainda não faz parte de nenhuma unidade comercial do CRM. Peça a um administrador para incluir você.",
@@ -208,7 +209,9 @@
       "MARK_LOST": "Marcar como perdido",
       "CHOOSE_REASON": "Escolha o motivo",
       "WON_DONE": "\"{title}\" marcado como ganho",
-      "LOST_DONE": "\"{title}\" marcado como perdido"
+      "LOST_DONE": "\"{title}\" marcado como perdido",
+      "TASKS_LATE": "Tarefa atrasada: {count}",
+      "TASKS_PENDING": "Tarefas pendentes: {count}"
     },
     "CONVERSATION": {
       "TAB": "CRM",
@@ -245,6 +248,153 @@
       "WON": "Ganhos",
       "CHIP_TOOLTIP": "Negócios abertos no CRM: {count}",
       "DEALS": "Negócios: {count}"
+    },
+    "CANCEL": "Cancelar",
+    "DATES": {
+      "TODAY": "Hoje",
+      "TOMORROW": "Amanhã",
+      "YESTERDAY": "Ontem"
+    },
+    "ACTIVITY_TABS": {
+      "TASKS": "Tarefas",
+      "TIMELINE": "Linha do tempo",
+      "AUDIT": "Auditoria"
+    },
+    "TASKS": {
+      "NEW": "Nova tarefa",
+      "ADD": "Adicionar tarefa",
+      "TITLE_PLACEHOLDER": "O que precisa ser feito? Ex.: Ligar para confirmar a proposta",
+      "DESCRIPTION_PLACEHOLDER": "Detalhes (opcional)",
+      "KIND": "Tipo",
+      "DUE_DATE": "Data",
+      "DUE_TIME": "Hora",
+      "ASSIGNEE": "Responsável",
+      "KINDS": {
+        "TODO": "Tarefa",
+        "CALL": "Ligação",
+        "MEETING": "Reunião",
+        "VISIT": "Visita",
+        "PROPOSAL": "Proposta",
+        "FOLLOW_UP": "Retorno"
+      },
+      "CREATED": "Tarefa criada: {title}",
+      "COMPLETED": "Tarefa concluída: {title}",
+      "REOPENED": "Tarefa reaberta",
+      "POSTPONED": "Tarefa adiada para {date}",
+      "DELETED": "Tarefa apagada",
+      "POSTPONE": {
+        "HOUR": "Adiar 1 hora",
+        "TOMORROW": "Adiar para amanhã",
+        "WEEK": "Adiar 1 semana",
+        "CUSTOM": "Escolher data e hora",
+        "SAVE": "Adiar"
+      },
+      "DELETE": "Apagar tarefa",
+      "MORE": "Mais opções",
+      "COMPLETE": "Marcar como feita",
+      "REOPEN": "Reabrir tarefa",
+      "LATE": "atrasada",
+      "DONE_BY": "Feita por {name} em {date}",
+      "PENDING_COUNT": "Pendentes: {count}",
+      "OVERDUE_COUNT": "Atrasadas: {count}",
+      "NONE_PENDING": "Nenhuma tarefa pendente",
+      "EMPTY": "Nenhuma tarefa pendente. Crie a próxima ação deste negócio.",
+      "EMPTY_READ_ONLY": "Nenhuma tarefa pendente.",
+      "SHOW_DONE": "Ver concluídas ({count})",
+      "HIDE_DONE": "Esconder concluídas",
+      "REMINDER": "Hora da tarefa: {title} ({contact})",
+      "REMINDER_LINK": "Ver tarefas",
+      "FILTERS": {
+        "MINE": "Minhas tarefas",
+        "ALL": "Todas as tarefas",
+        "PENDING": "Pendentes",
+        "DONE": "Concluídas (30 dias)"
+      },
+      "GROUPS": {
+        "OVERDUE": "Atrasadas",
+        "TODAY": "Hoje",
+        "TOMORROW": "Amanhã",
+        "WEEK": "Próximos 7 dias",
+        "LATER": "Mais adiante",
+        "NO_DATE": "Sem prazo",
+        "DONE": "Concluídas"
+      },
+      "LIST_EMPTY": "Nenhuma tarefa pendente por aqui.",
+      "LIST_EMPTY_DONE": "Nenhuma tarefa concluída nos últimos 30 dias."
+    },
+    "TIMELINE": {
+      "SYSTEM": "Sistema",
+      "NOTE": "{name} escreveu uma nota interna",
+      "CREATED": "{name} criou o negócio na etapa {stage}",
+      "STAGE_CHANGED": "{name} mudou a etapa de {from} para {to}",
+      "STATUS_CHANGED": "{name} mudou a situação de {from} para {to}",
+      "OWNER_CHANGED": "{name} trocou o responsável de {from} para {to}",
+      "TASK_CREATED": "{name} criou a tarefa \"{title}\"",
+      "TASK_COMPLETED": "{name} concluiu a tarefa \"{title}\"",
+      "FORWARDED": "{name} encaminhou o negócio",
+      "RECEIVED": "Negócio recebido por encaminhamento",
+      "MESSAGE_LINKED": "{name} ligou uma mensagem ao negócio",
+      "LOST_REASON": "Motivo: {reason}",
+      "TASK_DUE": "Prazo: {date}",
+      "TASK_DUE_FOR": "Prazo: {date} · Responsável: {name}",
+      "NOTE_HINT": "Nota interna do CRM: fica só no negócio, o cliente não vê",
+      "NOTE_PLACEHOLDER": "Escreva uma nota sobre o negócio (Ctrl+Enter salva)",
+      "SAVE_NOTE": "Salvar nota",
+      "NOTE_SAVED": "Nota salva",
+      "NOTE_DELETED": "Nota apagada",
+      "DELETE_NOTE": "Apagar",
+      "CONFIRM_DELETE": "Confirmar exclusão",
+      "FROM_CONVERSATION": "Na conversa #{id}",
+      "LOAD_MORE": "Carregar mais"
+    },
+    "AUDIT": {
+      "HINT": "Toda alteração do negócio e das tarefas, com quem fez e quando.",
+      "EMPTY": "Nenhuma alteração registrada.",
+      "YES": "Sim",
+      "NO": "Não",
+      "ACTIONS": {
+        "OPPORTUNITY_CREATE": "{name} criou o negócio",
+        "OPPORTUNITY_UPDATE": "{name} alterou o negócio",
+        "OPPORTUNITY_DESTROY": "{name} apagou o negócio",
+        "TASK_CREATE": "{name} criou a tarefa \"{label}\"",
+        "TASK_UPDATE": "{name} alterou a tarefa \"{label}\"",
+        "TASK_DESTROY": "{name} apagou a tarefa \"{label}\"",
+        "NOTE_DESTROY": "{name} apagou uma nota"
+      },
+      "FIELDS": {
+        "TITLE": "Nome",
+        "VALUE_CENTS": "Valor",
+        "EXPECTED_CLOSE_ON": "Previsão de fechamento",
+        "PROBABILITY": "Probabilidade",
+        "STATUS": "Situação",
+        "STAGE_ID": "Etapa",
+        "PIPELINE_ID": "Pipeline",
+        "BUSINESS_UNIT_ID": "Unidade",
+        "OWNER_ID": "Responsável",
+        "LOST_REASON_ID": "Motivo da perda",
+        "DESCRIPTION": "Descrição",
+        "KIND": "Tipo",
+        "DUE_AT": "Prazo",
+        "ASSIGNEE_ID": "Responsável",
+        "COMPLETED_AT": "Concluída em",
+        "BODY": "Nota"
+      }
+    },
+    "DRAWER": {
+      "OPEN_CONVERSATION": "Conversa #{id}",
+      "CLOSE": "Fechar"
+    },
+    "NOTE": {
+      "BUTTON": "Nota CRM",
+      "BUTTON_HINT": "Nota interna do CRM: vai para o negócio do contato e o cliente não vê",
+      "TITLE": "Nota interna CRM",
+      "PRIVATE_HINT": "Fica no negócio, o cliente não vê",
+      "DEAL": "Negócio da nota",
+      "BACK": "Voltar para a resposta",
+      "PLACEHOLDER": "Escreva a nota do CRM sobre este cliente...",
+      "KEYS": "Enter salva · Shift+Enter quebra a linha · Esc volta",
+      "SAVE": "Salvar nota",
+      "SAVED": "Nota salva no negócio {code}"
     }
   }
 }

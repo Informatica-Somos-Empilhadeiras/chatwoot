@@ -19,19 +19,58 @@ module Outsider::Crm::Serializer
     definition.slice(:id, :key, :label, :field_type, :options, :required, :active, :position)
   end
 
-  def opportunity(opportunity, access: nil)
+  # Lista de negócios: tarefas pendentes e conversas numa consulta só para todos
+  def opportunities(list, access: nil)
+    list = list.to_a
+    ActiveRecord::Associations::Preloader.new(records: list, associations: :conversation).call
+    stats = Outsider::Crm::TaskStats.for(list.map(&:id))
+    list.map { |opportunity| opportunity(opportunity, access: access, task_stats: stats[opportunity.id]) }
+  end
+
+  # conversation_display_id é o número da conversa que o Chatwoot mostra (e usa nas URLs)
+  def opportunity(opportunity, access: nil, task_stats: nil)
     opportunity.slice(
       :id, :display_id, :title, :value_cents, :currency, :expected_close_on, :probability, :status,
       :business_unit_id, :pipeline_id, :stage_id, :journey_id, :conversation_id, :lost_reason_id,
       :custom_fields, :position, :closed_at, :stage_changed_at, :created_at, :updated_at
     ).merge(
       code: opportunity.code,
+      conversation_display_id: opportunity.conversation&.display_id,
       effective_probability: opportunity.effective_probability,
       overdue: opportunity.open? && opportunity.expected_close_on.present? && opportunity.expected_close_on < Time.zone.today,
       sla_exceeded: sla_exceeded?(opportunity),
+      tasks: task_stats || Outsider::Crm::TaskStats.for([opportunity.id])[opportunity.id],
       contact: contact(opportunity.contact),
       owner: user(opportunity.owner),
       can_edit: access&.edit_opportunity?(opportunity)
+    )
+  end
+
+  def task(task, access: nil)
+    task.slice(:id, :opportunity_id, :title, :description, :kind, :due_at, :completed_at, :created_at).merge(
+      overdue: task.overdue?,
+      assignee: user(task.assignee),
+      created_by: user(task.created_by),
+      completed_by: user(task.completed_by),
+      can_edit: access&.edit_opportunity?(task.opportunity),
+      can_complete: access&.complete_task?(task)
+    )
+  end
+
+  # Tarefa na lista geral (aba Tarefas do CRM): leva junto o negócio e o contato
+  def task_with_opportunity(task, access: nil)
+    opportunity = task.opportunity
+    task(task, access: access).merge(
+      opportunity: opportunity.slice(:id, :title, :status, :business_unit_id).merge(
+        code: opportunity.code, contact: contact(opportunity.contact)
+      )
+    )
+  end
+
+  def activity(activity, access: nil)
+    activity.slice(:id, :opportunity_id, :kind, :body, :metadata, :created_at).merge(
+      user: user(activity.user),
+      can_delete: access&.delete_activity?(activity)
     )
   end
 

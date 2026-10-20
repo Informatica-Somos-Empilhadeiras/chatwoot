@@ -1,6 +1,7 @@
 <script setup>
 // OUTSIDER: aba "CRM" da conversa. Mostra o negócio principal do contato (o aberto ligado a esta
-// conversa ou, sem ele, o aberto mais recente), a barra de etapas e os outros negócios do contato.
+// conversa ou, sem ele, o aberto mais recente), a barra de etapas, as tarefas, a linha do tempo e
+// a auditoria dele, e os outros negócios do contato.
 // Usa o contato do Chatwoot: nada de cadastro duplicado. Grupos do WhatsApp não têm negócio.
 import { ref, computed, watch, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -13,6 +14,7 @@ import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
 import OpportunityDialog from '../components/OpportunityDialog.vue';
 import LostReasonDialog from '../components/LostReasonDialog.vue';
+import OpportunityActivity from '../activity/OpportunityActivity.vue';
 import StageProgress from './StageProgress.vue';
 import {
   crmState,
@@ -87,7 +89,7 @@ const afterChange = () => refreshContact(contact.value.id);
 const openNew = () =>
   dialogRef.value?.open(null, {
     contact: contact.value,
-    conversation_id: props.chat.id,
+    conversation_display_id: props.chat.id,
     unit_ids: summary.value.creatable_unit_ids,
     business_unit_id: summary.value.creatable_unit_ids[0],
   });
@@ -230,7 +232,7 @@ onMounted(async () => {
                   {{ t(`OUTSIDER_CRM.STATUS.${primary.status.toUpperCase()}`) }}
                 </span>
                 <span
-                  v-if="primary.conversation_id === chat.id"
+                  v-if="primary.conversation_display_id === chat.id"
                   class="px-1.5 py-0.5 rounded-md bg-n-blue-3 text-n-blue-11"
                 >
                   {{ t('OUTSIDER_CRM.CONVERSATION.FROM_THIS_CONVERSATION') }}
@@ -394,6 +396,17 @@ onMounted(async () => {
               </span>
             </div>
           </div>
+        </section>
+
+        <section
+          v-if="primary"
+          class="p-4 rounded-xl bg-n-solid-2 outline outline-1 -outline-offset-1 outline-n-container"
+        >
+          <OpportunityActivity
+            :opportunity="primary"
+            :conversation-display-id="chat.id"
+            @changed="afterChange"
+          />
         </section>
 
         <section v-if="others.length" class="flex flex-col gap-2">

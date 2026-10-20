@@ -47,6 +47,60 @@ export const centsToInput = cents =>
 export const formatDate = date =>
   date ? new Date(`${date}T12:00:00`).toLocaleDateString('pt-BR') : '';
 
+const timeFormat = new Intl.DateTimeFormat('pt-BR', {
+  hour: '2-digit',
+  minute: '2-digit',
+});
+
+const sameDay = (a, b) => a.toDateString() === b.toDateString();
+
+// "Hoje 14:00", "Amanhã 09:30", "Ontem 18:00" ou "21/10 14:00" (com o ano se não for este)
+export const formatDateTime = (timestamp, t) => {
+  if (!timestamp) return '';
+  const date = new Date(timestamp);
+  const time = timeFormat.format(date);
+  const today = new Date();
+  const tomorrow = new Date();
+  tomorrow.setDate(today.getDate() + 1);
+  const yesterday = new Date();
+  yesterday.setDate(today.getDate() - 1);
+  if (sameDay(date, today)) return `${t('OUTSIDER_CRM.DATES.TODAY')} ${time}`;
+  if (sameDay(date, tomorrow))
+    return `${t('OUTSIDER_CRM.DATES.TOMORROW')} ${time}`;
+  if (sameDay(date, yesterday))
+    return `${t('OUTSIDER_CRM.DATES.YESTERDAY')} ${time}`;
+  const options =
+    date.getFullYear() === today.getFullYear()
+      ? { day: '2-digit', month: '2-digit' }
+      : { day: '2-digit', month: '2-digit', year: 'numeric' };
+  return `${date.toLocaleDateString('pt-BR', options)} ${time}`;
+};
+
+// valores para <input type="date"> e <input type="time"> no fuso do navegador
+export const toDateInput = date => {
+  const pad = number => String(number).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+};
+
+export const toTimeInput = date =>
+  `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+
+// junta data e hora digitadas num ISO com fuso; sem hora, vale o fim do expediente (18:00)
+export const combineDateTime = (date, time) =>
+  date ? new Date(`${date}T${time || '18:00'}:00`).toISOString() : null;
+
+export const TASK_KINDS = [
+  { value: 'todo', icon: 'i-lucide-square-check' },
+  { value: 'call', icon: 'i-lucide-phone' },
+  { value: 'meeting', icon: 'i-lucide-users' },
+  { value: 'visit', icon: 'i-lucide-map-pin' },
+  { value: 'proposal', icon: 'i-lucide-file-text' },
+  { value: 'follow_up', icon: 'i-lucide-repeat' },
+];
+
+export const taskKindIcon = kind =>
+  TASK_KINDS.find(item => item.value === kind)?.icon || 'i-lucide-square-check';
+
 export const STATUS_COLORS = {
   open: 'bg-n-blue-3 text-n-blue-11',
   won: 'bg-n-teal-3 text-n-teal-11',

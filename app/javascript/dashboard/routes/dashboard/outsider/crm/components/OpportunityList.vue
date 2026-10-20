@@ -15,6 +15,7 @@ import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
 import Avatar from 'dashboard/components-next/avatar/Avatar.vue';
 import OpportunityDialog from './OpportunityDialog.vue';
+import OpportunityDrawer from './OpportunityDrawer.vue';
 import KanbanBoard from './KanbanBoard.vue';
 import MetricsBar from './MetricsBar.vue';
 import {
@@ -46,6 +47,7 @@ const readView = () => {
 };
 
 const dialogRef = ref(null);
+const drawerRef = ref(null);
 const boardRef = ref(null);
 const isLoading = ref(false);
 const isExporting = ref(false);
@@ -233,6 +235,12 @@ watch(() => props.pipelines, ensureBoardPipeline);
 
 const openNew = () => dialogRef.value?.open();
 const openEdit = opportunity => dialogRef.value?.open(opportunity);
+// clicar num negócio abre o painel (tarefas, linha do tempo, auditoria); de lá se edita
+const openDetails = opportunity => drawerRef.value?.open(opportunity);
+const onSaved = () => {
+  refresh();
+  drawerRef.value?.refresh();
+};
 const openNewInStage = stage =>
   dialogRef.value?.open(null, {
     business_unit_id: boardPipeline.value.business_unit_id,
@@ -335,7 +343,7 @@ onMounted(async () => {
       :pipeline="boardPipeline"
       :filters="filters"
       :lost-reasons="lostReasons"
-      @open="openEdit"
+      @open="openDetails"
       @new="openNewInStage"
       @changed="refreshKey += 1"
     />
@@ -400,7 +408,7 @@ onMounted(async () => {
               v-for="opportunity in opportunities"
               :key="opportunity.id"
               class="border-b cursor-pointer border-n-weak last:border-0 hover:bg-n-alpha-1"
-              @click="openEdit(opportunity)"
+              @click="openDetails(opportunity)"
             >
               <td class="px-4 py-3">
                 <div class="flex flex-col min-w-0">
@@ -412,6 +420,17 @@ onMounted(async () => {
                     <template v-if="unitNames[opportunity.business_unit_id]">
                       · {{ unitNames[opportunity.business_unit_id] }}
                     </template>
+                    <span
+                      v-if="opportunity.tasks?.overdue"
+                      class="font-medium text-n-ruby-11"
+                    >
+                      ·
+                      {{
+                        t('OUTSIDER_CRM.BOARD.TASKS_LATE', {
+                          count: opportunity.tasks.overdue,
+                        })
+                      }}
+                    </span>
                   </span>
                 </div>
               </td>
@@ -513,7 +532,14 @@ onMounted(async () => {
       :access="access"
       :pipelines="pipelines"
       :agents="agents"
-      @saved="refresh"
+      @saved="onSaved"
+    />
+    <OpportunityDrawer
+      ref="drawerRef"
+      :access="access"
+      :pipelines="pipelines"
+      @edit="openEdit"
+      @changed="refresh"
     />
   </div>
 </template>

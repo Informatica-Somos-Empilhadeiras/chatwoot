@@ -6,7 +6,7 @@ class Api::V1::Accounts::Outsider::Crm::ContactsController < Api::V1::Accounts::
 
   def show
     contact = Current.account.contacts.find(params[:id])
-    render json: ::Outsider::Crm::ContactSummary.new(contact, access: crm_access, conversation_id: params[:conversation_id]).to_h
+    render json: ::Outsider::Crm::ContactSummary.new(contact, access: crm_access, conversation_display_id: params[:conversation_id]).to_h
   end
 
   def summaries

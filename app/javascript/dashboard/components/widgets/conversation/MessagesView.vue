@@ -13,6 +13,7 @@ import Banner from 'dashboard/components/ui/Banner.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 import ResizableEditorWrapper from './ResizableEditorWrapper.vue';
 import MessageListNavigator from './outsider/MessageListNavigator.vue'; // OUTSIDER: histórico
+import CrmReplyArea from 'dashboard/routes/dashboard/outsider/crm/conversation/CrmReplyArea.vue'; // OUTSIDER: Nota interna CRM
 
 // stores and apis
 import { mapGetters } from 'vuex';
@@ -55,6 +56,7 @@ export default {
     Spinner,
     ResizableEditorWrapper,
     MessageListNavigator, // OUTSIDER
+    CrmReplyArea, // OUTSIDER
   },
   mixins: [inboxMixin],
   setup() {
@@ -566,7 +568,10 @@ export default {
         ref="resizableEditorWrapperRef"
         :container-height="Math.max(0, containerHeight - topBannerHeight)"
       >
-        <ReplyBox @toggle-editor-size="toggleReplyEditorSize" />
+        <!-- OUTSIDER: no modo Nota interna CRM a caixa de resposta dá lugar à nota do CRM -->
+        <CrmReplyArea :chat="currentChat">
+          <ReplyBox @toggle-editor-size="toggleReplyEditorSize" />
+        </CrmReplyArea>
       </ResizableEditorWrapper>
     </div>
   </div>

@@ -5,7 +5,8 @@
     "SAVE": "Save",
     "TABS": {
       "OPPORTUNITIES": "Deals",
-      "SETTINGS": "Settings"
+      "SETTINGS": "Settings",
+      "TASKS": "Tasks"
     },
     "STATES": {
       "NO_ACCESS": "You are not part of any CRM business unit yet. Ask an administrator to add you.",
@@ -208,7 +209,9 @@
       "MARK_LOST": "Mark as lost",
       "CHOOSE_REASON": "Choose the reason",
       "WON_DONE": "\"{title}\" marked as won",
-      "LOST_DONE": "\"{title}\" marked as lost"
+      "LOST_DONE": "\"{title}\" marked as lost",
+      "TASKS_LATE": "Overdue task: {count}",
+      "TASKS_PENDING": "Pending tasks: {count}"
     },
     "CONVERSATION": {
       "TAB": "CRM",
@@ -245,6 +248,153 @@
       "WON": "Won",
       "CHIP_TOOLTIP": "Open CRM deals: {count}",
       "DEALS": "Deals: {count}"
+    },
+    "CANCEL": "Cancel",
+    "DATES": {
+      "TODAY": "Today",
+      "TOMORROW": "Tomorrow",
+      "YESTERDAY": "Yesterday"
+    },
+    "ACTIVITY_TABS": {
+      "TASKS": "Tasks",
+      "TIMELINE": "Timeline",
+      "AUDIT": "Audit"
+    },
+    "TASKS": {
+      "NEW": "New task",
+      "ADD": "Add task",
+      "TITLE_PLACEHOLDER": "What needs to be done? E.g. Call to confirm the proposal",
+      "DESCRIPTION_PLACEHOLDER": "Details (optional)",
+      "KIND": "Type",
+      "DUE_DATE": "Date",
+      "DUE_TIME": "Time",
+      "ASSIGNEE": "Assignee",
+      "KINDS": {
+        "TODO": "Task",
+        "CALL": "Call",
+        "MEETING": "Meeting",
+        "VISIT": "Visit",
+        "PROPOSAL": "Proposal",
+        "FOLLOW_UP": "Follow-up"
+      },
+      "CREATED": "Task created: {title}",
+      "COMPLETED": "Task done: {title}",
+      "REOPENED": "Task reopened",
+      "POSTPONED": "Task postponed to {date}",
+      "DELETED": "Task deleted",
+      "POSTPONE": {
+        "HOUR": "Postpone 1 hour",
+        "TOMORROW": "Postpone to tomorrow",
+        "WEEK": "Postpone 1 week",
+        "CUSTOM": "Pick date and time",
+        "SAVE": "Postpone"
+      },
+      "DELETE": "Delete task",
+      "MORE": "More options",
+      "COMPLETE": "Mark as done",
+      "REOPEN": "Reopen task",
+      "LATE": "overdue",
+      "DONE_BY": "Done by {name} on {date}",
+      "PENDING_COUNT": "Pending: {count}",
+      "OVERDUE_COUNT": "Overdue: {count}",
+      "NONE_PENDING": "No pending tasks",
+      "EMPTY": "No pending tasks. Create the next action for this deal.",
+      "EMPTY_READ_ONLY": "No pending tasks.",
+      "SHOW_DONE": "Show done ({count})",
+      "HIDE_DONE": "Hide done",
+      "REMINDER": "Task due: {title} ({contact})",
+      "REMINDER_LINK": "See tasks",
+      "FILTERS": {
+        "MINE": "My tasks",
+        "ALL": "All tasks",
+        "PENDING": "Pending",
+        "DONE": "Done (30 days)"
+      },
+      "GROUPS": {
+        "OVERDUE": "Overdue",
+        "TODAY": "Today",
+        "TOMORROW": "Tomorrow",
+        "WEEK": "Next 7 days",
+        "LATER": "Later",
+        "NO_DATE": "No due date",
+        "DONE": "Done"
+      },
+      "LIST_EMPTY": "No pending tasks here.",
+      "LIST_EMPTY_DONE": "No tasks done in the last 30 days."
+    },
+    "TIMELINE": {
+      "SYSTEM": "System",
+      "NOTE": "{name} wrote an internal note",
+      "CREATED": "{name} created the deal in stage {stage}",
+      "STAGE_CHANGED": "{name} moved the stage from {from} to {to}",
+      "STATUS_CHANGED": "{name} changed the status from {from} to {to}",
+      "OWNER_CHANGED": "{name} changed the owner from {from} to {to}",
+      "TASK_CREATED": "{name} created the task \"{title}\"",
+      "TASK_COMPLETED": "{name} completed the task \"{title}\"",
+      "FORWARDED": "{name} forwarded the deal",
+      "RECEIVED": "Deal received by forwarding",
+      "MESSAGE_LINKED": "{name} linked a message to the deal",
+      "LOST_REASON": "Reason: {reason}",
+      "TASK_DUE": "Due: {date}",
+      "TASK_DUE_FOR": "Due: {date} · Assignee: {name}",
+      "NOTE_HINT": "CRM internal note: stays in the deal, the customer never sees it",
+      "NOTE_PLACEHOLDER": "Write a note about the deal (Ctrl+Enter saves)",
+      "SAVE_NOTE": "Save note",
+      "NOTE_SAVED": "Note saved",
+      "NOTE_DELETED": "Note deleted",
+      "DELETE_NOTE": "Delete",
+      "CONFIRM_DELETE": "Confirm delete",
+      "FROM_CONVERSATION": "In conversation #{id}",
+      "LOAD_MORE": "Load more"
+    },
+    "AUDIT": {
+      "HINT": "Every change to the deal and its tasks, with who and when.",
+      "EMPTY": "No changes recorded.",
+      "YES": "Yes",
+      "NO": "No",
+      "ACTIONS": {
+        "OPPORTUNITY_CREATE": "{name} created the deal",
+        "OPPORTUNITY_UPDATE": "{name} changed the deal",
+        "OPPORTUNITY_DESTROY": "{name} deleted the deal",
+        "TASK_CREATE": "{name} created the task \"{label}\"",
+        "TASK_UPDATE": "{name} changed the task \"{label}\"",
+        "TASK_DESTROY": "{name} deleted the task \"{label}\"",
+        "NOTE_DESTROY": "{name} deleted a note"
+      },
+      "FIELDS": {
+        "TITLE": "Name",
+        "VALUE_CENTS": "Value",
+        "EXPECTED_CLOSE_ON": "Expected close",
+        "PROBABILITY": "Probability",
+        "STATUS": "Status",
+        "STAGE_ID": "Stage",
+        "PIPELINE_ID": "Pipeline",
+        "BUSINESS_UNIT_ID": "Business unit",
+        "OWNER_ID": "Owner",
+        "LOST_REASON_ID": "Lost reason",
+        "DESCRIPTION": "Description",
+        "KIND": "Type",
+        "DUE_AT": "Due",
+        "ASSIGNEE_ID": "Assignee",
+        "COMPLETED_AT": "Completed at",
+        "BODY": "Note"
+      }
+    },
+    "DRAWER": {
+      "OPEN_CONVERSATION": "Conversation #{id}",
+      "CLOSE": "Close"
+    },
+    "NOTE": {
+      "BUTTON": "CRM note",
+      "BUTTON_HINT": "CRM internal note: goes to the contact's deal, the customer never sees it",
+      "TITLE": "CRM internal note",
+      "PRIVATE_HINT": "Stays in the deal, the customer never sees it",
+      "DEAL": "Deal for this note",
+      "BACK": "Back to reply",
+      "PLACEHOLDER": "Write the CRM note about this customer...",
+      "KEYS": "Enter saves · Shift+Enter new line · Esc goes back",
+      "SAVE": "Save note",
+      "SAVED": "Note saved in deal {code}"
     }
   }
 }

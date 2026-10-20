@@ -1,6 +1,7 @@
 # OUTSIDER: resumo do CRM de um contato do Chatwoot (aba CRM da conversa e painel do contato).
 # Só entram oportunidades das unidades que o usuário enxerga. A principal é a aberta ligada à
-# conversa atual; sem ela, a aberta atualizada por último.
+# conversa atual; sem ela, a aberta atualizada por último. A conversa chega pelo número que o
+# Chatwoot mostra (display_id).
 class Outsider::Crm::ContactSummary
   GROUP_SUFFIX = '@g.us'.freeze
   HISTORY_LIMIT = 50
@@ -9,10 +10,10 @@ class Outsider::Crm::ContactSummary
     contact.identifier.to_s.end_with?(GROUP_SUFFIX)
   end
 
-  def initialize(contact, access:, conversation_id: nil)
+  def initialize(contact, access:, conversation_display_id: nil)
     @contact = contact
     @access = access
-    @conversation_id = conversation_id.presence&.to_i
+    @conversation_display_id = conversation_display_id.presence&.to_i
   end
 
   def to_h
@@ -27,7 +28,7 @@ class Outsider::Crm::ContactSummary
       won_value_cents: won.sum(&:value_cents),
       primary_id: primary(open)&.id,
       creatable_unit_ids: creatable_unit_ids(open),
-      opportunities: opportunities.map { |opportunity| Outsider::Crm::Serializer.opportunity(opportunity, access: @access) }
+      opportunities: Outsider::Crm::Serializer.opportunities(opportunities, access: @access)
     }
   end
 
@@ -35,14 +36,14 @@ class Outsider::Crm::ContactSummary
 
   def opportunities
     @opportunities ||= @access.opportunities(Outsider::Crm::Opportunity.where(account_id: @contact.account_id, contact_id: @contact.id))
-                              .includes(:contact, :owner, :stage)
+                              .includes(:contact, :owner, :stage, :conversation)
                               .order(Arel.sql('CASE WHEN outsider_crm_opportunities.status = 0 THEN 0 ELSE 1 END'),
                                      Arel.sql('COALESCE(outsider_crm_opportunities.closed_at, outsider_crm_opportunities.updated_at) DESC'))
                               .limit(HISTORY_LIMIT).to_a
   end
 
   def primary(open)
-    open.find { |opportunity| @conversation_id && opportunity.conversation_id == @conversation_id } ||
+    open.find { |opportunity| @conversation_display_id && opportunity.conversation&.display_id == @conversation_display_id } ||
       open.max_by(&:updated_at)
   end
 

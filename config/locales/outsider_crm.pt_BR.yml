@@ -45,6 +45,17 @@ pt_BR:
         label: Nome do campo
         field_type: Tipo
         options: Opções
+      outsider/crm/task:
+        title: Tarefa
+        description: Descrição
+        kind: Tipo
+        due_at: Prazo
+        assignee: Responsável
+        opportunity: Negócio
+      outsider/crm/activity:
+        body: Nota
+        kind: Tipo
+        opportunity: Negócio
     errors:
       models:
         outsider/crm/opportunity:
@@ -132,6 +143,34 @@ pt_BR:
           restrict_dependent_destroy:
             has_many: "Não é possível apagar porque existem %{record} ligados"
         outsider/crm/custom_field_definition:
+          blank: "não pode ficar em branco"
+          invalid: "não é válido"
+          taken: "já está em uso"
+          inclusion: "não é uma opção válida"
+          not_a_number: "não é um número"
+          greater_than_or_equal_to: "deve ser maior ou igual a %{count}"
+          greater_than: "deve ser maior que %{count}"
+          in: "deve estar entre %{count}"
+          not_an_integer: "deve ser um número inteiro"
+          too_long: "é muito longo (máximo de %{count} caracteres)"
+          required: "é obrigatório"
+          restrict_dependent_destroy:
+            has_many: "Não é possível apagar porque existem %{record} ligados"
+        outsider/crm/task:
+          blank: "não pode ficar em branco"
+          invalid: "não é válido"
+          taken: "já está em uso"
+          inclusion: "não é uma opção válida"
+          not_a_number: "não é um número"
+          greater_than_or_equal_to: "deve ser maior ou igual a %{count}"
+          greater_than: "deve ser maior que %{count}"
+          in: "deve estar entre %{count}"
+          not_an_integer: "deve ser um número inteiro"
+          too_long: "é muito longo (máximo de %{count} caracteres)"
+          required: "é obrigatório"
+          restrict_dependent_destroy:
+            has_many: "Não é possível apagar porque existem %{record} ligados"
+        outsider/crm/activity:
           blank: "não pode ficar em branco"
           invalid: "não é válido"
           taken: "já está em uso"

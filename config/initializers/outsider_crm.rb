@@ -1,5 +1,6 @@
 # OUTSIDER: rotas do CRM (ver app/models/outsider/crm.rb e app/controllers/api/v1/accounts/outsider/crm/)
-Rails.application.routes.prepend do # rubocop:disable Metrics/BlockLength
+# rubocop:disable Metrics/BlockLength
+Rails.application.routes.prepend do
   namespace :api, defaults: { format: 'json' } do
     namespace :v1 do
       resources :accounts, only: [] do
@@ -24,7 +25,11 @@ Rails.application.routes.prepend do # rubocop:disable Metrics/BlockLength
                   get :export
                 end
                 member { patch :move }
+                resources :tasks, controller: 'opportunity_tasks', only: [:index, :create, :update, :destroy]
+                resources :activities, controller: 'opportunity_activities', only: [:index, :create, :destroy]
+                resources :audits, controller: 'opportunity_audits', only: [:index]
               end
+              resources :tasks, only: [:index]
             end
           end
         end
@@ -32,3 +37,4 @@ Rails.application.routes.prepend do # rubocop:disable Metrics/BlockLength
     end
   end
 end
+# rubocop:enable Metrics/BlockLength

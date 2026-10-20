@@ -5,6 +5,8 @@
 import { reactive } from 'vue';
 import store from 'dashboard/store';
 import CrmAPI from 'dashboard/api/outsider/crm';
+import { useAlert } from 'dashboard/composables';
+import { frontendURL } from 'dashboard/helper/URLHelper';
 import { DEFAULT_CONVERSATION_SIDEBAR_ITEMS_ORDER } from 'dashboard/composables/useUISettings';
 
 export const OPEN_CRM_TAB_EVENT = 'outsider_crm_open_tab';
@@ -25,6 +27,12 @@ export const crmState = reactive({
   summaries: {},
   chips: {},
   pendingCreate: null,
+  // "Nota interna CRM" na caixa de resposta: o editor da conversa vira o de nota do CRM
+  noteMode: false,
+  // sobe a cada mudança feita fora da aba (nota, tarefa) para a linha do tempo recarregar
+  activityVersion: {},
+  unitMembers: {},
+  myTasks: { pending: 0, overdue: 0 },
 });
 
 let contextPromise = null;
@@ -42,6 +50,10 @@ const resetForAccount = accountId => {
   crmState.lostReasons = [];
   crmState.summaries = {};
   crmState.chips = {};
+  crmState.noteMode = false;
+  crmState.activityVersion = {};
+  crmState.unitMembers = {};
+  crmState.myTasks = { pending: 0, overdue: 0 };
   contextPromise = null;
 };
 
@@ -168,3 +180,105 @@ export const findPipeline = id =>
 
 export const unitName = id =>
   crmState.access.units.find(unit => unit.id === id)?.name || '';
+
+export const bumpActivity = opportunityId => {
+  crmState.activityVersion[opportunityId] =
+    (crmState.activityVersion[opportunityId] || 0) + 1;
+};
+
+// membros da unidade, para escolher o responsável da tarefa (só gestor e administrador escolhem)
+export const loadUnitMembers = async unitId => {
+  if (!crmState.unitMembers[unitId]) {
+    const { data } = await CrmAPI.getUnit(unitId);
+    crmState.unitMembers[unitId] = (data.members || []).map(member => ({
+      id: member.user_id,
+      name: member.name,
+    }));
+  }
+  return crmState.unitMembers[unitId];
+};
+
+// Lembrete de tarefa: com o Chatwoot aberto, avisa quando chega a hora de uma tarefa do próprio
+// usuário (até 2 horas depois do prazo, uma vez por tarefa e prazo). A lista é buscada a cada
+// 5 minutos e só traz o que vence até o fim do dia.
+const REMINDER_CHECK = 60 * 1000;
+const REMINDER_REFRESH = 5 * 60 * 1000;
+const REMINDER_WINDOW = 2 * 60 * 60 * 1000;
+const REMINDED_KEY = 'outsider_crm_reminded';
+let reminderTimer = null;
+let reminderTasks = [];
+let reminderFetchedAt = 0;
+let reminderT = null;
+
+const endOfToday = () => {
+  const date = new Date();
+  date.setHours(23, 59, 59, 999);
+  return date.toISOString();
+};
+
+const readReminded = () => {
+  try {
+    return JSON.parse(localStorage.getItem(REMINDED_KEY) || '[]');
+  } catch {
+    return [];
+  }
+};
+
+export const refreshMyTasks = async () => {
+  try {
+    const { data } = await CrmAPI.getTaskList({ due_before: endOfToday() });
+    reminderTasks = data.payload;
+    reminderFetchedAt = Date.now();
+    // as contagens vêm de todas as pendentes, não só das de hoje
+    crmState.myTasks = data.meta;
+  } catch {
+    // sem lembrete se a lista falhar
+  }
+};
+
+const checkReminders = async () => {
+  if (!crmState.access.enabled || !reminderT) return;
+  if (Date.now() - reminderFetchedAt > REMINDER_REFRESH) await refreshMyTasks();
+  const now = Date.now();
+  const reminded = readReminded();
+  const due = reminderTasks.filter(task => {
+    if (!task.due_at) return false;
+    const at = new Date(task.due_at).getTime();
+    return (
+      at <= now &&
+      now - at < REMINDER_WINDOW &&
+      !reminded.includes(`${task.id}-${task.due_at}`)
+    );
+  });
+  if (!due.length) return;
+  const to = frontendURL(`accounts/${crmState.accountId}/crm/tasks`);
+  due.forEach(task => {
+    useAlert(
+      reminderT('OUTSIDER_CRM.TASKS.REMINDER', {
+        title: task.title,
+        contact: task.opportunity.contact?.name || task.opportunity.code,
+      }),
+      {
+        type: 'link',
+        to,
+        message: reminderT('OUTSIDER_CRM.TASKS.REMINDER_LINK'),
+        duration: 15000,
+      }
+    );
+  });
+  const keys = [...reminded, ...due.map(task => `${task.id}-${task.due_at}`)];
+  try {
+    localStorage.setItem(REMINDED_KEY, JSON.stringify(keys.slice(-200)));
+  } catch {
+    // navegador sem localStorage: o aviso pode repetir
+  }
+};
+
+// chamado pela tela de conversas e pela tela do CRM; roda um relógio só
+export const startTaskReminders = async t => {
+  reminderT = t;
+  await ensureCrmContext();
+  if (reminderTimer || !crmState.access.enabled) return;
+  reminderTimer = setInterval(checkReminders, REMINDER_CHECK);
+  checkReminders();
+};

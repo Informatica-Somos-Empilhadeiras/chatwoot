@@ -9,6 +9,7 @@ import { CAPTAIN_EVENTS } from 'dashboard/helper/AnalyticsHelper/events';
 import NextButton from 'dashboard/components-next/button/Button.vue';
 import EditorModeToggle from './EditorModeToggle.vue';
 import CopilotMenuBar from './CopilotMenuBar.vue';
+import CrmNoteModeButton from 'dashboard/routes/dashboard/outsider/crm/conversation/CrmNoteModeButton.vue'; // OUTSIDER: Nota interna CRM
 
 export default {
   name: 'ReplyTopPanel',
@@ -16,6 +17,7 @@ export default {
     NextButton,
     EditorModeToggle,
     CopilotMenuBar,
+    CrmNoteModeButton, // OUTSIDER
   },
   directives: {
     OnClickOutside: vOnClickOutside,
@@ -161,6 +163,8 @@ export default {
       @toggle-mode="handleModeToggle"
     />
     <div class="flex items-center mx-4 my-0">
+      <!-- OUTSIDER: Nota interna CRM -->
+      <CrmNoteModeButton v-if="!disabled" class="ltr:mr-3 rtl:ml-3" />
       <div v-if="isMessageLengthReachingThreshold" class="text-xs">
         <span :class="charLengthClass">
           {{ characterLengthWarning }}

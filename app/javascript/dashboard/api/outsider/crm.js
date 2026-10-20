@@ -163,6 +163,56 @@ class CrmAPI extends ApiClient {
       index,
     });
   }
+
+  getTasks(opportunityId) {
+    return axios.get(`${this.url}/opportunities/${opportunityId}/tasks`);
+  }
+
+  createTask(opportunityId, task) {
+    return axios.post(`${this.url}/opportunities/${opportunityId}/tasks`, {
+      task,
+    });
+  }
+
+  updateTask(opportunityId, id, task) {
+    return axios.patch(
+      `${this.url}/opportunities/${opportunityId}/tasks/${id}`,
+      { task }
+    );
+  }
+
+  deleteTask(opportunityId, id) {
+    return axios.delete(
+      `${this.url}/opportunities/${opportunityId}/tasks/${id}`
+    );
+  }
+
+  // lista geral: assignee_id ('me', 'all' ou id), status ('pending' ou 'done'), due_before
+  getTaskList(params = {}) {
+    return axios.get(`${this.url}/tasks`, { params });
+  }
+
+  getActivities(opportunityId, params = {}) {
+    return axios.get(`${this.url}/opportunities/${opportunityId}/activities`, {
+      params,
+    });
+  }
+
+  createNote(opportunityId, body, conversationDisplayId = null) {
+    return axios.post(`${this.url}/opportunities/${opportunityId}/activities`, {
+      activity: { body, conversation_display_id: conversationDisplayId },
+    });
+  }
+
+  deleteActivity(opportunityId, id) {
+    return axios.delete(
+      `${this.url}/opportunities/${opportunityId}/activities/${id}`
+    );
+  }
+
+  getAudits(opportunityId) {
+    return axios.get(`${this.url}/opportunities/${opportunityId}/audits`);
+  }
 }
 
 export default new CrmAPI();

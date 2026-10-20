@@ -1,7 +1,10 @@
 # OUTSIDER: item da linha do tempo de uma oportunidade (nota interna, mudança de etapa,
-# encaminhamento...). Notas internas do CRM nunca são enviadas ao cliente.
+# encaminhamento...). Notas internas do CRM ficam só aqui: nunca viram mensagem do Chatwoot e
+# nunca são enviadas ao cliente. Nota apagada fica registrada na auditoria.
 class Outsider::Crm::Activity < ApplicationRecord
   include Outsider::Crm::AccountScoped
+
+  audited associated_with: :account, on: [:destroy]
 
   belongs_to :opportunity, class_name: 'Outsider::Crm::Opportunity'
   belongs_to :user, optional: true

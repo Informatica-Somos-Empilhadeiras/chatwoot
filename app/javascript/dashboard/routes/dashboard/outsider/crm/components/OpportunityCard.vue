@@ -1,9 +1,9 @@
 <script setup>
-// OUTSIDER: card de um negócio no Kanban.
+// OUTSIDER: card de um negócio no Kanban. Tarefa atrasada deixa o card com borda vermelha.
 import { useI18n } from 'vue-i18n';
 import Avatar from 'dashboard/components-next/avatar/Avatar.vue';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
-import { formatDate, formatMoney } from '../helpers';
+import { formatDate, formatDateTime, formatMoney } from '../helpers';
 
 defineProps({
   opportunity: { type: Object, required: true },
@@ -14,8 +14,13 @@ const { t } = useI18n();
 
 <template>
   <div
-    class="flex flex-col gap-2 p-3 text-sm border rounded-lg shadow-sm bg-n-solid-1 border-n-weak hover:border-n-slate-7"
-    :class="opportunity.can_edit ? 'cursor-grab' : 'cursor-pointer'"
+    class="flex flex-col gap-2 p-3 text-sm border rounded-lg shadow-sm bg-n-solid-1"
+    :class="[
+      opportunity.can_edit ? 'cursor-grab' : 'cursor-pointer',
+      opportunity.tasks?.overdue
+        ? 'border-n-ruby-8 hover:border-n-ruby-9'
+        : 'border-n-weak hover:border-n-slate-7',
+    ]"
   >
     <div class="flex items-start justify-between gap-2">
       <span class="font-medium leading-snug text-n-slate-12 line-clamp-2">
@@ -63,6 +68,29 @@ const { t } = useI18n();
       >
         <Icon icon="i-lucide-calendar" class="size-3" />
         {{ formatDate(opportunity.expected_close_on) }}
+      </span>
+      <span
+        v-if="opportunity.tasks?.overdue"
+        class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-n-ruby-3 text-n-ruby-11"
+      >
+        <Icon icon="i-lucide-list-checks" class="size-3" />
+        {{
+          t('OUTSIDER_CRM.BOARD.TASKS_LATE', {
+            count: opportunity.tasks.overdue,
+          })
+        }}
+      </span>
+      <span
+        v-else-if="opportunity.tasks?.pending"
+        class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-n-alpha-2 text-n-slate-11"
+        :title="t('OUTSIDER_CRM.BOARD.TASKS_PENDING', { count: opportunity.tasks.pending })"
+      >
+        <Icon icon="i-lucide-list-checks" class="size-3" />
+        {{
+          opportunity.tasks.next_due_at
+            ? formatDateTime(opportunity.tasks.next_due_at, t)
+            : opportunity.tasks.pending
+        }}
       </span>
       <span
         v-if="opportunity.sla_exceeded"

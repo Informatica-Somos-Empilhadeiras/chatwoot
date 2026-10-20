@@ -16,7 +16,7 @@ class Api::V1::Accounts::Outsider::Crm::OpportunitiesController < Api::V1::Accou
     page = [params[:page].to_i, 1].max
     render json: {
       meta: { count: opportunities.count, page: page, per_page: PER_PAGE },
-      payload: opportunities.offset((page - 1) * PER_PAGE).limit(PER_PAGE).map { |opportunity| serialize(opportunity) }
+      payload: serialize_list(opportunities.offset((page - 1) * PER_PAGE).limit(PER_PAGE))
     }
   end
 
@@ -29,7 +29,8 @@ class Api::V1::Accounts::Outsider::Crm::OpportunitiesController < Api::V1::Accou
     pipeline = crm_scope(::Outsider::Crm::Pipeline).where(business_unit_id: crm_access.visible_unit_ids).find(params.require(:pipeline_id))
     scope = filtered.open.where(pipeline_id: pipeline.id).includes(:contact, :owner, :stage)
     totals = scope.group(:stage_id).pluck(:stage_id, Arel.sql('COUNT(*)'), Arel.sql('SUM(value_cents)')).index_by(&:first)
-    render json: { pipeline_id: pipeline.id, stages: pipeline.stages.select(&:kind_open?).map { |stage| board_column(stage, scope, totals) } }
+    cards = board_cards(scope, pipeline.stages.select(&:kind_open?))
+    render json: { pipeline_id: pipeline.id, stages: cards.map { |stage, list| board_column(stage, list, totals) } }
   end
 
   def summary
@@ -105,10 +106,18 @@ class Api::V1::Accounts::Outsider::Crm::OpportunitiesController < Api::V1::Accou
 
   def create_params
     attributes = params.require(:opportunity).permit(
-      :business_unit_id, :pipeline_id, :stage_id, :contact_id, :conversation_id, :owner_id, :title,
+      :business_unit_id, :pipeline_id, :stage_id, :contact_id, :owner_id, :title,
       :expected_close_on, :probability, custom_fields: {}
     ).to_h.symbolize_keys
-    attributes.merge(value_attributes)
+    attributes.merge(value_attributes).merge(conversation_attributes)
+  end
+
+  # O navegador conhece a conversa pelo número que aparece na tela (display_id), não pelo id interno
+  def conversation_attributes
+    display_id = params[:opportunity][:conversation_display_id]
+    return {} if display_id.blank?
+
+    { conversation_id: Current.account.conversations.find_by!(display_id: display_id).id }
   end
 
   def update_params
@@ -137,15 +146,23 @@ class Api::V1::Accounts::Outsider::Crm::OpportunitiesController < Api::V1::Accou
     stage_id.presence && crm_scope(::Outsider::Crm::Stage).find_by(id: stage_id)&.id
   end
 
-  def board_column(stage, scope, totals)
+  # Até BOARD_LIMIT cards por etapa, serializados juntos (tarefas pendentes numa consulta só)
+  def board_cards(scope, stages)
+    records = stages.index_with { |stage| scope.where(stage_id: stage.id).order(:position, :id).limit(BOARD_LIMIT).to_a }
+    serialized = serialize_list(records.values.flatten).index_by { |card| card['id'] }
+    records.transform_values { |list| list.map { |opportunity| serialized[opportunity.id] } }
+  end
+
+  def board_column(stage, cards, totals)
     _id, count, total = totals[stage.id]
-    ::Outsider::Crm::Serializer.stage(stage).merge(
-      count: count.to_i, total_cents: total.to_i,
-      opportunities: scope.where(stage_id: stage.id).order(:position, :id).limit(BOARD_LIMIT).map { |opportunity| serialize(opportunity) }
-    )
+    ::Outsider::Crm::Serializer.stage(stage).merge(count: count.to_i, total_cents: total.to_i, opportunities: cards)
   end
 
   def serialize(opportunity)
     ::Outsider::Crm::Serializer.opportunity(opportunity, access: crm_access)
+  end
+
+  def serialize_list(opportunities)
+    ::Outsider::Crm::Serializer.opportunities(opportunities, access: crm_access)
   end
 end

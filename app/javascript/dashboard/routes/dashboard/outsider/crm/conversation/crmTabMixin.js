@@ -8,6 +8,7 @@ import {
   crmState,
   ensureCrmContext,
   loadContactSummary,
+  startTaskReminders,
   summaryKey,
 } from '../crmStore';
 import { formatMoneyShort } from '../helpers';
@@ -54,11 +55,15 @@ export default {
       handler() {
         const contactId = this.currentChat?.meta?.sender?.id;
         loadContactSummary(contactId, this.currentChat?.id).catch(() => {});
+        // a nota do CRM na caixa de resposta vale só para a conversa em que foi aberta
+        crmState.noteMode = false;
       },
     },
   },
   mounted() {
     ensureCrmContext();
+    // lembrete de tarefa vencendo enquanto a pessoa atende
+    startTaskReminders(this.$t.bind(this));
     emitter.on(OPEN_CRM_TAB_EVENT, this.outsiderOpenCrmTab);
   },
   beforeUnmount() {
