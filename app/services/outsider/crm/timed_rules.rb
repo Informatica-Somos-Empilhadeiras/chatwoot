@@ -14,8 +14,8 @@ class Outsider::Crm::TimedRules
   NO_PENDING_SQL = "NOT EXISTS (SELECT 1 FROM outsider_crm_tasks t WHERE t.opportunity_id = #{TABLE}.id AND t.completed_at IS NULL)".freeze
 
   def self.perform_all
-    Account.where("jsonb_array_length(COALESCE(internal_attributes -> '#{Outsider::Crm::AutomationRules::KEY}', '[]'::jsonb)) > 0")
-           .find_each.sum { |account| new(account).perform }
+    accounts = Account.where("jsonb_array_length(COALESCE(internal_attributes -> '#{Outsider::Crm::AutomationRules::KEY}', '[]'::jsonb)) > 0")
+    Outsider::Crm::Switch.enabled_accounts(accounts).find_each.sum { |account| new(account).perform }
   end
 
   def initialize(account)

@@ -136,10 +136,13 @@ class Api::V1::Accounts::Outsider::Crm::OpportunitiesController < Api::V1::Accou
     render_forbidden unless crm_access.delete_opportunity?(@opportunity)
   end
 
-  # Vendedor só fica com oportunidades no próprio nome; gestor e administrador escolhem o responsável
+  # Vendedor só fica com oportunidades no próprio nome; gestor e administrador escolhem o responsável,
+  # menos agente com o CRM desligado (Outsider::Crm::Switch)
   def owner_allowed?(unit_id, current_owner_id = nil)
     owner_id = params.fetch(:opportunity, {})[:owner_id]
-    return true if owner_id.blank? || owner_id.to_i == current_owner_id || crm_access.manage_unit?(unit_id)
+    return true if owner_id.blank? || owner_id.to_i == current_owner_id
+    return false if ::Outsider::Crm::Switch.new(Current.account).disabled_agent_ids.include?(owner_id.to_i)
+    return true if crm_access.manage_unit?(unit_id)
 
     owner_id.to_i == Current.user.id
   end

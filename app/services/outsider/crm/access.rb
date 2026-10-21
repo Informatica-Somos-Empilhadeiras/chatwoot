@@ -1,4 +1,5 @@
-# OUTSIDER: quem pode o quê no CRM. Administradores podem tudo. Os demais só entram no CRM se
+# OUTSIDER: quem pode o quê no CRM. Antes de tudo o CRM precisa estar ligado na conta e para a pessoa
+# (Outsider::Crm::Switch). Administradores podem tudo. Os demais só entram no CRM se
 # forem membros de alguma unidade: seller vê as oportunidades da unidade e edita as suas,
 # manager edita todas da unidade. Não depende de custom roles (recurso pago do Chatwoot).
 #
@@ -19,7 +20,19 @@ class Outsider::Crm::Access
   end
 
   def enabled?
-    administrator? || memberships.any?
+    return @enabled if defined?(@enabled)
+
+    @enabled = switch.enabled_for?(account_user) && (administrator? || memberships.any?)
+  end
+
+  # Por que a pessoa não entra no CRM: 'account' (desligado na conta), 'agent' (desligado para ela pelo
+  # administrador da conta) ou 'no_unit' (não está em nenhuma unidade)
+  def disabled_reason
+    return if enabled?
+    return 'account' unless switch.account_enabled?
+    return 'agent' unless switch.agent_enabled?(account_user)
+
+    'no_unit'
   end
 
   def visible_unit_ids
@@ -131,28 +144,36 @@ class Outsider::Crm::Access
     activity.user_id == account_user.user_id || manage_unit?(activity.opportunity.business_unit_id)
   end
 
-  # Pode ser responsável por tarefa ou negócio da unidade: membros e administradores da conta
+  # Pode ser responsável por tarefa ou negócio da unidade: membros e administradores da conta, menos os
+  # agentes com o CRM desligado (crm_only: false inclui esses, para validar regras já salvas)
   def assignable_user_ids(unit_id)
     self.class.assignable_user_ids(account_user.account_id, unit_id)
   end
 
-  def self.assignable_user_ids(account_id, unit_id)
+  def self.assignable_user_ids(account_id, unit_id, crm_only: true)
     admins = AccountUser.where(account_id: account_id, role: :administrator).pluck(:user_id)
     members = Outsider::Crm::BusinessUnitMember.where(account_id: account_id, business_unit_id: unit_id).pluck(:user_id)
-    (admins + members).uniq
+    ids = (admins + members).uniq
+    crm_only ? Outsider::Crm::Switch.new(Account.find(account_id)).reject_disabled(ids) : ids
   end
 
   def as_json(*)
+    return { enabled: false, administrator: administrator?, reason: disabled_reason, units: [] } unless enabled?
+
     {
       administrator: administrator?,
       manager: manager?,
       all_deals: all_deals?,
-      enabled: enabled?,
+      enabled: true,
       units: visible_units.map { |unit| { id: unit.id, name: unit.name, role: role_in(unit.id) } }
     }
   end
 
   private
+
+  def switch
+    @switch ||= Outsider::Crm::Switch.new(account_user.account)
+  end
 
   def units
     Outsider::Crm::BusinessUnit.where(account_id: account_user.account_id)

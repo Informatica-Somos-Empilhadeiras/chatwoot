@@ -13,7 +13,9 @@
     "STATES": {
       "NO_ACCESS": "Você ainda não faz parte de nenhuma unidade comercial do CRM. Peça a um administrador para incluir você.",
       "NO_PIPELINES": "Ainda não há pipeline nas suas unidades. Um administrador ou gestor precisa criar um em Configurações > Pipelines.",
-      "EMPTY": "Nenhum negócio encontrado com esses filtros."
+      "EMPTY": "Nenhum negócio encontrado com esses filtros.",
+      "NO_ACCESS_ACCOUNT": "O CRM não está ligado nesta conta. Fale com o administrador do Chatwoot para ligar.",
+      "NO_ACCESS_AGENT": "O CRM foi desligado para você nesta conta. Peça a um administrador da conta para ligar em Configurações > Acesso."
     },
     "STATUS": {
       "OPEN": "Aberto",
@@ -76,7 +78,8 @@
         "GENERAL": "Geral",
         "AUTOMATIONS": "Automações",
         "GOALS": "Metas",
-        "COMMISSION": "Comissão"
+        "COMMISSION": "Comissão",
+        "ACCESS": "Acesso"
       },
       "UNITS": {
         "TITLE": "Unidades comerciais",
@@ -305,7 +308,8 @@
           "CREATE_TASK": "Criar a tarefa “Contatar cliente” para o responsável (prazo de 30 minutos)",
           "NOTES": "Recado para quem recebe (opcional)",
           "HELP": "O negócio perdido passa a encaminhado e um negócio novo abre na unidade de destino, na primeira etapa, com o mesmo contato, conversa, valor e campos. Não encaminha se o contato já tem negócio aberto lá ou se a jornada chegou ao limite de encaminhamentos; a linha do tempo mostra o motivo."
-        }
+        },
+        "CRM_OFF": "{name} (CRM desligado)"
       },
       "GOALS": {
         "TITLE": "Metas de venda",
@@ -366,6 +370,22 @@
         "SKIP": "Não repassar quando o motivo da perda for",
         "SKIP_HELP": "Por exemplo, quando o cliente desistiu da compra. Esses negócios ficam perdidos.",
         "SAVED": "Repasse em sequência salvo"
+      },
+      "ACCESS": {
+        "TITLE": "Quem usa o CRM",
+        "DESCRIPTION": "Todos os agentes da conta têm o CRM, a não ser que você desligue aqui. Quem fica desligado não vê o CRM em lugar nenhum: menu, aba e valor na conversa e bloco do contato.",
+        "SEARCH": "Buscar pessoa",
+        "NAME": "Pessoa",
+        "COUNT": "{enabled} de {count} agentes com o CRM",
+        "ADMIN": "Admin",
+        "ADMIN_HINT": "Administradores da conta sempre têm o CRM",
+        "ON": "Ligado",
+        "OFF": "Desligado",
+        "ALL_UNITS": "todas as unidades",
+        "NO_UNIT": "sem unidade (precisa entrar em uma unidade para ver negócios)",
+        "OPEN_DEALS": "Continua responsável por {n} negócio aberto. Reatribua se outra pessoa for cuidar. | Continua responsável por {n} negócios abertos. Reatribua se outra pessoa for cuidar.",
+        "EMPTY_SEARCH": "Ninguém encontrado com essa busca.",
+        "NOTE": "A mudança vale na hora para quem está com o Chatwoot aberto. Quem fica desligado sai das listas de responsável, do rodízio e dos avisos de negócio recebido."
       }
     },
     "ERRORS": {

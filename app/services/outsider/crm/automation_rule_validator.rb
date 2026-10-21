@@ -143,7 +143,8 @@ class Outsider::Crm::AutomationRuleValidator
 
   def forward_owner(id, unit, prefix)
     return if id.blank? || unit.nil?
-    return id.to_i if Outsider::Crm::Access.assignable_user_ids(@account.id, unit.id).include?(id.to_i)
+    # quem está com o CRM desligado continua válido aqui: na hora de encaminhar, o negócio chega sem responsável
+    return id.to_i if Outsider::Crm::Access.assignable_user_ids(@account.id, unit.id, crm_only: false).include?(id.to_i)
 
     @errors << "#{prefix}.owner_id"
     nil

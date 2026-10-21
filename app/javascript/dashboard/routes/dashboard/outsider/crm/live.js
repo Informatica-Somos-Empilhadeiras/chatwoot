@@ -2,6 +2,8 @@
 // Outsider::Crm::UpdatesChannel) recebe "algo mudou" quando alguém grava um negócio, uma tarefa, as
 // metas ou as configurações. Os avisos próximos viram um só e as telas abertas recarregam pela API,
 // que aplica as permissões de quem está vendo. Ao reconectar (queda de rede), recarregam também.
+// O aviso de acesso (CRM ligado ou desligado na conta ou para alguém) vai à parte, para quem confere
+// o acesso (onCrmAccessChange); as telas não recarregam por ele.
 import { onBeforeUnmount, onMounted } from 'vue';
 import { createConsumer } from '@rails/actioncable';
 import store from 'dashboard/store';
@@ -10,6 +12,7 @@ const CHANNEL = 'Outsider::Crm::UpdatesChannel';
 const BATCH_DELAY = 400;
 
 const listeners = new Set();
+const accessListeners = new Set();
 let consumer = null;
 let subscription = null;
 let subscribedAccount = null;
@@ -30,6 +33,16 @@ const flush = () => {
 };
 
 const received = change => {
+  if (change.kind === 'access') {
+    accessListeners.forEach(listener => {
+      try {
+        listener(change);
+      } catch {
+        // um erro aqui não impede os outros de conferirem o acesso
+      }
+    });
+    return;
+  }
   pending.push(change);
   if (!timer) timer = setTimeout(flush, BATCH_DELAY);
 };
@@ -65,9 +78,23 @@ export const startLiveUpdates = accountId => {
   );
 };
 
+// conta com o CRM desligado: fecha a conexão (ligar a conta de novo aparece ao recarregar a página)
+export const stopLiveUpdates = () => {
+  subscription?.unsubscribe();
+  subscription = null;
+  subscribedAccount = null;
+  consumer?.disconnect();
+  consumer = null;
+};
+
 export const onCrmChange = listener => {
   listeners.add(listener);
   return () => listeners.delete(listener);
+};
+
+export const onCrmAccessChange = listener => {
+  accessListeners.add(listener);
+  return () => accessListeners.delete(listener);
 };
 
 // para telas: recarrega enquanto o componente está na tela

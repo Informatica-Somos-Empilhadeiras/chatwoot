@@ -1,7 +1,8 @@
 # OUTSIDER: rodízio de vendedores por unidade, usado pelo repasse em sequência (LostChain) quando a
 # conta escolhe "rodízio". Guarda em accounts.internal_attributes quem recebeu por último em cada
 # unidade e passa para o próximo, em ordem de id. Sem vendedor na unidade, roda entre os gestores;
-# sem ninguém, o negócio fica sem responsável (e a unidade toda recebe o aviso).
+# sem ninguém, o negócio fica sem responsável (e a unidade toda recebe o aviso). Quem saiu da conta ou
+# está com o CRM desligado (Outsider::Crm::Switch) fica fora da vez.
 class Outsider::Crm::Rotation
   KEY = 'outsider_crm_rotation'.freeze
 
@@ -28,6 +29,7 @@ class Outsider::Crm::Rotation
   def candidate_ids(unit_id)
     members = Outsider::Crm::BusinessUnitMember.where(account_id: @account.id, business_unit_id: unit_id)
                                                .where(user_id: AccountUser.where(account_id: @account.id).select(:user_id))
+                                               .where.not(user_id: Outsider::Crm::Switch.new(@account).disabled_agent_ids)
     sellers = members.where(role: :seller).pluck(:user_id).sort
     sellers.presence || members.pluck(:user_id).sort
   end

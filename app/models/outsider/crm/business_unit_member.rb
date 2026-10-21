@@ -14,7 +14,14 @@ class Outsider::Crm::BusinessUnitMember < ApplicationRecord
   validates_same_account :business_unit
   validate :user_in_account
 
+  # entrar ou sair de uma unidade muda o acesso ao CRM: as telas abertas da pessoa conferem de novo
+  after_commit :access_changed
+
   private
+
+  def access_changed
+    Outsider::Crm::LiveUpdates.broadcast(account_id, 'access', user_id: user_id)
+  end
 
   def user_in_account
     return if user.blank? || account.blank?

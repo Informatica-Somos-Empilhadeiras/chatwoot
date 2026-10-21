@@ -7,7 +7,8 @@ class Outsider::Crm::StalledOpportunities
   LIMIT = 500
 
   def self.perform_all
-    Account.where("internal_attributes -> 'outsider_crm_settings' ->> 'automation_stalled_task' = 'true'").find_each do |account|
+    accounts = Account.where("internal_attributes -> 'outsider_crm_settings' ->> 'automation_stalled_task' = 'true'")
+    Outsider::Crm::Switch.enabled_accounts(accounts).find_each do |account|
       new(account).perform
     end
   end
@@ -62,10 +63,20 @@ class Outsider::Crm::StalledOpportunities
 
   def build_task(opportunity, days)
     opportunity.tasks.create!(
-      account_id: @account.id, kind: :follow_up, due_at: Time.current, assignee: opportunity.owner,
+      account_id: @account.id, kind: :follow_up, due_at: Time.current, assignee: crm_owner(opportunity),
       title: I18n.t('outsider_crm.automations.stalled_task_title', stage: opportunity.stage.name),
       description: I18n.t('outsider_crm.automations.stalled_task_description', days: days)
     )
+  end
+
+  # responsável com o CRM desligado (Outsider::Crm::Switch) não recebe tarefa: ela fica sem dono
+  def crm_owner(opportunity)
+    owner = opportunity.owner
+    owner if owner && switch.disabled_agent_ids.exclude?(owner.id)
+  end
+
+  def switch
+    @switch ||= Outsider::Crm::Switch.new(@account)
   end
 
   def locale

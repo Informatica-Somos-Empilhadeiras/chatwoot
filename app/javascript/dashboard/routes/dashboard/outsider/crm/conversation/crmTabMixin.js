@@ -21,6 +21,9 @@ export const CrmConversationTab = defineAsyncComponent(
 
 export default {
   computed: {
+    outsiderCrmEnabled() {
+      return crmState.access.enabled;
+    },
     outsiderCrmSummary() {
       const contactId = this.currentChat?.meta?.sender?.id;
       return crmState.summaries[summaryKey(contactId, this.currentChat?.id)];
@@ -50,6 +53,17 @@ export default {
     },
   },
   watch: {
+    // a aba CRM sumiu (CRM desligado) enquanto estava aberta: volta para as mensagens
+    outsiderCrmTabs(tabs) {
+      if (!tabs.length && this.activeIndex > this.dashboardApps.length) {
+        this.activeIndex = 0;
+      }
+    },
+    // o CRM religado com a conversa aberta busca o resumo na hora
+    outsiderCrmEnabled() {
+      const contactId = this.currentChat?.meta?.sender?.id;
+      loadContactSummary(contactId, this.currentChat?.id).catch(() => {});
+    },
     'currentChat.id': {
       immediate: true,
       handler() {

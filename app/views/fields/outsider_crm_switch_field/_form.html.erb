@@ -1,0 +1,10 @@
+<%# OUTSIDER: liga e desliga o CRM da conta no formulário do Super Admin, com a explicação ao lado da caixa %>
+<div class="field-unit__label">
+  <%= f.label field.attribute %>
+</div>
+<div class="field-unit__field">
+  <label class="flex items-start gap-3 font-normal">
+    <%= f.check_box field.attribute, class: 'mt-1 shrink-0' %>
+    <span class="text-sm text-n-slate-11"><%= t('outsider_crm.switch.hint') %></span>
+  </label>
+</div>

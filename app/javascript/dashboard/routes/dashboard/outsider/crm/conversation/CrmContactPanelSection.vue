@@ -58,8 +58,9 @@ const createDeal = () => {
   openTab();
 };
 
+// access.enabled: o CRM religado com a conversa aberta busca o resumo na hora
 watch(
-  () => [props.contactId, props.conversationId],
+  () => [props.contactId, props.conversationId, crmState.access.enabled],
   () =>
     loadContactSummary(props.contactId, Number(props.conversationId)).catch(
       () => {}

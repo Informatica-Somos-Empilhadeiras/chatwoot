@@ -13,9 +13,16 @@ const props = defineProps({
 
 const { t } = useI18n();
 
-const chip = computed(() => crmState.chips[props.contactId]);
+const chip = computed(() =>
+  crmState.access.enabled ? crmState.chips[props.contactId] : null
+);
 
-watch(() => props.contactId, requestContactChip, { immediate: true });
+// access.enabled: o CRM religado com a lista aberta pede os selos na hora
+watch(
+  () => [props.contactId, crmState.access.enabled],
+  () => requestContactChip(props.contactId),
+  { immediate: true }
+);
 </script>
 
 <template>

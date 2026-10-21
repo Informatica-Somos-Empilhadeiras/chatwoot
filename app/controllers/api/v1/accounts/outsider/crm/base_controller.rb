@@ -20,7 +20,8 @@ class Api::V1::Accounts::Outsider::Crm::BaseController < Api::V1::Accounts::Base
   end
 
   def ensure_crm_access
-    render json: { error: 'crm_access_denied' }, status: :forbidden unless crm_access.enabled?
+    # reason: 'account' (CRM desligado na conta), 'agent' (desligado para a pessoa) ou 'no_unit'
+    render json: { error: 'crm_access_denied', reason: crm_access.disabled_reason }, status: :forbidden unless crm_access.enabled?
   end
 
   def ensure_crm_admin

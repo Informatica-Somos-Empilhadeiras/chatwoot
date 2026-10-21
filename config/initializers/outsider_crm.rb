@@ -8,6 +8,7 @@ Rails.application.routes.prepend do
           namespace :outsider do
             namespace :crm do
               resource :access, only: [:show]
+              resources :agent_accesses, only: [:index, :update]
               resource :settings, only: [:show, :update]
               resource :reports, only: [:show]
               resource :performance, only: [:show]
@@ -64,4 +65,18 @@ Rails.application.reloader.to_prepare do
     Sidekiq::Cron::Job.create(name: 'outsider_crm_stalled_opportunities_job', cron: '20 * * * *',
                               class: 'Outsider::Crm::StalledOpportunitiesJob', queue: 'scheduled_jobs')
   end
+end
+
+# OUTSIDER: liga e desliga o CRM (Outsider::Crm::Switch) sem editar arquivos do Chatwoot: campo virtual no
+# Account, coluna "CRM" no dashboard de contas do Super Admin e limpeza da chave por agente quando a pessoa sai
+# da conta ou muda de papel. on_load (e não to_prepare) porque carregar o AccountDashboard na subida do Rails
+# consulta Redis e banco (ChatwootApp.chatwoot_cloud?) e quebraria o assets:precompile do build.
+Rails.autoloaders.main.on_load('Account') do |klass, _path|
+  klass.include(Outsider::Crm::AccountSwitch) unless klass < Outsider::Crm::AccountSwitch
+end
+Rails.autoloaders.main.on_load('AccountUser') do |klass, _path|
+  klass.include(Outsider::Crm::AccountUserSwitch) unless klass < Outsider::Crm::AccountUserSwitch
+end
+Rails.autoloaders.main.on_load('AccountDashboard') do |klass, _path|
+  klass.prepend(Outsider::Crm::AccountDashboardSwitch) unless klass < Outsider::Crm::AccountDashboardSwitch
 end

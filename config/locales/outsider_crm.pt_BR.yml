@@ -1,5 +1,9 @@
 pt_BR:
   outsider_crm:
+    switch:
+      enabled: Ligado
+      disabled: Desligado
+      hint: "Mostra o CRM nesta conta. Com ele ligado, todos os agentes têm acesso; o administrador da conta pode desligar para cada agente em CRM > Configurações > Acesso."
     errors:
       duplicate_open_opportunity: Este contato já tem uma oportunidade aberta nesta unidade
       group_contact: Grupos do WhatsApp não podem ter negócios
@@ -210,3 +214,8 @@ pt_BR:
           required: "é obrigatório"
           restrict_dependent_destroy:
             has_many: "Não é possível apagar porque existem %{record} ligados"
+  # Campo "CRM" da conta no Super Admin (Outsider::Crm::AccountDashboardSwitch)
+  helpers:
+    label:
+      account:
+        outsider_crm_enabled: CRM

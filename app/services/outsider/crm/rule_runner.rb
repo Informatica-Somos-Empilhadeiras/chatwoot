@@ -65,19 +65,26 @@ class Outsider::Crm::RuleRunner
     end
   end
 
-  # Responsável do negócio (sem responsável: tarefa sem dono), gestores da unidade ou uma pessoa
+  # Responsável do negócio (sem responsável: tarefa sem dono), gestores da unidade ou uma pessoa. Quem está
+  # com o CRM desligado não recebe: vale o próximo da lista ou a tarefa fica sem dono
   def assignees(action)
+    owner = crm_user(@opportunity.owner)
     case action['assignee']
     when 'managers'
-      managers = User.where(id: Outsider::Crm::BusinessUnitMember.where(business_unit_id: @opportunity.business_unit_id, role: :manager)
-                                                                 .select(:user_id)).to_a
-      managers.presence || [@opportunity.owner]
-    when 'user' then [User.find_by(id: action['user_id']) || @opportunity.owner]
-    else [@opportunity.owner]
+      ids = Outsider::Crm::BusinessUnitMember.where(business_unit_id: @opportunity.business_unit_id, role: :manager)
+                                             .where(user_id: AccountUser.where(account_id: @opportunity.account_id).select(:user_id))
+                                             .pluck(:user_id)
+      User.where(id: switch.reject_disabled(ids)).to_a.presence || [owner]
+    when 'user' then [crm_user(User.find_by(id: action['user_id'])) || owner]
+    else [owner]
     end
   end
 
-  # Só passa para quem pode ser responsável na unidade (membro ou administrador)
+  def crm_user(user)
+    user if user && switch.reject_disabled([user.id]).any?
+  end
+
+  # Só passa para quem pode ser responsável na unidade (membro ou administrador, com o CRM ligado)
   def set_owner(action, summary)
     user_id = action['user_id'].to_i
     return summary[:skipped] = (Array(summary[:skipped]) + ['owner_not_member']) unless assignable?(user_id)
@@ -88,8 +95,11 @@ class Outsider::Crm::RuleRunner
   end
 
   def assignable?(user_id)
-    Outsider::Crm::BusinessUnitMember.exists?(business_unit_id: @opportunity.business_unit_id, user_id: user_id) ||
-      AccountUser.exists?(account_id: @opportunity.account_id, user_id: user_id, role: :administrator)
+    Outsider::Crm::Access.assignable_user_ids(@opportunity.account_id, @opportunity.business_unit_id).include?(user_id)
+  end
+
+  def switch
+    @switch ||= Outsider::Crm::Switch.new(@opportunity.account)
   end
 
   def add_label(action, summary)
@@ -126,9 +136,16 @@ class Outsider::Crm::RuleRunner
   def forward_params(action)
     {
       to_business_unit_id: action['to_business_unit_id'], pipeline_id: action['pipeline_id'], reason_id: forward_reason_id(action),
-      owner_id: action['owner_id'], notes: action['notes'], create_task: action['create_task'], complete_tasks: true,
+      owner_id: forward_owner_id(action), notes: action['notes'], create_task: action['create_task'], complete_tasks: true,
       rule_name: @rule['name']
     }
+  end
+
+  # responsável escolhido na regra que está com o CRM desligado: o negócio chega sem responsável e a
+  # unidade recebe o aviso
+  def forward_owner_id(action)
+    id = action['owner_id']
+    id.present? && switch.disabled_agent_ids.include?(id.to_i) ? nil : id
   end
 
   def forward_reason_id(action)

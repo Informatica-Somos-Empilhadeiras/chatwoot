@@ -1,8 +1,9 @@
 <script setup>
 // OUTSIDER: CRM de vendas (ver app/controllers/api/v1/accounts/outsider/crm/).
-// Quem não é administrador só entra se for membro de alguma unidade comercial. A seção vem da rota
+// O CRM precisa estar ligado na conta (Super Admin) e para a pessoa (Configurações > Acesso); quem
+// não é administrador também precisa ser membro de alguma unidade comercial. A seção vem da rota
 // (crm/:tab), escolhida pelos subitens do CRM no menu lateral.
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { useAlert } from 'dashboard/composables';
@@ -18,6 +19,7 @@ import { errorMessage } from '../helpers';
 import { crmSections } from '../sections';
 import {
   crmState,
+  ensureCrmContext,
   invalidateCrmContext,
   refreshMyTasks,
   startTaskReminders,
@@ -53,21 +55,50 @@ const loadStructure = async () => {
   pipelines.value = pipelinesResponse.data;
 };
 
-const reload = async () => {
-  invalidateCrmContext();
+const showStructure = async () => {
+  if (!access.value.enabled) return;
   try {
-    const { data } = await CrmAPI.getAccess();
-    access.value = data;
-    // o menu lateral usa o mesmo acesso (seção Configurações, por exemplo)
-    crmState.access = data;
-    if (data.enabled) await loadStructure();
+    await loadStructure();
   } catch (error) {
     useAlert(errorMessage(t, error));
   }
 };
 
+// o acesso é o mesmo do menu lateral (crmStore): buscado de novo depois de mudar configurações
+const reload = async () => {
+  invalidateCrmContext();
+  await ensureCrmContext();
+  access.value = crmState.access;
+  await showStructure();
+};
+
+// CRM ligado ou desligado na conta ou para alguém, ou unidades mudadas, com a tela aberta: o crmStore
+// confere o acesso pelo aviso ao vivo e a tela acompanha
+watch(
+  () => crmState.access,
+  value => {
+    if (isLoading.value || value === access.value) return;
+    access.value = value;
+    showStructure();
+  }
+);
+
+// por que a pessoa não entra: CRM desligado na conta, desligado para ela ou fora das unidades
+const noAccessMessage = computed(() => {
+  const key = {
+    account: 'NO_ACCESS_ACCOUNT',
+    agent: 'NO_ACCESS_AGENT',
+  }[access.value.reason];
+  return t(`OUTSIDER_CRM.STATES.${key || 'NO_ACCESS'}`);
+});
+
 onMounted(async () => {
   await reload();
+  // conferência ao vivo que chegou enquanto a tela carregava (o watch acima ainda não olhava)
+  if (crmState.access !== access.value) {
+    access.value = crmState.access;
+    await showStructure();
+  }
   isLoading.value = false;
   if (access.value.enabled) {
     refreshMyTasks();
@@ -117,7 +148,7 @@ onMounted(async () => {
           >
             <Icon icon="i-lucide-handshake" class="size-10 text-n-slate-9" />
             <p class="max-w-md mb-0 text-sm text-n-slate-11">
-              {{ t('OUTSIDER_CRM.STATES.NO_ACCESS') }}
+              {{ noAccessMessage }}
             </p>
           </div>
           <template v-else>

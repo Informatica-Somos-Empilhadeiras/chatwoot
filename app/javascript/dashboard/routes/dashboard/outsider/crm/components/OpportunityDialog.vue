@@ -13,6 +13,7 @@ import Select from 'dashboard/components-next/select/Select.vue';
 import ComboBox from 'dashboard/components-next/combobox/ComboBox.vue';
 import CustomFieldInput from './CustomFieldInput.vue';
 import { centsToInput, errorMessage, parseMoney } from '../helpers';
+import { withCrmAccess } from '../crmStore';
 
 const props = defineProps({
   access: { type: Object, required: true },
@@ -102,8 +103,12 @@ const canManageUnit = computed(
     )
 );
 
+// sem os agentes com o CRM desligado (o responsável atual continua na lista)
 const ownerOptions = computed(() =>
-  props.agents.map(agent => ({ value: agent.id, label: agent.name }))
+  withCrmAccess(props.agents, editing.value?.owner?.id).map(agent => ({
+    value: agent.id,
+    label: agent.name,
+  }))
 );
 
 const statusOptions = computed(() =>

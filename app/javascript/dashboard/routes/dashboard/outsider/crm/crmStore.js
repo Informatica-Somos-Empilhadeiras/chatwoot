@@ -8,7 +8,12 @@ import CrmAPI from 'dashboard/api/outsider/crm';
 import { useAlert } from 'dashboard/composables';
 import { frontendURL } from 'dashboard/helper/URLHelper';
 import { DEFAULT_CONVERSATION_SIDEBAR_ITEMS_ORDER } from 'dashboard/composables/useUISettings';
-import { onCrmChange, startLiveUpdates } from './live';
+import {
+  onCrmAccessChange,
+  onCrmChange,
+  startLiveUpdates,
+  stopLiveUpdates,
+} from './live';
 import { errorMessage } from './helpers';
 
 export const OPEN_CRM_TAB_EVENT = 'outsider_crm_open_tab';
@@ -19,7 +24,12 @@ const SIDEBAR_PLACED_KEY = 'outsider_crm_sidebar_placed';
 const CHIP_BATCH_DELAY = 50;
 const CHIP_BATCH_SIZE = 100;
 
-const emptyAccess = () => ({ enabled: false, administrator: false, units: [] });
+const emptyAccess = () => ({
+  enabled: false,
+  administrator: false,
+  units: [],
+  disabled_user_ids: [],
+});
 
 export const crmState = reactive({
   accountId: null,
@@ -42,6 +52,10 @@ export const crmState = reactive({
 });
 
 let contextPromise = null;
+// cada busca do acesso tem um número: resposta atrasada de uma busca anterior é ignorada
+let accessRequest = 0;
+// já veio o acesso desta conta: as próximas buscas são conferências (aviso ao vivo, reconexão)
+let accessKnown = false;
 const summaryRequests = {};
 const historyRequests = {};
 let chipQueue = new Set();
@@ -50,9 +64,8 @@ let chipTimer = null;
 const currentAccountId = () =>
   window.location.pathname.match(/\/accounts\/(\d+)/)?.[1] || null;
 
-const resetForAccount = accountId => {
-  crmState.accountId = accountId;
-  crmState.access = emptyAccess();
+// o que foi carregado do CRM; some quando a conta muda ou o acesso é desligado
+const clearCrmData = () => {
   crmState.pipelines = [];
   crmState.lostReasons = [];
   crmState.summaries = {};
@@ -63,7 +76,17 @@ const resetForAccount = accountId => {
   crmState.myTasks = { pending: 0, overdue: 0 };
   crmState.histories = {};
   crmState.received = [];
+  // eslint-disable-next-line no-use-before-define
+  resetReminders();
+};
+
+const resetForAccount = accountId => {
+  crmState.accountId = accountId;
+  crmState.access = emptyAccess();
+  clearCrmData();
   contextPromise = null;
+  accessRequest += 1;
+  accessKnown = false;
 };
 
 // Uma vez por usuário: põe o bloco CRM logo abaixo das ações da conversa e aberto. Quem já tinha
@@ -91,21 +114,48 @@ const placeSidebarItem = () => {
 };
 
 const fetchContext = async () => {
+  accessRequest += 1;
+  const request = accessRequest;
+  const { accountId } = crmState;
+  const stale = () =>
+    request !== accessRequest || accountId !== crmState.accountId;
   try {
     const { data } = await CrmAPI.getAccess();
+    if (stale()) return;
+    const recheck = accessKnown;
+    const wasEnabled = crmState.access.enabled;
+    accessKnown = true;
     crmState.access = data;
-    if (!data.enabled) return;
+    // Com o CRM ligado na conta, fica conectado mesmo sem acesso: o aviso de religado chega e o menu
+    // volta sem recarregar. Conta com o CRM desligado não abre conexão.
+    if (data.reason === 'account') stopLiveUpdates();
+    else startLiveUpdates(accountId);
+    if (!data.enabled) {
+      // CRM desligado na conta ou para a pessoa: menu, aba, selo e bloco do contato somem
+      clearCrmData();
+      return;
+    }
     placeSidebarItem();
-    startLiveUpdates(crmState.accountId);
+    if (recheck && !wasEnabled) {
+      // religado com a página aberta: contagem de tarefas e aviso de recebidos voltam na hora
+      // eslint-disable-next-line no-use-before-define
+      refreshMyTasks();
+      // eslint-disable-next-line no-use-before-define
+      refreshReceived();
+    }
     const [pipelines, reasons] = await Promise.all([
       CrmAPI.getPipelines(),
       CrmAPI.getLostReasons(),
     ]);
+    if (stale()) return;
     crmState.pipelines = pipelines.data;
     crmState.lostReasons = reasons.data;
   } catch {
-    // sem CRM (erro de rede ou sem permissão): as telas simplesmente não aparecem
-    crmState.access = emptyAccess();
+    if (stale()) return;
+    // Tenta de novo na próxima vez; numa conferência que falhou (rede), o CRM fica como estava.
+    // O acesso não é trocado aqui: trocar refaria o menu, que pediria o acesso de novo sem parar
+    // enquanto o servidor estiver fora.
+    contextPromise = null;
   }
 };
 
@@ -119,6 +169,15 @@ export const ensureCrmContext = () => {
 // a tela do CRM chama depois de mudar configurações, para a conversa ver pipelines novos
 export const invalidateCrmContext = () => {
   contextPromise = null;
+};
+
+// Responsável e tarefa só vão para quem tem o CRM: tira da lista os agentes com o CRM desligado
+// (CRM > Configurações > Acesso). keepId mantém quem já é o responsável, para o nome aparecer.
+export const withCrmAccess = (people, keepId = null) => {
+  const disabled = crmState.access.disabled_user_ids || [];
+  return people.filter(
+    person => person.id === keepId || !disabled.includes(person.id)
+  );
 };
 
 export const summaryKey = (contactId, conversationId) =>
@@ -239,6 +298,11 @@ let reminderTimer = null;
 let reminderTasks = [];
 let reminderFetchedAt = 0;
 let reminderT = null;
+
+const resetReminders = () => {
+  reminderTasks = [];
+  reminderFetchedAt = 0;
+};
 
 const endOfToday = () => {
   const date = new Date();
@@ -375,9 +439,24 @@ export const claimOpportunity = async (t, opportunity) => {
 
 // Atualização ao vivo (live.js): o que fica fora da tela do CRM também acompanha. Contagem de
 // tarefas do menu, aviso de negócio recebido e o resumo dos contatos já abertos na conversa.
+// CRM ligado ou desligado na conta ou para alguém: confere o acesso de novo. Vários avisos seguidos
+// (o administrador mexendo em várias pessoas) viram uma busca só.
+const ACCESS_CHECK_DELAY = 300;
+let accessTimer = null;
+const recheckAccess = () => {
+  clearTimeout(accessTimer);
+  accessTimer = setTimeout(() => {
+    invalidateCrmContext();
+    ensureCrmContext();
+  }, ACCESS_CHECK_DELAY);
+};
+onCrmAccessChange(recheckAccess);
+
 onCrmChange(changes => {
-  if (!crmState.access.enabled) return;
   const all = changes.some(change => change.kind === 'reconnected');
+  // sem conexão, um aviso de acesso pode ter se perdido
+  if (all) recheckAccess();
+  if (!crmState.access.enabled) return;
   if (all || changes.some(change => change.kind !== 'config')) refreshMyTasks();
   if (all || changes.some(change => change.kind === 'opportunity')) {
     refreshReceived();

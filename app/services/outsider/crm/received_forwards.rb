@@ -60,8 +60,9 @@ class Outsider::Crm::ReceivedForwards
     ids = @access.member_unit_ids
     return ids unless @access.administrator?
 
-    # quem saiu da conta não conta: a unidade dele também cai no administrador
-    in_account = AccountUser.where(account_id: @account_id).select(:user_id)
+    # quem saiu da conta ou está com o CRM desligado não conta: a unidade dele também cai no administrador
+    disabled = ::Outsider::Crm::Switch.new(@access.account_user.account).disabled_agent_ids
+    in_account = AccountUser.where(account_id: @account_id).where.not(user_id: disabled).select(:user_id)
     with_members = Outsider::Crm::BusinessUnitMember.where(account_id: @account_id, user_id: in_account).select(:business_unit_id)
     ids + Outsider::Crm::BusinessUnit.where(account_id: @account_id).where.not(id: with_members).pluck(:id)
   end

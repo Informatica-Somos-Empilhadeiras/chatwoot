@@ -62,4 +62,13 @@ RSpec.describe Outsider::Crm::TimedRules do
     expect(idle.tasks.pluck(:title)).to eq(['Tarefa no_next_task'])
     expect(Outsider::Crm::Task.where(account_id: other.id)).to be_empty
   end
+
+  it 'skips accounts with the CRM off' do
+    rule('no_next_task', 1)
+    idle = travel_to(2.hours.ago) { deal }
+    crm_enable(account, enabled: false)
+
+    expect(described_class.perform_all).to eq(0)
+    expect(idle.tasks).to be_empty
+  end
 end

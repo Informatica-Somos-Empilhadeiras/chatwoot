@@ -1,7 +1,13 @@
 # OUTSIDER: atalhos para montar unidade, pipeline e oportunidade nos specs do CRM.
 module OutsiderCrmHelpers
+  # O CRM começa desligado em toda conta (Outsider::Crm::Switch); montar uma unidade já liga
   def crm_unit(account, name: 'Locação')
+    crm_enable(account)
     Outsider::Crm::BusinessUnit.create!(account: account, name: name)
+  end
+
+  def crm_enable(account, enabled: true)
+    account.reload.update_columns(internal_attributes: account.internal_attributes.merge('outsider_crm_enabled' => enabled)) # rubocop:disable Rails/SkipsModelValidations
   end
 
   def crm_pipeline(account, unit, name: 'Vendas')

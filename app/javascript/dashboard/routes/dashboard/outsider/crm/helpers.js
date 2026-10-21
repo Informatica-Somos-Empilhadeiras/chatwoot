@@ -189,7 +189,15 @@ export const errorMessage = (t, error) => {
   if (status === 401 || code === 'crm_forbidden' || code === 'crm_admin_only') {
     return t('OUTSIDER_CRM.ERRORS.NO_PERMISSION');
   }
-  if (code === 'crm_access_denied') return t('OUTSIDER_CRM.ERRORS.NO_ACCESS');
+  if (code === 'crm_access_denied') {
+    // CRM desligado na conta ou para a pessoa: o motivo vem em reason
+    if (data.reason === 'account') {
+      return t('OUTSIDER_CRM.STATES.NO_ACCESS_ACCOUNT');
+    }
+    if (data.reason === 'agent')
+      return t('OUTSIDER_CRM.STATES.NO_ACCESS_AGENT');
+    return t('OUTSIDER_CRM.ERRORS.NO_ACCESS');
+  }
   // apagar recusado: o motivo vem em reason (negócios, regras, campo preenchido, encaminhamento)
   if (code === 'in_use' && data.reason) {
     return t(`OUTSIDER_CRM.DELETE.BLOCKED.${data.reason.toUpperCase()}`, data);

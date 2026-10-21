@@ -6,6 +6,8 @@ RSpec.describe 'Outsider CRM business units API', type: :request do
   let(:agent) { create(:user, account: account, role: :agent) }
   let(:base_url) { "/api/v1/accounts/#{account.id}/outsider/crm" }
 
+  before { crm_enable(account) }
+
   describe 'GET access' do
     it 'returns unauthorized without a session' do
       get "#{base_url}/access"
@@ -16,7 +18,14 @@ RSpec.describe 'Outsider CRM business units API', type: :request do
     it 'tells an agent outside every unit that the CRM is off' do
       get "#{base_url}/access", headers: agent.create_new_auth_token, as: :json
 
-      expect(response.parsed_body).to include('enabled' => false, 'administrator' => false)
+      expect(response.parsed_body).to include('enabled' => false, 'administrator' => false, 'reason' => 'no_unit')
+      expect(response.parsed_body).not_to have_key('settings')
+    end
+
+    it 'sends the settings to whoever has access' do
+      get "#{base_url}/access", headers: admin.create_new_auth_token, as: :json
+
+      expect(response.parsed_body).to include('enabled' => true, 'administrator' => true, 'disabled_user_ids' => [])
       expect(response.parsed_body['settings']).to include('max_forward_attempts' => 3)
     end
   end

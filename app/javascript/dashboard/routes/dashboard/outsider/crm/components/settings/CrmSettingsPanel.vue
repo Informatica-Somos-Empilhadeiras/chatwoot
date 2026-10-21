@@ -5,6 +5,7 @@ import { ref, computed } from 'vue';
 import { useRoute } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import UnitsSettings from './UnitsSettings.vue';
+import AccessSettings from './AccessSettings.vue';
 import PipelinesSettings from './PipelinesSettings.vue';
 import ReasonsSettings from './ReasonsSettings.vue';
 import FieldsSettings from './FieldsSettings.vue';
@@ -27,6 +28,7 @@ const route = useRoute();
 const sections = computed(() =>
   [
     { key: 'units', icon: 'i-lucide-building-2', admin: true },
+    { key: 'access', icon: 'i-lucide-user-check', admin: true },
     { key: 'pipelines', icon: 'i-lucide-kanban', admin: false },
     { key: 'reasons', icon: 'i-lucide-circle-x', admin: true },
     { key: 'fields', icon: 'i-lucide-text-cursor-input', admin: true },
@@ -74,6 +76,7 @@ const active = ref(
         :units="units"
         @changed="emit('changed')"
       />
+      <AccessSettings v-else-if="active === 'access'" />
       <PipelinesSettings
         v-else-if="active === 'pipelines'"
         :access="access"

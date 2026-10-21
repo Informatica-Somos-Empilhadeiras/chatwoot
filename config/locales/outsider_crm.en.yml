@@ -1,5 +1,9 @@
 en:
   outsider_crm:
+    switch:
+      enabled: "On"
+      disabled: "Off"
+      hint: "Shows the CRM in this account. When on, every agent has access; the account administrator can turn it off per agent in CRM > Settings > Access."
     errors:
       duplicate_open_opportunity: This contact already has an open opportunity in this business unit
       group_contact: WhatsApp groups cannot have opportunities
@@ -29,3 +33,8 @@ en:
         no_owner_to_assign: Choose the destination owner to assign the conversation
         owner_not_in_inbox: "%{name} is not in this conversation's inbox"
         conversation_forbidden: You are not in this conversation's inbox, so you cannot assign it
+  # Campo "CRM" da conta no Super Admin (Outsider::Crm::AccountDashboardSwitch)
+  helpers:
+    label:
+      account:
+        outsider_crm_enabled: CRM

@@ -14,7 +14,7 @@ import Button from 'dashboard/components-next/button/Button.vue';
 import Switch from 'dashboard/components-next/switch/Switch.vue';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
 import { TASK_KINDS, errorMessage } from '../../helpers';
-import { loadUnitMembers } from '../../crmStore';
+import { crmState, loadUnitMembers } from '../../crmStore';
 import {
   ACTION_ICONS,
   ASSIGNEES,
@@ -95,6 +95,23 @@ const forwardPipelineOptions = action => [
     )
     .map(pipeline => ({ value: pipeline.id, label: pipeline.name })),
 ];
+// Agente com o CRM desligado (Configurações > Acesso) sai das listas; se a regra já o usa, ele continua
+// na lista com o aviso, para quem edita a regra saber que precisa trocar
+const crmOff = id =>
+  (crmState.access.disabled_user_ids || []).includes(Number(id));
+const personLabel = (id, name) =>
+  crmOff(id) ? t('OUTSIDER_CRM.SETTINGS.RULES.CRM_OFF', { name }) : name;
+const personOptions = selectedId =>
+  props.agentOptions
+    .filter(
+      option =>
+        !crmOff(option.value) || Number(option.value) === Number(selectedId)
+    )
+    .map(option => ({
+      ...option,
+      label: personLabel(option.value, option.label),
+    }));
+
 // responsável no destino: membros da unidade e administradores da conta (mesma regra da API)
 const ownerOptions = action => {
   const unitMembers = members.value[action.to_business_unit_id] || [];
@@ -104,10 +121,14 @@ const ownerOptions = action => {
   );
   return [
     { value: '', label: t('OUTSIDER_CRM.SETTINGS.RULES.FORWARD.NO_OWNER') },
-    ...[...unitMembers, ...admins].map(person => ({
-      value: person.id,
-      label: person.name,
-    })),
+    ...[...unitMembers, ...admins]
+      .filter(
+        person => !crmOff(person.id) || person.id === Number(action.owner_id)
+      )
+      .map(person => ({
+        value: person.id,
+        label: personLabel(person.id, person.name),
+      })),
   ];
 };
 
@@ -491,7 +512,7 @@ defineExpose({ open });
               <Select
                 v-if="action.assignee === 'user'"
                 v-model="action.user_id"
-                :options="agentOptions"
+                :options="personOptions(action.user_id)"
                 :placeholder="t('OUTSIDER_CRM.SETTINGS.RULES.CHOOSE_PERSON')"
               />
             </div>
@@ -507,7 +528,7 @@ defineExpose({ open });
           <template v-else-if="action.type === 'set_owner'">
             <Select
               v-model="action.user_id"
-              :options="agentOptions"
+              :options="personOptions(action.user_id)"
               :placeholder="t('OUTSIDER_CRM.SETTINGS.RULES.CHOOSE_PERSON')"
             />
             <p class="mb-0 text-xs text-n-slate-11">

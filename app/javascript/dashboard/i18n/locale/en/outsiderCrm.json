@@ -13,7 +13,9 @@
     "STATES": {
       "NO_ACCESS": "You are not part of any CRM business unit yet. Ask an administrator to add you.",
       "NO_PIPELINES": "There is no pipeline in your business units yet. An administrator or manager needs to create one in Settings > Pipelines.",
-      "EMPTY": "No deals match these filters."
+      "EMPTY": "No deals match these filters.",
+      "NO_ACCESS_ACCOUNT": "The CRM is not turned on in this account. Ask your Chatwoot administrator to turn it on.",
+      "NO_ACCESS_AGENT": "The CRM was turned off for you in this account. Ask an account administrator to turn it on in Settings > Access."
     },
     "STATUS": {
       "OPEN": "Open",
@@ -76,7 +78,8 @@
         "GENERAL": "General",
         "AUTOMATIONS": "Automations",
         "GOALS": "Goals",
-        "COMMISSION": "Commission"
+        "COMMISSION": "Commission",
+        "ACCESS": "Access"
       },
       "UNITS": {
         "TITLE": "Business units",
@@ -305,7 +308,8 @@
           "CREATE_TASK": "Create the “Contact the customer” task for the owner (due in 30 minutes)",
           "NOTES": "Note for the receiver (optional)",
           "HELP": "The lost deal becomes forwarded and a new deal opens in the destination unit, in the first stage, with the same contact, conversation, value and fields. It does not forward if the contact already has an open deal there or the journey reached the forwarding limit; the timeline shows why."
-        }
+        },
+        "CRM_OFF": "{name} (CRM off)"
       },
       "GOALS": {
         "TITLE": "Sales goals",
@@ -366,6 +370,22 @@
         "SKIP": "Do not hand off when the lost reason is",
         "SKIP_HELP": "For example, when the customer gave up buying. Those deals stay lost.",
         "SAVED": "Sequential handoff saved"
+      },
+      "ACCESS": {
+        "TITLE": "Who uses the CRM",
+        "DESCRIPTION": "Every agent in the account has the CRM unless you turn it off here. People with the CRM off do not see it anywhere: menu, conversation tab and value, and contact block.",
+        "SEARCH": "Search people",
+        "NAME": "Person",
+        "COUNT": "{enabled} of {count} agents with the CRM",
+        "ADMIN": "Admin",
+        "ADMIN_HINT": "Account administrators always have the CRM",
+        "ON": "On",
+        "OFF": "Off",
+        "ALL_UNITS": "all units",
+        "NO_UNIT": "no unit (needs to join a unit to see deals)",
+        "OPEN_DEALS": "Still owns {n} open deal. Reassign it if someone else will take over. | Still owns {n} open deals. Reassign them if someone else will take over.",
+        "EMPTY_SEARCH": "Nobody matches this search.",
+        "NOTE": "The change applies right away for people with Chatwoot open. People with the CRM off leave the owner lists, the rotation and the received-deal notices."
       }
     },
     "ERRORS": {

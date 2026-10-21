@@ -304,6 +304,15 @@ class CrmAPI extends ApiClient {
   getContactHistory(contactId) {
     return axios.get(`${this.url}/contacts/${contactId}/history`);
   }
+
+  // quem tem o CRM na conta (Configurações > Acesso, só administrador)
+  getAgentAccesses() {
+    return axios.get(`${this.url}/agent_accesses`);
+  }
+
+  updateAgentAccess(userId, enabled) {
+    return axios.patch(`${this.url}/agent_accesses/${userId}`, { enabled });
+  }
 }
 
 export default new CrmAPI();

@@ -8,7 +8,12 @@ import { useMapGetter, useStore } from 'dashboard/composables/store';
 import CrmAPI from 'dashboard/api/outsider/crm';
 import Button from 'dashboard/components-next/button/Button.vue';
 import Select from 'dashboard/components-next/select/Select.vue';
-import { crmState, ensureCrmContext, loadUnitMembers } from '../crmStore';
+import {
+  crmState,
+  ensureCrmContext,
+  loadUnitMembers,
+  withCrmAccess,
+} from '../crmStore';
 import {
   TASK_KINDS,
   combineDateTime,
@@ -62,11 +67,14 @@ const kindOptions = computed(() =>
   }))
 );
 
-// membros da unidade e administradores da conta (os únicos que o backend aceita)
+// membros da unidade e administradores da conta (os únicos que o backend aceita), menos os
+// agentes com o CRM desligado
 const assigneeOptions = computed(() => {
   const people = new Map();
   people.set(currentUser.value.id, currentUser.value.name);
-  members.value.forEach(member => people.set(member.id, member.name));
+  withCrmAccess(members.value).forEach(member =>
+    people.set(member.id, member.name)
+  );
   agents.value
     .filter(agent => agent.role === 'administrator')
     .forEach(agent => people.set(agent.id, agent.name));
@@ -97,9 +105,11 @@ onMounted(async () => {
   await ensureCrmContext();
   if (!canAssign.value) return;
   if (!agents.value.length) store.dispatch('agents/get');
-  // quem gerencia a unidade começa com o responsável do negócio
-  form.value.assignee_id =
-    props.opportunity.owner?.id || form.value.assignee_id;
+  // quem gerencia a unidade começa com o responsável do negócio, se ele tem o CRM ligado
+  const ownerId = props.opportunity.owner?.id;
+  if (ownerId && !(crmState.access.disabled_user_ids || []).includes(ownerId)) {
+    form.value.assignee_id = ownerId;
+  }
   try {
     members.value = await loadUnitMembers(props.opportunity.business_unit_id);
   } catch {
