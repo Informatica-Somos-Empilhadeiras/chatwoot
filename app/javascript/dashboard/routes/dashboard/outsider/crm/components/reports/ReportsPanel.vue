@@ -13,6 +13,7 @@ import LoadError from '../../activity/LoadError.vue';
 import ForecastChart from './ForecastChart.vue';
 import FunnelTable from './FunnelTable.vue';
 import BarList from './BarList.vue';
+import ProposalReport from './ProposalReport.vue';
 import { errorMessage, formatDate, formatMoney } from '../../helpers';
 
 const props = defineProps({
@@ -440,6 +441,8 @@ useCrmChanges(changes => {
           </table>
         </div>
       </section>
+
+      <ProposalReport :filters="filters" />
     </template>
   </div>
 </template>

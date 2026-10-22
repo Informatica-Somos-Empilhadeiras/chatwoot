@@ -26,11 +26,15 @@ module Outsider::Crm::Serializer
     list = list.to_a
     ActiveRecord::Associations::Preloader.new(records: list, associations: LIST_PRELOAD).call
     stats = Outsider::Crm::TaskStats.for(list.map(&:id))
-    list.map { |opportunity| opportunity(opportunity, access: access, task_stats: stats[opportunity.id]) }
+    proposals = Outsider::Crm::ProposalStats.for(list.map(&:id), access)
+    list.map do |opportunity|
+      opportunity(opportunity, access: access, task_stats: stats[opportunity.id], proposal: proposals[opportunity.id] || false)
+    end
   end
 
   # conversation_display_id é o número da conversa que o Chatwoot mostra (e usa nas URLs)
-  def opportunity(opportunity, access: nil, task_stats: nil)
+  # proposal: selo da proposta mais recente (ProposalStats); false = já consultado e o negócio não tem
+  def opportunity(opportunity, access: nil, task_stats: nil, proposal: nil)
     opportunity.slice(
       :id, :display_id, :title, :value_cents, :currency, :expected_close_on, :probability, :status,
       :business_unit_id, :pipeline_id, :stage_id, :journey_id, :conversation_id, :lost_reason_id,
@@ -39,12 +43,21 @@ module Outsider::Crm::Serializer
       code: opportunity.code,
       conversation_display_id: opportunity.conversation&.display_id,
       effective_probability: opportunity.effective_probability,
-      overdue: opportunity.open? && opportunity.expected_close_on.present? && opportunity.expected_close_on < Time.zone.today,
+      overdue: close_overdue?(opportunity),
       sla_exceeded: sla_exceeded?(opportunity),
       tasks: task_stats || Outsider::Crm::TaskStats.for([opportunity.id])[opportunity.id],
+      proposal: proposal_stats(opportunity, access, proposal),
       contact: contact(opportunity.contact),
       owner: user(opportunity.owner)
     ).merge(permissions(opportunity, access)).merge(forward_links(opportunity))
+  end
+
+  def close_overdue?(opportunity)
+    opportunity.open? && opportunity.expected_close_on.present? && opportunity.expected_close_on < Time.zone.today
+  end
+
+  def proposal_stats(opportunity, access, proposal)
+    proposal.nil? ? Outsider::Crm::ProposalStats.for([opportunity.id], access)[opportunity.id] : proposal.presence
   end
 
   def permissions(opportunity, access)

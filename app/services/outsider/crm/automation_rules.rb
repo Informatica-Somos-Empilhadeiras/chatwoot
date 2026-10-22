@@ -3,6 +3,9 @@
 # por conta e mudam pouco. Quem executa é o Outsider::Crm::RuleRunner (eventos do negócio) e o
 # Outsider::Crm::TimedRules (verificação de hora em hora).
 #
+# Gatilhos de proposta (Entrega 18): enviada, aceita, recusada, enviada sem resposta há mais de
+# wait_hours e vencendo (faltam menos de wait_hours para acabar a validade).
+#
 # Regra: { id, name, active, trigger, wait_hours, conditions: { business_unit_id, pipeline_id,
 # stage_id, min_value_cents, lost_reason_id }, actions: [{ type, ... }] }. Nenhuma ação muda etapa
 # do negócio. A única que muda a situação é "encaminhar" (só em "quando perder"): o perdido vira
@@ -12,8 +15,11 @@ class Outsider::Crm::AutomationRules
   KEY = 'outsider_crm_rules'.freeze
   # id nunca reaproveitado: a linha do tempo guarda o id da regra para não repetir a mesma situação
   NEXT_ID_KEY = 'outsider_crm_rules_next_id'.freeze
-  EVENT_TRIGGERS = %w[created stage_entered won lost].freeze
-  TIMED_TRIGGERS = %w[stalled no_next_task].freeze
+  # Entrega 18: gatilhos de proposta. Rodam no negócio ligado à proposta (proposta sem negócio não dispara)
+  PROPOSAL_EVENT_TRIGGERS = %w[proposal_sent proposal_accepted proposal_rejected].freeze
+  PROPOSAL_TIMED_TRIGGERS = %w[proposal_no_reply proposal_expiring].freeze
+  EVENT_TRIGGERS = (%w[created stage_entered won lost] + PROPOSAL_EVENT_TRIGGERS).freeze
+  TIMED_TRIGGERS = (%w[stalled no_next_task] + PROPOSAL_TIMED_TRIGGERS).freeze
   TRIGGERS = (EVENT_TRIGGERS + TIMED_TRIGGERS).freeze
   ACTION_TYPES = %w[create_task set_owner add_label add_note forward].freeze
   # gatilhos em que dá para encaminhar e filtrar pelo motivo da perda

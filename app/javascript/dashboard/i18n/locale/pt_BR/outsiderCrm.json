@@ -215,7 +215,12 @@
           "WON": "Negócio ganho",
           "LOST": "Negócio perdido",
           "STALLED": "Negócio parado na mesma etapa",
-          "NO_NEXT_TASK": "Negócio sem próxima tarefa"
+          "NO_NEXT_TASK": "Negócio sem próxima tarefa",
+          "PROPOSAL_SENT": "Proposta enviada",
+          "PROPOSAL_ACCEPTED": "Proposta aceita",
+          "PROPOSAL_REJECTED": "Proposta recusada",
+          "PROPOSAL_NO_REPLY": "Proposta enviada sem resposta",
+          "PROPOSAL_EXPIRING": "Proposta perto de vencer"
         },
         "TRIGGER_HELP": {
           "CREATED": "Vale para todo negócio novo, inclusive o que chega por encaminhamento de outra unidade.",
@@ -223,7 +228,12 @@
           "WON": "Roda logo depois das automações prontas de ganho.",
           "LOST": "Roda logo depois das automações prontas de perda. Aqui dá para filtrar pelo motivo da perda e encaminhar o negócio para outra unidade.",
           "STALLED": "Conferido de hora em hora. Roda uma vez por passagem na etapa.",
-          "NO_NEXT_TASK": "Conferido de hora em hora, contando da última tarefa concluída (ou da criação do negócio). Só roda de novo depois que o negócio concluir outra tarefa."
+          "NO_NEXT_TASK": "Conferido de hora em hora, contando da última tarefa concluída (ou da criação do negócio). Só roda de novo depois que o negócio concluir outra tarefa.",
+          "PROPOSAL_SENT": "Roda quando a proposta ligada ao negócio passa a enviada (pelo envio por WhatsApp ou e-mail, ou marcada à mão). Proposta sem negócio não dispara regras.",
+          "PROPOSAL_ACCEPTED": "Roda quando a proposta ligada ao negócio é marcada como aceita. Proposta sem negócio não dispara regras.",
+          "PROPOSAL_REJECTED": "Roda quando a proposta ligada ao negócio é marcada como recusada. Proposta sem negócio não dispara regras.",
+          "PROPOSAL_NO_REPLY": "Conferido de hora em hora: proposta enviada, sem aceite nem recusa, contando do último envio. Reenviar abre uma nova contagem. Só vale para negócio aberto.",
+          "PROPOSAL_EXPIRING": "Conferido de hora em hora: proposta enviada cuja validade acaba antes do tempo escolhido. Roda uma vez por validade. Só vale para negócio aberto."
         },
         "PIPELINE": "Pipeline",
         "STAGE": "Etapa",
@@ -262,7 +272,8 @@
           "MIN_VALUE": "a partir de {value}",
           "TASK_MANAGERS": "{title} (gestores)",
           "OWNER": "Responsável: {name}",
-          "FORWARD": "Encaminhar para {unit}"
+          "FORWARD": "Encaminhar para {unit}",
+          "EXPIRING": "{trigger}: faltando menos de {time}"
         },
         "PRESETS": {
           "TITLE": "Comece por um modelo",
@@ -275,7 +286,13 @@
           "STALLED_MANAGERS_TASK": "Ver com o vendedor o negócio parado",
           "NEXT_TASK": "Cobrar próxima tarefa",
           "NEXT_TASK_TASK": "Definir o próximo passo do negócio",
-          "LOST_FORWARD": "Encaminhar o perdido para outra unidade"
+          "LOST_FORWARD": "Encaminhar o perdido para outra unidade",
+          "PROPOSAL_NO_REPLY": "Cobrar proposta sem resposta",
+          "PROPOSAL_NO_REPLY_TASK": "Ligar para o cliente sobre a {proposta}",
+          "PROPOSAL_EXPIRING": "Avisar proposta perto de vencer",
+          "PROPOSAL_EXPIRING_TASK": "A {proposta} vence em breve: renovar ou fechar",
+          "PROPOSAL_REJECTED": "Entender a proposta recusada",
+          "PROPOSAL_REJECTED_TASK": "Perguntar ao cliente o motivo da recusa da {proposta}"
         },
         "ERRORS": {
           "NAME": "Dê um nome à regra (até 80 letras).",
@@ -312,7 +329,11 @@
           "NOTES": "Recado para quem recebe (opcional)",
           "HELP": "O negócio perdido passa a encaminhado e um negócio novo abre na unidade de destino, na primeira etapa, com o mesmo contato, conversa, valor e campos. Não encaminha se o contato já tem negócio aberto lá ou se a jornada chegou ao limite de encaminhamentos; a linha do tempo mostra o motivo."
         },
-        "CRM_OFF": "{name} (CRM desligado)"
+        "CRM_OFF": "{name} (CRM desligado)",
+        "WAIT_LABELS": {
+          "PROPOSAL_EXPIRING": "faltando menos de"
+        },
+        "PROPOSAL_PLACEHOLDER": "Em gatilhos de proposta, escreva {proposta} no título, na descrição ou na nota para aparecer o número dela (ex.: PROPOSTA 2661)."
       },
       "GOALS": {
         "TITLE": "Metas de venda",
@@ -454,7 +475,22 @@
       "STACK_COUNT": "nenhum negócio aberto | 1 negócio aberto | {n} negócios abertos",
       "STACK_SHOW": "Mostrar quadro",
       "STACK_HIDE": "Recolher",
-      "NO_PIPELINES_HERE": "Nenhum pipeline ativo para mostrar com estes filtros."
+      "NO_PIPELINES_HERE": "Nenhum pipeline ativo para mostrar com estes filtros.",
+      "PROPOSAL": {
+        "DRAFT": "Proposta {number} em rascunho",
+        "SENT": "Proposta enviada {when}",
+        "SENT_NO_DATE": "Proposta enviada",
+        "ACCEPTED": "Proposta aceita",
+        "REJECTED": "Proposta recusada",
+        "EXPIRED": "Proposta vencida",
+        "TOOLTIP": "Proposta {number} · {total}",
+        "MORE": "{count} propostas neste negócio",
+        "TODAY": "hoje",
+        "YESTERDAY": "ontem",
+        "DAYS_AGO": "há {days} dias",
+        "EXPIRES_TODAY": "vence hoje",
+        "EXPIRES_IN": "vence em {days} d"
+      }
     },
     "CONVERSATION": {
       "TAB": "CRM",
@@ -642,7 +678,8 @@
         "OPEN": "Abrir proposta",
         "SENT_WHATSAPP": "{name} enviou a proposta {number} por WhatsApp para {recipient}",
         "SENT_EMAIL": "{name} enviou a proposta {number} por e-mail para {recipient}"
-      }
+      },
+      "RULE_PROPOSAL": "Proposta {number}"
     },
     "AUDIT": {
       "HINT": "Toda alteração do negócio e das tarefas, com quem fez e quando.",
@@ -845,6 +882,42 @@
         "FORWARDED": "Encaminhados",
         "RECEIVED": "Recebidos",
         "CONVERSION": "Conversão"
+      },
+      "PROPOSALS": {
+        "TITLE": "Propostas",
+        "SUBTITLE": "Propostas emitidas no período, pela situação de hoje. Só as que você pode ver.",
+        "EMPTY": "Nenhuma proposta emitida neste período.",
+        "TILES": {
+          "ISSUED": "Emitidas",
+          "ISSUED_HINT": "{count} propostas · {sent} enviadas",
+          "ACCEPTED": "Aceitas",
+          "ACCEPTED_HINT": "{count} propostas",
+          "RATE": "Taxa de aceite",
+          "RATE_HINT": "Aceitas ÷ (aceitas + recusadas + vencidas)",
+          "DAYS": "Tempo até a resposta",
+          "DAYS_HINT": "Do envio ao aceite ou recusa"
+        },
+        "STATUS_TITLE": "Situação",
+        "OWNERS_TITLE": "Por responsável",
+        "PRODUCTS_TITLE": "Máquinas e itens mais propostos",
+        "PRODUCTS_EMPTY": "Nenhum item nas propostas do período.",
+        "COLUMNS": {
+          "OWNER": "Responsável",
+          "ISSUED": "Emitidas",
+          "OPEN": "Em aberto",
+          "ACCEPTED": "Aceitas",
+          "REJECTED": "Recusadas",
+          "EXPIRED": "Vencidas",
+          "RATE": "Aceite",
+          "ITEM": "Item",
+          "QUANTITY": "Qtd. proposta",
+          "PROPOSALS": "Propostas",
+          "ACCEPTED_QUANTITY": "Qtd. aceita",
+          "ACCEPTED_VALUE": "Valor aceito"
+        },
+        "CANCELED_NOTE": "Canceladas no período: {count} (fora das contas).",
+        "OPEN_LIST": "Ver propostas",
+        "TOOLTIP": "Propostas: {count} ({share}%) · {value}"
       }
     },
     "DELETE": {
@@ -1154,7 +1227,18 @@
         "REMOVE": "Tirar item",
         "ADD": "Adicionar item",
         "EMPTY": "Nenhum item. Adicione uma máquina do catálogo ou um item livre.",
-        "GRAND_TOTAL": "Total da proposta"
+        "GRAND_TOTAL": "Total da proposta",
+        "DISCOUNT_MODE": {
+          "LABEL": "Desconto",
+          "MONEY": "R$",
+          "PERCENT": "%",
+          "AS_PERCENT": "= {percent}%",
+          "AS_MONEY": "= {value}",
+          "SWITCH": "Trocar entre R$ e %",
+          "ALL": "Desconto em todos os itens",
+          "ALL_APPLY": "Aplicar",
+          "ALL_HELP": "Calcula o desconto de cada item pelo percentual. Dá para ajustar item por item depois."
+        }
       },
       "CONDITIONS": {
         "LABEL": "Título (ex.: Frete)",

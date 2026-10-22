@@ -57,6 +57,44 @@ export const itemTotal = item => {
   return Math.round(quantity * price * 100) - Math.round(discount * 100);
 };
 
+// valor bruto da linha em centavos (quantidade × valor), antes do desconto
+export const itemGross = item => {
+  const quantity = parseQuantity(item.quantity);
+  const price = parseMoney(item.unit_price);
+  if ([quantity, price].some(Number.isNaN)) return NaN;
+  return Math.round(quantity * price * 100);
+};
+
+// desconto em % (Entrega 18): "5" ou "2,5" vira número entre 0 e 100; inválido vira NaN
+export const parsePercent = text => {
+  const value = String(text ?? '')
+    .trim()
+    .replace('%', '')
+    .replace(',', '.');
+  if (!value) return 0;
+  const number = Number(value);
+  return Number.isFinite(number) && number >= 0 && number <= 100 ? number : NaN;
+};
+
+// desconto em centavos a partir do percentual sobre o bruto da linha
+export const percentDiscount = (item, percentText) => {
+  const gross = itemGross(item);
+  const percent = parsePercent(percentText);
+  if ([gross, percent].some(Number.isNaN)) return NaN;
+  return Math.round((gross * percent) / 100);
+};
+
+// quanto o desconto em R$ representa do bruto, com até 2 casas ("5" ou "2,5")
+export const discountPercent = item => {
+  const gross = itemGross(item);
+  const discount = parseMoney(item.discount);
+  if (!gross || Number.isNaN(gross) || !discount || Number.isNaN(discount)) {
+    return null;
+  }
+  const value = Math.round(((discount * 100) / gross) * 10000) / 100;
+  return String(value).replace('.', ',');
+};
+
 export const proposalRoute = (accountScopedRoute, query) =>
   accountScopedRoute(CRM_ROUTE, { tab: 'proposals' }, query);
 

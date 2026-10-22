@@ -2,20 +2,25 @@
 # roda as ações como "Sistema" e registra na linha do tempo do negócio o que foi feito.
 # Eventos (negócio criado, entrou numa etapa, ganho, perdido) chegam pelo after_commit do negócio;
 # um erro numa regra vai para o log e não desfaz a gravação do negócio nem impede as outras regras.
+# Gatilhos de proposta (Entrega 18) rodam no negócio ligado a ela; {proposta} no título e na descrição
+# da tarefa e na nota vira o número da proposta, e a linha do tempo guarda qual proposta disparou.
 class Outsider::Crm::RuleRunner
-  def self.on_events(opportunity, events)
+  PROPOSAL_PLACEHOLDER = '{proposta}'.freeze
+
+  def self.on_events(opportunity, events, proposal: nil)
     Outsider::Crm::AutomationRules.new(opportunity.account).active(events).each do |rule|
-      runner = new(opportunity, rule)
+      runner = new(opportunity, rule, proposal: proposal)
       runner.perform if runner.matches?
     end
   rescue StandardError => e
     ChatwootExceptionTracker.new(e, account: opportunity.account).capture_exception
   end
 
-  def initialize(opportunity, rule, key: nil)
+  def initialize(opportunity, rule, key: nil, proposal: nil)
     @opportunity = opportunity
     @rule = rule
     @key = key
+    @proposal = proposal
   end
 
   def matches?
@@ -35,7 +40,8 @@ class Outsider::Crm::RuleRunner
         forwards, others = @rule['actions'].partition { |action| action['type'] == 'forward' }
         (others + forwards).each { |action| run_action(action, summary) }
       end
-      Outsider::Crm::Automations.log(@opportunity, 'custom', rule_id: @rule['id'], rule_name: @rule['name'], key: @key, **summary)
+      Outsider::Crm::Automations.log(@opportunity, 'custom', rule_id: @rule['id'], rule_name: @rule['name'], key: @key,
+                                                             **proposal_metadata, **summary)
     end
     true
   rescue StandardError => e
@@ -44,6 +50,16 @@ class Outsider::Crm::RuleRunner
   end
 
   private
+
+  def proposal_metadata
+    @proposal ? { proposal_id: @proposal.id, proposal_number: @proposal.number } : {}
+  end
+
+  def fill(text)
+    return text if text.blank? || @proposal.nil?
+
+    text.gsub(PROPOSAL_PLACEHOLDER, @proposal.code)
+  end
 
   def run_action(action, summary)
     case action['type']
@@ -58,7 +74,8 @@ class Outsider::Crm::RuleRunner
   def create_tasks(action, summary)
     assignees(action).each do |user|
       @opportunity.tasks.create!(
-        account_id: @opportunity.account_id, kind: action['kind'], title: action['title'], description: action['description'],
+        account_id: @opportunity.account_id, kind: action['kind'], title: fill(action['title']).first(255),
+        description: fill(action['description']),
         due_at: action['due_in_hours'].to_i.hours.from_now, assignee: user
       )
       summary[:tasks] = summary[:tasks].to_i + 1
@@ -155,7 +172,7 @@ class Outsider::Crm::RuleRunner
   end
 
   def add_note(action, summary)
-    @opportunity.activities.create!(account_id: @opportunity.account_id, kind: :note, body: action['body'])
+    @opportunity.activities.create!(account_id: @opportunity.account_id, kind: :note, body: fill(action['body']))
     summary[:note] = true
   end
 end

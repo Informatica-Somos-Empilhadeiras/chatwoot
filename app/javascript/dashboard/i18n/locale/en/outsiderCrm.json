@@ -215,7 +215,12 @@
           "WON": "Opportunity won",
           "LOST": "Opportunity lost",
           "STALLED": "Opportunity stalled in the same stage",
-          "NO_NEXT_TASK": "Opportunity with no next task"
+          "NO_NEXT_TASK": "Opportunity with no next task",
+          "PROPOSAL_SENT": "Proposal sent",
+          "PROPOSAL_ACCEPTED": "Proposal accepted",
+          "PROPOSAL_REJECTED": "Proposal rejected",
+          "PROPOSAL_NO_REPLY": "Proposal sent without reply",
+          "PROPOSAL_EXPIRING": "Proposal about to expire"
         },
         "TRIGGER_HELP": {
           "CREATED": "Applies to every new opportunity, including one forwarded from another unit.",
@@ -223,7 +228,12 @@
           "WON": "Runs right after the ready-made win automations.",
           "LOST": "Runs right after the built-in lost automations. Here you can filter by lost reason and forward the deal to another unit.",
           "STALLED": "Checked every hour. Runs once per stage visit.",
-          "NO_NEXT_TASK": "Checked every hour, counting from the last completed task (or from creation). Runs again only after the opportunity completes another task."
+          "NO_NEXT_TASK": "Checked every hour, counting from the last completed task (or from creation). Runs again only after the opportunity completes another task.",
+          "PROPOSAL_SENT": "Runs when the proposal linked to the deal becomes sent (sent by WhatsApp or e-mail, or marked by hand). Proposals without a deal do not trigger rules.",
+          "PROPOSAL_ACCEPTED": "Runs when the proposal linked to the deal is marked as accepted. Proposals without a deal do not trigger rules.",
+          "PROPOSAL_REJECTED": "Runs when the proposal linked to the deal is marked as rejected. Proposals without a deal do not trigger rules.",
+          "PROPOSAL_NO_REPLY": "Checked every hour: sent proposal, not accepted or rejected, counting from the last send. Sending again restarts the count. Open deals only.",
+          "PROPOSAL_EXPIRING": "Checked every hour: sent proposal whose validity ends within the chosen time. Runs once per validity date. Open deals only."
         },
         "PIPELINE": "Pipeline",
         "STAGE": "Stage",
@@ -262,7 +272,8 @@
           "MIN_VALUE": "from {value}",
           "TASK_MANAGERS": "{title} (managers)",
           "OWNER": "Owner: {name}",
-          "FORWARD": "Forward to {unit}"
+          "FORWARD": "Forward to {unit}",
+          "EXPIRING": "{trigger}: less than {time} left"
         },
         "PRESETS": {
           "TITLE": "Start from a template",
@@ -275,7 +286,13 @@
           "STALLED_MANAGERS_TASK": "Review the stalled opportunity with the seller",
           "NEXT_TASK": "Chase the next task",
           "NEXT_TASK_TASK": "Define the next step of the opportunity",
-          "LOST_FORWARD": "Forward lost deals to another unit"
+          "LOST_FORWARD": "Forward lost deals to another unit",
+          "PROPOSAL_NO_REPLY": "Follow up unanswered proposal",
+          "PROPOSAL_NO_REPLY_TASK": "Call the customer about {proposta}",
+          "PROPOSAL_EXPIRING": "Warn about expiring proposal",
+          "PROPOSAL_EXPIRING_TASK": "{proposta} expires soon: renew or close",
+          "PROPOSAL_REJECTED": "Understand the rejected proposal",
+          "PROPOSAL_REJECTED_TASK": "Ask the customer why {proposta} was rejected"
         },
         "ERRORS": {
           "NAME": "Give the rule a name (up to 80 characters).",
@@ -312,7 +329,11 @@
           "NOTES": "Note for the receiver (optional)",
           "HELP": "The lost deal becomes forwarded and a new deal opens in the destination unit, in the first stage, with the same contact, conversation, value and fields. It does not forward if the contact already has an open deal there or the journey reached the forwarding limit; the timeline shows why."
         },
-        "CRM_OFF": "{name} (CRM off)"
+        "CRM_OFF": "{name} (CRM off)",
+        "WAIT_LABELS": {
+          "PROPOSAL_EXPIRING": "with less than"
+        },
+        "PROPOSAL_PLACEHOLDER": "In proposal triggers, write {proposta} in the title, description or note to show its number (e.g. PROPOSTA 2661)."
       },
       "GOALS": {
         "TITLE": "Sales goals",
@@ -454,7 +475,22 @@
       "STACK_COUNT": "no open deals | 1 open deal | {n} open deals",
       "STACK_SHOW": "Show board",
       "STACK_HIDE": "Collapse",
-      "NO_PIPELINES_HERE": "No active pipeline to show with these filters."
+      "NO_PIPELINES_HERE": "No active pipeline to show with these filters.",
+      "PROPOSAL": {
+        "DRAFT": "Proposal {number} in draft",
+        "SENT": "Proposal sent {when}",
+        "SENT_NO_DATE": "Proposal sent",
+        "ACCEPTED": "Proposal accepted",
+        "REJECTED": "Proposal rejected",
+        "EXPIRED": "Proposal expired",
+        "TOOLTIP": "Proposal {number} · {total}",
+        "MORE": "{count} proposals on this deal",
+        "TODAY": "today",
+        "YESTERDAY": "yesterday",
+        "DAYS_AGO": "{days} days ago",
+        "EXPIRES_TODAY": "expires today",
+        "EXPIRES_IN": "expires in {days} d"
+      }
     },
     "CONVERSATION": {
       "TAB": "CRM",
@@ -642,7 +678,8 @@
         "OPEN": "Open proposal",
         "SENT_WHATSAPP": "{name} sent proposal {number} by WhatsApp to {recipient}",
         "SENT_EMAIL": "{name} sent proposal {number} by e-mail to {recipient}"
-      }
+      },
+      "RULE_PROPOSAL": "Proposal {number}"
     },
     "AUDIT": {
       "HINT": "Every change to the deal and its tasks, with who and when.",
@@ -845,6 +882,42 @@
         "FORWARDED": "Forwarded",
         "RECEIVED": "Received",
         "CONVERSION": "Conversion"
+      },
+      "PROPOSALS": {
+        "TITLE": "Proposals",
+        "SUBTITLE": "Proposals issued in the period, by their current situation. Only those you can see.",
+        "EMPTY": "No proposals issued in this period.",
+        "TILES": {
+          "ISSUED": "Issued",
+          "ISSUED_HINT": "{count} proposals · {sent} sent",
+          "ACCEPTED": "Accepted",
+          "ACCEPTED_HINT": "{count} proposals",
+          "RATE": "Acceptance rate",
+          "RATE_HINT": "Accepted ÷ (accepted + rejected + expired)",
+          "DAYS": "Time to answer",
+          "DAYS_HINT": "From sending to acceptance or rejection"
+        },
+        "STATUS_TITLE": "Situation",
+        "OWNERS_TITLE": "By owner",
+        "PRODUCTS_TITLE": "Most proposed machines and items",
+        "PRODUCTS_EMPTY": "No items in the proposals of the period.",
+        "COLUMNS": {
+          "OWNER": "Owner",
+          "ISSUED": "Issued",
+          "OPEN": "Open",
+          "ACCEPTED": "Accepted",
+          "REJECTED": "Rejected",
+          "EXPIRED": "Expired",
+          "RATE": "Acceptance",
+          "ITEM": "Item",
+          "QUANTITY": "Qty proposed",
+          "PROPOSALS": "Proposals",
+          "ACCEPTED_QUANTITY": "Qty accepted",
+          "ACCEPTED_VALUE": "Accepted value"
+        },
+        "CANCELED_NOTE": "Canceled in the period: {count} (not counted).",
+        "OPEN_LIST": "See proposals",
+        "TOOLTIP": "Proposals: {count} ({share}%) · {value}"
       }
     },
     "DELETE": {
@@ -1154,7 +1227,18 @@
         "REMOVE": "Remove item",
         "ADD": "Add item",
         "EMPTY": "No items. Add a machine from the catalog or a free item.",
-        "GRAND_TOTAL": "Proposal total"
+        "GRAND_TOTAL": "Proposal total",
+        "DISCOUNT_MODE": {
+          "LABEL": "Discount",
+          "MONEY": "R$",
+          "PERCENT": "%",
+          "AS_PERCENT": "= {percent}%",
+          "AS_MONEY": "= {value}",
+          "SWITCH": "Switch between R$ and %",
+          "ALL": "Discount on every item",
+          "ALL_APPLY": "Apply",
+          "ALL_HELP": "Computes each item discount from the percentage. You can still adjust item by item."
+        }
       },
       "CONDITIONS": {
         "LABEL": "Title (e.g. Freight)",

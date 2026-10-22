@@ -3,7 +3,7 @@
 // negócio recebido por encaminhamento mostra de qual unidade veio. Com o destaque ligado nas
 // automações, negócio aberto sem tarefa pendente mostra "Sem próxima tarefa". Recebido por
 // encaminhamento e ainda não aberto pelo usuário mostra "Novo" em vermelho. Sem responsável, quem é
-// da unidade vê o botão "Pegar" (fica com o negócio).
+// da unidade vê o botão "Pegar" (fica com o negócio). Com proposta, o selo dela (Entrega 18).
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import Avatar from 'dashboard/components-next/avatar/Avatar.vue';
@@ -11,6 +11,7 @@ import Button from 'dashboard/components-next/button/Button.vue';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
 import { formatDate, formatDateTime, formatMoney } from '../helpers';
 import { isReceived } from '../crmStore';
+import ProposalBadge from './ProposalBadge.vue';
 
 const props = defineProps({
   opportunity: { type: Object, required: true },
@@ -75,6 +76,11 @@ const isNew = computed(() => isReceived(props.opportunity.id));
         })
       }}
     </span>
+
+    <ProposalBadge
+      v-if="opportunity.proposal"
+      :proposal="opportunity.proposal"
+    />
 
     <div class="flex items-center justify-between gap-2">
       <span class="font-semibold text-n-slate-12">

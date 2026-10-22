@@ -20,6 +20,7 @@ import Select from 'dashboard/components-next/select/Select.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
 import Avatar from 'dashboard/components-next/avatar/Avatar.vue';
+import ProposalBadge from './ProposalBadge.vue';
 import OpportunityDialog from './OpportunityDialog.vue';
 import OpportunityDrawer from './OpportunityDrawer.vue';
 import KanbanBoard from './KanbanBoard.vue';
@@ -608,6 +609,11 @@ onMounted(async () => {
                       · {{ t('OUTSIDER_CRM.BOARD.NO_NEXT_TASK') }}
                     </span>
                   </span>
+                  <ProposalBadge
+                    v-if="opportunity.proposal"
+                    :proposal="opportunity.proposal"
+                    class="mt-1"
+                  />
                 </div>
               </td>
               <td class="px-4 py-3">

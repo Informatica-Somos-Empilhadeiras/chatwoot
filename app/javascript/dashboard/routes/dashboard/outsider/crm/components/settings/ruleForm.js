@@ -8,8 +8,23 @@ export const RULE_TRIGGERS = [
   'lost',
   'stalled',
   'no_next_task',
+  'proposal_sent',
+  'proposal_accepted',
+  'proposal_rejected',
+  'proposal_no_reply',
+  'proposal_expiring',
 ];
-export const TIMED_TRIGGERS = ['stalled', 'no_next_task'];
+export const TIMED_TRIGGERS = [
+  'stalled',
+  'no_next_task',
+  'proposal_no_reply',
+  'proposal_expiring',
+];
+// gatilhos de proposta (Entrega 18): {proposta} no texto vira o número dela
+export const isProposalTrigger = trigger =>
+  String(trigger || '').startsWith('proposal_');
+// "vencendo": o tempo é quanto falta para acabar a validade, não quanto já passou
+export const COUNTDOWN_TRIGGERS = ['proposal_expiring'];
 export const RULE_ACTIONS = [
   'create_task',
   'set_owner',

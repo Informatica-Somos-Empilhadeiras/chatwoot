@@ -42,6 +42,11 @@ class Outsider::Crm::Proposal < ApplicationRecord
 
   before_validation :normalize_texts
   before_create :assign_number
+  after_commit :run_rules, on: :update, if: :saved_change_to_status?
+  after_commit :broadcast_deals
+
+  # Situações que disparam as regras "quando a proposta for ..." (Entrega 18)
+  RULE_STATUSES = %w[sent accepted rejected].freeze
 
   def code
     "PROPOSTA #{number}"
@@ -76,6 +81,23 @@ class Outsider::Crm::Proposal < ApplicationRecord
   end
 
   private
+
+  # Regras de automação do negócio ligado (AutomationRules: proposal_sent, proposal_accepted,
+  # proposal_rejected). Depois do commit: um erro numa regra não desfaz a mudança da proposta
+  def run_rules
+    return unless RULE_STATUSES.include?(status) && opportunity_id
+
+    opportunity = Outsider::Crm::Opportunity.find_by(id: opportunity_id)
+    Outsider::Crm::RuleRunner.on_events(opportunity, ["proposal_#{status}"], proposal: self) if opportunity
+  end
+
+  # Selo da proposta no card (Entrega 18): avisa as telas abertas que o negócio ligado (e o de antes,
+  # se trocou) mudou, para o Kanban e a tabela recarregarem
+  def broadcast_deals
+    [opportunity_id, opportunity_id_previously_was].compact.uniq.each do |id|
+      Outsider::Crm::LiveUpdates.broadcast(account_id, 'opportunity', id: id, contact_id: contact_id)
+    end
+  end
 
   def normalize_texts
     self.customer = (customer || {}).to_h.stringify_keys.slice(*CUSTOMER_KEYS).transform_values { |value| value.to_s.strip }

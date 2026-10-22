@@ -6,6 +6,7 @@
 # Cada regra roda uma vez por situação: a marca (key) é a entrada na etapa ou o momento em que o
 # negócio ficou sem tarefa, gravada na linha do tempo. Mudou de etapa ou ganhou e concluiu uma
 # tarefa nova, a situação é outra e a regra pode rodar de novo.
+# Os gatilhos de proposta (proposta sem resposta, proposta vencendo) ficam em ProposalTimedRules.
 class Outsider::Crm::TimedRules
   LIMIT = 500
   TABLE = 'outsider_crm_opportunities'.freeze
@@ -30,12 +31,18 @@ class Outsider::Crm::TimedRules
   private
 
   def perform_rule(rule)
+    return Outsider::Crm::ProposalTimedRules.new(@account, rule).perform if proposal_trigger?(rule)
+
     candidates = candidates(rule).limit(LIMIT).to_a
     done = already_run(rule, candidates)
     candidates.count do |opportunity|
       key = opportunity.reference_at.utc.iso8601
       done.exclude?([opportunity.id, key]) && Outsider::Crm::RuleRunner.new(opportunity, rule, key: key).perform
     end
+  end
+
+  def proposal_trigger?(rule)
+    Outsider::Crm::AutomationRules::PROPOSAL_TIMED_TRIGGERS.include?(rule['trigger'])
   end
 
   def candidates(rule)

@@ -19,6 +19,11 @@ class CrmAPI extends ApiClient {
     return axios.get(`${this.url}/reports`, { params });
   }
 
+  // seção Propostas da aba Relatórios (Entrega 18)
+  getProposalReport(params) {
+    return axios.get(`${this.url}/proposal_reports`, { params });
+  }
+
   // automação "negócio parado" e regras com gatilho de tempo: roda a verificação na hora (só administrador)
   checkStalled() {
     return axios.post(`${this.url}/automations/stalled`);

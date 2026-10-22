@@ -3,13 +3,20 @@
 // venda ou locação) ou é livre (frete, serviço). "Características no PDF" leva a tabela e a imagem
 // do catálogo para a primeira página; a proposta guarda uma cópia, então mudar o catálogo depois não
 // muda proposta feita ("Atualizar do catálogo" pega os dados de agora).
-import { computed } from 'vue';
+// Desconto em R$ ou em % (Entrega 18): em %, o desconto em R$ é recalculado a cada mudança de
+// quantidade ou valor; o que vai para o servidor e para o PDF continua em R$.
+import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import Button from 'dashboard/components-next/button/Button.vue';
 import Select from 'dashboard/components-next/select/Select.vue';
 import Checkbox from 'dashboard/components-next/checkbox/Checkbox.vue';
 import { centsToInput, formatMoney } from '../../helpers';
-import { itemTotal } from './proposalHelpers';
+import {
+  discountPercent,
+  itemTotal,
+  parsePercent,
+  percentDiscount,
+} from './proposalHelpers';
 
 const props = defineProps({
   kind: { type: String, required: true },
@@ -20,6 +27,7 @@ const props = defineProps({
 const items = defineModel({ type: Array, required: true });
 
 const MONEY_PLACEHOLDER = '0,00';
+const PERCENT_PLACEHOLDER = '0';
 
 const { t } = useI18n();
 
@@ -47,6 +55,8 @@ const blankItem = () => ({
   quantity: '1',
   unit_price: '',
   discount: '',
+  discount_mode: 'money',
+  discount_percent: '',
   show_details: false,
   refresh_details: false,
   image_url: null,
@@ -77,6 +87,55 @@ const chooseProduct = (item, productId) => {
   item.show_details = product.kind === 'machine';
   item.image_url = product.image_url;
   item.refresh_details = true;
+};
+
+const isPercent = item => item.discount_mode === 'percent';
+
+// em %, o desconto em R$ acompanha quantidade e valor
+const syncDiscount = item => {
+  if (!isPercent(item)) return;
+  const cents = percentDiscount(item, item.discount_percent);
+  item.discount = Number.isNaN(cents) ? 'x' : centsToInput(cents);
+};
+
+const toggleMode = item => {
+  if (isPercent(item)) {
+    item.discount_mode = 'money';
+    return;
+  }
+  item.discount_mode = 'percent';
+  item.discount_percent = discountPercent(item) || '';
+  syncDiscount(item);
+};
+
+const discountHint = item => {
+  if (isPercent(item)) {
+    const cents = percentDiscount(item, item.discount_percent);
+    return cents && !Number.isNaN(cents)
+      ? t('OUTSIDER_CRM.PROPOSALS.ITEMS.DISCOUNT_MODE.AS_MONEY', {
+          value: formatMoney(cents),
+        })
+      : '';
+  }
+  const percent = discountPercent(item);
+  return percent
+    ? t('OUTSIDER_CRM.PROPOSALS.ITEMS.DISCOUNT_MODE.AS_PERCENT', { percent })
+    : '';
+};
+
+// mesmo % em todos os itens; depois dá para ajustar item por item
+const allPercent = ref('');
+const allPercentValid = computed(
+  () => allPercent.value !== '' && !Number.isNaN(parsePercent(allPercent.value))
+);
+
+const applyToAll = () => {
+  if (!allPercentValid.value) return;
+  items.value.forEach(item => {
+    item.discount_mode = 'percent';
+    item.discount_percent = allPercent.value;
+    syncDiscount(item);
+  });
 };
 
 const lineTotal = item => {
@@ -167,6 +226,7 @@ defineExpose({ add });
             inputmode="decimal"
             :disabled="readOnly"
             class="!mb-0 !text-sm rounded-lg text-right"
+            @input="syncDiscount(item)"
           />
         </label>
         <label class="flex flex-col gap-1 text-xs">
@@ -184,13 +244,58 @@ defineExpose({ add });
             :placeholder="MONEY_PLACEHOLDER"
             :disabled="readOnly"
             class="!mb-0 !text-sm rounded-lg text-right"
+            @input="syncDiscount(item)"
           />
         </label>
-        <label class="flex flex-col gap-1 text-xs">
-          <span class="text-n-slate-11">
-            {{ t('OUTSIDER_CRM.PROPOSALS.ITEMS.DISCOUNT') }}
+        <div class="flex flex-col gap-1 text-xs" data-discount>
+          <span
+            class="flex items-center justify-between h-4 gap-1 text-n-slate-11"
+          >
+            {{ t('OUTSIDER_CRM.PROPOSALS.ITEMS.DISCOUNT_MODE.LABEL') }}
+            <button
+              v-if="!readOnly"
+              v-tooltip.top="
+                t('OUTSIDER_CRM.PROPOSALS.ITEMS.DISCOUNT_MODE.SWITCH')
+              "
+              type="button"
+              class="flex overflow-hidden text-[11px] leading-[14px] rounded outline outline-1 -outline-offset-1 outline-n-weak"
+              data-discount-mode
+              @click="toggleMode(item)"
+            >
+              <span
+                class="px-1.5"
+                :class="
+                  isPercent(item)
+                    ? 'text-n-slate-10'
+                    : 'bg-n-brand text-white font-medium'
+                "
+              >
+                {{ t('OUTSIDER_CRM.PROPOSALS.ITEMS.DISCOUNT_MODE.MONEY') }}
+              </span>
+              <span
+                class="px-1.5"
+                :class="
+                  isPercent(item)
+                    ? 'bg-n-brand text-white font-medium'
+                    : 'text-n-slate-10'
+                "
+              >
+                {{ t('OUTSIDER_CRM.PROPOSALS.ITEMS.DISCOUNT_MODE.PERCENT') }}
+              </span>
+            </button>
           </span>
           <input
+            v-if="isPercent(item)"
+            v-model="item.discount_percent"
+            type="text"
+            inputmode="decimal"
+            :placeholder="PERCENT_PLACEHOLDER"
+            :disabled="readOnly"
+            class="!mb-0 !text-sm rounded-lg text-right"
+            @input="syncDiscount(item)"
+          />
+          <input
+            v-else
             v-model="item.discount"
             type="text"
             inputmode="decimal"
@@ -198,7 +303,10 @@ defineExpose({ add });
             :disabled="readOnly"
             class="!mb-0 !text-sm rounded-lg text-right"
           />
-        </label>
+          <span class="h-3 -mt-0.5 text-[11px] text-right text-n-slate-10">
+            {{ discountHint(item) }}
+          </span>
+        </div>
         <div class="flex flex-col gap-1 text-xs">
           <span class="text-n-slate-11">
             {{ t('OUTSIDER_CRM.PROPOSALS.ITEMS.TOTAL') }}
@@ -253,6 +361,34 @@ defineExpose({ add });
         @click="add"
       />
       <span v-else />
+      <div
+        v-if="!readOnly && items.length > 1"
+        v-tooltip.top="t('OUTSIDER_CRM.PROPOSALS.ITEMS.DISCOUNT_MODE.ALL_HELP')"
+        class="flex items-center gap-1.5 text-xs text-n-slate-11"
+        data-discount-all
+      >
+        {{ t('OUTSIDER_CRM.PROPOSALS.ITEMS.DISCOUNT_MODE.ALL') }}
+        <span class="relative">
+          <input
+            v-model="allPercent"
+            type="text"
+            inputmode="decimal"
+            :placeholder="PERCENT_PLACEHOLDER"
+            class="!mb-0 !text-sm !h-8 !w-20 !pr-6 rounded-lg text-right"
+            @keydown.enter.prevent="applyToAll"
+          />
+          <span class="absolute -translate-y-1/2 right-2 top-1/2">%</span>
+        </span>
+        <Button
+          size="xs"
+          variant="faded"
+          color="slate"
+          type="button"
+          :label="t('OUTSIDER_CRM.PROPOSALS.ITEMS.DISCOUNT_MODE.ALL_APPLY')"
+          :disabled="!allPercentValid"
+          @click="applyToAll"
+        />
+      </div>
       <span class="text-sm text-n-slate-11">
         {{ t('OUTSIDER_CRM.PROPOSALS.ITEMS.GRAND_TOTAL') }}
         <strong class="ml-1 text-base text-n-slate-12">

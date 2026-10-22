@@ -8,6 +8,7 @@ import { formatMoney } from '../../helpers';
 const props = defineProps({
   rows: { type: Array, required: true },
   emptyLabel: { type: String, required: true },
+  tooltipKey: { type: String, default: 'OUTSIDER_CRM.REPORTS.REASONS.TOOLTIP' },
 });
 
 const { t } = useI18n();
@@ -29,7 +30,7 @@ const share = row => Math.round((row.count * 100) / (total.value || 1));
       v-for="row in rows"
       :key="row.id || 'none'"
       v-tooltip="
-        t('OUTSIDER_CRM.REPORTS.REASONS.TOOLTIP', {
+        t(tooltipKey, {
           count: row.count,
           share: share(row),
           value: formatMoney(row.value_cents),

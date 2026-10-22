@@ -99,6 +99,10 @@ const FORWARD_ERRORS = [
 // o que uma regra montada pelo administrador fez (ou deixou de fazer), na linha de detalhe
 const ruleDetail = meta =>
   [
+    meta.proposal_number &&
+      t('OUTSIDER_CRM.TIMELINE.RULE_PROPOSAL', {
+        number: meta.proposal_number,
+      }),
     meta.tasks && t('OUTSIDER_CRM.TIMELINE.RULE_TASKS', { count: meta.tasks }),
     meta.owner && t('OUTSIDER_CRM.TIMELINE.RULE_OWNER', { name: meta.owner }),
     meta.label && t('OUTSIDER_CRM.TIMELINE.RULE_LABEL', { label: meta.label }),
@@ -434,12 +438,13 @@ onMounted(() => load());
             v-if="
               item.metadata?.conversation_display_id ||
               item.can_delete ||
-              item.kind === 'proposal'
+              item.kind === 'proposal' ||
+              item.metadata?.proposal_id
             "
             class="flex items-center gap-3 text-xs"
           >
             <router-link
-              v-if="item.kind === 'proposal' && item.metadata?.proposal_id"
+              v-if="item.metadata?.proposal_id"
               :to="
                 accountScopedRoute(
                   CRM_ROUTE,

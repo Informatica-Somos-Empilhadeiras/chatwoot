@@ -18,6 +18,7 @@ import { crmState, loadUnitMembers } from '../../crmStore';
 import {
   ACTION_ICONS,
   ASSIGNEES,
+  COUNTDOWN_TRIGGERS,
   LOST_TRIGGER,
   MAX_RULE_ACTIONS,
   RULE_ACTIONS,
@@ -27,6 +28,7 @@ import {
   blankForm,
   formToRule,
   isFormValid,
+  isProposalTrigger,
   ruleErrorMessage,
   ruleToForm,
 } from './ruleForm';
@@ -52,6 +54,16 @@ const form = ref(blankForm());
 const members = ref({});
 
 const isTimed = computed(() => TIMED_TRIGGERS.includes(form.value.trigger));
+const isCountdown = computed(() =>
+  COUNTDOWN_TRIGGERS.includes(form.value.trigger)
+);
+const isProposal = computed(() => isProposalTrigger(form.value.trigger));
+// a mensagem mostra {proposta} ao pé da letra: o vue-i18n trocaria o que está entre chaves
+const proposalHint = computed(() =>
+  t('OUTSIDER_CRM.SETTINGS.RULES.PROPOSAL_PLACEHOLDER', {
+    proposta: '{proposta}',
+  })
+);
 const isLost = computed(() => form.value.trigger === LOST_TRIGGER);
 const isValid = computed(() => isFormValid(form.value));
 
@@ -203,7 +215,10 @@ const changePipeline = value => {
 
 const task = (titleKey, kind, hours, assignee = 'owner') => ({
   ...blankAction('create_task'),
-  title: t(`OUTSIDER_CRM.SETTINGS.RULES.PRESETS.${titleKey}`),
+  // {proposta} fica no título: a regra troca pelo número da proposta na hora de rodar
+  title: t(`OUTSIDER_CRM.SETTINGS.RULES.PRESETS.${titleKey}`, {
+    proposta: '{proposta}',
+  }),
   kind,
   due_amount: hours % 24 === 0 && hours ? hours / 24 : hours,
   due_unit: hours % 24 === 0 && hours ? 'days' : 'hours',
@@ -256,6 +271,34 @@ const PRESETS = [
       wait_amount: 1,
       wait_unit: 'days',
       actions: [task('NEXT_TASK_TASK', 'todo', 4)],
+    }),
+  },
+  {
+    key: 'PROPOSAL_NO_REPLY',
+    icon: 'i-lucide-file-clock',
+    build: () => ({
+      trigger: 'proposal_no_reply',
+      wait_amount: 3,
+      wait_unit: 'days',
+      actions: [task('PROPOSAL_NO_REPLY_TASK', 'call', 4)],
+    }),
+  },
+  {
+    key: 'PROPOSAL_EXPIRING',
+    icon: 'i-lucide-calendar-clock',
+    build: () => ({
+      trigger: 'proposal_expiring',
+      wait_amount: 2,
+      wait_unit: 'days',
+      actions: [task('PROPOSAL_EXPIRING_TASK', 'follow_up', 4)],
+    }),
+  },
+  {
+    key: 'PROPOSAL_REJECTED',
+    icon: 'i-lucide-file-x',
+    build: () => ({
+      trigger: 'proposal_rejected',
+      actions: [task('PROPOSAL_REJECTED_TASK', 'call', 24)],
     }),
   },
 ];
@@ -372,7 +415,13 @@ defineExpose({ open });
           <Select v-model="form.trigger" :options="triggerOptions" />
           <template v-if="isTimed">
             <span class="pb-2 text-sm text-n-slate-11">
-              {{ t('OUTSIDER_CRM.SETTINGS.RULES.FOR_MORE_THAN') }}
+              {{
+                isCountdown
+                  ? t(
+                      'OUTSIDER_CRM.SETTINGS.RULES.WAIT_LABELS.PROPOSAL_EXPIRING'
+                    )
+                  : t('OUTSIDER_CRM.SETTINGS.RULES.FOR_MORE_THAN')
+              }}
             </span>
             <Input
               v-model="form.wait_amount"
@@ -620,6 +669,13 @@ defineExpose({ open });
         </div>
         <p class="mb-0 text-xs text-n-slate-11">
           {{ t('OUTSIDER_CRM.SETTINGS.RULES.ACTIONS_HELP') }}
+        </p>
+        <p
+          v-if="isProposal"
+          class="flex items-start gap-1.5 mb-0 text-xs text-n-blue-11"
+        >
+          <Icon icon="i-lucide-file-text" class="size-3.5 mt-px shrink-0" />
+          {{ proposalHint }}
         </p>
       </section>
     </div>

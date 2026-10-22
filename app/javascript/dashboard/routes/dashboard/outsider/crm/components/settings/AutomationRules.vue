@@ -13,7 +13,7 @@ import Switch from 'dashboard/components-next/switch/Switch.vue';
 import SettingsSection from './SettingsSection.vue';
 import RuleDialog from './RuleDialog.vue';
 import { errorMessage, formatMoney } from '../../helpers';
-import { ACTION_ICONS, splitHours } from './ruleForm';
+import { ACTION_ICONS, COUNTDOWN_TRIGGERS, splitHours } from './ruleForm';
 
 const props = defineProps({
   units: { type: Array, required: true },
@@ -66,6 +66,12 @@ const whenText = rule => {
   const trigger = t(
     `OUTSIDER_CRM.SETTINGS.RULES.TRIGGERS.${rule.trigger.toUpperCase()}`
   );
+  if (rule.wait_hours && COUNTDOWN_TRIGGERS.includes(rule.trigger)) {
+    return t('OUTSIDER_CRM.SETTINGS.RULES.SUMMARY.EXPIRING', {
+      trigger,
+      time: duration(rule.wait_hours),
+    });
+  }
   return rule.wait_hours
     ? t('OUTSIDER_CRM.SETTINGS.RULES.SUMMARY.WAIT', {
         trigger,
