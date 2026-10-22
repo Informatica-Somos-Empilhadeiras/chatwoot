@@ -2,6 +2,10 @@
 # próximo número, dados da empresa que emite (padrão e, se quiser, diferentes por unidade), assinatura de cada
 # vendedor e quem vê as propostas de quem. Ficam fora do código porque o repositório é público.
 #
+# win_deal_on_accept: proposta aceita marca o negócio ligado como ganho (desligado de início)
+# send_message / email_subject: textos que abrem a janela de envio, com {contato}, {numero}, {titulo},
+# {vendedor} e {empresa}; em branco vale o padrão do idioma da conta.
+#
 # access: { user_id => { 'view' => 'own' | 'users' | 'all', 'user_ids' => [...], 'catalog' => bool } }
 # Administrador vê todas e mexe no catálogo sem precisar estar aqui.
 class Outsider::Crm::ProposalConfig
@@ -9,6 +13,8 @@ class Outsider::Crm::ProposalConfig
   COMPANY_KEYS = %w[legal_name trade_name cnpj address city documents_email bank_details].freeze
   SIGNATURE_KEYS = %w[title phone].freeze
   VIEWS = %w[own users all].freeze
+  SEND_TEXT_KEYS = %w[send_message email_subject].freeze
+  SEND_TEXT_LIMIT = 2_000
 
   class Invalid < StandardError; end
 
@@ -49,11 +55,27 @@ class Outsider::Crm::ProposalConfig
     to_h.fetch('access', {})
   end
 
-  def update_general(next_number:)
-    number = Integer(next_number, exception: false)
-    raise Invalid, 'next_number' unless number&.between?(1, 99_999_999)
+  def win_deal_on_accept?
+    to_h['win_deal_on_accept'] == true
+  end
 
-    write { |data| data.merge('next_number' => number) }
+  # Textos gravados (podem estar em branco) e os padrão, para a tela mostrar o que vale
+  def send_texts
+    SEND_TEXT_KEYS.index_with { |key| to_h[key].to_s }
+  end
+
+  def effective_send_texts
+    SEND_TEXT_KEYS.index_with { |key| to_h[key].presence || I18n.t("outsider_crm.proposals.send.defaults.#{key}") }
+  end
+
+  # Só muda o que vier: próximo número, ganhar o negócio ao aceitar e os textos do envio
+  def update_general(values)
+    values = values.to_h.stringify_keys
+    changes = {}
+    changes['next_number'] = valid_number(values['next_number']) if values.key?('next_number')
+    changes['win_deal_on_accept'] = ActiveModel::Type::Boolean.new.cast(values['win_deal_on_accept']) || false if values.key?('win_deal_on_accept')
+    SEND_TEXT_KEYS.each { |key| changes[key] = values[key].to_s.strip[0, SEND_TEXT_LIMIT] if values.key?(key) }
+    write { |data| data.merge(changes) }
   end
 
   # unit_id nil: dados padrão; com unidade, só os campos preenchidos valem para ela
@@ -84,6 +106,13 @@ class Outsider::Crm::ProposalConfig
   end
 
   private
+
+  def valid_number(value)
+    number = Integer(value, exception: false)
+    raise Invalid, 'next_number' unless number&.between?(1, 99_999_999)
+
+    number
+  end
 
   # Pessoas da conta, sem a própria
   def access_ids(list, user_id)

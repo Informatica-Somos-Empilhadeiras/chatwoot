@@ -19,6 +19,19 @@ pt_BR:
     proposals:
       locked: Proposta aceita, recusada ou cancelada não muda mais. Volte para rascunho para alterar
       invalid_image: Envie uma imagem PNG ou JPG
+      send:
+        defaults:
+          send_message: "Olá, {contato}! Segue a proposta {numero} ({titulo}). Fico à disposição para qualquer dúvida."
+          email_subject: "Proposta {numero} - {empresa}"
+        errors:
+          not_allowed: Você não pode enviar esta proposta
+          channel: Escolha WhatsApp ou e-mail
+          contact: Escolha um contato da conta (grupos não recebem proposta)
+          no_phone: Este contato não tem telefone cadastrado
+          no_email: Este contato não tem e-mail cadastrado
+          inbox: Escolha uma caixa de entrada que você atende
+          subject_required: Escreva o assunto do e-mail
+          too_long: O texto ficou longo demais
     forward:
       task_title: "Contatar cliente encaminhado por %{unit}"
       errors:

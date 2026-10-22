@@ -639,7 +639,9 @@
         "REJECTED": "{name} marked proposal {number} as rejected",
         "CANCELED": "{name} canceled proposal {number}",
         "CHANGED": "{name} changed proposal {number}",
-        "OPEN": "Open proposal"
+        "OPEN": "Open proposal",
+        "SENT_WHATSAPP": "{name} sent proposal {number} by WhatsApp to {recipient}",
+        "SENT_EMAIL": "{name} sent proposal {number} by e-mail to {recipient}"
       }
     },
     "AUDIT": {
@@ -1175,18 +1177,61 @@
         "NEW_SALE": "Sale",
         "NEW_RENTAL": "Rental",
         "CONTACT_TITLE": "Contact proposals"
+      },
+      "SEND": {
+        "OPEN": "Send to customer",
+        "TITLE": "Send {code}",
+        "CHANNEL": "Send by",
+        "WHATSAPP": "WhatsApp",
+        "EMAIL": "E-mail",
+        "INBOX": "Through inbox",
+        "SYSTEM_EMAIL": "Chatwoot mail server (no e-mail inbox)",
+        "NO_WHATSAPP_INBOX": "You are not a member of any WhatsApp inbox. Ask an administrator to add you.",
+        "NO_EMAIL_INBOX": "There is no e-mail inbox you are a member of and no mail server configured in Chatwoot.",
+        "TO": "To",
+        "SEARCH": "Search another contact by name, phone or e-mail",
+        "NO_CONTACTS": "No contacts found.",
+        "BLOCKED": {
+          "NO_PHONE": "No phone number",
+          "NO_EMAIL": "No e-mail"
+        },
+        "SUBJECT": "E-mail subject",
+        "MESSAGE": "Message",
+        "ATTACHMENT": "The PDF of this proposal version is attached.",
+        "SUBMIT": "Send",
+        "DONE": "Proposal sent.",
+        "QUEUED": "Proposal handed to the mail server. The status shows in the history.",
+        "ERRORS": {
+          "NO_INBOX": "Choose a channel with an available inbox.",
+          "CONTACT": "Choose who to send it to.",
+          "SUBJECT": "Write the e-mail subject."
+        },
+        "STATE": {
+          "PENDING": "Sending",
+          "SENT": "Sent",
+          "DELIVERED": "Delivered",
+          "READ": "Read",
+          "FAILED": "Failed"
+        },
+        "HISTORY": {
+          "TITLE": "Sends ({count})",
+          "LINE": "{date} · by {name} · version {version}",
+          "FILE": "Sent PDF",
+          "CONVERSATION": "Open conversation"
+        }
       }
     },
     "PROPOSAL_SETTINGS": {
       "TITLE": "Proposals",
-      "DESCRIPTION": "Numbering, company details, templates and what each person sees in proposals. Everything lives in the account settings, not in the code.",
+      "DESCRIPTION": "Numbering, company data, templates, sending texts and what each person sees in proposals. Everything lives in the account settings, not in the code.",
       "LOAD_FAILED": "Could not load the proposal settings.",
       "RETRY": "Try again",
       "TABS": {
         "NUMBERING": "Numbering",
         "COMPANY": "Company details",
         "TEMPLATES": "Templates",
-        "PEOPLE": "People"
+        "PEOPLE": "People",
+        "SENDING": "Sending and acceptance"
       },
       "INVALID": {
         "NEXT_NUMBER": "Enter a whole number between 1 and 99,999,999.",
@@ -1389,6 +1434,15 @@
         "PHONE": "Phone",
         "PHONE_PLACEHOLDER": "E.g.: (62) 99999-0000",
         "SAVED": "{name}: changes saved."
+      },
+      "SENDING": {
+        "DESCRIPTION": "Texts prefilled in the send window (the sender can change them) and what happens when a proposal is accepted.",
+        "MESSAGE": "Send message",
+        "SUBJECT": "E-mail subject",
+        "VARIABLES": "Replaced when sending: {'{'}contato{'}'} (contact first name), {'{'}numero{'}'}, {'{'}titulo{'}'}, {'{'}vendedor{'}'} and {'{'}empresa{'}'}. Leave blank for the default text.",
+        "WIN_ON_ACCEPT": "An accepted proposal marks the linked deal as won",
+        "WIN_ON_ACCEPT_HELP": "Applies to open deals the person accepting can edit. When off, the deal stays as it is.",
+        "SAVED": "Sending settings saved."
       }
     }
   }

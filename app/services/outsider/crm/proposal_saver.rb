@@ -41,19 +41,28 @@ class Outsider::Crm::ProposalSaver
     end
   end
 
-  # Aceita, recusada, cancelada, enviada ou de volta a rascunho
+  # Aceita, recusada, cancelada, enviada ou de volta a rascunho. Aceita pode ganhar o negócio ligado
+  # (Configurações > Propostas > Geral)
   def change_status(proposal, status)
     raise Forbidden, 'status' unless Outsider::Crm::Proposal.statuses.key?(status.to_s)
 
-    proposal.status = status
-    proposal.sent_at ||= Time.current if proposal.sent?
-    proposal.decided_at = proposal.accepted? || proposal.rejected? ? Time.current : nil
-    proposal.save!
-    log(proposal, status.to_s) if proposal.opportunity
+    Outsider::Crm::Proposal.transaction do
+      accepting = !proposal.accepted? && status.to_s == 'accepted'
+      apply_status(proposal, status)
+      log(proposal, status.to_s) if proposal.opportunity
+      win_opportunity(proposal) if accepting
+    end
     proposal
   end
 
   private
+
+  def apply_status(proposal, status)
+    proposal.status = status
+    proposal.sent_at ||= Time.current if proposal.sent?
+    proposal.decided_at = proposal.accepted? || proposal.rejected? ? Time.current : nil
+    proposal.save!
+  end
 
   def assign(proposal, params)
     TEXT_FIELDS.each { |field| proposal.public_send("#{field}=", params[field]) if params.key?(field) && !params[field].nil? }
@@ -149,6 +158,19 @@ class Outsider::Crm::ProposalSaver
       params: { contact_id: proposal.contact_id, business_unit_id: data[:business_unit_id], pipeline_id: data[:pipeline_id],
                 title: proposal.title, value_cents: proposal.total_cents, owner_id: proposal.owner_id || @user.id }
     ).perform
+  end
+
+  # Negócio aberto e que a pessoa pode alterar; trava jornada e negócio na ordem do encaminhamento, para não
+  # ganhar um negócio que acabou de sair para outra unidade. Os outros casos ficam como estão.
+  def win_opportunity(proposal)
+    opportunity = proposal.opportunity
+    return unless opportunity&.open? && Outsider::Crm::ProposalConfig.new(@account).win_deal_on_accept?
+
+    opportunity.journey.lock!
+    opportunity.lock!
+    return unless opportunity.open? && crm_access.edit_opportunity?(opportunity)
+
+    opportunity.update!(status: :won)
   end
 
   def owner_id(id)

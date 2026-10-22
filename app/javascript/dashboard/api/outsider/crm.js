@@ -381,6 +381,16 @@ class CrmAPI extends ApiClient {
     });
   }
 
+  // Envio ao cliente: contatos (ou a busca, com q), caixas, textos padrão e variáveis
+  getProposalSendOptions(id, params = {}) {
+    return axios.get(`${this.url}/proposals/${id}/sends/new`, { params });
+  }
+
+  // { channel, contact_id, inbox_id, message, subject }; devolve a proposta com o histórico
+  sendProposal(id, payload) {
+    return axios.post(`${this.url}/proposals/${id}/sends`, payload);
+  }
+
   getProposalTemplates() {
     return axios.get(`${this.url}/proposal_templates`);
   }
@@ -410,10 +420,9 @@ class CrmAPI extends ApiClient {
     return axios.get(`${this.url}/proposal_settings`);
   }
 
-  updateProposalGeneral(nextNumber) {
-    return axios.patch(`${this.url}/proposal_settings/general`, {
-      next_number: nextNumber,
-    });
+  // values: next_number, win_deal_on_accept, send_message, email_subject (só o que mudar)
+  updateProposalGeneral(values) {
+    return axios.patch(`${this.url}/proposal_settings/general`, values);
   }
 
   // unitId vazio: dados padrão da empresa

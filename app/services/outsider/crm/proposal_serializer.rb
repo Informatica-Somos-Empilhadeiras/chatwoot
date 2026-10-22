@@ -27,7 +27,8 @@ module Outsider::Crm::ProposalSerializer
                      opportunity: opportunity_link(proposal.opportunity),
                      can_edit: access&.edit?(proposal),
                      can_edit_content: access&.edit_content?(proposal),
-                     can_delete: access&.delete?(proposal)
+                     can_delete: access&.delete?(proposal),
+                     can_send: access&.send?(proposal)
                    )
   end
 
@@ -35,8 +36,35 @@ module Outsider::Crm::ProposalSerializer
     proposal_row(proposal, access: access).merge(
       proposal.slice(:customer, :conditions, :signer, :notes, :contact_id, :opportunity_id, :owner_id),
       items: proposal.items.map { |item| item(item) },
-      created_by: Outsider::Crm::Serializer.user(proposal.created_by)
+      created_by: Outsider::Crm::Serializer.user(proposal.created_by),
+      sends: sends(proposal)
     )
+  end
+
+  # Envios, do mais novo ao mais antigo. A versão conta os PDFs diferentes na ordem em que saíram; o
+  # arquivo é o mesmo que foi para o cliente. message_status é o da mensagem na conversa (enviada,
+  # entregue, lida ou falhou), quando o canal informa.
+  def sends(proposal)
+    records = proposal.sends.order(:id).includes(:user, document_attachment: :blob).to_a
+    versions = records.filter_map(&:digest).uniq.each_with_index.to_h { |digest, index| [digest, index + 1] }
+    lookup = send_lookups(records)
+    records.reverse.map { |record| send_row(record, versions[record.digest], lookup) }
+  end
+
+  def send_row(record, version, lookup)
+    record.slice(:id, :channel, :recipient, :status, :error, :created_at, :contact_id).merge(
+      contact_name: lookup[:contacts][record.contact_id], user: Outsider::Crm::Serializer.user(record.user),
+      version: version, file_url: file_path(record.document),
+      conversation_display_id: lookup[:conversations][record.conversation_id], message_status: lookup[:messages][record.message_id]
+    )
+  end
+
+  def send_lookups(records)
+    {
+      conversations: Conversation.where(id: records.filter_map(&:conversation_id)).pluck(:id, :display_id).to_h,
+      messages: Message.where(id: records.filter_map(&:message_id)).pluck(:id, :status).to_h,
+      contacts: Contact.where(id: records.filter_map(&:contact_id)).pluck(:id, :name).to_h
+    }
   end
 
   def item(item)

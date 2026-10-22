@@ -74,6 +74,7 @@ Rails.application.routes.prepend do
                   get :pdf
                   patch :status
                 end
+                resources :sends, only: [:new, :create], controller: 'proposal_sends'
               end
             end
           end

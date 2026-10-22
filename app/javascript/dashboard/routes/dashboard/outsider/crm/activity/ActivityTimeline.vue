@@ -46,12 +46,15 @@ const KIND_ICONS = {
   proposal: 'i-lucide-file-text',
 };
 
-// proposta ligada ao negócio: criada, ligada depois, enviada, aceita, recusada, cancelada
+// proposta ligada ao negócio: criada, ligada depois, enviada (marcada ou mandada por WhatsApp ou
+// e-mail), aceita, recusada, cancelada
 const PROPOSAL_ACTIONS = [
   'created',
   'linked',
   'draft',
   'sent',
+  'sent_whatsapp',
+  'sent_email',
   'accepted',
   'rejected',
   'canceled',
@@ -257,7 +260,12 @@ const describe = item => {
             ? meta.action.toUpperCase()
             : 'CHANGED'
         }`,
-        { name, number: meta.number, total: formatMoney(meta.total_cents) }
+        {
+          name,
+          number: meta.number,
+          total: formatMoney(meta.total_cents),
+          recipient: meta.recipient,
+        }
       );
     case 'automation':
       if (meta.rule === 'chain') return chainText(meta);

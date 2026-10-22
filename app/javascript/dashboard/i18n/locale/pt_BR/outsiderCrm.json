@@ -639,7 +639,9 @@
         "REJECTED": "{name} marcou a proposta {number} como recusada",
         "CANCELED": "{name} cancelou a proposta {number}",
         "CHANGED": "{name} mudou a proposta {number}",
-        "OPEN": "Abrir proposta"
+        "OPEN": "Abrir proposta",
+        "SENT_WHATSAPP": "{name} enviou a proposta {number} por WhatsApp para {recipient}",
+        "SENT_EMAIL": "{name} enviou a proposta {number} por e-mail para {recipient}"
       }
     },
     "AUDIT": {
@@ -1175,18 +1177,61 @@
         "NEW_SALE": "Venda",
         "NEW_RENTAL": "Locação",
         "CONTACT_TITLE": "Propostas do contato"
+      },
+      "SEND": {
+        "OPEN": "Enviar ao cliente",
+        "TITLE": "Enviar {code}",
+        "CHANNEL": "Enviar por",
+        "WHATSAPP": "WhatsApp",
+        "EMAIL": "E-mail",
+        "INBOX": "Pela caixa de entrada",
+        "SYSTEM_EMAIL": "Servidor de e-mail do Chatwoot (sem caixa de e-mail)",
+        "NO_WHATSAPP_INBOX": "Você não atende nenhuma caixa de WhatsApp. Peça ao administrador para incluir você em uma.",
+        "NO_EMAIL_INBOX": "Não há caixa de e-mail que você atenda nem servidor de e-mail configurado no Chatwoot.",
+        "TO": "Para",
+        "SEARCH": "Buscar outro contato por nome, telefone ou e-mail",
+        "NO_CONTACTS": "Nenhum contato encontrado.",
+        "BLOCKED": {
+          "NO_PHONE": "Sem telefone cadastrado",
+          "NO_EMAIL": "Sem e-mail cadastrado"
+        },
+        "SUBJECT": "Assunto do e-mail",
+        "MESSAGE": "Mensagem",
+        "ATTACHMENT": "O PDF desta versão da proposta vai anexado.",
+        "SUBMIT": "Enviar",
+        "DONE": "Proposta enviada.",
+        "QUEUED": "Proposta entregue ao servidor de e-mail. A situação aparece no histórico.",
+        "ERRORS": {
+          "NO_INBOX": "Escolha um canal com caixa de entrada disponível.",
+          "CONTACT": "Escolha para quem enviar.",
+          "SUBJECT": "Escreva o assunto do e-mail."
+        },
+        "STATE": {
+          "PENDING": "Enviando",
+          "SENT": "Enviada",
+          "DELIVERED": "Entregue",
+          "READ": "Lida",
+          "FAILED": "Falhou"
+        },
+        "HISTORY": {
+          "TITLE": "Envios ({count})",
+          "LINE": "{date} · por {name} · versão {version}",
+          "FILE": "PDF enviado",
+          "CONVERSATION": "Abrir conversa"
+        }
       }
     },
     "PROPOSAL_SETTINGS": {
       "TITLE": "Propostas",
-      "DESCRIPTION": "Numeração, dados da empresa, modelos e o que cada pessoa vê nas propostas. Tudo fica nas configurações da conta, não no código.",
+      "DESCRIPTION": "Numeração, dados da empresa, modelos, textos do envio e o que cada pessoa vê nas propostas. Tudo fica nas configurações da conta, não no código.",
       "LOAD_FAILED": "Não foi possível carregar as configurações das propostas.",
       "RETRY": "Tentar de novo",
       "TABS": {
         "NUMBERING": "Numeração",
         "COMPANY": "Dados da empresa",
         "TEMPLATES": "Modelos",
-        "PEOPLE": "Pessoas"
+        "PEOPLE": "Pessoas",
+        "SENDING": "Envio e aceite"
       },
       "INVALID": {
         "NEXT_NUMBER": "Informe um número inteiro entre 1 e 99.999.999.",
@@ -1389,6 +1434,15 @@
         "PHONE": "Telefone",
         "PHONE_PLACEHOLDER": "Ex.: (62) 99999-0000",
         "SAVED": "{name}: alterações salvas."
+      },
+      "SENDING": {
+        "DESCRIPTION": "Textos que já vêm preenchidos na janela de envio (quem envia pode mudar antes de mandar) e o que acontece quando uma proposta é aceita.",
+        "MESSAGE": "Mensagem do envio",
+        "SUBJECT": "Assunto do e-mail",
+        "VARIABLES": "Campos que são trocados na hora: {'{'}contato{'}'} (primeiro nome do contato), {'{'}numero{'}'}, {'{'}titulo{'}'}, {'{'}vendedor{'}'} e {'{'}empresa{'}'}. Em branco, vale o texto padrão.",
+        "WIN_ON_ACCEPT": "Proposta aceita marca o negócio ligado como ganho",
+        "WIN_ON_ACCEPT_HELP": "Vale para negócios abertos que quem aceita pode alterar. Desligado, o negócio continua como está.",
+        "SAVED": "Configurações de envio salvas."
       }
     }
   }

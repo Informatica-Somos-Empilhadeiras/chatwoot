@@ -42,6 +42,11 @@ class Outsider::Crm::ProposalAccess
     edit?(proposal) && (proposal.draft? || proposal.sent?)
   end
 
+  # Enviar ao cliente (Entrega 15): quem edita, enquanto a proposta está em aberto ou já foi aceita (reenviar)
+  def send?(proposal)
+    edit?(proposal) && (proposal.draft? || proposal.sent? || proposal.accepted?)
+  end
+
   # Só rascunho nunca enviado se apaga; o resto se cancela, para não sumir do histórico
   def delete?(proposal)
     edit?(proposal) && proposal.draft? && proposal.sends.empty?

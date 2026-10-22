@@ -12,7 +12,7 @@ class Api::V1::Accounts::Outsider::Crm::ProposalSettingsController < Api::V1::Ac
   end
 
   def general
-    proposal_config.update_general(next_number: params.require(:next_number))
+    proposal_config.update_general(params.permit(:next_number, :win_deal_on_accept, *::Outsider::Crm::ProposalConfig::SEND_TEXT_KEYS))
     render json: payload
   end
 
@@ -47,6 +47,9 @@ class Api::V1::Accounts::Outsider::Crm::ProposalSettingsController < Api::V1::Ac
     settings = ::Outsider::Crm::ProposalConfig.new(Current.account.reload)
     {
       next_number: settings.next_number,
+      win_deal_on_accept: settings.win_deal_on_accept?,
+      send_texts: settings.send_texts,
+      default_send_texts: ::Outsider::Crm::ProposalConfig::SEND_TEXT_KEYS.index_with { |key| I18n.t("outsider_crm.proposals.send.defaults.#{key}") },
       last_number: crm_scope(::Outsider::Crm::Proposal).maximum(:number),
       company: settings.company,
       unit_companies: settings.unit_companies,

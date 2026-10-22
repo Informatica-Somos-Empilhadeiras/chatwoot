@@ -42,7 +42,9 @@ const save = async () => {
   if (!isValid.value) return;
   isSaving.value = true;
   try {
-    const { data } = await CrmAPI.updateProposalGeneral(number.value);
+    const { data } = await CrmAPI.updateProposalGeneral({
+      next_number: number.value,
+    });
     emit('updated', data);
     useAlert(t('OUTSIDER_CRM.PROPOSAL_SETTINGS.NUMBERING.SAVED'));
   } catch (error) {

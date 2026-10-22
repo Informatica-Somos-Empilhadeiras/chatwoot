@@ -1,6 +1,7 @@
 <script setup>
 // OUTSIDER: Configurações > Propostas, só para administradores: numeração, dados da empresa que saem
-// na proposta, modelos (textos, condições e papel timbrado) e o que cada pessoa vê e assina. Tudo fica
+// na proposta, modelos (textos, condições e papel timbrado), textos do envio e o que o aceite faz, e o
+// que cada pessoa vê e assina. Tudo fica
 // nas configurações da conta, não no código (ver app/services/outsider/crm/proposal_config.rb).
 import { ref, computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -13,6 +14,7 @@ import NumberingSettings from './NumberingSettings.vue';
 import CompanySettings from './CompanySettings.vue';
 import TemplateSettings from './TemplateSettings.vue';
 import PeopleSettings from './PeopleSettings.vue';
+import SendingSettings from './SendingSettings.vue';
 import { settingsError } from './proposalSettings';
 
 defineProps({
@@ -31,6 +33,7 @@ const tabs = computed(() =>
     { key: 'numbering', icon: 'i-lucide-hash' },
     { key: 'company', icon: 'i-lucide-building' },
     { key: 'templates', icon: 'i-lucide-file-text' },
+    { key: 'sending', icon: 'i-lucide-send' },
     { key: 'people', icon: 'i-lucide-users' },
   ].map(tab => ({
     ...tab,
@@ -109,6 +112,11 @@ onMounted(load);
       v-else-if="active === 'company'"
       :settings="settings"
       :units="units"
+      @updated="refresh"
+    />
+    <SendingSettings
+      v-else-if="active === 'sending'"
+      :settings="settings"
       @updated="refresh"
     />
     <PeopleSettings v-else :settings="settings" @updated="refresh" />

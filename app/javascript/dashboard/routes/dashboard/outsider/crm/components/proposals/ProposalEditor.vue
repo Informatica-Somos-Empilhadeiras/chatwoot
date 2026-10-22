@@ -1,8 +1,9 @@
 <script setup>
 // OUTSIDER: criar e editar uma proposta de venda ou locação. Os dados da empresa do cliente vêm do
 // contato (ou da última proposta dele) e ficam guardados na proposta; itens do catálogo ou livres;
-// condições e textos vêm do modelo. "Ver PDF" salva e mostra o PDF montado na hora. Aceita,
-// recusada ou cancelada fica travada até voltar para rascunho.
+// condições e textos vêm do modelo. "Ver PDF" salva e mostra o PDF montado na hora. "Enviar" salva e
+// manda o PDF por WhatsApp ou e-mail; os envios ficam no histórico. Aceita, recusada ou cancelada fica
+// travada até voltar para rascunho.
 import { ref, computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useAlert } from 'dashboard/composables';
@@ -17,6 +18,8 @@ import ProposalItems from './ProposalItems.vue';
 import ProposalConditions from './ProposalConditions.vue';
 import ProposalDealLink from './ProposalDealLink.vue';
 import ProposalPdfDialog from './ProposalPdfDialog.vue';
+import ProposalSendDialog from './ProposalSendDialog.vue';
+import ProposalSendHistory from './ProposalSendHistory.vue';
 import ConfirmDelete from '../ConfirmDelete.vue';
 import { centsToInput, errorMessage, parseMoney } from '../../helpers';
 import { withCrmAccess } from '../../crmStore';
@@ -49,6 +52,7 @@ const isSaving = ref(false);
 const products = ref([]);
 const contactOptions = ref([]);
 const pdfRef = ref(null);
+const sendRef = ref(null);
 const confirmRef = ref(null);
 const savedSnapshot = ref('');
 
@@ -316,6 +320,12 @@ const viewPdf = async () => {
   if (current) pdfRef.value?.open(current);
 };
 
+const openSend = async () => {
+  let current = proposal.value;
+  if (isDirty.value && !readOnly.value) current = await save({ quiet: true });
+  if (current) sendRef.value?.open(current);
+};
+
 const changeStatus = async next => {
   if (isDirty.value && !readOnly.value && !(await save({ quiet: true }))) {
     return;
@@ -470,11 +480,21 @@ onMounted(async () => {
         <Button
           v-if="!readOnly"
           size="sm"
+          :variant="proposal?.can_send ? 'faded' : 'solid'"
+          :color="proposal?.can_send ? 'slate' : 'blue'"
           icon="i-lucide-save"
           :label="t('OUTSIDER_CRM.SAVE')"
           :is-loading="isSaving"
           :disabled="!isDirty && !isNew"
           @click="save()"
+        />
+        <Button
+          v-if="proposal?.can_send"
+          size="sm"
+          icon="i-lucide-send"
+          :label="t('OUTSIDER_CRM.PROPOSALS.SEND.OPEN')"
+          :is-loading="isSaving"
+          @click="openSend"
         />
       </div>
     </div>
@@ -489,6 +509,17 @@ onMounted(async () => {
           : t('OUTSIDER_CRM.PROPOSALS.FORM.READ_ONLY')
       }}
     </p>
+
+    <section v-if="proposal?.sends?.length" class="flex flex-col gap-3">
+      <h3 class="mb-0 text-sm font-medium text-n-slate-12">
+        {{
+          t('OUTSIDER_CRM.PROPOSALS.SEND.HISTORY.TITLE', {
+            count: proposal.sends.length,
+          })
+        }}
+      </h3>
+      <ProposalSendHistory :sends="proposal.sends" />
+    </section>
 
     <section class="flex flex-col gap-3">
       <h3 class="mb-0 text-sm font-medium text-n-slate-12">
@@ -706,6 +737,7 @@ onMounted(async () => {
     </div>
 
     <ProposalPdfDialog ref="pdfRef" />
+    <ProposalSendDialog ref="sendRef" @sent="fromProposal" />
     <ConfirmDelete ref="confirmRef" />
   </div>
 </template>
