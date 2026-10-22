@@ -945,7 +945,21 @@
       "IF_LOST": "if lost",
       "THEN": "then",
       "PARALLEL": "In the same journey, opened directly in another unit:",
-      "UPCOMING": "Next in the handoff"
+      "UPCOMING": "Next in the handoff",
+      "DETAIL": {
+        "UNIT": "Unit",
+        "VALUE": "Value",
+        "OWNER": "Owner",
+        "CODE": "Code",
+        "WHEN": "When",
+        "REASON": "Reason",
+        "ATTEMPT": "Attempt",
+        "WHO": "Who",
+        "OPEN": "Open deal",
+        "CLICK_TO_PIN": "Click to pin",
+        "UPCOMING_HELP": "If the open deal is lost, the sequential handoff takes the customer to this unit.",
+        "ATTEMPT_OF": "{current} of {max}"
+      }
     },
     "CATALOG": {
       "TITLE": "Catalog",
@@ -1473,7 +1487,10 @@
           "BANK": "Order and bank details",
           "SIGNATURE": "Signature and acceptance",
           "NOTES": "Notes",
-          "TEXT": "Free text"
+          "TEXT": "Free text",
+          "IMAGE": "Image",
+          "DIVIDER": "Divider",
+          "SPACER": "Spacer"
         },
         "HELP": {
           "DATE_NUMBER": "City and date on the left, proposal number on the right",
@@ -1488,7 +1505,10 @@
           "BANK": "Order confirmation, bank details and e-mail for documents",
           "SIGNATURE": "Salesperson signature and customer acceptance box",
           "NOTES": "Proposal notes, when filled in",
-          "TEXT": ""
+          "TEXT": "",
+          "IMAGE": "Template image, with width and alignment",
+          "DIVIDER": "Horizontal line to split sections",
+          "SPACER": "Blank space between blocks"
         },
         "DRAG": "Drag to reorder",
         "HIDE": "Hide in PDF",
@@ -1569,6 +1589,53 @@
         "CREATE": "Create template",
         "CREATED": "Template created.",
         "COPY_NAME": "{name} (copy)"
+      },
+      "STUDIO": {
+        "EDIT": "Edit",
+        "BACK": "Back to templates",
+        "ACTIVE": "Active",
+        "INACTIVE": "Inactive",
+        "PREVIEW": "Preview PDF",
+        "CLOSE_PREVIEW": "Close preview",
+        "NAME_REQUIRED": "Name the template to save it.",
+        "TABS": {
+          "BLOCKS": "Blocks",
+          "LETTERHEAD": "Letterhead",
+          "SETTINGS": "Settings"
+        },
+        "PALETTE_HELP": "Drag a block onto the sheet or click it to place it after the last block you clicked. Click a block on the sheet to change its style and texts.",
+        "FREE_BLOCKS": "Free blocks",
+        "PROPOSAL_BLOCKS": "Proposal blocks",
+        "FULL": "The template already has {max} blocks, the maximum.",
+        "ON_SHEET": "Already on the sheet. Click it on the sheet to edit.",
+        "HIDDEN_TILE": "Hidden: drag it to the sheet or click to show it again.",
+        "ON_SHEET_BADGE": "on sheet",
+        "HIDDEN_BADGE": "hidden",
+        "BACK_TO_BLOCKS": "Blocks",
+        "PAGE": "Page {page} of {total}",
+        "EMPTY_PAGE": "Drag a block from the left here.",
+        "MOVE_UP": "Move up",
+        "MOVE_DOWN": "Move down",
+        "DUPLICATE": "Duplicate",
+        "TYPE_HERE": "Type here…",
+        "EMPTY_TEXT": "(empty text)",
+        "MACHINE_IMAGE": "Machine image",
+        "NO_CONDITIONS": "No default conditions. Add them in the block settings.",
+        "BANK_DETAILS": "Bank details from Settings > Proposals > Company",
+        "NOTES_SAMPLE": "Filled in on each proposal. Without notes, the block is left out.",
+        "PICK_IMAGE": "Select an image",
+        "DROP_IMAGE": "or drop an image here",
+        "UPLOADING": "Uploading…",
+        "IMAGE_HELP": "PNG or JPEG. The image is uploaded right away and stored once in the template.",
+        "IMAGE_WIDTH": "Width",
+        "ALIGN": "Alignment",
+        "LINE_COLOR": "Line color",
+        "LINE_THICKNESS": "Thickness",
+        "SPACER_HEIGHT": "Space height",
+        "SPACER_SIZE": "Space · {mm} mm",
+        "LEAVE_TITLE": "Leave without saving?",
+        "LEAVE_TEXT": "This template has unsaved changes that will be lost.",
+        "LEAVE": "Leave without saving"
       }
     }
   }

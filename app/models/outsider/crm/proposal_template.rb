@@ -62,9 +62,9 @@ class Outsider::Crm::ProposalTemplate < ApplicationRecord
     Outsider::Crm::ProposalTemplateLayout.layout(content)
   end
 
-  # Anexos de imagem que nenhum elemento usa mais (sobra de imagem trocada ou elemento apagado)
+  # Anexos de imagem que nenhum elemento ou bloco de imagem usa mais (sobra de imagem trocada ou apagada)
   def unused_layout_images
-    used = layout['elements'].filter_map { |element| element['image_id'] }
+    used = Outsider::Crm::ProposalTemplateLayout.image_ids(content)
     layout_images.attachments.reject { |attachment| used.include?(attachment.id) }
   end
 

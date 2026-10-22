@@ -1,7 +1,8 @@
 # OUTSIDER: monta o PDF da proposta (A4) com o Prawn, seguindo o modelo (Outsider::Crm::ProposalTemplateLayout):
 # os blocos do conteúdo em sequência (data e número, cliente, abertura, título, características das máquinas,
-# itens, condições, partes, fechamento, dados bancários, assinatura, observações e textos livres) e, por cima,
-# o papel timbrado: cabeçalho, rodapé e os elementos em posição livre, em todas as páginas ou só na primeira.
+# itens, condições, partes, fechamento, dados bancários, assinatura, observações, textos, imagens, linhas e
+# espaços livres) e, por cima, o papel timbrado: cabeçalho, rodapé e os elementos em posição livre, em todas
+# as páginas ou só na primeira.
 # Sem desenho próprio, o modelo segue o das propostas da Somos (Entrega 14). Papel timbrado padrão em
 # config/outsider_crm. Fontes do próprio PDF (Helvetica, Times, Courier): caracteres fora do português comum
 # (emoji, por exemplo) saem do texto.
@@ -11,6 +12,7 @@ class Outsider::Crm::ProposalPdf
   include Outsider::Crm::ProposalPdf::Machines
   include Outsider::Crm::ProposalPdf::ItemsPage
   include Outsider::Crm::ProposalPdf::ClosingPage
+  include Outsider::Crm::ProposalPdf::FreeBlocks
 
   FONT_SIZE = 9
   MM = 72 / 25.4
@@ -20,14 +22,15 @@ class Outsider::Crm::ProposalPdf
   DEFAULT_FOOTER = Rails.root.join('config/outsider_crm/proposta-rodape.jpg')
   # espaço antes de cada bloco (pt) quando ele vem depois de outro na mesma página
   SPACE_BEFORE = { 'customer' => 14, 'intro' => 10, 'title' => 12, 'specs' => 12, 'conditions' => 28, 'parties' => 24,
-                   'closing' => 8, 'bank' => 24, 'signature' => 30, 'notes' => 24 }.freeze
+                   'closing' => 8, 'bank' => 24, 'signature' => 30, 'notes' => 24, 'image' => 10, 'divider' => 8,
+                   'spacer' => 0 }.freeze
   # e quando abre uma página nova, depois da linha com o número da proposta
   SPACE_ON_NEW_PAGE = { 'items' => 0, 'bank' => 24 }.freeze
   BLOCKS = {
     'date_number' => :date_number_block, 'customer' => :customer_block, 'intro' => :intro_block, 'title' => :title_block,
     'specs' => :machines_block, 'items' => :items_block, 'conditions' => :conditions_block, 'parties' => :parties_block,
     'closing' => :closing_block, 'bank' => :bank_block, 'signature' => :signature_block, 'notes' => :notes_block,
-    'text' => :text_block
+    'text' => :text_block, 'image' => :image_block, 'divider' => :divider_block, 'spacer' => :spacer_block
   }.freeze
 
   # O texto já sai limpo para Windows-1252 (clean), então o aviso do Prawn sobre fontes embutidas não ajuda

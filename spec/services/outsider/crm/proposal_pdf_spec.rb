@@ -98,5 +98,19 @@ RSpec.describe Outsider::Crm::ProposalPdf do
 
       expect(with_image.bytesize).to be > plain.bytesize
     end
+
+    it 'renders free image, divider and spacer blocks in the sequence' do
+      template.layout_images.attach(io: Rails.root.join('spec/assets/sample.png').open, filename: 'foto.png', content_type: 'image/png')
+      image_id = template.layout_images.attachments.first.id
+      plain = design
+
+      blocks = [{ 'type' => 'image', 'image_id' => image_id, 'width' => 50, 'align' => 'right' },
+                { 'type' => 'divider', 'color' => 'FF0000', 'thickness' => 2 }, { 'type' => 'spacer', 'height' => 20 },
+                { 'type' => 'image', 'image_id' => 999 }]
+      data = design(blocks: template.blocks + blocks)
+
+      expect(data.bytesize).to be > plain.bytesize
+      expect(data).to include('1.0 0.0 0.0 SCN')
+    end
   end
 end

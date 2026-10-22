@@ -38,4 +38,25 @@ RSpec.describe Outsider::Crm::ProposalTemplateLayout do
     expect(layout['elements'][0]['id']).to be_present
     expect(layout['elements'][1]).to include('type' => 'image', 'image_id' => 7)
   end
+
+  it 'repeats free image, divider and spacer blocks and clamps their options' do
+    blocks = described_class.normalize_blocks(
+      [{ type: 'image', image_id: '12', width: 300, align: 'middle' }, { type: 'image', key: 'logo' },
+       { type: 'divider', color: '#ff0000', thickness: 9 }, { type: 'divider', color: 'red' }, { type: 'spacer', height: 0 }]
+    )
+
+    expect(blocks.pluck('type')).to eq(%w[image image divider divider spacer])
+    expect(blocks[0]).to include('key' => 'image-0', 'image_id' => 12, 'width' => 100.0, 'align' => 'center')
+    expect(blocks[1]).to include('key' => 'logo', 'image_id' => nil)
+    expect(blocks[2]).to include('color' => 'ff0000', 'thickness' => 4.0)
+    expect(blocks[3]['color']).to eq('BFBFBF')
+    expect(blocks[4]['height']).to eq(1.0)
+  end
+
+  it 'lists the template images in use by elements and image blocks' do
+    content = { 'blocks' => [{ 'type' => 'image', 'image_id' => 3 }, { 'type' => 'text' }],
+                'layout' => { 'elements' => [{ 'type' => 'image', 'image_id' => 5 }] } }
+
+    expect(described_class.image_ids(content)).to contain_exactly(3, 5)
+  end
 end

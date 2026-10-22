@@ -84,6 +84,20 @@ RSpec.describe 'Outsider CRM proposal templates', type: :request do
     expect(unused['id']).not_to eq(used['id'])
   end
 
+  it 'keeps images used by image blocks and copies them pointing to the same file' do
+    image = upload(admin, "/#{sale.id}/layout_images")
+    upload(admin, "/#{sale.id}/layout_images")
+    blocks = sale.blocks + [{ type: 'image', image_id: image['id'], width: 60, align: 'left' }, { type: 'spacer', height: 10 }]
+
+    call(:patch, admin, "/#{sale.id}", proposal_template: { content: { blocks: blocks } })
+
+    expect(sale.reload.layout_images.attachments.pluck(:id)).to eq([image['id']])
+    copy = templates.find(call(:post, admin, '', name: 'Cópia', kind: 'sale', source_id: sale.id)['id'])
+    copied = copy.layout_images.attachments.sole
+    expect(copied.blob).to eq(sale.layout_images.attachments.sole.blob)
+    expect(copy.blocks.find { |block| block['type'] == 'image' }).to include('image_id' => copied.id, 'width' => 60.0, 'align' => 'left')
+  end
+
   it 'refuses a template with every block hidden' do
     hidden = sale.blocks.map { |block| block.merge('visible' => false) }
 

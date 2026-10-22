@@ -5,7 +5,8 @@
 class Api::V1::Accounts::Outsider::Crm::ProposalTemplatesController < Api::V1::Accounts::Outsider::Crm::ProposalBaseController
   SLOTS = { 'header' => :header_image, 'footer' => :footer_image }.freeze
   IMAGE_MAX_SIZE = 2000
-  BLOCK_KEYS = %i[key type visible new_page size bold highlight image_side heading text equipment equipment_heading].freeze
+  BLOCK_KEYS = %i[key type visible new_page size bold highlight image_side heading text equipment equipment_heading
+                  image_id width align color thickness height].freeze
   ELEMENT_KEYS = %i[id type x y width pages text size bold highlight color align image_id].freeze
 
   before_action :ensure_crm_admin, except: [:index, :show]

@@ -1,16 +1,15 @@
 <script setup>
-// OUTSIDER: papel timbrado do modelo: cabeçalho e rodapé (imagens na largura da folha, enviadas na hora),
-// em quais páginas cada um entra, margens do conteúdo e os elementos soltos (texto ou imagem) que o
-// administrador arrasta para qualquer lugar da folha. A imagem de um elemento sobe na hora e fica guardada
-// uma vez só; o elemento passa a valer quando o modelo é salvo.
-import { ref, computed, watch, onBeforeUnmount } from 'vue';
+// OUTSIDER: papel timbrado do modelo, na esquerda do editor (Entregas 16 e 17): cabeçalho e rodapé
+// (imagens na largura da folha, enviadas na hora), em quais páginas cada um entra, margens do conteúdo e os
+// elementos soltos (texto ou imagem), que se arrastam direto na folha do centro. A imagem de um elemento
+// sobe na hora e fica guardada uma vez só; o elemento passa a valer quando o modelo é salvo.
+import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useAlert } from 'dashboard/composables';
 import CrmAPI from 'dashboard/api/outsider/crm';
 import Button from 'dashboard/components-next/button/Button.vue';
 import Select from 'dashboard/components-next/select/Select.vue';
 import TemplateImageSlot from './TemplateImageSlot.vue';
-import LetterheadCanvas from './LetterheadCanvas.vue';
 import LetterheadElementPanel from './LetterheadElementPanel.vue';
 import { settingsError } from './proposalSettings';
 import {
@@ -23,98 +22,20 @@ import {
 
 const props = defineProps({
   template: { type: Object, required: true },
+  images: { type: Object, required: true },
 });
 
 const emit = defineEmits(['updated']);
 
 const layout = defineModel('layout', { type: Object, required: true });
+const selectedId = defineModel('selected', { type: String, default: null });
 
 const { t } = useI18n();
 
 const TYPES = ['image/png', 'image/jpeg'];
-const selectedId = ref(null);
-const page = ref('first');
 const fileRef = ref(null);
 const replacing = ref(false);
 const isUploading = ref(false);
-const uploaded = ref({});
-const defaults = ref({ header: '', footer: '' });
-const ratios = ref({ header: 0, footer: 0 });
-
-const usesDefault = computed(
-  () => !!props.template.content?.default_letterhead
-);
-
-// imagem do modelo; sem ela, o modelo padrão usa a que vem com o CRM
-const slotUrl = slot =>
-  props.template[`${slot}_image_url`] ||
-  (usesDefault.value ? defaults.value[slot] : '');
-const headerUrl = computed(() => slotUrl('header'));
-const footerUrl = computed(() => slotUrl('footer'));
-
-const loadDefault = async slot => {
-  if (defaults.value[slot]) return;
-  try {
-    const { data } = await CrmAPI.getProposalTemplateDefaultImage(slot);
-    defaults.value = { ...defaults.value, [slot]: URL.createObjectURL(data) };
-  } catch {
-    // sem a imagem padrão, a folha mostra só as margens; a prévia em PDF continua certa
-  }
-};
-
-watch(
-  () => [
-    usesDefault.value,
-    props.template.header_image_url,
-    props.template.footer_image_url,
-  ],
-  () => {
-    ['header', 'footer'].forEach(slot => {
-      if (usesDefault.value && !props.template[`${slot}_image_url`]) {
-        loadDefault(slot);
-      }
-    });
-  },
-  { immediate: true }
-);
-
-// altura do cabeçalho e do rodapé na folha, pela proporção da imagem
-watch(
-  () => [headerUrl.value, footerUrl.value],
-  ([header, footer]) => {
-    [
-      ['header', header],
-      ['footer', footer],
-    ].forEach(([slot, url]) => {
-      if (!url) {
-        ratios.value = { ...ratios.value, [slot]: 0 };
-        return;
-      }
-      const image = new Image();
-      image.onload = () => {
-        if (image.naturalWidth) {
-          ratios.value = {
-            ...ratios.value,
-            [slot]: image.naturalHeight / image.naturalWidth,
-          };
-        }
-      };
-      image.src = url;
-    });
-  },
-  { immediate: true }
-);
-
-onBeforeUnmount(() => {
-  Object.values(defaults.value).forEach(url => url && URL.revokeObjectURL(url));
-});
-
-const imageUrls = computed(() => ({
-  ...Object.fromEntries(
-    (props.template.layout_images || []).map(image => [image.id, image.url])
-  ),
-  ...uploaded.value,
-}));
 
 const selected = computed(() =>
   layout.value.elements.find(element => element.id === selectedId.value)
@@ -134,7 +55,6 @@ const canAdd = computed(() => layout.value.elements.length < MAX_ELEMENTS);
 const addElement = element => {
   layout.value.elements = [...layout.value.elements, element];
   selectedId.value = element.id;
-  page.value = 'first';
 };
 
 const addText = () => {
@@ -165,7 +85,7 @@ const onFile = async event => {
       props.template.id,
       file
     );
-    uploaded.value = { ...uploaded.value, [data.id]: data.url };
+    props.images.remember(data.id, data.url);
     if (replacing.value && selected.value) {
       selected.value.image_id = data.id;
     } else if (canAdd.value) {
@@ -199,7 +119,61 @@ const fieldClass =
 
 <template>
   <div class="flex flex-col gap-5">
-    <div class="grid gap-4 sm:grid-cols-2">
+    <div class="flex flex-col gap-3">
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <span class="text-sm font-medium text-n-slate-12">
+          {{ t('OUTSIDER_CRM.PROPOSAL_SETTINGS.LETTERHEAD.ELEMENTS') }}
+        </span>
+        <div class="flex flex-wrap items-center gap-2">
+          <Button
+            type="button"
+            size="xs"
+            variant="faded"
+            color="slate"
+            icon="i-lucide-type"
+            :label="t('OUTSIDER_CRM.PROPOSAL_SETTINGS.LETTERHEAD.ADD_TEXT')"
+            :disabled="!canAdd"
+            @click="addText"
+          />
+          <Button
+            type="button"
+            size="xs"
+            variant="faded"
+            color="slate"
+            icon="i-lucide-image-plus"
+            :label="t('OUTSIDER_CRM.PROPOSAL_SETTINGS.LETTERHEAD.ADD_IMAGE')"
+            :disabled="!canAdd"
+            :is-loading="isUploading && !replacing"
+            @click="chooseImage(false)"
+          />
+        </div>
+      </div>
+      <p class="mb-0 text-xs text-n-slate-11">
+        {{ t('OUTSIDER_CRM.PROPOSAL_SETTINGS.LETTERHEAD.ELEMENTS_HELP') }}
+      </p>
+      <div>
+          <LetterheadElementPanel
+            v-if="selected"
+            :key="selected.id"
+            :element="selected"
+            :image-url="images.imageUrls[selected.image_id] || ''"
+            :is-uploading="isUploading && replacing"
+            @remove="removeSelected"
+            @replace-image="chooseImage(true)"
+          />
+          <p
+            v-else
+            class="p-3 mb-0 text-xs rounded-lg text-n-slate-11 bg-n-alpha-1"
+          >
+            {{
+              layout.elements.length
+                ? t('OUTSIDER_CRM.PROPOSAL_SETTINGS.LETTERHEAD.PICK')
+                : t('OUTSIDER_CRM.PROPOSAL_SETTINGS.LETTERHEAD.NONE')
+            }}
+          </p>
+      </div>
+    </div>
+    <div class="grid gap-4 pt-4 border-t border-n-weak">
       <div class="flex flex-col gap-2">
         <TemplateImageSlot
           :template="template"
@@ -262,96 +236,6 @@ const fieldClass =
       </span>
     </div>
 
-    <div class="flex flex-col gap-3">
-      <div class="flex flex-wrap items-center justify-between gap-2">
-        <span class="text-sm font-medium text-n-slate-12">
-          {{ t('OUTSIDER_CRM.PROPOSAL_SETTINGS.LETTERHEAD.ELEMENTS') }}
-        </span>
-        <div class="flex flex-wrap items-center gap-2">
-          <Button
-            type="button"
-            size="xs"
-            variant="faded"
-            color="slate"
-            icon="i-lucide-type"
-            :label="t('OUTSIDER_CRM.PROPOSAL_SETTINGS.LETTERHEAD.ADD_TEXT')"
-            :disabled="!canAdd"
-            @click="addText"
-          />
-          <Button
-            type="button"
-            size="xs"
-            variant="faded"
-            color="slate"
-            icon="i-lucide-image-plus"
-            :label="t('OUTSIDER_CRM.PROPOSAL_SETTINGS.LETTERHEAD.ADD_IMAGE')"
-            :disabled="!canAdd"
-            :is-loading="isUploading && !replacing"
-            @click="chooseImage(false)"
-          />
-        </div>
-      </div>
-      <p class="mb-0 text-xs text-n-slate-11">
-        {{ t('OUTSIDER_CRM.PROPOSAL_SETTINGS.LETTERHEAD.ELEMENTS_HELP') }}
-      </p>
-      <div class="flex flex-wrap items-start gap-4">
-        <div class="flex flex-col items-center gap-2">
-          <div
-            class="flex p-0.5 text-xs rounded-lg bg-n-alpha-1"
-            role="tablist"
-          >
-            <button
-              v-for="value in ['first', 'next']"
-              :key="value"
-              type="button"
-              class="px-2.5 py-1 rounded-md"
-              :class="
-                page === value
-                  ? 'bg-n-solid-3 text-n-slate-12 font-medium shadow-sm'
-                  : 'text-n-slate-11'
-              "
-              @click="page = value"
-            >
-              {{
-                t(
-                  `OUTSIDER_CRM.PROPOSAL_SETTINGS.LETTERHEAD.PAGE_VIEW.${value.toUpperCase()}`
-                )
-              }}
-            </button>
-          </div>
-          <LetterheadCanvas
-            v-model:layout="layout"
-            v-model:selected="selectedId"
-            :header-url="headerUrl"
-            :footer-url="footerUrl"
-            :header-ratio="ratios.header"
-            :footer-ratio="ratios.footer"
-            :image-urls="imageUrls"
-            :page="page"
-          />
-        </div>
-        <div class="flex-1 min-w-[14rem]">
-          <LetterheadElementPanel
-            v-if="selected"
-            :key="selected.id"
-            :element="selected"
-            :image-url="imageUrls[selected.image_id] || ''"
-            :is-uploading="isUploading && replacing"
-            @remove="removeSelected"
-            @replace-image="chooseImage(true)"
-          />
-          <p
-            v-else
-            class="p-3 mb-0 text-xs rounded-lg text-n-slate-11 bg-n-alpha-1"
-          >
-            {{
-              layout.elements.length
-                ? t('OUTSIDER_CRM.PROPOSAL_SETTINGS.LETTERHEAD.PICK')
-                : t('OUTSIDER_CRM.PROPOSAL_SETTINGS.LETTERHEAD.NONE')
-            }}
-          </p>
-        </div>
-      </div>
       <input
         ref="fileRef"
         type="file"
@@ -359,6 +243,5 @@ const fieldClass =
         class="hidden"
         @change="onFile"
       />
-    </div>
   </div>
 </template>

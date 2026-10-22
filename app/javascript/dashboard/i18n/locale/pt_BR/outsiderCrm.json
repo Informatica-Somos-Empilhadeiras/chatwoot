@@ -945,7 +945,21 @@
       "IF_LOST": "se perder",
       "THEN": "depois",
       "UPCOMING": "Próxima no repasse",
-      "PARALLEL": "Na mesma jornada, aberto direto em outra unidade:"
+      "PARALLEL": "Na mesma jornada, aberto direto em outra unidade:",
+      "DETAIL": {
+        "UNIT": "Unidade",
+        "VALUE": "Valor",
+        "OWNER": "Responsável",
+        "CODE": "Código",
+        "WHEN": "Quando",
+        "REASON": "Motivo",
+        "ATTEMPT": "Tentativa",
+        "WHO": "Quem",
+        "OPEN": "Abrir negócio",
+        "CLICK_TO_PIN": "Clique para fixar",
+        "UPCOMING_HELP": "Se o negócio aberto for perdido, o repasse em sequência leva o cliente para esta unidade.",
+        "ATTEMPT_OF": "{current} de {max}"
+      }
     },
     "CATALOG": {
       "TITLE": "Catálogo",
@@ -1473,7 +1487,10 @@
           "BANK": "Pedido e dados bancários",
           "SIGNATURE": "Assinatura e aceite",
           "NOTES": "Observações",
-          "TEXT": "Texto livre"
+          "TEXT": "Texto livre",
+          "IMAGE": "Imagem",
+          "DIVIDER": "Linha",
+          "SPACER": "Espaço"
         },
         "HELP": {
           "DATE_NUMBER": "Cidade e data à esquerda, número da proposta à direita",
@@ -1488,7 +1505,10 @@
           "BANK": "Confirmação de pedido, dados bancários e e-mail para documentação",
           "SIGNATURE": "Assinatura do vendedor e quadro de aceite do cliente",
           "NOTES": "Observações da proposta, quando preenchidas",
-          "TEXT": ""
+          "TEXT": "",
+          "IMAGE": "Imagem do modelo, com largura e alinhamento",
+          "DIVIDER": "Linha horizontal para separar partes",
+          "SPACER": "Espaço em branco entre blocos"
         },
         "DRAG": "Arrastar para mudar a ordem",
         "HIDE": "Esconder no PDF",
@@ -1569,6 +1589,53 @@
         "CREATE": "Criar modelo",
         "CREATED": "Modelo criado.",
         "COPY_NAME": "{name} (cópia)"
+      },
+      "STUDIO": {
+        "EDIT": "Editar",
+        "BACK": "Voltar para os modelos",
+        "ACTIVE": "Ativo",
+        "INACTIVE": "Inativo",
+        "PREVIEW": "Pré-visualizar PDF",
+        "CLOSE_PREVIEW": "Fechar prévia",
+        "NAME_REQUIRED": "Dê um nome ao modelo para salvar.",
+        "TABS": {
+          "BLOCKS": "Blocos",
+          "LETTERHEAD": "Papel timbrado",
+          "SETTINGS": "Configurações"
+        },
+        "PALETTE_HELP": "Arraste um bloco para a folha ou clique nele para colocar depois do último bloco que você clicou. Clique num bloco da folha para mudar o estilo e os textos.",
+        "FREE_BLOCKS": "Blocos livres",
+        "PROPOSAL_BLOCKS": "Blocos da proposta",
+        "FULL": "O modelo já tem {max} blocos, o máximo.",
+        "ON_SHEET": "Já está na folha. Clique nele na folha para editar.",
+        "HIDDEN_TILE": "Escondido: arraste para a folha ou clique para mostrar de novo.",
+        "ON_SHEET_BADGE": "na folha",
+        "HIDDEN_BADGE": "escondido",
+        "BACK_TO_BLOCKS": "Blocos",
+        "PAGE": "Página {page} de {total}",
+        "EMPTY_PAGE": "Arraste um bloco da esquerda para cá.",
+        "MOVE_UP": "Subir",
+        "MOVE_DOWN": "Descer",
+        "DUPLICATE": "Duplicar",
+        "TYPE_HERE": "Escreva aqui…",
+        "EMPTY_TEXT": "(texto vazio)",
+        "MACHINE_IMAGE": "Imagem da máquina",
+        "NO_CONDITIONS": "Nenhuma condição padrão. Adicione nos ajustes do bloco.",
+        "BANK_DETAILS": "Dados bancários de Configurações > Propostas > Empresa",
+        "NOTES_SAMPLE": "Preenchidas em cada proposta. Sem observação, o bloco não aparece.",
+        "PICK_IMAGE": "Selecione uma imagem",
+        "DROP_IMAGE": "ou solte uma imagem aqui",
+        "UPLOADING": "Enviando…",
+        "IMAGE_HELP": "PNG ou JPEG. A imagem sobe na hora e fica guardada uma vez só no modelo.",
+        "IMAGE_WIDTH": "Largura",
+        "ALIGN": "Alinhamento",
+        "LINE_COLOR": "Cor da linha",
+        "LINE_THICKNESS": "Espessura",
+        "SPACER_HEIGHT": "Altura do espaço",
+        "SPACER_SIZE": "Espaço · {mm} mm",
+        "LEAVE_TITLE": "Sair sem salvar?",
+        "LEAVE_TEXT": "As alterações deste modelo ainda não foram salvas e serão perdidas.",
+        "LEAVE": "Sair sem salvar"
       }
     }
   }

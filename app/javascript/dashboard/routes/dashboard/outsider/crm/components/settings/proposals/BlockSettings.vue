@@ -1,8 +1,8 @@
 <script setup>
-// OUTSIDER: um bloco do conteúdo do modelo. Fechado, mostra o nome, se começa em página nova e o olho
-// para esconder; aberto, o estilo do bloco (página nova, tamanho, negrito, destaque) e os textos dele.
-// Os textos dos blocos padrão são as chaves de sempre do modelo (form); o bloco de texto livre guarda
-// título e texto nele mesmo.
+// OUTSIDER: ajustes do bloco selecionado na folha, na esquerda do editor (Entregas 16 e 17): página nova,
+// estilo (tamanho, negrito, destaque) e os textos do bloco. Os textos dos blocos da proposta são as chaves
+// de sempre do modelo (form); os blocos livres guardam o que é deles (texto e título, imagem com largura e
+// alinhamento, cor e espessura da linha, altura do espaço).
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import Button from 'dashboard/components-next/button/Button.vue';
@@ -10,13 +10,23 @@ import Select from 'dashboard/components-next/select/Select.vue';
 import Switch from 'dashboard/components-next/switch/Switch.vue';
 import ConditionsEditor from './ConditionsEditor.vue';
 import { MAX_TEXT } from './proposalSettings';
-import { BLOCK_INFO, BLOCK_SIZES } from './templateDesign';
+import {
+  BLOCK_INFO,
+  BLOCK_SIZES,
+  DIVIDER_THICKNESS,
+  IMAGE_WIDTHS,
+  SPACER_HEIGHTS,
+  clamp,
+  isFree,
+  round1,
+} from './templateDesign';
 
 defineProps({
-  expanded: { type: Boolean, default: false },
+  imageUrl: { type: String, default: '' },
+  isUploading: { type: Boolean, default: false },
 });
 
-const emit = defineEmits(['toggle', 'remove']);
+const emit = defineEmits(['back', 'remove', 'hide', 'pickImage']);
 
 const block = defineModel('block', { type: Object, required: true });
 const form = defineModel('form', { type: Object, required: true });
@@ -38,12 +48,33 @@ const name = computed(() =>
   t(`OUTSIDER_CRM.PROPOSAL_SETTINGS.BLOCKS.TYPES.${typeKey.value}`)
 );
 
-// o título do bloco de texto livre ajuda a achar o bloco na lista
-const subtitle = computed(() =>
-  block.value.type === 'text'
-    ? block.value.heading || block.value.text.slice(0, 60)
-    : t(`OUTSIDER_CRM.PROPOSAL_SETTINGS.BLOCKS.HELP.${typeKey.value}`)
+const help = computed(() =>
+  t(`OUTSIDER_CRM.PROPOSAL_SETTINGS.BLOCKS.HELP.${typeKey.value}`)
 );
+
+// imagem, linha e espaço não têm texto: sem tamanho, negrito e destaque
+const hasText = computed(
+  () => !['image', 'divider', 'spacer'].includes(block.value.type)
+);
+
+const ALIGNS = [
+  { value: 'left', icon: 'i-lucide-align-left' },
+  { value: 'center', icon: 'i-lucide-align-center' },
+  { value: 'right', icon: 'i-lucide-align-right' },
+];
+
+const THICKNESSES = [0.5, 1, 1.5, 2, 3, 4];
+const thicknessOptions = computed(() =>
+  THICKNESSES.map(value => ({
+    value,
+    label: `${String(value).replace('.', ',')} pt`,
+  }))
+);
+
+const setNumber = (key, value, limits) => {
+  if (value === '' || Number.isNaN(Number(value))) return;
+  set(key, round1(clamp(value, limits.min, limits.max)));
+};
 
 const sizeOptions = computed(() =>
   Array.from({ length: BLOCK_SIZES.max - BLOCK_SIZES.min + 1 }, (_, i) => {
@@ -88,84 +119,37 @@ const toggleClass = on =>
 </script>
 
 <template>
-  <div
-    class="rounded-xl outline outline-1 -outline-offset-1 bg-n-solid-1"
-    :class="[
-      expanded ? 'outline-n-brand' : 'outline-n-container',
-      { 'opacity-60': !block.visible },
-    ]"
-    :data-block="block.key"
-  >
-    <div class="flex items-center gap-2 px-2 py-2">
+  <div class="flex flex-col gap-4" :data-block-settings="block.key">
+    <button
+      type="button"
+      class="flex items-center gap-1 text-xs font-medium w-fit text-n-blue-11 hover:underline"
+      data-settings-back
+      @click="emit('back')"
+    >
+      <span class="i-lucide-arrow-left size-3.5" />
+      {{ t('OUTSIDER_CRM.PROPOSAL_SETTINGS.STUDIO.BACK_TO_BLOCKS') }}
+    </button>
+    <div class="flex items-start gap-2">
       <span
-        class="flex items-center justify-center rounded cursor-grab size-6 text-n-slate-10 hover:text-n-slate-12 crm-block-handle"
-        :title="t('OUTSIDER_CRM.PROPOSAL_SETTINGS.BLOCKS.DRAG')"
-      >
-        <span class="i-lucide-grip-vertical size-4" />
-      </span>
-      <button
-        type="button"
-        class="flex items-center flex-1 min-w-0 gap-2 text-left"
-        @click="emit('toggle')"
-      >
-        <span :class="info.icon" class="size-4 shrink-0 text-n-slate-11" />
-        <span class="flex flex-col min-w-0">
-          <span class="text-sm font-medium truncate text-n-slate-12">
-            {{ name }}
-          </span>
-          <span v-if="subtitle" class="text-xs truncate text-n-slate-11">
-            {{ subtitle }}
-          </span>
-        </span>
-      </button>
-      <span
-        v-if="block.new_page"
-        class="px-1.5 py-0.5 text-[11px] rounded-md bg-n-alpha-2 text-n-slate-11 whitespace-nowrap"
-      >
-        {{ t('OUTSIDER_CRM.PROPOSAL_SETTINGS.BLOCKS.NEW_PAGE_BADGE') }}
-      </span>
-      <Button
-        v-tooltip.top="
-          block.visible
-            ? t('OUTSIDER_CRM.PROPOSAL_SETTINGS.BLOCKS.HIDE')
-            : t('OUTSIDER_CRM.PROPOSAL_SETTINGS.BLOCKS.SHOW')
-        "
-        type="button"
-        size="xs"
-        variant="ghost"
-        color="slate"
-        :icon="block.visible ? 'i-lucide-eye' : 'i-lucide-eye-off'"
-        :aria-label="
-          block.visible
-            ? t('OUTSIDER_CRM.PROPOSAL_SETTINGS.BLOCKS.HIDE')
-            : t('OUTSIDER_CRM.PROPOSAL_SETTINGS.BLOCKS.SHOW')
-        "
-        @click="set('visible', !block.visible)"
+        :class="info.icon"
+        class="mt-0.5 size-5 shrink-0 text-n-teal-10"
       />
-      <Button
-        type="button"
-        size="xs"
-        variant="ghost"
-        color="slate"
-        :icon="expanded ? 'i-lucide-chevron-down' : 'i-lucide-chevron-right'"
-        :aria-label="name"
-        @click="emit('toggle')"
-      />
+      <div class="flex flex-col min-w-0">
+        <span class="text-sm font-semibold text-n-slate-12">{{ name }}</span>
+        <span v-if="help" class="text-xs text-n-slate-11">{{ help }}</span>
+      </div>
     </div>
 
-    <div
-      v-if="expanded"
-      class="flex flex-col gap-4 px-3 pt-1 pb-3 border-t border-n-weak"
-    >
+    <div class="flex flex-col gap-4">
       <!-- Estilo do bloco -->
-      <div class="flex flex-wrap items-center gap-x-4 gap-y-2 pt-3">
-        <label class="flex items-center gap-2 text-sm text-n-slate-12">
-          <Switch
-            :model-value="block.new_page"
-            @update:model-value="value => set('new_page', value)"
-          />
-          {{ t('OUTSIDER_CRM.PROPOSAL_SETTINGS.BLOCKS.NEW_PAGE') }}
-        </label>
+      <label class="flex items-center gap-2 text-sm text-n-slate-12">
+        <Switch
+          :model-value="block.new_page"
+          @update:model-value="value => set('new_page', value)"
+        />
+        {{ t('OUTSIDER_CRM.PROPOSAL_SETTINGS.BLOCKS.NEW_PAGE') }}
+      </label>
+      <div v-if="hasText" class="flex flex-wrap items-center gap-x-4 gap-y-2">
         <label class="flex items-center gap-2 text-sm text-n-slate-12">
           {{ t('OUTSIDER_CRM.PROPOSAL_SETTINGS.BLOCKS.SIZE') }}
           <Select
@@ -205,7 +189,7 @@ const toggleClass = on =>
       </div>
 
       <!-- Características das máquinas -->
-      <div v-if="block.type === 'specs'" class="grid gap-3 sm:grid-cols-2">
+      <div v-if="block.type === 'specs'" class="grid gap-3">
         <label data-fields class="flex flex-col gap-1 text-sm">
           <span class="font-medium text-n-slate-12">
             {{ t('OUTSIDER_CRM.PROPOSAL_SETTINGS.BLOCKS.HEADING') }}
@@ -358,18 +342,145 @@ const toggleClass = on =>
             @input="set('text', $event.target.value)"
           />
         </label>
-        <div>
+      </template>
+
+      <!-- Imagem -->
+      <template v-if="block.type === 'image'">
+        <div class="flex flex-col gap-2">
+          <img
+            v-if="imageUrl"
+            :src="imageUrl"
+            alt=""
+            class="object-contain w-full rounded-lg max-h-32 bg-n-alpha-1"
+          />
           <Button
             type="button"
-            size="xs"
-            variant="ghost"
-            color="ruby"
-            icon="i-lucide-trash-2"
-            :label="t('OUTSIDER_CRM.PROPOSAL_SETTINGS.BLOCKS.REMOVE')"
-            @click="emit('remove')"
+            size="sm"
+            variant="faded"
+            color="slate"
+            icon="i-lucide-image-plus"
+            :label="
+              imageUrl
+                ? t('OUTSIDER_CRM.PROPOSAL_SETTINGS.LETTERHEAD.REPLACE_IMAGE')
+                : t('OUTSIDER_CRM.PROPOSAL_SETTINGS.STUDIO.PICK_IMAGE')
+            "
+            :is-loading="isUploading"
+            data-image-pick
+            @click="emit('pickImage')"
           />
+          <span class="text-xs text-n-slate-11">
+            {{ t('OUTSIDER_CRM.PROPOSAL_SETTINGS.STUDIO.IMAGE_HELP') }}
+          </span>
+        </div>
+        <label class="flex flex-col gap-1 text-sm">
+          <span class="flex justify-between font-medium text-n-slate-12">
+            {{ t('OUTSIDER_CRM.PROPOSAL_SETTINGS.STUDIO.IMAGE_WIDTH') }}
+            <span class="font-normal tabular-nums text-n-slate-11">
+              {{ `${block.width}%` }}
+            </span>
+          </span>
+          <input
+            :value="block.width"
+            type="range"
+            :min="IMAGE_WIDTHS.min"
+            :max="IMAGE_WIDTHS.max"
+            step="1"
+            class="w-full accent-n-brand"
+            data-image-width
+            @input="setNumber('width', $event.target.value, IMAGE_WIDTHS)"
+          />
+        </label>
+        <div class="flex flex-col gap-1 text-sm">
+          <span class="font-medium text-n-slate-12">
+            {{ t('OUTSIDER_CRM.PROPOSAL_SETTINGS.STUDIO.ALIGN') }}
+          </span>
+          <div class="flex gap-1">
+            <button
+              v-for="align in ALIGNS"
+              :key="align.value"
+              type="button"
+              class="flex items-center justify-center rounded-lg size-8 outline outline-1 -outline-offset-1"
+              :class="toggleClass(block.align === align.value)"
+              :aria-pressed="block.align === align.value"
+              @click="set('align', align.value)"
+            >
+              <span :class="align.icon" class="size-4" />
+            </button>
+          </div>
         </div>
       </template>
+
+      <!-- Linha -->
+      <div v-if="block.type === 'divider'" class="flex flex-wrap gap-4">
+        <label class="flex flex-col gap-1 text-sm">
+          <span class="font-medium text-n-slate-12">
+            {{ t('OUTSIDER_CRM.PROPOSAL_SETTINGS.STUDIO.LINE_COLOR') }}
+          </span>
+          <input
+            :value="`#${block.color}`"
+            type="color"
+            class="w-16 h-9 p-0.5 rounded-lg cursor-pointer bg-n-alpha-black2 outline outline-1 -outline-offset-1 outline-n-weak"
+            @input="set('color', $event.target.value.slice(1).toUpperCase())"
+          />
+        </label>
+        <label class="flex flex-col gap-1 text-sm">
+          <span class="font-medium text-n-slate-12">
+            {{ t('OUTSIDER_CRM.PROPOSAL_SETTINGS.STUDIO.LINE_THICKNESS') }}
+          </span>
+          <Select
+            :model-value="block.thickness"
+            :options="thicknessOptions"
+            @update:model-value="
+              value => setNumber('thickness', value, DIVIDER_THICKNESS)
+            "
+          />
+        </label>
+      </div>
+
+      <!-- Espaço -->
+      <label
+        v-if="block.type === 'spacer'"
+        class="flex flex-col gap-1 text-sm"
+      >
+        <span class="flex justify-between font-medium text-n-slate-12">
+          {{ t('OUTSIDER_CRM.PROPOSAL_SETTINGS.STUDIO.SPACER_HEIGHT') }}
+          <span class="font-normal tabular-nums text-n-slate-11">
+            {{ `${block.height} mm` }}
+          </span>
+        </span>
+        <input
+          :value="block.height"
+          type="range"
+          :min="SPACER_HEIGHTS.min"
+          :max="SPACER_HEIGHTS.max"
+          step="1"
+          class="w-full accent-n-brand"
+          @input="setNumber('height', $event.target.value, SPACER_HEIGHTS)"
+        />
+      </label>
+
+      <div class="pt-3 border-t border-n-weak">
+        <Button
+          v-if="isFree(block)"
+          type="button"
+          size="xs"
+          variant="ghost"
+          color="ruby"
+          icon="i-lucide-trash-2"
+          :label="t('OUTSIDER_CRM.PROPOSAL_SETTINGS.BLOCKS.REMOVE')"
+          @click="emit('remove')"
+        />
+        <Button
+          v-else
+          type="button"
+          size="xs"
+          variant="ghost"
+          color="slate"
+          icon="i-lucide-eye-off"
+          :label="t('OUTSIDER_CRM.PROPOSAL_SETTINGS.BLOCKS.HIDE')"
+          @click="emit('hide')"
+        />
+      </div>
     </div>
   </div>
 </template>

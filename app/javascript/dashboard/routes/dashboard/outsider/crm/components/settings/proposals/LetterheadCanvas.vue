@@ -1,9 +1,10 @@
 <script setup>
-// OUTSIDER: folha A4 em escala para posicionar os elementos soltos do papel timbrado. Arrastar move o
-// elemento, a alça da direita muda a largura e as setas do teclado ajustam de 1 em 1 mm (Shift: 5 mm).
-// Mostra o cabeçalho, o rodapé e a área do conteúdo (margens) da página escolhida: a primeira ou as
-// seguintes, já que cada item pode sair só na primeira. O PDF da prévia é a referência final.
-import { computed } from 'vue';
+// OUTSIDER: uma folha A4 em escala no editor do modelo: cabeçalho, rodapé, número da página, a área do
+// conteúdo (margens) com os blocos que o editor põe no slot e os elementos soltos do papel timbrado.
+// Com editable, arrastar move o elemento, a alça da direita muda a largura e as setas do teclado ajustam
+// de 1 em 1 mm (Shift: 5 mm). A folha cresce quando o conteúdo passa do tamanho A4 (o PDF quebra a
+// página sozinho nesse caso); a prévia em PDF é a referência final.
+import { computed, useSlots } from 'vue';
 import { useI18n } from 'vue-i18n';
 import {
   ELEMENT_SIZES,
@@ -21,21 +22,26 @@ const props = defineProps({
   headerRatio: { type: Number, default: 0 },
   footerRatio: { type: Number, default: 0 },
   imageUrls: { type: Object, default: () => ({}) },
-  page: { type: String, default: 'first' },
+  pageNumber: { type: Number, default: 1 },
+  pageCount: { type: Number, default: 1 },
   width: { type: Number, default: 300 },
+  editable: { type: Boolean, default: true },
 });
 
 const layout = defineModel('layout', { type: Object, required: true });
 const selectedId = defineModel('selected', { type: String, default: null });
 
 const { t } = useI18n();
+const slots = useSlots();
+
+const page = computed(() => (props.pageNumber === 1 ? 'first' : 'next'));
 
 const scale = computed(() => props.width / PAGE_WIDTH_MM);
 const px = mm => `${mm * scale.value}px`;
 // o PDF põe o rodapé 14 pt acima da borda de baixo, deixando espaço para o número da página
 const FOOTER_GAP_MM = 14 * PT_TO_MM;
 
-const onPage = pages => props.page === 'first' || pages === 'all';
+const onPage = pages => page.value === 'first' || pages === 'all';
 const showHeader = computed(
   () => !!props.headerUrl && onPage(layout.value.header_pages)
 );
@@ -90,7 +96,7 @@ const textStyle = element => ({
 });
 
 const startDrag = (event, element, mode) => {
-  if (event.button !== 0) return;
+  if (event.button !== 0 || !props.editable) return;
   event.preventDefault();
   event.stopPropagation();
   selectedId.value = element.id;
@@ -130,7 +136,7 @@ const KEYS = {
 };
 
 const onKeydown = (event, element) => {
-  const step = KEYS[event.key];
+  const step = props.editable && KEYS[event.key];
   if (!step) return;
   event.preventDefault();
   const amount = event.shiftKey ? 5 : 1;
@@ -143,10 +149,11 @@ const onKeydown = (event, element) => {
 
 <template>
   <div
-    class="relative overflow-hidden bg-white shadow-md select-none shrink-0 ring-1 ring-n-weak"
-    :style="{ width: px(PAGE_WIDTH_MM), height: px(PAGE_HEIGHT_MM) }"
+    class="relative overflow-hidden bg-white shadow-md shrink-0 ring-1 ring-[rgba(0,0,0,0.08)]"
+    :class="{ 'select-none': editable }"
+    :style="{ width: px(PAGE_WIDTH_MM), minHeight: px(PAGE_HEIGHT_MM) }"
     data-letterhead-canvas
-    @pointerdown="selectedId = null"
+    @pointerdown="editable && (selectedId = null)"
   >
     <img
       v-if="showHeader"
@@ -163,8 +170,21 @@ const onKeydown = (event, element) => {
       :style="{ bottom: px(FOOTER_GAP_MM) }"
       draggable="false"
     />
-    <!-- área do conteúdo (blocos) -->
+    <!-- área do conteúdo: os blocos do editor ou, sem eles, só o desenho das margens -->
     <div
+      v-if="slots.default"
+      class="relative"
+      :style="{
+        paddingLeft: contentBox.left,
+        paddingRight: contentBox.right,
+        paddingTop: contentBox.top,
+        paddingBottom: contentBox.bottom,
+      }"
+    >
+      <slot />
+    </div>
+    <div
+      v-else
       class="absolute flex flex-col gap-1.5 p-1.5 border border-dashed pointer-events-none border-slate-300"
       :style="contentBox"
     >
@@ -182,7 +202,7 @@ const onKeydown = (event, element) => {
       class="absolute text-[8px] text-slate-500 pointer-events-none"
       :style="{ right: px(layout.margins.side), bottom: px(2) }"
     >
-      {{ page === 'first' ? '1 / 2' : '2 / 2' }}
+      {{ `${pageNumber} / ${pageCount}` }}
     </span>
 
     <div
@@ -190,12 +210,14 @@ const onKeydown = (event, element) => {
       :key="element.id"
       data-element
       :data-element-id="element.id"
-      tabindex="0"
-      class="absolute cursor-move group focus:outline-none"
+      :tabindex="editable ? 0 : undefined"
+      class="absolute group focus:outline-none"
       :class="
-        selectedId === element.id
-          ? 'ring-2 ring-n-brand z-10'
-          : 'ring-1 ring-transparent hover:ring-n-blue-8'
+        !editable
+          ? 'pointer-events-none'
+          : selectedId === element.id
+            ? 'ring-2 ring-n-brand z-30 cursor-move'
+            : 'ring-1 ring-transparent hover:ring-n-blue-8 z-30 cursor-move'
       "
       :style="{
         left: px(element.x),
@@ -233,7 +255,7 @@ const onKeydown = (event, element) => {
         </span>
       </div>
       <span
-        v-if="selectedId === element.id"
+        v-if="editable && selectedId === element.id"
         class="absolute top-1/2 -right-1.5 w-2.5 h-5 -translate-y-1/2 rounded-sm cursor-ew-resize bg-n-brand"
         data-resize
         @pointerdown="startDrag($event, element, 'resize')"

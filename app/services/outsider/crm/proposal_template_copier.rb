@@ -29,7 +29,7 @@ class Outsider::Crm::ProposalTemplateCopier
     end
     used = source.layout_images.attachments - source.unused_layout_images
     ids = used.to_h { |attachment| [attachment.id, attach_layout_image(template, attachment.blob)] }
-    template.content = template.content.merge('layout' => remap(template.layout, ids)) if template.content.key?('layout')
+    template.content = remap(template.content, ids)
     template.save!
   end
 
@@ -38,8 +38,16 @@ class Outsider::Crm::ProposalTemplateCopier
     template.layout_images.attachments.max_by(&:id).id
   end
 
-  # os elementos passam a usar os anexos do modelo novo (mesmo arquivo)
-  def remap(layout, ids)
-    layout.merge('elements' => layout['elements'].map { |element| element.merge('image_id' => ids[element['image_id']]) })
+  # os elementos e os blocos de imagem passam a usar os anexos do modelo novo (mesmo arquivo)
+  def remap(content, ids)
+    content = content.merge('blocks' => content['blocks'].map { |block| remap_image(block, ids) }) if content['blocks'].is_a?(Array)
+    return content unless content.key?('layout')
+
+    layout = Outsider::Crm::ProposalTemplateLayout.layout(content)
+    content.merge('layout' => layout.merge('elements' => layout['elements'].map { |element| remap_image(element, ids) }))
+  end
+
+  def remap_image(item, ids)
+    item['image_id'] ? item.merge('image_id' => ids[item['image_id']]) : item
   end
 end

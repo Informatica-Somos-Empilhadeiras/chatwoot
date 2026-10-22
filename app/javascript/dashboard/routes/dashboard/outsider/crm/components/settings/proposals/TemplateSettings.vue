@@ -1,7 +1,8 @@
 <script setup>
-// OUTSIDER: modelos de proposta da conta. Cada modelo guarda os blocos e textos, as condições e o papel
-// timbrado que a proposta nova recebe. "Novo modelo" cria em branco ou copiando outro; modelo que alguma
-// proposta usa não é apagado (o servidor recusa e sugere desativar).
+// OUTSIDER: modelos de proposta da conta (Entregas 16 e 17), em cartões com a miniatura da primeira folha,
+// como a lista de e-mails da Brevo. "Editar" abre o editor em tela cheia; "Novo modelo" cria em branco
+// ou copiando outro e já abre o editor. Modelo que alguma proposta usa não é apagado (o servidor recusa e
+// sugere desativar).
 import { ref, computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useAlert } from 'dashboard/composables';
@@ -9,17 +10,17 @@ import CrmAPI from 'dashboard/api/outsider/crm';
 import Button from 'dashboard/components-next/button/Button.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 import ConfirmDelete from '../../ConfirmDelete.vue';
-import TemplateEditor from './TemplateEditor.vue';
+import TemplateStudio from './TemplateStudio.vue';
+import TemplateThumb from './TemplateThumb.vue';
 import NewTemplateDialog from './NewTemplateDialog.vue';
 import { settingsError } from './proposalSettings';
 
 const { t } = useI18n();
 
 const templates = ref([]);
-const activeId = ref(null);
+const editingId = ref(null);
 const isLoading = ref(true);
 const failed = ref(false);
-const dirtyIds = ref([]);
 const newDialogRef = ref(null);
 const confirmRef = ref(null);
 
@@ -35,9 +36,6 @@ const load = async () => {
   try {
     const { data } = await CrmAPI.getProposalTemplates();
     templates.value = data;
-    if (!data.some(template => template.id === activeId.value)) {
-      activeId.value = sorted.value[0]?.id ?? null;
-    }
   } catch (error) {
     failed.value = true;
     useAlert(settingsError(t, error));
@@ -52,18 +50,16 @@ const replace = template => {
   );
 };
 
-const current = computed(() =>
-  templates.value.find(template => template.id === activeId.value)
+const editing = computed(() =>
+  templates.value.find(template => template.id === editingId.value)
 );
 
 const onCreated = template => {
   templates.value = [...templates.value, template];
-  activeId.value = template.id;
+  editingId.value = template.id;
 };
 
-const askDelete = () => {
-  const template = current.value;
-  if (!template) return;
+const askDelete = template => {
   confirmRef.value?.open(
     t('OUTSIDER_CRM.PROPOSAL_SETTINGS.TEMPLATES.DELETE_TITLE'),
     t('OUTSIDER_CRM.PROPOSAL_SETTINGS.TEMPLATES.DELETE_TEXT', {
@@ -72,17 +68,14 @@ const askDelete = () => {
     async () => {
       await CrmAPI.deleteProposalTemplate(template.id);
       templates.value = templates.value.filter(item => item.id !== template.id);
-      dirtyIds.value = dirtyIds.value.filter(id => id !== template.id);
-      activeId.value = sorted.value[0]?.id ?? null;
     }
   );
 };
 
-const setDirty = (id, dirty) => {
-  dirtyIds.value = dirty
-    ? [...new Set([...dirtyIds.value, id])]
-    : dirtyIds.value.filter(item => item !== id);
-};
+const kindLabel = template =>
+  t(
+    `OUTSIDER_CRM.PROPOSAL_SETTINGS.TEMPLATES.KINDS.${template.kind.toUpperCase()}`
+  );
 
 onMounted(load);
 </script>
@@ -114,79 +107,90 @@ onMounted(load);
     <p class="mb-0 text-sm text-n-slate-11">
       {{ t('OUTSIDER_CRM.PROPOSAL_SETTINGS.TEMPLATES.DESCRIPTION') }}
     </p>
-    <div class="flex flex-wrap items-stretch gap-2">
-      <button
+    <div class="grid gap-4 grid-cols-[repeat(auto-fill,minmax(16rem,1fr))]">
+      <article
         v-for="template in sorted"
         :key="template.id"
-        type="button"
-        class="flex flex-col items-start gap-0.5 px-3 py-2 text-left rounded-xl outline outline-1 -outline-offset-1 min-w-[10rem]"
-        :class="
-          activeId === template.id
-            ? 'outline-n-brand bg-n-alpha-2'
-            : 'outline-n-container bg-n-solid-2 hover:bg-n-alpha-1'
-        "
-        @click="activeId = template.id"
+        class="flex flex-col overflow-hidden rounded-xl bg-n-solid-2 outline outline-1 -outline-offset-1 outline-n-container"
+        :data-template-card="template.id"
       >
-        <span
-          class="flex items-center gap-1.5 text-sm font-medium text-n-slate-12"
+        <button
+          type="button"
+          class="flex justify-center pt-4 overflow-hidden bg-n-alpha-1 hover:bg-n-alpha-2"
+          :aria-label="t('OUTSIDER_CRM.PROPOSAL_SETTINGS.STUDIO.EDIT')"
+          @click="editingId = template.id"
         >
-          {{ template.name }}
-          <span
-            v-if="dirtyIds.includes(template.id)"
-            v-tooltip.top="
-              t('OUTSIDER_CRM.PROPOSAL_SETTINGS.TEMPLATES.UNSAVED')
-            "
-            class="rounded-full size-2 bg-n-amber-9"
+          <TemplateThumb
+            :template="template"
+            :width="208"
+            class="shadow-md rounded-t-sm"
           />
-        </span>
-        <span class="text-xs text-n-slate-11">
-          {{
-            t(
-              `OUTSIDER_CRM.PROPOSAL_SETTINGS.TEMPLATES.KINDS.${template.kind.toUpperCase()}`
-            )
-          }}
-          <template v-if="!template.active">
-            · {{ t('OUTSIDER_CRM.PROPOSAL_SETTINGS.TEMPLATES.INACTIVE') }}
-          </template>
-        </span>
-      </button>
+        </button>
+        <div class="flex items-start gap-2 p-3 border-t border-n-weak">
+          <div class="flex flex-col flex-1 min-w-0 gap-0.5">
+            <span class="text-sm font-medium truncate text-n-slate-12">
+              {{ template.name }}
+            </span>
+            <span class="flex items-center gap-1.5 text-xs text-n-slate-11">
+              <span
+                class="rounded-full size-2"
+                :class="template.active ? 'bg-n-teal-9' : 'bg-n-slate-8'"
+              />
+              {{
+                template.active
+                  ? t('OUTSIDER_CRM.PROPOSAL_SETTINGS.STUDIO.ACTIVE')
+                  : t('OUTSIDER_CRM.PROPOSAL_SETTINGS.STUDIO.INACTIVE')
+              }}
+              {{ ` · ${kindLabel(template)}` }}
+            </span>
+          </div>
+          <Button
+            v-tooltip.top="t('OUTSIDER_CRM.PROPOSAL_SETTINGS.TEMPLATES.DUPLICATE')"
+            type="button"
+            size="xs"
+            variant="ghost"
+            color="slate"
+            icon="i-lucide-copy-plus"
+            :aria-label="t('OUTSIDER_CRM.PROPOSAL_SETTINGS.TEMPLATES.DUPLICATE')"
+            @click="newDialogRef?.open(template)"
+          />
+          <Button
+            v-tooltip.top="t('OUTSIDER_CRM.PROPOSAL_SETTINGS.TEMPLATES.DELETE')"
+            type="button"
+            size="xs"
+            variant="ghost"
+            color="ruby"
+            icon="i-lucide-trash-2"
+            :aria-label="t('OUTSIDER_CRM.PROPOSAL_SETTINGS.TEMPLATES.DELETE')"
+            @click="askDelete(template)"
+          />
+          <Button
+            type="button"
+            size="xs"
+            variant="outline"
+            color="slate"
+            :label="t('OUTSIDER_CRM.PROPOSAL_SETTINGS.STUDIO.EDIT')"
+            data-template-edit
+            @click="editingId = template.id"
+          />
+        </div>
+      </article>
       <button
         type="button"
-        class="flex items-center gap-2 px-3 py-2 text-sm rounded-xl text-n-slate-11 outline outline-1 -outline-offset-1 outline-dashed outline-n-weak hover:text-n-slate-12 hover:bg-n-alpha-1"
+        class="flex flex-col items-center justify-center gap-2 p-6 text-sm rounded-xl min-h-[14rem] text-n-slate-11 outline outline-1 -outline-offset-1 outline-dashed outline-n-weak hover:text-n-slate-12 hover:bg-n-alpha-1"
         data-new-template-button
         @click="newDialogRef?.open()"
       >
-        <span class="i-lucide-plus size-4" />
+        <span class="i-lucide-plus size-6" />
         {{ t('OUTSIDER_CRM.PROPOSAL_SETTINGS.NEW_TEMPLATE.BUTTON') }}
       </button>
     </div>
-    <div v-if="current" class="flex flex-wrap items-center gap-2 -mt-1">
-      <Button
-        size="xs"
-        variant="ghost"
-        color="slate"
-        icon="i-lucide-copy-plus"
-        :label="t('OUTSIDER_CRM.PROPOSAL_SETTINGS.TEMPLATES.DUPLICATE')"
-        @click="newDialogRef?.open(current)"
-      />
-      <Button
-        size="xs"
-        variant="ghost"
-        color="ruby"
-        icon="i-lucide-trash-2"
-        :label="t('OUTSIDER_CRM.PROPOSAL_SETTINGS.TEMPLATES.DELETE')"
-        @click="askDelete"
-      />
-    </div>
-    <!-- v-show mantém o que foi digitado ao trocar de modelo -->
-    <TemplateEditor
-      v-for="template in sorted"
-      v-show="template.id === activeId"
-      :key="template.id"
-      :template="template"
-      :visible="template.id === activeId"
+    <TemplateStudio
+      v-if="editing"
+      :key="editing.id"
+      :template="editing"
       @updated="replace"
-      @dirty="dirty => setDirty(template.id, dirty)"
+      @close="editingId = null"
     />
     <NewTemplateDialog
       ref="newDialogRef"

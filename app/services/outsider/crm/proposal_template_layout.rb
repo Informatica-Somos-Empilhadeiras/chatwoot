@@ -3,6 +3,8 @@
 # blocks: o conteúdo em sequência, na ordem do PDF. Cada bloco pode ser escondido, começar numa página nova
 #         e ter tamanho de letra, negrito e destaque amarelo próprios. Os textos dos blocos padrão continuam
 #         nas chaves de sempre do content (intro, closing...); o bloco "text" é um texto livre com título.
+#         Entrega 17: blocos livres "image" (imagem do modelo, largura em % e alinhamento), "divider" (linha)
+#         e "spacer" (espaço em mm), que podem aparecer quantas vezes quiser, como o "text".
 # layout: fonte, margens (em mm), em quais páginas entram o cabeçalho e o rodapé e os elementos em posição
 #         livre no papel timbrado (texto ou imagem, em mm a partir do canto de cima à esquerda da folha A4),
 #         em todas as páginas ou só na primeira.
@@ -11,9 +13,14 @@
 # itens, mais condições): solto, um texto maior passaria por cima do outro. Modelo antigo, sem blocks,
 # ganha a sequência das Entregas 14 e 15 (mesmo PDF).
 module Outsider::Crm::ProposalTemplateLayout
+  extend Outsider::Crm::ProposalTemplateLayout::Values
+
   module_function
 
-  BLOCK_TYPES = %w[date_number customer intro title specs items conditions parties closing bank signature notes text].freeze
+  BLOCK_TYPES = %w[date_number customer intro title specs items conditions parties closing bank signature notes
+                   text image divider spacer].freeze
+  # blocos livres: podem repetir e ganham uma chave própria
+  FREE_BLOCKS = %w[text image divider spacer].freeze
   FONTS = %w[Helvetica Times-Roman Courier].freeze
   PAGES = %w[all first].freeze
   ALIGNS = %w[left center right].freeze
@@ -28,6 +35,13 @@ module Outsider::Crm::ProposalTemplateLayout
   DEFAULT_SIZES = { 'title' => 10, 'signature' => 10 }.freeze
   DEFAULT_HEADINGS = { 'specs' => 'Principais Características' }.freeze
   EQUIPMENT_HEADING = 'EQUIPAMENTO'.freeze
+  # opções próprias de alguns blocos
+  BLOCK_EXTRAS = {
+    'specs' => { 'image_side' => 'right', 'equipment' => true, 'equipment_heading' => EQUIPMENT_HEADING },
+    'image' => { 'image_id' => nil, 'width' => 40, 'align' => 'center' },
+    'divider' => { 'color' => 'BFBFBF', 'thickness' => 1 },
+    'spacer' => { 'height' => 8 }
+  }.freeze
 
   def default_blocks(content)
     [
@@ -42,7 +56,7 @@ module Outsider::Crm::ProposalTemplateLayout
   def block(type, visible: true, new_page: false)
     data = { 'key' => type, 'type' => type, 'visible' => visible, 'new_page' => new_page, 'size' => DEFAULT_SIZES.fetch(type, 9),
              'bold' => false, 'highlight' => false, 'heading' => DEFAULT_HEADINGS.fetch(type, ''), 'text' => '' }
-    type == 'specs' ? data.merge('image_side' => 'right', 'equipment' => true, 'equipment_heading' => EQUIPMENT_HEADING) : data
+    data.merge(BLOCK_EXTRAS.fetch(type, {}))
   end
 
   def default_layout
@@ -63,7 +77,7 @@ module Outsider::Crm::ProposalTemplateLayout
     Array(list).first(MAX_BLOCKS).each_with_index.filter_map do |raw, index|
       raw = raw.to_h.stringify_keys
       type = raw['type'].to_s
-      next unless BLOCK_TYPES.include?(type) && (type == 'text' || seen.exclude?(type))
+      next unless BLOCK_TYPES.include?(type) && (FREE_BLOCKS.include?(type) || seen.exclude?(type))
 
       seen << type
       normalize_block(raw, type, index)
@@ -73,24 +87,10 @@ module Outsider::Crm::ProposalTemplateLayout
   def normalize_block(raw, type, index)
     base = block(type)
     data = base.merge(block_style(raw, base)).merge(
-      'key' => type == 'text' ? raw['key'].to_s.presence&.first(40) || "text-#{index}" : type,
+      'key' => FREE_BLOCKS.include?(type) ? raw['key'].to_s.presence&.first(40) || "#{type}-#{index}" : type,
       'heading' => heading(raw, 'heading', base['heading']), 'text' => raw['text'].to_s.first(MAX_TEXT)
     )
-    type == 'specs' ? data.merge(machine_options(raw)) : data
-  end
-
-  def block_style(raw, base)
-    { 'visible' => boolean(raw.fetch('visible', true)), 'new_page' => boolean(raw['new_page']),
-      'size' => number(raw['size'], base['size'], 6..16), 'bold' => boolean(raw['bold']), 'highlight' => boolean(raw['highlight']) }
-  end
-
-  def machine_options(raw)
-    { 'image_side' => pick(raw['image_side'], %w[right left]), 'equipment' => boolean(raw.fetch('equipment', true)),
-      'equipment_heading' => heading(raw, 'equipment_heading', EQUIPMENT_HEADING) }
-  end
-
-  def heading(raw, key, default)
-    raw.key?(key) ? raw[key].to_s.strip.first(200) : default
+    data.merge(block_options(raw, type))
   end
 
   def normalize_layout(raw)
@@ -113,25 +113,13 @@ module Outsider::Crm::ProposalTemplateLayout
   end
 
   def element_text(raw)
-    color = raw['color'].to_s.delete('#')
     { 'text' => raw['text'].to_s.first(1_000), 'size' => number(raw['size'], 9, 6..40), 'bold' => boolean(raw['bold']),
-      'highlight' => boolean(raw['highlight']), 'color' => color.match?(/\A\h{6}\z/) ? color : '000000',
-      'align' => pick(raw['align'], ALIGNS) }
+      'highlight' => boolean(raw['highlight']), 'color' => color(raw['color'], '000000'), 'align' => pick(raw['align'], ALIGNS) }
   end
 
-  # valor da lista ou o primeiro dela
-  def pick(value, list)
-    list.include?(value) ? value : list.first
-  end
-
-  def boolean(value)
-    ActiveModel::Type::Boolean.new.cast(value) || false
-  end
-
-  def number(value, default, range)
-    number = Float(value, exception: false)
-    return default if number.nil?
-
-    number.clamp(range.begin, range.end).round(1)
+  # ids das imagens do modelo em uso (elementos do papel timbrado e blocos de imagem)
+  def image_ids(content)
+    elements = layout(content)['elements'].filter_map { |element| element['image_id'] }
+    elements + blocks(content).filter_map { |block| block['image_id'] if block['type'] == 'image' }
   end
 end

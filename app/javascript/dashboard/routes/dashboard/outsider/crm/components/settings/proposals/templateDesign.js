@@ -1,6 +1,7 @@
-// OUTSIDER: desenho do modelo de proposta no editor (Entrega 16): blocos do conteúdo e papel timbrado.
+// OUTSIDER: desenho do modelo de proposta no editor (Entregas 16 e 17): blocos do conteúdo e papel timbrado.
 // Os limites e os padrões seguem app/services/outsider/crm/proposal_template_layout.rb, que limpa o que
 // chega do navegador; aqui eles só evitam mandar valor que o servidor ia trocar.
+import { FLAG_KEYS, TEXT_KEYS, conditionRow } from './proposalSettings';
 
 export const FONTS = [
   { value: 'Helvetica', css: 'Helvetica, Arial, sans-serif' },
@@ -39,7 +40,18 @@ export const BLOCK_INFO = {
   signature: { icon: 'i-lucide-pen-line', texts: ['signature_box'] },
   notes: { icon: 'i-lucide-sticky-note', texts: [] },
   text: { icon: 'i-lucide-type', texts: [] },
+  image: { icon: 'i-lucide-image', texts: [] },
+  divider: { icon: 'i-lucide-minus', texts: [] },
+  spacer: { icon: 'i-lucide-square-dashed', texts: [] },
 };
+
+// blocos livres: entram quantas vezes quiser e podem ser apagados; os outros só se escondem
+export const FREE_TYPES = ['text', 'image', 'divider', 'spacer'];
+export const isFree = block => FREE_TYPES.includes(block?.type);
+
+export const IMAGE_WIDTHS = { min: 5, max: 100 };
+export const DIVIDER_THICKNESS = { min: 0.5, max: 4 };
+export const SPACER_HEIGHTS = { min: 1, max: 80 };
 
 // blocos que ligavam pelas chaves antigas do modelo; ao salvar os blocos, as chaves acompanham
 export const FLAG_OF_BLOCK = {
@@ -54,9 +66,16 @@ const uid = prefix => {
   return `${prefix}-${Date.now().toString(36)}-${nextId}`;
 };
 
-export const textBlock = () => ({
-  key: uid('text'),
-  type: 'text',
+const FREE_DEFAULTS = {
+  text: {},
+  image: { image_id: null, width: 40, align: 'center' },
+  divider: { color: 'BFBFBF', thickness: 1 },
+  spacer: { height: 8 },
+};
+
+export const freeBlock = (type, extra = {}) => ({
+  key: uid(type),
+  type,
   visible: true,
   new_page: false,
   size: 9,
@@ -64,7 +83,12 @@ export const textBlock = () => ({
   highlight: false,
   heading: '',
   text: '',
+  ...FREE_DEFAULTS[type],
+  ...extra,
 });
+
+// cópia de um bloco livre com chave nova
+export const duplicateBlock = block => ({ ...block, key: uid(block.type) });
 
 // medidas em mm a partir do canto de cima à esquerda da folha A4
 export const newElement = (type, extra = {}) => ({
@@ -104,5 +128,67 @@ export const layoutOf = content => {
     footer_pages: layout.footer_pages === 'first' ? 'first' : 'all',
     margins: { ...DEFAULT_MARGINS, ...(layout.margins || {}) },
     elements: (layout.elements || []).map(element => ({ ...element })),
+  };
+};
+
+// espaço antes de cada bloco (pt) quando ele vem depois de outro na mesma página, como no PDF
+// (SPACE_BEFORE de app/services/outsider/crm/proposal_pdf.rb)
+const SPACE_BEFORE = {
+  customer: 14,
+  intro: 10,
+  title: 12,
+  specs: 12,
+  conditions: 28,
+  parties: 24,
+  closing: 8,
+  bank: 24,
+  signature: 30,
+  notes: 24,
+  image: 10,
+  divider: 8,
+  spacer: 0,
+};
+export const spaceBefore = type => SPACE_BEFORE[type] ?? 12;
+
+// páginas do conteúdo: um bloco visível com "página nova" abre a próxima
+export const pagesOf = blocks => {
+  const pages = [[]];
+  blocks
+    .filter(block => block.visible)
+    .forEach(block => {
+      if (block.new_page && pages[pages.length - 1].length) pages.push([]);
+      pages[pages.length - 1].push(block);
+    });
+  return pages;
+};
+
+// volta das páginas para a lista do modelo: o primeiro bloco de cada página (menos a primeira) começa
+// em página nova; os escondidos vão para o fim, guardando o que tinham
+export const blocksFromPages = (pages, blocks) => {
+  const ordered = pages.flatMap((list, page) =>
+    list.map((block, index) => ({
+      ...block,
+      visible: true,
+      new_page: page > 0 && index === 0,
+    }))
+  );
+  const keys = new Set(ordered.map(block => block.key));
+  return [
+    ...ordered,
+    ...blocks.filter(block => !block.visible && !keys.has(block.key)),
+  ];
+};
+
+// conteúdo do modelo no formato do editor (textos vazios, chaves desligadas)
+export const contentOf = template => {
+  const content = template.content || {};
+  return {
+    ...Object.fromEntries(TEXT_KEYS.map(key => [key, content[key] ?? ''])),
+    ...Object.fromEntries(FLAG_KEYS.map(key => [key, content[key] === true])),
+    validity_days: Number(content.validity_days ?? 0),
+    conditions_style: content.conditions_style === 'list' ? 'list' : 'table',
+    conditions: (content.conditions || []).map(conditionRow),
+    blocks: blocksOf(content),
+    layout: layoutOf(content),
   };
 };
