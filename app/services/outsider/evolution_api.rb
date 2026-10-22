@@ -73,6 +73,11 @@ class Outsider::EvolutionApi
     post("/message/sendStatus/#{@instance}", payload, timeout: timeout)
   end
 
+  # Envia um ou mais contatos (vCard). Devolve a mensagem enviada, com key.id
+  def send_contact(number:, contact:)
+    post("/message/sendContact/#{@instance}", { number: number, contact: contact })
+  end
+
   # Devolve [{ 'exists', 'jid', 'number' }]
   def whatsapp_numbers(numbers)
     post("/chat/whatsappNumbers/#{@instance}", { numbers: numbers })

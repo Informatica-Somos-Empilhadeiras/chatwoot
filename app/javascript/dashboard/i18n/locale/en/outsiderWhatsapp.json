@@ -1,0 +1,54 @@
+{
+  "OUTSIDER_WHATSAPP": {
+    "VOICE": {
+      "SOMEONE": "Contact",
+      "SPEED": "Speed",
+      "PLAY": "Play audio",
+      "PAUSE": "Pause audio",
+      "POSITION": "Audio position",
+      "DOWNLOAD": "Download audio"
+    },
+    "CONTACT_CARD": {
+      "CHAT": "Message",
+      "SAVE": "Save contact",
+      "VIEW": "View contact",
+      "SHOW_ALL": "View all ({count})",
+      "SHOW_LESS": "View less",
+      "ERROR": "Could not open the contact."
+    },
+    "SEND_CONTACT": {
+      "BUTTON": "Contact",
+      "TOOLTIP": "Send contact (WhatsApp card)",
+      "TITLE": "Send contact",
+      "DESCRIPTION": "The customer gets a contact card, the same as one sent from the phone.",
+      "SEARCH": "Search by name or phone",
+      "SEARCHING": "Searching...",
+      "HINT": "Type at least 2 letters or digits.",
+      "NO_RESULTS": "No contacts found.",
+      "NO_PHONE": "No phone",
+      "MANUAL": "Or type the name and number",
+      "NAME": "Name",
+      "PHONE": "Phone with area code",
+      "ADD": "Add",
+      "REMOVE": "Remove",
+      "LIMIT": "Up to {max} contacts per message.",
+      "SEND": "Send",
+      "SEND_COUNT": "Send ({count})",
+      "ERRORS": {
+        "DEFAULT": "Could not send the contact.",
+        "NOT_EVOLUTION": "This inbox is not WhatsApp through Evolution.",
+        "NO_RECIPIENT": "The conversation has no WhatsApp number.",
+        "INVALID_PHONE": "One of the numbers is incomplete. Use area code and number.",
+        "MISSING_NAME": "One of the contacts has no name.",
+        "TOO_MANY_CONTACTS": "Up to 10 contacts per message.",
+        "NO_CONTACTS": "Pick at least one contact.",
+        "NOT_CONFIGURED": "The Evolution key (EVOLUTION_API_KEY) is missing on the server.",
+        "EVOLUTION_UNAUTHORIZED": "Evolution refused the key (EVOLUTION_API_KEY).",
+        "EVOLUTION_TIMEOUT": "Evolution took too long. Check the conversation before trying again.",
+        "EVOLUTION_UNREACHABLE": "Could not reach Evolution."
+      },
+      "SENT_ONE": "Contact sent. It shows in the conversation once WhatsApp confirms.",
+      "SENT_MANY": "Contacts sent. They show in the conversation once WhatsApp confirms."
+    }
+  }
+}

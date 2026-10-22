@@ -1,0 +1,54 @@
+{
+  "OUTSIDER_WHATSAPP": {
+    "VOICE": {
+      "SOMEONE": "Contato",
+      "SPEED": "Velocidade",
+      "PLAY": "Tocar áudio",
+      "PAUSE": "Pausar áudio",
+      "POSITION": "Posição do áudio",
+      "DOWNLOAD": "Baixar áudio"
+    },
+    "CONTACT_CARD": {
+      "CHAT": "Conversar",
+      "SAVE": "Salvar contato",
+      "VIEW": "Ver contato",
+      "SHOW_ALL": "Ver todos ({count})",
+      "SHOW_LESS": "Ver menos",
+      "ERROR": "Não foi possível abrir o contato."
+    },
+    "SEND_CONTACT": {
+      "BUTTON": "Contato",
+      "TOOLTIP": "Enviar contato (cartão do WhatsApp)",
+      "TITLE": "Enviar contato",
+      "DESCRIPTION": "O cliente recebe um cartão de contato, igual ao que você manda pelo celular.",
+      "SEARCH": "Buscar pelo nome ou telefone",
+      "SEARCHING": "Buscando...",
+      "HINT": "Digite pelo menos 2 letras ou números.",
+      "NO_RESULTS": "Nenhum contato encontrado.",
+      "NO_PHONE": "Sem telefone",
+      "MANUAL": "Ou digite o nome e o número",
+      "NAME": "Nome",
+      "PHONE": "Telefone com DDD",
+      "ADD": "Adicionar",
+      "REMOVE": "Tirar",
+      "LIMIT": "No máximo {max} contatos por envio.",
+      "SEND": "Enviar",
+      "SEND_COUNT": "Enviar ({count})",
+      "ERRORS": {
+        "DEFAULT": "Não foi possível enviar o contato.",
+        "NOT_EVOLUTION": "Esta caixa não é do WhatsApp pela Evolution.",
+        "NO_RECIPIENT": "A conversa não tem número de WhatsApp.",
+        "INVALID_PHONE": "Um dos números está incompleto. Use DDD e número.",
+        "MISSING_NAME": "Falta o nome de um dos contatos.",
+        "TOO_MANY_CONTACTS": "No máximo 10 contatos por envio.",
+        "NO_CONTACTS": "Escolha pelo menos um contato.",
+        "NOT_CONFIGURED": "Falta a chave da Evolution (EVOLUTION_API_KEY) no servidor.",
+        "EVOLUTION_UNAUTHORIZED": "A Evolution recusou a chave (EVOLUTION_API_KEY).",
+        "EVOLUTION_TIMEOUT": "A Evolution demorou para responder. Veja na conversa se o contato saiu antes de tentar de novo.",
+        "EVOLUTION_UNREACHABLE": "Não foi possível falar com a Evolution."
+      },
+      "SENT_ONE": "Contato enviado. Ele aparece na conversa assim que o WhatsApp confirmar.",
+      "SENT_MANY": "Contatos enviados. Eles aparecem na conversa assim que o WhatsApp confirmar."
+    }
+  }
+}

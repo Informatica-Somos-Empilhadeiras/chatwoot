@@ -11,10 +11,11 @@ import VideoCallButton from '../VideoCallButton.vue';
 import { INBOX_TYPES } from 'dashboard/helper/inbox';
 import { mapGetters } from 'vuex';
 import NextButton from 'dashboard/components-next/button/Button.vue';
+import SendContactButton from './outsider/SendContactButton.vue'; // OUTSIDER: enviar contato
 
 export default {
   name: 'ReplyBottomPanel',
-  components: { NextButton, FileUpload, VideoCallButton },
+  components: { NextButton, FileUpload, VideoCallButton, SendContactButton },
   mixins: [inboxMixin],
   props: {
     isNote: {
@@ -315,6 +316,12 @@ export default {
           md
         />
       </FileUpload>
+      <!-- OUTSIDER: enviar contato (cartão do WhatsApp, só caixas da Evolution) -->
+      <SendContactButton
+        v-if="!isOnPrivateNote && !isEditorDisabled"
+        :inbox="inbox"
+        :conversation-id="conversationId"
+      />
       <NextButton
         v-if="showAudioRecorderButton"
         v-tooltip.top-end="$t('CONVERSATION.REPLYBOX.TIP_AUDIORECORDER_ICON')"

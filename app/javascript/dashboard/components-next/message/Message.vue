@@ -43,6 +43,9 @@ import FormBubble from './bubbles/Form.vue';
 import VoiceCallBubble from './bubbles/VoiceCall.vue';
 import MediaAlbumBubble from './outsider/MediaAlbum.vue'; // OUTSIDER: álbum
 import { isMediaAlbum } from 'dashboard/helper/outsider/mediaAlbum'; // OUTSIDER
+import ContactCardBubble from './outsider/ContactCard.vue'; // OUTSIDER: cartão de contato
+import { isContactCardMessage } from 'dashboard/helper/outsider/contactCard'; // OUTSIDER
+import { isVoiceWithHeader } from 'dashboard/helper/outsider/voiceNote'; // OUTSIDER: áudio de grupo
 
 import MessageError from './MessageError.vue';
 import ContextMenu from 'dashboard/modules/conversations/components/MessageContextMenu.vue';
@@ -294,6 +297,8 @@ const shouldShowAvatar = computed(() => {
 
 const componentToRender = computed(() => {
   if (isMediaAlbum(props)) return MediaAlbumBubble; // OUTSIDER: álbum
+  if (isContactCardMessage(props)) return ContactCardBubble; // OUTSIDER: cartão de contato
+  if (isVoiceWithHeader(props)) return AudioBubble; // OUTSIDER: áudio de grupo
 
   if (props.isEmailInbox && !props.private) {
     const emailInboxTypes = [MESSAGE_TYPES.INCOMING, MESSAGE_TYPES.OUTGOING];
@@ -587,17 +592,17 @@ provideMessageContext({
           <button
             v-if="shouldShowContextMenu"
             class="peer hidden group-hover:flex absolute top-1 ltr:right-1.5 rtl:left-1.5 size-7 items-center justify-center rounded-full bg-white dark:bg-[#151718] shadow-sm border border-black/5 dark:border-white/10 text-n-slate-11 hover:text-n-slate-12 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all z-20 cursor-pointer"
-            @click.prevent.stop="openContextMenu($event)"
             title="Opções"
+            @click.prevent.stop="openContextMenu($event)"
           >
-            <span class="i-lucide-chevron-down size-4"></span>
+            <span class="i-lucide-chevron-down size-4" />
           </button>
 
           <!-- Máscara de sombreamento em toda a extensão do topo (acionada apenas no hover do botão) -->
           <div
             v-if="shouldShowContextMenu"
             class="hidden peer-hover:block absolute top-0 inset-x-0 h-10 pointer-events-none z-10 bg-gradient-to-b from-black/20 to-transparent rounded-t-lg transition-all"
-          ></div>
+          />
         </div>
       </div>
       <MessageError
