@@ -54,4 +54,49 @@ RSpec.describe Outsider::Crm::ProposalPdf do
     expect(text).to include('se houver**')
     expect(text).not_to include('🚜')
   end
+
+  describe 'template design (blocks and letterhead)' do
+    let(:proposal) { crm_proposal(account, owner: user, customer: { 'company' => 'Cliente Exemplo Ltda', 'phone' => '(62) 1234-5678' }) }
+    let(:template) { proposal.template }
+
+    def design(blocks: template.blocks, layout: {})
+      template.update!(content: template.content.merge('blocks' => blocks, 'layout' => layout))
+      described_class.new(proposal.reload).render
+    end
+
+    it 'follows the block order, hides blocks and renders free texts with fields' do
+      blocks = template.blocks.map { |block| block['type'] == 'customer' ? block.merge('visible' => false) : block }
+      free = { 'type' => 'text', 'heading' => 'Garantia {proposta.numero}', 'text' => 'Garantia **total** para =={cliente.empresa}==',
+               'highlight' => true, 'size' => 11 }
+      blocks.insert(blocks.index { |block| block['type'] == 'items' }, free.merge('new_page' => true))
+
+      text = pdf_text(design(blocks: blocks))
+
+      expect(text).not_to include('(62) 1234-5678')
+      expect(text).to include("Garantia #{proposal.number}", 'Garantia total para Cliente Exemplo Ltda')
+      expect(text.index('Garantia total')).to be < text.index('Descrição')
+    end
+
+    it 'draws free elements on every page or only on the first' do
+      layout = { 'font' => 'Times-Roman', 'header_pages' => 'first',
+                 'elements' => [{ 'type' => 'text', 'x' => 120, 'y' => 30, 'width' => 80, 'text' => 'Contato: {proposta.numero}', 'pages' => 'all' },
+                                { 'type' => 'text', 'x' => 20, 'y' => 30, 'width' => 80, 'text' => 'Selo da primeira', 'pages' => 'first' }] }
+
+      data = design(layout: layout)
+      text = pdf_text(data)
+
+      expect(text.scan("Contato: #{proposal.number}").size).to eq(page_count(data))
+      expect(text.scan('Selo da primeira').size).to eq(1)
+    end
+
+    it 'draws an image element from the template images' do
+      template.layout_images.attach(io: Rails.root.join('spec/assets/sample.png').open, filename: 'selo.png', content_type: 'image/png')
+      image_id = template.layout_images.attachments.first.id
+      plain = design(layout: {})
+
+      with_image = design(layout: { 'elements' => [{ 'type' => 'image', 'x' => 10, 'y' => 250, 'width' => 30, 'image_id' => image_id }] })
+
+      expect(with_image.bytesize).to be > plain.bytesize
+    end
+  end
 end

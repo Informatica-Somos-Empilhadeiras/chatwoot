@@ -100,6 +100,7 @@ const remove = () =>
     </div>
     <div class="flex flex-wrap items-center gap-2">
       <Button
+        type="button"
         size="xs"
         variant="faded"
         color="slate"
@@ -114,6 +115,7 @@ const remove = () =>
       />
       <Button
         v-if="imageUrl"
+        type="button"
         size="xs"
         variant="ghost"
         color="ruby"

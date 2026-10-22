@@ -1,14 +1,16 @@
 <script setup>
-// OUTSIDER: modelos de proposta da conta (Venda e Locação padrão). Cada modelo guarda os textos, as
-// condições e o papel timbrado que a proposta nova recebe. O editor de posição do papel timbrado fica
-// para uma próxima entrega.
+// OUTSIDER: modelos de proposta da conta. Cada modelo guarda os blocos e textos, as condições e o papel
+// timbrado que a proposta nova recebe. "Novo modelo" cria em branco ou copiando outro; modelo que alguma
+// proposta usa não é apagado (o servidor recusa e sugere desativar).
 import { ref, computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useAlert } from 'dashboard/composables';
 import CrmAPI from 'dashboard/api/outsider/crm';
 import Button from 'dashboard/components-next/button/Button.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
+import ConfirmDelete from '../../ConfirmDelete.vue';
 import TemplateEditor from './TemplateEditor.vue';
+import NewTemplateDialog from './NewTemplateDialog.vue';
 import { settingsError } from './proposalSettings';
 
 const { t } = useI18n();
@@ -18,6 +20,8 @@ const activeId = ref(null);
 const isLoading = ref(true);
 const failed = ref(false);
 const dirtyIds = ref([]);
+const newDialogRef = ref(null);
+const confirmRef = ref(null);
 
 const sorted = computed(() =>
   [...templates.value].sort(
@@ -45,6 +49,32 @@ const load = async () => {
 const replace = template => {
   templates.value = templates.value.map(item =>
     item.id === template.id ? template : item
+  );
+};
+
+const current = computed(() =>
+  templates.value.find(template => template.id === activeId.value)
+);
+
+const onCreated = template => {
+  templates.value = [...templates.value, template];
+  activeId.value = template.id;
+};
+
+const askDelete = () => {
+  const template = current.value;
+  if (!template) return;
+  confirmRef.value?.open(
+    t('OUTSIDER_CRM.PROPOSAL_SETTINGS.TEMPLATES.DELETE_TITLE'),
+    t('OUTSIDER_CRM.PROPOSAL_SETTINGS.TEMPLATES.DELETE_TEXT', {
+      name: template.name,
+    }),
+    async () => {
+      await CrmAPI.deleteProposalTemplate(template.id);
+      templates.value = templates.value.filter(item => item.id !== template.id);
+      dirtyIds.value = dirtyIds.value.filter(id => id !== template.id);
+      activeId.value = sorted.value[0]?.id ?? null;
+    }
   );
 };
 
@@ -84,7 +114,7 @@ onMounted(load);
     <p class="mb-0 text-sm text-n-slate-11">
       {{ t('OUTSIDER_CRM.PROPOSAL_SETTINGS.TEMPLATES.DESCRIPTION') }}
     </p>
-    <div class="flex flex-wrap gap-2">
+    <div class="flex flex-wrap items-stretch gap-2">
       <button
         v-for="template in sorted"
         :key="template.id"
@@ -120,6 +150,33 @@ onMounted(load);
           </template>
         </span>
       </button>
+      <button
+        type="button"
+        class="flex items-center gap-2 px-3 py-2 text-sm rounded-xl text-n-slate-11 outline outline-1 -outline-offset-1 outline-dashed outline-n-weak hover:text-n-slate-12 hover:bg-n-alpha-1"
+        data-new-template-button
+        @click="newDialogRef?.open()"
+      >
+        <span class="i-lucide-plus size-4" />
+        {{ t('OUTSIDER_CRM.PROPOSAL_SETTINGS.NEW_TEMPLATE.BUTTON') }}
+      </button>
+    </div>
+    <div v-if="current" class="flex flex-wrap items-center gap-2 -mt-1">
+      <Button
+        size="xs"
+        variant="ghost"
+        color="slate"
+        icon="i-lucide-copy-plus"
+        :label="t('OUTSIDER_CRM.PROPOSAL_SETTINGS.TEMPLATES.DUPLICATE')"
+        @click="newDialogRef?.open(current)"
+      />
+      <Button
+        size="xs"
+        variant="ghost"
+        color="ruby"
+        icon="i-lucide-trash-2"
+        :label="t('OUTSIDER_CRM.PROPOSAL_SETTINGS.TEMPLATES.DELETE')"
+        @click="askDelete"
+      />
     </div>
     <!-- v-show mantém o que foi digitado ao trocar de modelo -->
     <TemplateEditor
@@ -127,8 +184,15 @@ onMounted(load);
       v-show="template.id === activeId"
       :key="template.id"
       :template="template"
+      :visible="template.id === activeId"
       @updated="replace"
       @dirty="dirty => setDirty(template.id, dirty)"
     />
+    <NewTemplateDialog
+      ref="newDialogRef"
+      :templates="sorted"
+      @created="onCreated"
+    />
+    <ConfirmDelete ref="confirmRef" />
   </section>
 </template>

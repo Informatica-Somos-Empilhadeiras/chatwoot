@@ -1275,7 +1275,7 @@
         }
       },
       "TEMPLATES": {
-        "DESCRIPTION": "Each template holds the texts, conditions and letterhead a new proposal starts with. Whoever writes the proposal can still adjust everything in it.",
+        "DESCRIPTION": "Each template holds the blocks and texts, the conditions and the letterhead a new proposal starts with. Whoever writes the proposal can still adjust texts and conditions.",
         "EMPTY": "No proposal templates yet. They are created the first time someone opens proposals.",
         "KINDS": {
           "SALE": "Sale",
@@ -1288,7 +1288,7 @@
         "DISCARD": "Discard changes",
         "SAVED": "Template saved.",
         "LETTERHEAD": "Letterhead",
-        "LETTERHEAD_HELP": "PNG or JPEG images at A4 page width. The editor to freely position elements on the letterhead comes in a later delivery.",
+        "LETTERHEAD_HELP": "PNG or JPEG images as wide as an A4 page. They upload right away, without saving the template.",
         "IMAGE": {
           "HEADER": "Header",
           "FOOTER": "Footer",
@@ -1336,17 +1336,17 @@
           "SIGNATURE_BOX": "Customer acceptance box"
         },
         "TEXTS_HELP": {
-          "TITLE_PREFIX": "Comes before the proposal title. E.g.: PROPOSTA COMERCIAL.",
-          "INTRO": "First paragraph, right after the customer details.",
-          "TOTAL_LABEL": "Next to the total amount. Empty: \"Total:\".",
-          "CONDITIONS_HEADING": "List style only, above the conditions.",
-          "PARTIES_TEXT": "Proposer and acceptor. Shown when parties are on.",
-          "ACCEPTANCE_TEXT": "Right after the parties text. Shown when parties are on.",
-          "CLOSING": "Final paragraph, after the conditions.",
-          "ORDER_HEADING": "Above the legal name and address, on the last page.",
-          "BANK_HEADING": "Above the bank details, on the last page.",
-          "DOCUMENTS_HEADING": "Above the documents e-mail, on the last page.",
-          "SIGNATURE_BOX": "Text of the box where the customer signs, on the last page."
+          "TITLE_PREFIX": "Comes before the proposal title. E.g.: COMMERCIAL PROPOSAL.",
+          "INTRO": "First paragraph of the proposal.",
+          "TOTAL_LABEL": "Next to the total. Empty: \"Total:\".",
+          "CONDITIONS_HEADING": "Above the conditions, in list style.",
+          "PARTIES_TEXT": "Proposer and acceptor.",
+          "ACCEPTANCE_TEXT": "Right after the parties text.",
+          "CLOSING": "Final paragraph.",
+          "ORDER_HEADING": "Above the legal name and address.",
+          "BANK_HEADING": "Above the bank details.",
+          "DOCUMENTS_HEADING": "Above the e-mail for documents.",
+          "SIGNATURE_BOX": "Text of the box where the customer signs."
         },
         "CONDITIONS": {
           "TITLE": "Default conditions",
@@ -1359,10 +1359,20 @@
           "DOWN": "Move down",
           "REMOVE": "Remove condition",
           "COUNT": "{count} of {max}"
-        }
+        },
+        "FONT": "Font",
+        "FONTS": {
+          "HELVETICA": "Helvetica (sans serif)",
+          "TIMES_ROMAN": "Times (serif)",
+          "COURIER": "Courier (typewriter)"
+        },
+        "DUPLICATE": "Duplicate template",
+        "DELETE": "Delete template",
+        "DELETE_TITLE": "Delete template",
+        "DELETE_TEXT": "The template \"{name}\" will be removed. Only templates no proposal uses can be deleted; otherwise deactivate it. This cannot be undone."
       },
       "FIELDS": {
-        "HELP": "In texts, use **word** for bold and automatic fields in braces, which the PDF replaces with the proposal data (customer, number, validity, seller, company, machine).",
+        "HELP": "In texts, use **word** for bold, ==word== for yellow highlight and automatic fields in braces, which the PDF replaces with the proposal data (customer, number, validity, salesperson, company, machine).",
         "SHOW": "Show fields",
         "HIDE": "Hide fields",
         "CLICK": "Click a field to insert it into the text being edited. With no text being edited, it is copied. A misspelled field is printed as is on the PDF.",
@@ -1443,6 +1453,122 @@
         "WIN_ON_ACCEPT": "An accepted proposal marks the linked deal as won",
         "WIN_ON_ACCEPT_HELP": "Applies to open deals the person accepting can edit. When off, the deal stays as it is.",
         "SAVED": "Sending settings saved."
+      },
+      "EDITOR_TABS": {
+        "CONTENT": "Content",
+        "LETTERHEAD": "Letterhead"
+      },
+      "BLOCKS": {
+        "DESCRIPTION": "The PDF follows this order. Drag by the handle to reorder, use the eye to hide a block and click a block to change its style and texts.",
+        "TYPES": {
+          "DATE_NUMBER": "Date and number",
+          "CUSTOMER": "Customer details",
+          "INTRO": "Opening",
+          "TITLE": "Title",
+          "SPECS": "Machine specifications",
+          "ITEMS": "Items and total",
+          "CONDITIONS": "Conditions",
+          "PARTIES": "Parties",
+          "CLOSING": "Closing",
+          "BANK": "Order and bank details",
+          "SIGNATURE": "Signature and acceptance",
+          "NOTES": "Notes",
+          "TEXT": "Free text"
+        },
+        "HELP": {
+          "DATE_NUMBER": "City and date on the left, proposal number on the right",
+          "CUSTOMER": "Company, tax ID, address, phone, e-mail and contact",
+          "INTRO": "First paragraph",
+          "TITLE": "Proposal title in bold",
+          "SPECS": "Spec sheet with image and equipment list",
+          "ITEMS": "Items table with the total",
+          "CONDITIONS": "Table or list of conditions",
+          "PARTIES": "Proposer, acceptor and acceptance text",
+          "CLOSING": "Final paragraph",
+          "BANK": "Order confirmation, bank details and e-mail for documents",
+          "SIGNATURE": "Salesperson signature and customer acceptance box",
+          "NOTES": "Proposal notes, when filled in",
+          "TEXT": ""
+        },
+        "DRAG": "Drag to reorder",
+        "HIDE": "Hide in PDF",
+        "SHOW": "Show in PDF",
+        "NEW_PAGE": "Starts on a new page",
+        "NEW_PAGE_BADGE": "new page",
+        "SIZE": "Size",
+        "BOLD": "Bold for the whole block",
+        "HIGHLIGHT": "Yellow highlight for the whole block",
+        "HEADING": "Heading",
+        "HEADING_PLACEHOLDER": "E.g.: Warranty (optional)",
+        "TEXT": "Text",
+        "REMOVE": "Remove block",
+        "ADD_TEXT": "Text block",
+        "IMAGE_SIDE": "Machine image",
+        "IMAGE_SIDES": {
+          "RIGHT": "On the right",
+          "LEFT": "On the left"
+        },
+        "EQUIPMENT": "Equipment list below the specifications",
+        "EQUIPMENT_HEADING": "Equipment heading",
+        "NONE_VISIBLE": "Keep at least one block visible to save."
+      },
+      "LETTERHEAD": {
+        "SHOW_ON": "Shows on",
+        "PAGES": {
+          "ALL": "All pages",
+          "FIRST": "First page only"
+        },
+        "MARGINS": "Content margins (mm)",
+        "MARGIN": {
+          "SIDE": "Sides",
+          "TOP": "Below header",
+          "BOTTOM": "Above footer"
+        },
+        "MARGINS_HELP": "Content starts below the header and ends above the footer. On pages without header or footer it uses that space.",
+        "ELEMENTS": "Free elements",
+        "ELEMENTS_HELP": "Texts and images anywhere on the page (logo, seal, salesperson contact). Drag to position, use the blue handle to change the width and the arrow keys for fine tuning (Shift: 5 mm). Automatic fields work here too.",
+        "ADD_TEXT": "Text",
+        "ADD_IMAGE": "Image",
+        "NEW_TEXT": "New text",
+        "CONTENT_AREA": "Content",
+        "EMPTY_TEXT": "(empty text)",
+        "PAGE_VIEW": {
+          "FIRST": "First page",
+          "NEXT": "Following pages"
+        },
+        "PICK": "Click an element on the page to edit it.",
+        "NONE": "No free elements. Add a text or an image.",
+        "TEXT_ELEMENT": "Free text",
+        "IMAGE_ELEMENT": "Free image",
+        "REMOVE": "Remove",
+        "TEXT": "Text",
+        "SIZE": "Size",
+        "COLOR": "Text color",
+        "REPLACE_IMAGE": "Replace image",
+        "X": "Left (mm)",
+        "Y": "Top (mm)",
+        "WIDTH": "Width (mm)",
+        "ELEMENT_PAGES": "Shows on"
+      },
+      "PREVIEW": {
+        "TITLE": "PDF preview",
+        "REFRESH": "Refresh preview",
+        "HIDE": "Hide preview",
+        "SHOW": "Show preview",
+        "HELP": "Sample proposal with a fictitious customer and the first catalog machine. Shows what is on screen, even unsaved."
+      },
+      "NEW_TEMPLATE": {
+        "BUTTON": "New template",
+        "TITLE": "New proposal template",
+        "DESCRIPTION": "Start from the default texts of the type or copy an existing template. The copy uses the same images, without duplicating files.",
+        "BLANK": "Blank (default texts of the type)",
+        "SOURCE": "Start from",
+        "KIND": "Type",
+        "KIND_HELP": "Sale or rental: defines which proposals the template shows up for.",
+        "KIND_FROM_SOURCE": "The copy keeps the type of the original template.",
+        "CREATE": "Create template",
+        "CREATED": "Template created.",
+        "COPY_NAME": "{name} (copy)"
       }
     }
   }

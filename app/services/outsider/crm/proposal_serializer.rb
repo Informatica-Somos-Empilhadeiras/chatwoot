@@ -8,10 +8,13 @@ module Outsider::Crm::ProposalSerializer
                   :active, :created_at, :updated_at).merge(image_url: file_path(product.image))
   end
 
+  # content sai com os blocos e o papel timbrado efetivos (os do modelo ou os derivados dos textos antigos)
   def template(template)
-    template.slice(:id, :name, :kind, :active, :position, :content).merge(
+    template.slice(:id, :name, :kind, :active, :position).merge(
+      content: template.content.merge('blocks' => template.blocks, 'layout' => template.layout),
       header_image_url: file_path(template.header_image),
-      footer_image_url: file_path(template.footer_image)
+      footer_image_url: file_path(template.footer_image),
+      layout_images: template.layout_images.attachments.map { |image| { id: image.id, url: file_path(image) } }
     )
   end
 
@@ -77,8 +80,9 @@ module Outsider::Crm::ProposalSerializer
                      business_unit_id: opportunity.business_unit_id }
   end
 
+  # attachment: has_one_attached ou um anexo de has_many_attached
   def file_path(attachment)
-    return unless attachment&.attached?
+    return if attachment.blank?
 
     Rails.application.routes.url_helpers.rails_blob_path(attachment, only_path: true)
   end

@@ -1,37 +1,26 @@
-# OUTSIDER: itens, total e condições da proposta (quadro na venda, lista na locação) e, na locação, as
-# partes. Parte do Outsider::Crm::ProposalPdf.
+# OUTSIDER: blocos de itens e total, condições (quadro ou lista), partes e fechamento do PDF da proposta.
+# Parte do Outsider::Crm::ProposalPdf.
 module Outsider::Crm::ProposalPdf::ItemsPage
   private
 
-  def font_size
-    Outsider::Crm::ProposalPdf::FONT_SIZE
-  end
-
-  def items_page
-    @pdf.start_new_page
-    proposal_number_line
-    items_table
-    @pdf.move_down 28
-    @template.conditions_style == 'list' ? conditions_list : conditions_table
-    parties if @template.flag?(:show_parties)
-  end
-
-  def proposal_number_line
-    @pdf.text("<b>PROPOSTA</b>  <b>#{@proposal.number}</b>", inline_format: true, align: :right)
-    @pdf.move_down 2
-  end
-
-  def items_table
+  def items_block(_block)
     discount = @template.flag?(:show_discount)
     header = ['Item', 'Descrição', 'Qtd.', 'Valor Unit.', ('Desc.' if discount), 'Total'].compact
     rows = @proposal.items.each_with_index.map { |item, index| item_row(item, index, discount) }
     rows << [{ content: total_line, colspan: header.size, align: :right, inline_format: true, padding: [7, 4] }]
-    @pdf.table([header] + rows, header: true, column_widths: item_widths(discount),
-                                cell_style: { size: font_size, border_width: 1, padding: [3, 3], valign: :center }) do |table|
+    @pdf.table([header] + rows, header: true, column_widths: item_widths(discount), cell_style: table_style(3)) do |table|
       table.row(0).font_style = :bold
       table.columns(2..(header.size - 1)).align = :right
       table.column(0).align = :center
     end
+  end
+
+  # tamanho e negrito do bloco valem também nos quadros; destaque pinta o fundo das células
+  def table_style(padding)
+    style = { size: block_size, border_width: 1, padding: [3, padding], valign: :center }
+    style[:font_style] = :bold if @style&.dig(:bold)
+    style[:background_color] = Outsider::Crm::ProposalPdf::HIGHLIGHT if @style&.dig(:highlight)
+    style
   end
 
   def item_row(item, index, discount)
@@ -50,15 +39,18 @@ module Outsider::Crm::ProposalPdf::ItemsPage
     widths
   end
 
+  def conditions_block(_block)
+    @template.conditions_style == 'list' ? conditions_list : conditions_table
+  end
+
   def conditions_table
     rows = @proposal.conditions.map do |condition|
-      [{ content: markup(condition['label']), inline_format: true }, { content: markup(condition['text']), inline_format: true }]
+      [{ content: markup(condition['label'], table: true), inline_format: true },
+       { content: markup(condition['text'], table: true), inline_format: true }]
     end
     return if rows.empty?
 
-    @pdf.table(rows, width: @pdf.bounds.width, column_widths: { 0 => 128 },
-                     cell_style: { size: font_size, border_width: 1, padding: [3, 4], valign: :center })
-    closing_text
+    @pdf.table(rows, width: @pdf.bounds.width, column_widths: { 0 => 128 }, cell_style: table_style(4))
   end
 
   def conditions_list
@@ -66,31 +58,26 @@ module Outsider::Crm::ProposalPdf::ItemsPage
 
     heading = @template.text(:conditions_heading)
     if heading.present?
-      @pdf.text(clean(heading), style: :bold)
+      say(@fields.apply(heading), bold: true)
       @pdf.move_down 10
     end
     @proposal.conditions.each do |condition|
       label = condition['label'].present? ? "#{markup(condition['label'])}: " : ''
-      @pdf.text("• #{label}#{markup(condition['text'])}", inline_format: true, align: :justify)
+      write(fragments("• #{label}#{markup(condition['text'])}"), align: :justify)
     end
   end
 
-  def parties
-    @pdf.move_down 24
-    @pdf.text('PARTES:', style: :bold)
+  def parties_block(_block)
+    say('PARTES:', bold: true)
     @pdf.move_down 10
     [@template.text(:parties_text), @template.text(:acceptance_text)].compact_blank.each do |text|
       rich(text, align: :justify)
       @pdf.move_down 8
     end
-    closing_text
   end
 
-  def closing_text
+  def closing_block(_block)
     text = @template.text(:closing)
-    return if text.blank?
-
-    @pdf.move_down 8
-    rich(text, align: :justify)
+    rich(text, align: :justify) if text.present?
   end
 end

@@ -1,19 +1,10 @@
-# OUTSIDER: última página da proposta: confirmação de pedido, dados bancários, para onde mandar a
-# documentação, assinatura do vendedor e quadro de aceite do cliente. Parte do Outsider::Crm::ProposalPdf.
+# OUTSIDER: blocos do fim do PDF da proposta: confirmação de pedido, dados bancários e para onde mandar a
+# documentação; assinatura do vendedor com o quadro de aceite do cliente; observações da proposta. Parte do
+# Outsider::Crm::ProposalPdf.
 module Outsider::Crm::ProposalPdf::ClosingPage
   private
 
-  def closing_page
-    @pdf.start_new_page
-    proposal_number_line
-    @pdf.move_down 24
-    company_blocks if @template.flag?(:show_bank)
-    @pdf.move_down 30
-    signatures
-    notes
-  end
-
-  def company_blocks
+  def bank_block(_block)
     top = @pdf.cursor
     width = @pdf.bounds.width
     @pdf.bounding_box([0, top], width: width * 0.62) { order_and_bank }
@@ -36,26 +27,19 @@ module Outsider::Crm::ProposalPdf::ClosingPage
   end
 
   def bold_line(text)
-    @pdf.text(clean(text), style: :bold) if text.present?
+    say(text, bold: true) if text.present?
   end
 
+  # títulos deste bloco saem sempre com destaque amarelo, como nas propostas da Somos
   def highlighted(text)
-    return if text.blank?
-
-    text = clean(text)
-    width = @pdf.width_of(text, style: :bold)
-    height = @pdf.font.height
-    @pdf.fill_color(Outsider::Crm::ProposalPdf::HIGHLIGHT)
-    @pdf.fill_rectangle([0, @pdf.cursor], width + 2, height)
-    @pdf.fill_color('000000')
-    @pdf.text(text, style: :bold)
+    say(@fields.apply(text), bold: true, highlight: true) if text.present?
   end
 
   def plain_lines(text)
-    text.to_s.split("\n").each { |line| @pdf.text(clean(line)) }
+    text.to_s.split("\n").each { |line| say(line) }
   end
 
-  def signatures
+  def signature_block(_block)
     @pdf.start_new_page if @pdf.cursor < 160
     top = @pdf.cursor
     left = 125
@@ -71,29 +55,28 @@ module Outsider::Crm::ProposalPdf::ClosingPage
   end
 
   def signer_block
-    @pdf.text('Atenciosamente,', align: :center)
+    say('Atenciosamente,', align: :center, size: block_size - 1)
     @pdf.move_down 24
     @pdf.stroke_horizontal_rule
     @pdf.move_down 4
-    @proposal.signer.values_at('name', 'title', 'phone').compact_blank.each { |line| @pdf.text(clean(line), align: :center) }
+    @proposal.signer.values_at('name', 'title', 'phone').compact_blank.each { |line| say(line, align: :center, size: block_size - 1) }
   end
 
   def acceptance_text
-    rich(@template.text(:signature_box), size: 10)
+    rich(@template.text(:signature_box))
     @pdf.move_down 12
-    @pdf.text('Ass: ______________________________________', size: 10)
+    say('Ass: ______________________________________')
     @pdf.move_down 10
-    @pdf.text('Nome / Dep.: ______________________________', size: 10)
+    say('Nome / Dep.: ______________________________')
     @pdf.move_down 10
     stamp = "<color rgb='#{Outsider::Crm::ProposalPdf::BLUE}'><b>* CARIMBO DO CNPJ *</b></color>"
-    @pdf.text("Data:          _______ / _______ / _______          #{stamp}", inline_format: true, size: 10)
+    write(fragments("Data:          _______ / _______ / _______          #{stamp}"))
   end
 
-  def notes
+  def notes_block(_block)
     return if @proposal.notes.blank?
 
-    @pdf.move_down 24
-    @pdf.text('Observações', style: :bold)
+    say('Observações', bold: true)
     @pdf.move_down 4
     rich(@proposal.notes)
   end

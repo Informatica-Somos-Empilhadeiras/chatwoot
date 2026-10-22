@@ -415,6 +415,41 @@ class CrmAPI extends ApiClient {
     return axios.delete(`${this.url}/proposal_templates/${id}/images/${slot}`);
   }
 
+  // { name, kind, source_id }: em branco (textos padrão do tipo) ou cópia de outro modelo
+  createProposalTemplate(payload) {
+    return axios.post(`${this.url}/proposal_templates`, payload);
+  }
+
+  deleteProposalTemplate(id) {
+    return axios.delete(`${this.url}/proposal_templates/${id}`);
+  }
+
+  // PDF de exemplo com o que está no editor, sem salvar
+  previewProposalTemplate(id, proposalTemplate) {
+    return axios.post(
+      `${this.url}/proposal_templates/${id}/preview`,
+      { proposal_template: proposalTemplate },
+      { responseType: 'blob' }
+    );
+  }
+
+  // imagem de um elemento solto do papel timbrado; devolve { id, url }
+  uploadProposalTemplateLayoutImage(id, file) {
+    const data = new FormData();
+    data.append('image', file);
+    return axios.post(
+      `${this.url}/proposal_templates/${id}/layout_images`,
+      data
+    );
+  }
+
+  // slot: header | footer (papel timbrado que vem com o CRM)
+  getProposalTemplateDefaultImage(slot) {
+    return axios.get(`${this.url}/proposal_templates/default_images/${slot}`, {
+      responseType: 'blob',
+    });
+  }
+
   // Configurações > Propostas (só administrador)
   getProposalSettings() {
     return axios.get(`${this.url}/proposal_settings`);

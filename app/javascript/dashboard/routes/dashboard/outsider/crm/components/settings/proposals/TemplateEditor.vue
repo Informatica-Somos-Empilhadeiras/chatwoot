@@ -1,7 +1,8 @@
 <script setup>
-// OUTSIDER: edição de um modelo de proposta: nome, ativo, papel timbrado, validade, estilo e lista das
-// condições, textos e o que aparece no PDF. Salvar manda só as chaves do conteúdo que mudaram (o
-// servidor junta com o que já existe).
+// OUTSIDER: editor de um modelo de proposta (Entrega 16). Em cima, nome, ativo, fonte e validade; em
+// Conteúdo, os blocos do PDF em sequência (ordem, mostrar ou esconder, estilo e textos de cada um); em
+// Papel timbrado, cabeçalho, rodapé, margens e os elementos soltos arrastáveis. Ao lado, a prévia do PDF
+// com o que está na tela. Salvar manda só as chaves do conteúdo que mudaram (o servidor junta com o resto).
 import { ref, computed, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useAlert } from 'dashboard/composables';
@@ -12,20 +13,21 @@ import Input from 'dashboard/components-next/input/Input.vue';
 import Label from 'dashboard/components-next/label/Label.vue';
 import Select from 'dashboard/components-next/select/Select.vue';
 import Switch from 'dashboard/components-next/switch/Switch.vue';
-import TemplateImageSlot from './TemplateImageSlot.vue';
-import ConditionsEditor from './ConditionsEditor.vue';
 import FieldChips from './FieldChips.vue';
+import TemplateBlocks from './TemplateBlocks.vue';
+import LetterheadSettings from './LetterheadSettings.vue';
+import TemplatePreview from './TemplatePreview.vue';
 import {
   FLAG_KEYS,
-  MAX_TEXT,
-  TEXT_FIELDS,
   TEXT_KEYS,
   conditionRow,
   settingsError,
 } from './proposalSettings';
+import { FLAG_OF_BLOCK, FONTS, blocksOf, layoutOf } from './templateDesign';
 
 const props = defineProps({
   template: { type: Object, required: true },
+  visible: { type: Boolean, default: true },
 });
 
 const emit = defineEmits(['updated', 'dirty']);
@@ -38,6 +40,8 @@ const CONTENT_KEYS = [
   'validity_days',
   'conditions_style',
   'conditions',
+  'blocks',
+  'layout',
 ];
 
 // conteúdo do modelo no formato do formulário (textos vazios, chaves desligadas)
@@ -49,12 +53,16 @@ const contentOf = template => {
     validity_days: Number(content.validity_days ?? 0),
     conditions_style: content.conditions_style === 'list' ? 'list' : 'table',
     conditions: (content.conditions || []).map(conditionRow),
+    blocks: blocksOf(content),
+    layout: layoutOf(content),
   };
 };
 
 const name = ref('');
 const active = ref(true);
 const form = ref({});
+const tab = ref('content');
+const showPreview = ref(true);
 const isSaving = ref(false);
 
 const reset = () => {
@@ -66,11 +74,14 @@ reset();
 
 const original = computed(() => contentOf(props.template));
 
-// condições sem o uid, para comparar e enviar
-const plain = (key, value) =>
-  key === 'conditions'
-    ? value.map(row => ({ label: row.label, text: row.text }))
-    : value;
+// condições sem o uid; números como número
+const plain = (key, value) => {
+  if (key === 'conditions') {
+    return value.map(row => ({ label: row.label, text: row.text }));
+  }
+  if (key === 'validity_days') return Number(value);
+  return value;
+};
 
 const changedKeys = computed(() =>
   CONTENT_KEYS.filter(
@@ -95,21 +106,52 @@ const validityValid = computed(() => {
     days !== '' && Number.isInteger(Number(days)) && days >= 0 && days <= 365
   );
 });
-const isValid = computed(() => !!name.value.trim() && validityValid.value);
+const hasVisibleBlock = computed(() =>
+  form.value.blocks.some(block => block.visible)
+);
+const isValid = computed(
+  () => !!name.value.trim() && validityValid.value && hasVisibleBlock.value
+);
 
-const styleOptions = computed(() =>
-  ['table', 'list'].map(style => ({
-    value: style,
+const fontOptions = computed(() =>
+  FONTS.map(font => ({
+    value: font.value,
     label: t(
-      `OUTSIDER_CRM.PROPOSAL_SETTINGS.TEMPLATES.STYLES.${style.toUpperCase()}`
+      `OUTSIDER_CRM.PROPOSAL_SETTINGS.TEMPLATES.FONTS.${font.value.toUpperCase().replace('-', '_')}`
     ),
   }))
 );
 
-const textLabel = key =>
-  t(`OUTSIDER_CRM.PROPOSAL_SETTINGS.TEMPLATES.TEXTS.${key.toUpperCase()}`);
-const textHelp = key =>
-  t(`OUTSIDER_CRM.PROPOSAL_SETTINGS.TEMPLATES.TEXTS_HELP.${key.toUpperCase()}`);
+const font = computed({
+  get: () => form.value.layout.font,
+  set: value => {
+    form.value.layout = { ...form.value.layout, font: value };
+  },
+});
+
+// blocos que eram ligados pelas chaves antigas levam a chave junto, para o modelo ficar coerente
+const flagsFromBlocks = () =>
+  Object.fromEntries(
+    Object.entries(FLAG_OF_BLOCK).map(([type, flag]) => [
+      flag,
+      form.value.blocks.some(block => block.type === type && block.visible),
+    ])
+  );
+
+const contentPayload = keys => {
+  const content = Object.fromEntries(
+    keys.map(key => [key, plain(key, form.value[key])])
+  );
+  return keys.includes('blocks')
+    ? { ...content, ...flagsFromBlocks() }
+    : content;
+};
+
+const previewPayload = computed(() => ({
+  name: name.value.trim() || props.template.name,
+  active: true,
+  content: contentPayload(CONTENT_KEYS),
+}));
 
 // campo automático vai para o texto em edição; sem nenhum em edição, é copiado
 let lastField = null;
@@ -142,18 +184,14 @@ const insertField = async token => {
   }
 };
 
+// imagem enviada (cabeçalho, rodapé) volta com o modelo salvo; o que está em edição continua na tela
+const onImageUpdated = data => emit('updated', data);
+
 const save = async () => {
   if (!isValid.value || !isDirty.value) return;
   const payload = { name: name.value.trim(), active: active.value };
   if (changedKeys.value.length) {
-    payload.content = Object.fromEntries(
-      changedKeys.value.map(key => [
-        key,
-        key === 'validity_days'
-          ? Number(form.value[key])
-          : plain(key, form.value[key]),
-      ])
-    );
+    payload.content = contentPayload(changedKeys.value);
   }
   isSaving.value = true;
   try {
@@ -162,7 +200,7 @@ const save = async () => {
       payload
     );
     emit('updated', data);
-    // a resposta já vem normalizada (linhas vazias de condição saem)
+    // a resposta já vem normalizada (linhas vazias de condição saem, números dentro dos limites)
     name.value = data.name;
     active.value = data.active;
     form.value = contentOf(data);
@@ -174,18 +212,21 @@ const save = async () => {
   }
 };
 
-const textareaClass =
-  '!mb-0 w-full px-3 py-2 text-sm rounded-lg resize-y reset-base bg-n-alpha-black2 text-n-slate-12 outline outline-1 -outline-offset-1 outline-n-weak focus:outline-n-brand placeholder:text-n-slate-10';
+const TABS = [
+  { key: 'content', icon: 'i-lucide-list-ordered' },
+  { key: 'letterhead', icon: 'i-lucide-layout-template' },
+];
 </script>
 
 <template>
   <form
-    class="flex flex-col gap-6 p-4 rounded-xl bg-n-solid-2 outline outline-1 -outline-offset-1 outline-n-container"
+    novalidate
+    class="flex flex-col gap-5 p-4 rounded-xl bg-n-solid-2 outline outline-1 -outline-offset-1 outline-n-container"
     @submit.prevent="save"
     @focusin="onFocusIn"
   >
-    <!-- Nome e ativo -->
-    <div class="flex flex-wrap items-end gap-4">
+    <!-- Nome, ativo, fonte e validade -->
+    <div class="flex flex-wrap items-start gap-4">
       <Input
         v-model="name"
         maxlength="255"
@@ -193,156 +234,115 @@ const textareaClass =
         :label="t('OUTSIDER_CRM.PROPOSAL_SETTINGS.TEMPLATES.NAME')"
         :message-type="name.trim() ? 'info' : 'error'"
       />
-      <label class="flex items-center gap-2 h-10 text-sm text-n-slate-12">
-        <Switch v-model="active" />
-        {{ t('OUTSIDER_CRM.SETTINGS.ACTIVE') }}
+      <label class="flex flex-col gap-1 text-sm">
+        <span class="mb-0.5 font-medium text-n-slate-12">
+          {{ t('OUTSIDER_CRM.PROPOSAL_SETTINGS.TEMPLATES.FONT') }}
+        </span>
+        <Select v-model="font" :options="fontOptions" />
       </label>
-      <Label
-        :label="
-          t(
-            `OUTSIDER_CRM.PROPOSAL_SETTINGS.TEMPLATES.KINDS.${template.kind.toUpperCase()}`
-          )
+      <Input
+        v-model="form.validity_days"
+        v-tooltip.top="
+          t('OUTSIDER_CRM.PROPOSAL_SETTINGS.TEMPLATES.VALIDITY_HELP')
         "
-        class="mb-2.5"
-        compact
+        type="number"
+        min="0"
+        max="365"
+        class="w-32"
+        :label="t('OUTSIDER_CRM.PROPOSAL_SETTINGS.TEMPLATES.VALIDITY')"
+        :message-type="validityValid ? 'info' : 'error'"
       />
+      <div class="flex items-center gap-3 pt-7">
+        <label class="flex items-center gap-2 text-sm text-n-slate-12">
+          <Switch v-model="active" />
+          {{ t('OUTSIDER_CRM.SETTINGS.ACTIVE') }}
+        </label>
+        <Label
+          :label="
+            t(
+              `OUTSIDER_CRM.PROPOSAL_SETTINGS.TEMPLATES.KINDS.${template.kind.toUpperCase()}`
+            )
+          "
+          compact
+        />
+      </div>
     </div>
-    <p v-if="!active" class="mb-0 -mt-4 text-xs text-n-slate-11">
+    <p v-if="!active" class="mb-0 -mt-3 text-xs text-n-slate-11">
       {{ t('OUTSIDER_CRM.PROPOSAL_SETTINGS.TEMPLATES.INACTIVE_HELP') }}
     </p>
 
-    <!-- Papel timbrado -->
-    <section class="flex flex-col gap-3">
-      <h4 class="mb-0 text-sm font-medium text-n-slate-12">
-        {{ t('OUTSIDER_CRM.PROPOSAL_SETTINGS.TEMPLATES.LETTERHEAD') }}
-      </h4>
-      <div class="grid gap-4 sm:grid-cols-2">
-        <TemplateImageSlot
-          :template="template"
-          position="header"
-          @updated="data => emit('updated', data)"
-        />
-        <TemplateImageSlot
-          :template="template"
-          position="footer"
-          @updated="data => emit('updated', data)"
-        />
-      </div>
-      <p class="mb-0 text-xs text-n-slate-11">
-        {{ t('OUTSIDER_CRM.PROPOSAL_SETTINGS.TEMPLATES.LETTERHEAD_HELP') }}
-      </p>
-    </section>
-
-    <!-- O que aparece -->
-    <section class="flex flex-col gap-3">
-      <h4 class="mb-0 text-sm font-medium text-n-slate-12">
-        {{ t('OUTSIDER_CRM.PROPOSAL_SETTINGS.TEMPLATES.SHOW') }}
-      </h4>
-      <div class="grid gap-2 sm:grid-cols-2">
-        <label
-          v-for="flag in FLAG_KEYS"
-          :key="flag"
-          class="flex items-start gap-3 p-3 rounded-lg bg-n-alpha-1"
-        >
-          <Switch v-model="form[flag]" class="mt-0.5" />
-          <span class="flex flex-col gap-0.5">
-            <span class="text-sm text-n-slate-12">
+    <div
+      class="grid items-start gap-4"
+      :class="{
+        'xl:grid-cols-[minmax(0,1fr)_minmax(0,25rem)]': showPreview,
+      }"
+    >
+      <div class="flex flex-col min-w-0 gap-4">
+        <div class="flex items-center justify-between gap-2">
+          <nav class="flex gap-1 p-0.5 rounded-lg bg-n-alpha-1">
+            <button
+              v-for="item in TABS"
+              :key="item.key"
+              type="button"
+              class="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md"
+              :class="
+                tab === item.key
+                  ? 'bg-n-solid-3 text-n-slate-12 font-medium shadow-sm'
+                  : 'text-n-slate-11 hover:text-n-slate-12'
+              "
+              @click="tab = item.key"
+            >
+              <span :class="item.icon" class="size-4" />
               {{
                 t(
-                  `OUTSIDER_CRM.PROPOSAL_SETTINGS.TEMPLATES.FLAGS.${flag.toUpperCase()}`
+                  `OUTSIDER_CRM.PROPOSAL_SETTINGS.EDITOR_TABS.${item.key.toUpperCase()}`
                 )
               }}
-            </span>
-            <span class="text-xs text-n-slate-11">
-              {{
-                t(
-                  `OUTSIDER_CRM.PROPOSAL_SETTINGS.TEMPLATES.FLAGS_HELP.${flag.toUpperCase()}`
-                )
-              }}
-            </span>
-          </span>
-        </label>
-      </div>
-      <div class="flex flex-wrap items-start gap-4">
-        <div class="flex flex-col gap-1">
-          <Input
-            v-model="form.validity_days"
-            type="number"
-            min="0"
-            max="365"
-            class="w-40"
-            :label="t('OUTSIDER_CRM.PROPOSAL_SETTINGS.TEMPLATES.VALIDITY')"
-            :message-type="validityValid ? 'info' : 'error'"
+            </button>
+          </nav>
+          <Button
+            v-if="!showPreview"
+            type="button"
+            size="xs"
+            variant="faded"
+            color="slate"
+            icon="i-lucide-file-text"
+            :label="t('OUTSIDER_CRM.PROPOSAL_SETTINGS.PREVIEW.SHOW')"
+            @click="showPreview = true"
           />
-          <span class="text-xs text-n-slate-11 max-w-[16rem]">
-            {{ t('OUTSIDER_CRM.PROPOSAL_SETTINGS.TEMPLATES.VALIDITY_HELP') }}
-          </span>
         </div>
-        <label class="flex flex-col gap-1 text-sm">
-          <span class="mb-0.5 font-medium text-n-slate-12">
-            {{ t('OUTSIDER_CRM.PROPOSAL_SETTINGS.TEMPLATES.STYLE') }}
-          </span>
-          <Select v-model="form.conditions_style" :options="styleOptions" />
-          <span class="text-xs text-n-slate-11 max-w-[20rem]">
-            {{ t('OUTSIDER_CRM.PROPOSAL_SETTINGS.TEMPLATES.STYLE_HELP') }}
-          </span>
-        </label>
-      </div>
-    </section>
 
-    <!-- Textos -->
-    <section class="flex flex-col gap-3">
-      <h4 class="mb-0 text-sm font-medium text-n-slate-12">
-        {{ t('OUTSIDER_CRM.PROPOSAL_SETTINGS.TEMPLATES.TEXTS_TITLE') }}
-      </h4>
-      <FieldChips @insert="insertField" />
-      <div class="grid gap-4 sm:grid-cols-2">
-        <label
-          v-for="field in TEXT_FIELDS"
-          :key="field.key"
-          data-fields
-          class="flex flex-col gap-1 text-sm"
-          :class="{ 'sm:col-span-2': field.multiline }"
-        >
-          <span class="font-medium text-n-slate-12">
-            {{ textLabel(field.key) }}
-          </span>
-          <textarea
-            v-if="field.multiline"
-            v-model="form[field.key]"
-            rows="3"
-            :maxlength="MAX_TEXT"
-            :class="textareaClass"
+        <template v-if="tab === 'content'">
+          <p class="mb-0 text-xs text-n-slate-11">
+            {{ t('OUTSIDER_CRM.PROPOSAL_SETTINGS.BLOCKS.DESCRIPTION') }}
+          </p>
+          <FieldChips @insert="insertField" />
+          <TemplateBlocks v-model:blocks="form.blocks" v-model:form="form" />
+          <p v-if="!hasVisibleBlock" class="mb-0 text-xs text-n-ruby-11">
+            {{ t('OUTSIDER_CRM.PROPOSAL_SETTINGS.BLOCKS.NONE_VISIBLE') }}
+          </p>
+        </template>
+        <template v-else>
+          <FieldChips @insert="insertField" />
+          <LetterheadSettings
+            v-model:layout="form.layout"
+            :template="template"
+            @updated="onImageUpdated"
           />
-          <input
-            v-else
-            v-model="form[field.key]"
-            type="text"
-            :maxlength="MAX_TEXT"
-            :class="textareaClass"
-          />
-          <span class="text-xs text-n-slate-11">
-            {{ textHelp(field.key) }}
-          </span>
-        </label>
+        </template>
       </div>
-    </section>
 
-    <!-- Condições -->
-    <section class="flex flex-col gap-3">
-      <div class="flex flex-col gap-1">
-        <h4 class="mb-0 text-sm font-medium text-n-slate-12">
-          {{ t('OUTSIDER_CRM.PROPOSAL_SETTINGS.TEMPLATES.CONDITIONS.TITLE') }}
-        </h4>
-        <p class="mb-0 text-xs text-n-slate-11">
-          {{ t('OUTSIDER_CRM.PROPOSAL_SETTINGS.TEMPLATES.CONDITIONS.HELP') }}
-        </p>
-      </div>
-      <ConditionsEditor v-model="form.conditions" />
-    </section>
+      <TemplatePreview
+        v-if="showPreview && visible"
+        :template-id="template.id"
+        :payload="previewPayload"
+        class="xl:sticky xl:top-4 h-[75vh]"
+        @hide="showPreview = false"
+      />
+    </div>
 
     <div
-      class="sticky bottom-0 flex flex-wrap items-center gap-2 pt-3 -mx-4 px-4 pb-1 border-t border-n-weak bg-n-solid-2"
+      class="sticky bottom-0 z-20 flex flex-wrap items-center gap-2 pt-3 -mx-4 px-4 pb-1 border-t border-n-weak bg-n-solid-2"
     >
       <Button
         type="submit"
@@ -353,6 +353,7 @@ const textareaClass =
       />
       <Button
         v-if="isDirty"
+        type="button"
         size="sm"
         variant="ghost"
         color="slate"

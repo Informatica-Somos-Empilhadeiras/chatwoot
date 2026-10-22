@@ -1275,7 +1275,7 @@
         }
       },
       "TEMPLATES": {
-        "DESCRIPTION": "Cada modelo traz os textos, as condições e o papel timbrado que a proposta nova recebe. Quem faz a proposta ainda pode ajustar tudo nela.",
+        "DESCRIPTION": "Cada modelo traz os blocos e textos, as condições e o papel timbrado que a proposta nova recebe. Quem faz a proposta ainda pode ajustar textos e condições nela.",
         "EMPTY": "Nenhum modelo de proposta ainda. Eles são criados na primeira vez que alguém abre as propostas.",
         "KINDS": {
           "SALE": "Venda",
@@ -1288,7 +1288,7 @@
         "DISCARD": "Descartar alterações",
         "SAVED": "Modelo salvo.",
         "LETTERHEAD": "Papel timbrado",
-        "LETTERHEAD_HELP": "Imagens PNG ou JPEG na largura da folha A4. O editor para posicionar elementos livremente no papel timbrado chega numa próxima entrega.",
+        "LETTERHEAD_HELP": "Imagens PNG ou JPEG na largura da folha A4. Elas sobem na hora, sem precisar salvar o modelo.",
         "IMAGE": {
           "HEADER": "Cabeçalho",
           "FOOTER": "Rodapé",
@@ -1337,16 +1337,16 @@
         },
         "TEXTS_HELP": {
           "TITLE_PREFIX": "Vem antes do título da proposta. Ex.: PROPOSTA COMERCIAL.",
-          "INTRO": "Primeiro parágrafo, logo após os dados do cliente.",
+          "INTRO": "Primeiro parágrafo da proposta.",
           "TOTAL_LABEL": "Ao lado do valor total. Vazio: \"Total:\".",
-          "CONDITIONS_HEADING": "Só no estilo lista, acima das condições.",
-          "PARTIES_TEXT": "Proponente e aceitante. Sai quando as partes estão ligadas.",
-          "ACCEPTANCE_TEXT": "Logo após o texto das partes. Sai quando as partes estão ligadas.",
-          "CLOSING": "Parágrafo final, após as condições.",
-          "ORDER_HEADING": "Acima da razão social e do endereço, na última página.",
-          "BANK_HEADING": "Acima dos dados bancários, na última página.",
-          "DOCUMENTS_HEADING": "Acima do e-mail para documentação, na última página.",
-          "SIGNATURE_BOX": "Texto do quadro onde o cliente assina, na última página."
+          "CONDITIONS_HEADING": "Acima das condições, no estilo lista.",
+          "PARTIES_TEXT": "Proponente e aceitante.",
+          "ACCEPTANCE_TEXT": "Logo após o texto das partes.",
+          "CLOSING": "Parágrafo final.",
+          "ORDER_HEADING": "Acima da razão social e do endereço.",
+          "BANK_HEADING": "Acima dos dados bancários.",
+          "DOCUMENTS_HEADING": "Acima do e-mail para documentação.",
+          "SIGNATURE_BOX": "Texto do quadro onde o cliente assina."
         },
         "CONDITIONS": {
           "TITLE": "Condições padrão",
@@ -1359,10 +1359,20 @@
           "DOWN": "Descer",
           "REMOVE": "Remover condição",
           "COUNT": "{count} de {max}"
-        }
+        },
+        "FONT": "Fonte",
+        "FONTS": {
+          "HELVETICA": "Helvetica (sem serifa)",
+          "TIMES_ROMAN": "Times (com serifa)",
+          "COURIER": "Courier (máquina de escrever)"
+        },
+        "DUPLICATE": "Duplicar modelo",
+        "DELETE": "Apagar modelo",
+        "DELETE_TITLE": "Apagar modelo",
+        "DELETE_TEXT": "O modelo \"{name}\" sai da lista. Só dá para apagar modelo que nenhuma proposta usa; se já foi usado, desative. Não tem como desfazer."
       },
       "FIELDS": {
-        "HELP": "Nos textos, use **palavra** para negrito e campos automáticos entre chaves, que o PDF troca pelos dados da proposta (cliente, número, validade, vendedor, empresa, máquina).",
+        "HELP": "Nos textos, use **palavra** para negrito, ==palavra== para destaque amarelo e campos automáticos entre chaves, que o PDF troca pelos dados da proposta (cliente, número, validade, vendedor, empresa, máquina).",
         "SHOW": "Ver campos",
         "HIDE": "Esconder campos",
         "CLICK": "Clique num campo para inseri-lo no texto em edição. Sem texto em edição, ele é copiado. Campo escrito errado aparece como está no PDF.",
@@ -1443,6 +1453,122 @@
         "WIN_ON_ACCEPT": "Proposta aceita marca o negócio ligado como ganho",
         "WIN_ON_ACCEPT_HELP": "Vale para negócios abertos que quem aceita pode alterar. Desligado, o negócio continua como está.",
         "SAVED": "Configurações de envio salvas."
+      },
+      "EDITOR_TABS": {
+        "CONTENT": "Conteúdo",
+        "LETTERHEAD": "Papel timbrado"
+      },
+      "BLOCKS": {
+        "DESCRIPTION": "O PDF segue esta ordem. Arraste pela alça para mudar a ordem, use o olho para esconder um bloco e clique no bloco para mudar o estilo e os textos dele.",
+        "TYPES": {
+          "DATE_NUMBER": "Data e número",
+          "CUSTOMER": "Dados do cliente",
+          "INTRO": "Abertura",
+          "TITLE": "Título",
+          "SPECS": "Características das máquinas",
+          "ITEMS": "Itens e total",
+          "CONDITIONS": "Condições",
+          "PARTIES": "Partes",
+          "CLOSING": "Fechamento",
+          "BANK": "Pedido e dados bancários",
+          "SIGNATURE": "Assinatura e aceite",
+          "NOTES": "Observações",
+          "TEXT": "Texto livre"
+        },
+        "HELP": {
+          "DATE_NUMBER": "Cidade e data à esquerda, número da proposta à direita",
+          "CUSTOMER": "Empresa, CNPJ, endereço, telefone, e-mail e contato",
+          "INTRO": "Primeiro parágrafo",
+          "TITLE": "Título da proposta em negrito",
+          "SPECS": "Ficha técnica com imagem e lista do equipamento",
+          "ITEMS": "Tabela de itens com o total",
+          "CONDITIONS": "Quadro ou lista das condições",
+          "PARTIES": "Proponente, aceitante e texto de aceite",
+          "CLOSING": "Parágrafo final",
+          "BANK": "Confirmação de pedido, dados bancários e e-mail para documentação",
+          "SIGNATURE": "Assinatura do vendedor e quadro de aceite do cliente",
+          "NOTES": "Observações da proposta, quando preenchidas",
+          "TEXT": ""
+        },
+        "DRAG": "Arrastar para mudar a ordem",
+        "HIDE": "Esconder no PDF",
+        "SHOW": "Mostrar no PDF",
+        "NEW_PAGE": "Começa em página nova",
+        "NEW_PAGE_BADGE": "página nova",
+        "SIZE": "Tamanho",
+        "BOLD": "Negrito no bloco todo",
+        "HIGHLIGHT": "Destaque amarelo no bloco todo",
+        "HEADING": "Título",
+        "HEADING_PLACEHOLDER": "Ex.: Garantia (opcional)",
+        "TEXT": "Texto",
+        "REMOVE": "Remover bloco",
+        "ADD_TEXT": "Bloco de texto",
+        "IMAGE_SIDE": "Imagem da máquina",
+        "IMAGE_SIDES": {
+          "RIGHT": "À direita",
+          "LEFT": "À esquerda"
+        },
+        "EQUIPMENT": "Lista do equipamento abaixo das características",
+        "EQUIPMENT_HEADING": "Título do equipamento",
+        "NONE_VISIBLE": "Deixe pelo menos um bloco visível para salvar."
+      },
+      "LETTERHEAD": {
+        "SHOW_ON": "Aparece em",
+        "PAGES": {
+          "ALL": "Todas as páginas",
+          "FIRST": "Só na primeira"
+        },
+        "MARGINS": "Margens do conteúdo (mm)",
+        "MARGIN": {
+          "SIDE": "Laterais",
+          "TOP": "Abaixo do cabeçalho",
+          "BOTTOM": "Acima do rodapé"
+        },
+        "MARGINS_HELP": "O conteúdo começa abaixo do cabeçalho e termina acima do rodapé. Nas páginas sem cabeçalho ou rodapé, ele usa esse espaço.",
+        "ELEMENTS": "Elementos soltos",
+        "ELEMENTS_HELP": "Textos e imagens em qualquer lugar da folha (logo, selo, contato do vendedor). Arraste para posicionar, use a alça azul para mudar a largura e as setas do teclado para ajuste fino (Shift: 5 mm). Campos automáticos também valem aqui.",
+        "ADD_TEXT": "Texto",
+        "ADD_IMAGE": "Imagem",
+        "NEW_TEXT": "Novo texto",
+        "CONTENT_AREA": "Conteúdo",
+        "EMPTY_TEXT": "(texto vazio)",
+        "PAGE_VIEW": {
+          "FIRST": "Primeira página",
+          "NEXT": "Páginas seguintes"
+        },
+        "PICK": "Clique num elemento da folha para editar.",
+        "NONE": "Nenhum elemento solto. Adicione um texto ou uma imagem.",
+        "TEXT_ELEMENT": "Texto solto",
+        "IMAGE_ELEMENT": "Imagem solta",
+        "REMOVE": "Remover",
+        "TEXT": "Texto",
+        "SIZE": "Tamanho",
+        "COLOR": "Cor do texto",
+        "REPLACE_IMAGE": "Trocar imagem",
+        "X": "Esquerda (mm)",
+        "Y": "Topo (mm)",
+        "WIDTH": "Largura (mm)",
+        "ELEMENT_PAGES": "Aparece em"
+      },
+      "PREVIEW": {
+        "TITLE": "Prévia do PDF",
+        "REFRESH": "Atualizar prévia",
+        "HIDE": "Esconder prévia",
+        "SHOW": "Mostrar prévia",
+        "HELP": "Proposta de exemplo com cliente fictício e a primeira máquina do catálogo. Mostra o que está na tela, mesmo sem salvar."
+      },
+      "NEW_TEMPLATE": {
+        "BUTTON": "Novo modelo",
+        "TITLE": "Novo modelo de proposta",
+        "DESCRIPTION": "Comece com os textos padrão do tipo ou copie um modelo que já existe. A cópia usa as mesmas imagens, sem duplicar arquivo.",
+        "BLANK": "Em branco (textos padrão do tipo)",
+        "SOURCE": "Começar de",
+        "KIND": "Tipo",
+        "KIND_HELP": "Venda ou locação: define em quais propostas o modelo aparece.",
+        "KIND_FROM_SOURCE": "A cópia fica com o tipo do modelo original.",
+        "CREATE": "Criar modelo",
+        "CREATED": "Modelo criado.",
+        "COPY_NAME": "{name} (cópia)"
       }
     }
   }

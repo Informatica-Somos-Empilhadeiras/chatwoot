@@ -32,6 +32,12 @@ en:
           inbox: Choose an inbox you are a member of
           subject_required: Write the e-mail subject
           too_long: The text is too long
+    proposal_templates:
+      in_use:
+        one: This template is used by 1 proposal. Deactivate it instead of deleting
+        other: This template is used by %{count} proposals. Deactivate it instead of deleting
+      last_active: Each proposal type needs at least one active template
+      too_many_images: This template already has too many images. Delete image elements you no longer use
     forward:
       task_title: "Contact the customer forwarded by %{unit}"
       errors:
@@ -50,6 +56,12 @@ en:
         owner_not_in_inbox: "%{name} is not in this conversation's inbox"
         conversation_forbidden: You are not in this conversation's inbox, so you cannot assign it
   # Campo "CRM" da conta no Super Admin (Outsider::Crm::AccountDashboardSwitch)
+  activerecord:
+    errors:
+      models:
+        outsider/crm/proposal_template:
+          invalid_image: "Upload a PNG or JPG image"
+          image_too_large: "The image is larger than 5 MB"
   helpers:
     label:
       account:

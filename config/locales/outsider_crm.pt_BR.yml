@@ -32,6 +32,12 @@ pt_BR:
           inbox: Escolha uma caixa de entrada que você atende
           subject_required: Escreva o assunto do e-mail
           too_long: O texto ficou longo demais
+    proposal_templates:
+      in_use:
+        one: Modelo usado em 1 proposta. Desative o modelo em vez de apagar
+        other: Modelo usado em %{count} propostas. Desative o modelo em vez de apagar
+      last_active: Cada tipo de proposta precisa de pelo menos um modelo ativo
+      too_many_images: Este modelo já tem imagens demais. Apague elementos de imagem que não usa
     forward:
       task_title: "Contatar cliente encaminhado por %{unit}"
       errors:
@@ -136,6 +142,7 @@ pt_BR:
         content: Textos do modelo
         header_image: Cabeçalho
         footer_image: Rodapé
+        layout_images: Imagens do papel timbrado
     errors:
       models:
         outsider/crm/opportunity:
@@ -308,6 +315,8 @@ pt_BR:
           restrict_dependent_destroy:
             has_many: "Não é possível apagar porque existem %{record} ligados"
         outsider/crm/proposal_template:
+          invalid_image: "Envie uma imagem PNG ou JPG"
+          image_too_large: "A imagem passou de 5 MB"
           blank: "não pode ficar em branco"
           invalid: "não é válido"
           taken: "já está em uso"

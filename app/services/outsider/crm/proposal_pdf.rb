@@ -1,29 +1,43 @@
-# OUTSIDER: monta o PDF da proposta (A4) com o Prawn, no desenho das propostas da Somos:
-#   1ª página: data e número, dados do cliente, abertura, título, principais características com a imagem
-#              da máquina e a lista do equipamento;
-#   depois:    itens e total, condições (quadro na venda, lista na locação) e, na locação, as partes;
-#   última:    confirmação de pedido, dados bancários, para onde mandar a documentação e as assinaturas.
-# Papel timbrado (cabeçalho e rodapé) em todas as páginas: o do modelo ou, nos modelos padrão, o que vem
-# com o CRM (config/outsider_crm). Fonte Helvetica do próprio PDF: caracteres fora do português comum
+# OUTSIDER: monta o PDF da proposta (A4) com o Prawn, seguindo o modelo (Outsider::Crm::ProposalTemplateLayout):
+# os blocos do conteúdo em sequência (data e número, cliente, abertura, título, características das máquinas,
+# itens, condições, partes, fechamento, dados bancários, assinatura, observações e textos livres) e, por cima,
+# o papel timbrado: cabeçalho, rodapé e os elementos em posição livre, em todas as páginas ou só na primeira.
+# Sem desenho próprio, o modelo segue o das propostas da Somos (Entrega 14). Papel timbrado padrão em
+# config/outsider_crm. Fontes do próprio PDF (Helvetica, Times, Courier): caracteres fora do português comum
 # (emoji, por exemplo) saem do texto.
 class Outsider::Crm::ProposalPdf
+  include Outsider::Crm::ProposalPdf::Text
+  include Outsider::Crm::ProposalPdf::Letterhead
+  include Outsider::Crm::ProposalPdf::Machines
   include Outsider::Crm::ProposalPdf::ItemsPage
   include Outsider::Crm::ProposalPdf::ClosingPage
-  include Outsider::Crm::ProposalPdf::Text
 
-  MARGIN_X = 36
   FONT_SIZE = 9
+  MM = 72 / 25.4
   HIGHLIGHT = 'FFFF00'.freeze
   BLUE = '1F3A93'.freeze
   DEFAULT_HEADER = Rails.root.join('config/outsider_crm/proposta-cabecalho.jpg')
   DEFAULT_FOOTER = Rails.root.join('config/outsider_crm/proposta-rodape.jpg')
+  # espaço antes de cada bloco (pt) quando ele vem depois de outro na mesma página
+  SPACE_BEFORE = { 'customer' => 14, 'intro' => 10, 'title' => 12, 'specs' => 12, 'conditions' => 28, 'parties' => 24,
+                   'closing' => 8, 'bank' => 24, 'signature' => 30, 'notes' => 24 }.freeze
+  # e quando abre uma página nova, depois da linha com o número da proposta
+  SPACE_ON_NEW_PAGE = { 'items' => 0, 'bank' => 24 }.freeze
+  BLOCKS = {
+    'date_number' => :date_number_block, 'customer' => :customer_block, 'intro' => :intro_block, 'title' => :title_block,
+    'specs' => :machines_block, 'items' => :items_block, 'conditions' => :conditions_block, 'parties' => :parties_block,
+    'closing' => :closing_block, 'bank' => :bank_block, 'signature' => :signature_block, 'notes' => :notes_block,
+    'text' => :text_block
+  }.freeze
 
   # O texto já sai limpo para Windows-1252 (clean), então o aviso do Prawn sobre fontes embutidas não ajuda
   Prawn::Fonts::AFM.hide_m17n_warning = true
 
-  def initialize(proposal)
+  # template: modelo ainda não salvo, para a pré-visualização do editor
+  def initialize(proposal, template: nil)
     @proposal = proposal
-    @template = proposal.template
+    @template = template || proposal.template
+    @layout = @template.layout
     @company = Outsider::Crm::ProposalConfig.new(proposal.account).company(proposal.business_unit_id)
     @fields = Outsider::Crm::ProposalFields.new(proposal, @company)
   end
@@ -34,53 +48,54 @@ class Outsider::Crm::ProposalPdf
   end
 
   def render
-    header = image_data(@template.header_image, DEFAULT_HEADER)
-    footer = image_data(@template.footer_image, DEFAULT_FOOTER)
-    @header_height = letterhead_height(header)
-    @footer_height = letterhead_height(footer)
-    @pdf = Prawn::Document.new(page_size: 'A4', margin: [@header_height + 18, MARGIN_X, @footer_height + 22, MARGIN_X],
+    prepare_letterhead
+    @pdf = Prawn::Document.new(page_size: 'A4', margin: first_page_margins,
                                info: { Title: clean(filename.delete_suffix('.pdf')), Creator: 'CRM' })
-    @pdf.font('Helvetica', size: FONT_SIZE)
+    keep_margins_on_new_pages
+    @pdf.font(@layout['font'], size: FONT_SIZE)
     @pdf.default_leading = 1
-    first_page
-    items_page
-    closing_page
-    letterhead(header, footer)
+    @blank_page = true
+    @template.blocks.each { |block| render_block(block) if block['visible'] }
+    draw_letterhead
     @pdf.render
   end
 
   private
 
-  # ---------- 1ª página ----------
-
-  def first_page
-    date_and_number(@fields.date_line)
-    @pdf.move_down 14
-    customer_block
-    @pdf.move_down 10
-    attention = @proposal.customer['attention']
-    @pdf.text("Atenção: #{clean(attention)}") if attention.present?
-    @pdf.move_down 10
-    rich(@template.text(:intro)) if @template.text(:intro).present?
-    @pdf.move_down 12
-    title = [@template.text(:title_prefix), @proposal.title].compact_blank.join(' ')
-    @pdf.text(clean(title), style: :bold, size: 10)
-    @pdf.move_down 12
-    machine_details if @template.flag?(:show_specs)
+  def render_block(block)
+    if block['new_page'] && !@blank_page
+      @pdf.start_new_page
+      proposal_number_line
+      @pdf.move_down SPACE_ON_NEW_PAGE.fetch(block['type'], 12)
+    elsif !@blank_page
+      @pdf.move_down SPACE_BEFORE.fetch(block['type'], 12)
+    end
+    page = @pdf.page_number
+    with_block_style(block) { send(BLOCKS.fetch(block['type']), block) }
+    @blank_page = false if @pdf.page_number != page || @pdf.cursor < @pdf.bounds.top
   end
 
-  def date_and_number(left)
+  def proposal_number_line
+    write(fragments("<b>PROPOSTA</b>  <b>#{@proposal.number}</b>"), align: :right)
+    @pdf.move_down 2
+  end
+
+  # ---------- blocos da abertura ----------
+
+  def date_number_block(_block)
     top = @pdf.cursor
-    @pdf.text(clean(left))
+    say(@fields.date_line)
     @pdf.move_cursor_to(top)
-    @pdf.text("<b>PROPOSTA</b>  #{@proposal.number}", inline_format: true, align: :right)
+    write(fragments("<b>PROPOSTA</b>  #{@proposal.number}"), align: :right)
   end
 
-  def customer_block
+  def customer_block(_block)
     customer = @proposal.customer
     [label_line('EMPRESA', customer['company']), document_line(customer), label_line('ENDEREÇO', customer['address']),
      place_line(customer), label_line('FONE', customer['phone']), label_line('E-MAIL', customer['email'])]
-      .each { |line| @pdf.text(line, inline_format: true) }
+      .each { |line| write(fragments(line)) }
+    @pdf.move_down 10
+    say("Atenção: #{customer['attention']}") if customer['attention'].present?
   end
 
   def document_line(customer)
@@ -97,90 +112,20 @@ class Outsider::Crm::ProposalPdf
     "#{label}: <b>#{escape(value)}</b>"
   end
 
-  def machine_details
-    detailed = @proposal.items.select { |item| item.show_details && item.details.present? }
-    detailed.each_with_index do |item, index|
-      @pdf.move_down 10 if index.positive?
-      @pdf.text(clean(item.description), style: :bold) if detailed.size > 1
-      specs_with_image(item)
-      features(item.details['features'])
+  def intro_block(_block)
+    rich(@template.text(:intro)) if @template.text(:intro).present?
+  end
+
+  def title_block(_block)
+    say([@template.text(:title_prefix), @proposal.title].compact_blank.join(' '), bold: true)
+  end
+
+  # Texto livre do modelo, com título opcional
+  def text_block(block)
+    if block['heading'].present?
+      say(@fields.apply(block['heading']), bold: true, size: block['size'] + 1)
+      @pdf.move_down 6
     end
-  end
-
-  def specs_with_image(item)
-    specs = Array(item.details['specs'])
-    image = item.image
-    return if specs.empty? && image.nil?
-
-    @pdf.text('Principais Características', style: :bold, size: 10)
-    @pdf.move_down 16
-    top = @pdf.cursor
-    left_width = image ? @pdf.bounds.width * 0.6 : @pdf.bounds.width
-    @pdf.bounding_box([0, top], width: left_width) { specs_table(specs) } if specs.any?
-    after_specs = @pdf.cursor
-    after_image = image ? product_image(image, top, left_width) : after_specs
-    @pdf.move_cursor_to([after_specs, after_image].min)
-    @pdf.move_down 14
-  end
-
-  def specs_table(specs)
-    rows = specs.map do |spec|
-      style = spec['bold'] ? :bold : :normal
-      [{ content: clean(spec['label']), font_style: style }, { content: clean(spec['value']), font_style: style }]
-    end
-    @pdf.table(rows, width: @pdf.bounds.width, column_widths: { 1 => @pdf.bounds.width * 0.3 },
-                     cell_style: { borders: [], padding: [0.5, 2], size: FONT_SIZE })
-  end
-
-  def product_image(image, top, left_width)
-    data = StringIO.new(image.download)
-    @pdf.bounding_box([left_width + 12, top], width: @pdf.bounds.width - left_width - 12) do
-      @pdf.image(data, fit: [@pdf.bounds.width, 165], position: :center)
-      @pdf.move_down 4
-      @pdf.text('*Imagem ilustrativa', size: 7, align: :right)
-    end
-    @pdf.cursor
-  rescue StandardError
-    top
-  end
-
-  def features(list)
-    list = Array(list).compact_blank
-    return if list.empty?
-
-    @pdf.text('EQUIPAMENTO', style: :bold, size: 11)
-    @pdf.move_down 6
-    @pdf.text(clean("• #{list.join('  •  ')}"), leading: 3)
-  end
-
-  # ---------- papel timbrado e números de página ----------
-
-  # Cabeçalho e rodapé entram uma vez no arquivo e se repetem em todas as páginas
-  def letterhead(header, footer)
-    pdf = @pdf
-    footer_top = @footer_height + 14
-    pdf.repeat(:all) do
-      pdf.canvas do
-        pdf.image(StringIO.new(header), at: [0, pdf.bounds.top], width: pdf.bounds.width) if header
-        pdf.image(StringIO.new(footer), at: [0, footer_top], width: pdf.bounds.width) if footer
-      end
-    end
-    pdf.number_pages('<page> / <total>', at: [pdf.bounds.right - 60, -(@footer_height + 22) + 12], width: 60, align: :right, size: 7)
-  end
-
-  def letterhead_height(data)
-    return 30 if data.nil?
-
-    info = Prawn::Images.const_get(data.byteslice(0, 2) == "\xFF\xD8".b ? :JPG : :PNG).new(data)
-    PDF::Core::PageGeometry::SIZES['A4'][0] * info.height / info.width.to_f
-  rescue StandardError
-    30
-  end
-
-  def image_data(attachment, default_path)
-    return attachment.download if attachment.attached?
-    return File.binread(default_path) if @template.content['default_letterhead'] && File.exist?(default_path)
-
-    nil
+    rich(block['text'], align: :justify) if block['text'].present?
   end
 end

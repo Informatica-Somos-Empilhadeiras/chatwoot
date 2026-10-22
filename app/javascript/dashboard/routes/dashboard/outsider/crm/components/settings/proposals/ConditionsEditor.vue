@@ -89,6 +89,7 @@ const change = (index, key, value) => {
             v-tooltip.left="
               t('OUTSIDER_CRM.PROPOSAL_SETTINGS.TEMPLATES.CONDITIONS.UP')
             "
+            type="button"
             icon="i-lucide-arrow-up"
             size="xs"
             variant="ghost"
@@ -100,6 +101,7 @@ const change = (index, key, value) => {
             v-tooltip.left="
               t('OUTSIDER_CRM.PROPOSAL_SETTINGS.TEMPLATES.CONDITIONS.DOWN')
             "
+            type="button"
             icon="i-lucide-arrow-down"
             size="xs"
             variant="ghost"
@@ -111,6 +113,7 @@ const change = (index, key, value) => {
             v-tooltip.left="
               t('OUTSIDER_CRM.PROPOSAL_SETTINGS.TEMPLATES.CONDITIONS.REMOVE')
             "
+            type="button"
             icon="i-lucide-trash-2"
             size="xs"
             variant="ghost"
@@ -122,6 +125,7 @@ const change = (index, key, value) => {
     </div>
     <div class="flex items-center justify-between gap-2">
       <Button
+        type="button"
         icon="i-lucide-plus"
         size="xs"
         variant="ghost"

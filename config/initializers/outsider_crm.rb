@@ -55,11 +55,14 @@ Rails.application.routes.prepend do
                   delete :image, action: :remove_image
                 end
               end
-              resources :proposal_templates, only: [:index, :show, :update] do
+              resources :proposal_templates, only: [:index, :show, :create, :update, :destroy] do
                 member do
                   put 'images/:slot', action: :upload_image
                   delete 'images/:slot', action: :remove_image
+                  post :preview
+                  post :layout_images, action: :upload_layout_image
                 end
+                get 'default_images/:slot', action: :default_image, on: :collection
               end
               resource :proposal_settings, only: [:show] do
                 patch :general
