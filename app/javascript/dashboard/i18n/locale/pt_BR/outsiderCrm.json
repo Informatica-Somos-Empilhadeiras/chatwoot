@@ -8,7 +8,9 @@
       "SETTINGS": "Configurações",
       "TASKS": "Tarefas",
       "REPORTS": "Relatórios",
-      "GOALS": "Metas"
+      "GOALS": "Metas",
+      "PROPOSALS": "Propostas",
+      "CATALOG": "Catálogo"
     },
     "STATES": {
       "NO_ACCESS": "Você ainda não faz parte de nenhuma unidade comercial do CRM. Peça a um administrador para incluir você.",
@@ -79,7 +81,8 @@
         "AUTOMATIONS": "Automações",
         "GOALS": "Metas",
         "COMMISSION": "Comissão",
-        "ACCESS": "Acesso"
+        "ACCESS": "Acesso",
+        "PROPOSALS": "Propostas"
       },
       "UNITS": {
         "TITLE": "Unidades comerciais",
@@ -501,7 +504,8 @@
     "ACTIVITY_TABS": {
       "TASKS": "Tarefas",
       "TIMELINE": "Linha do tempo",
-      "AUDIT": "Auditoria"
+      "AUDIT": "Auditoria",
+      "PROPOSALS": "Propostas"
     },
     "TASKS": {
       "NEW": "Nova tarefa",
@@ -625,7 +629,18 @@
       "CHAIN_FORWARDED": "Repasse em sequência enviou para {unit} ({code})",
       "CHAIN_FAILED": "Repasse em sequência não conseguiu enviar para {unit}",
       "CHAIN_EXHAUSTED": "Repasse em sequência: não há mais unidades para tentar",
-      "CHAIN_NO_OWNER": "Chegou sem responsável: a unidade recebeu o aviso para alguém pegar"
+      "CHAIN_NO_OWNER": "Chegou sem responsável: a unidade recebeu o aviso para alguém pegar",
+      "PROPOSAL": {
+        "CREATED": "{name} criou a proposta {number} ({total})",
+        "LINKED": "{name} ligou a proposta {number} ({total}) a este negócio",
+        "DRAFT": "{name} voltou a proposta {number} para rascunho",
+        "SENT": "{name} marcou a proposta {number} como enviada ({total})",
+        "ACCEPTED": "{name} marcou a proposta {number} como aceita ({total})",
+        "REJECTED": "{name} marcou a proposta {number} como recusada",
+        "CANCELED": "{name} cancelou a proposta {number}",
+        "CHANGED": "{name} mudou a proposta {number}",
+        "OPEN": "Abrir proposta"
+      }
     },
     "AUDIT": {
       "HINT": "Toda alteração do negócio e das tarefas, com quem fez e quando.",
@@ -845,7 +860,8 @@
         "HAS_OPPORTUNITIES": "Não dá para apagar: ainda tem negócios aqui ({count}). Apague ou mova os negócios antes.",
         "USED_BY_RULES": "Não dá para apagar: usado nas regras de automação {names}. Mude ou apague essas regras antes.",
         "HAS_VALUES": "Não dá para apagar: o campo está preenchido em negócios ({count}). Desative o campo para escondê-lo.",
-        "FORWARDED_OUT": "Não dá para apagar: este negócio foi encaminhado para {unit} ({code}). Apague primeiro o {code}, depois este."
+        "FORWARDED_OUT": "Não dá para apagar: este negócio foi encaminhado para {unit} ({code}). Apague primeiro o {code}, depois este.",
+        "USED_IN_PROPOSALS": "Não dá para apagar: o item está em propostas ({count}). Desative o item para tirá-lo das propostas novas."
       }
     },
     "NOTICE": {
@@ -928,6 +944,452 @@
       "THEN": "depois",
       "UPCOMING": "Próxima no repasse",
       "PARALLEL": "Na mesma jornada, aberto direto em outra unidade:"
+    },
+    "CATALOG": {
+      "TITLE": "Catálogo",
+      "DESCRIPTION": "Máquinas e acessórios usados nas propostas.",
+      "SEARCH": "Buscar por nome, código ou marca",
+      "FILTERS": {
+        "ALL": "Todos",
+        "MACHINE": "Máquinas",
+        "ACCESSORY": "Acessórios",
+        "SHOW_INACTIVE": "Mostrar inativos"
+      },
+      "COUNT": "{n} item | {n} itens",
+      "NEW": "Novo item",
+      "EDIT": "Editar item",
+      "CLOSE": "Fechar",
+      "EMPTY": "O catálogo ainda está vazio. Peça ao administrador para cadastrar as máquinas e os acessórios.",
+      "EMPTY_MANAGER": "Cadastre as máquinas e os acessórios que entram nas propostas: foto, principais características, equipamento e preços.",
+      "NO_RESULTS": "Nenhum item encontrado com esses filtros.",
+      "KINDS": {
+        "MACHINE": "Máquina",
+        "ACCESSORY": "Acessório"
+      },
+      "INACTIVE": "Inativo",
+      "SALE": "Venda",
+      "RENTAL": "Locação",
+      "FORM": {
+        "KIND": "Tipo",
+        "NAME": "Nome",
+        "NAME_PLACEHOLDER": "Ex.: Empilhadeira a combustão 3,5 t",
+        "CODE": "Código",
+        "CODE_PLACEHOLDER": "Ex.: CPCD35",
+        "BRAND": "Marca",
+        "BRAND_PLACEHOLDER": "Ex.: Heli",
+        "DESCRIPTION": "Descrição",
+        "DESCRIPTION_PLACEHOLDER": "Anotação interna do catálogo (não sai no PDF)",
+        "SALE_PRICE": "Preço de venda (R$)",
+        "RENTAL_PRICE": "Preço de locação (R$)",
+        "PRICE_PLACEHOLDER": "0,00",
+        "PRICE_INVALID": "Valor inválido. Use, por exemplo, 185.000,00.",
+        "ACTIVE": "Ativo",
+        "ACTIVE_HELP": "Item inativo não aparece para montar novas propostas; as propostas já feitas não mudam."
+      },
+      "SPECS": {
+        "TITLE": "Principais características",
+        "ADD": "Adicionar linha",
+        "EMPTY": "Nenhuma característica cadastrada.",
+        "LABEL_PLACEHOLDER": "Ex.: Capacidade de carga",
+        "VALUE_PLACEHOLDER": "Ex.: 3500 kg",
+        "BOLD": "Negrito",
+        "BOLD_HELP": "Destaca a linha em negrito no PDF da proposta",
+        "HELP": "Linhas da tabela de características da proposta, na ordem em que aparecem. Linha sem nome é descartada."
+      },
+      "FEATURES": {
+        "TITLE": "Equipamento",
+        "ADD": "Adicionar",
+        "EMPTY": "Nenhum item de equipamento cadastrado.",
+        "ADD_PLACEHOLDER": "Ex.: Motor Xinchai C490 Diesel",
+        "HELP": "Digite e tecle Enter. Para adicionar vários de uma vez, cole a lista (um item por linha) e tecle Enter."
+      },
+      "IMAGE": {
+        "TITLE": "Imagem",
+        "DROP": "Clique ou arraste uma imagem aqui",
+        "CHOOSE": "Escolher imagem",
+        "REPLACE": "Trocar imagem",
+        "REMOVE": "Remover imagem",
+        "HELP": "PNG ou JPG. Imagens grandes são reduzidas para 1200 px.",
+        "PENDING": "A mudança na imagem vale quando você salvar.",
+        "INVALID_TYPE": "Use uma imagem PNG ou JPG.",
+        "FAILED": "O item foi salvo, mas a imagem não: {message}"
+      },
+      "MOVE_UP": "Subir",
+      "MOVE_DOWN": "Descer",
+      "REMOVE": "Remover",
+      "SAVED": "\"{name}\" salvo no catálogo.",
+      "DELETED": "\"{name}\" saiu do catálogo.",
+      "DELETE_TITLE": "Apagar item do catálogo",
+      "DELETE_TEXT": "O item \"{name}\" sai do catálogo com a imagem. Só dá para apagar item que não está em nenhuma proposta; se já foi usado, desative. Não tem como desfazer.",
+      "DEACTIVATE_HINT": "Desative o item para tirá-lo das novas propostas. As propostas já feitas continuam iguais.",
+      "DEACTIVATE": "Desativar e salvar"
+    },
+    "PROPOSALS": {
+      "NEW": "Nova proposta",
+      "EMPTY": "Nenhuma proposta encontrada.",
+      "LOAD_MORE": "Carregar mais",
+      "SUMMARY": "{count} propostas · {total}",
+      "VALID_UNTIL_SHORT": "vale até {date}",
+      "STATUS_CHANGED": "Proposta marcada como: {status}",
+      "KIND": {
+        "SALE": "Venda",
+        "RENTAL": "Locação"
+      },
+      "STATUS": {
+        "DRAFT": "Rascunho",
+        "SENT": "Enviada",
+        "ACCEPTED": "Aceita",
+        "REJECTED": "Recusada",
+        "EXPIRED": "Vencida",
+        "CANCELED": "Cancelada"
+      },
+      "ACTIONS": {
+        "SENT": "Marcar como enviada",
+        "ACCEPTED": "Aceita",
+        "REJECTED": "Recusada",
+        "CANCELED": "Cancelar",
+        "DRAFT": "Voltar para rascunho"
+      },
+      "FILTERS": {
+        "SEARCH": "Buscar por número, cliente ou máquina",
+        "ALL_STATUSES": "Todas as situações",
+        "ALL_KINDS": "Venda e locação",
+        "ALL_OWNERS": "Todos os vendedores",
+        "FROM": "De",
+        "TO": "até"
+      },
+      "TABLE": {
+        "NUMBER": "Número",
+        "CUSTOMER": "Cliente",
+        "TITLE": "Título",
+        "TOTAL": "Total",
+        "DATE": "Data",
+        "OWNER": "Vendedor",
+        "STATUS": "Situação"
+      },
+      "PDF": {
+        "VIEW": "Ver PDF",
+        "DOWNLOAD": "Baixar",
+        "TITLE": "{code}"
+      },
+      "DELETE": {
+        "TITLE": "Apagar proposta",
+        "TEXT": "A {code} sai do CRM. Só rascunho nunca enviado pode ser apagado; os outros se cancelam. Não tem como desfazer.",
+        "DONE": "Proposta apagada"
+      },
+      "FORM": {
+        "BACK": "Propostas",
+        "NEW_TITLE": "Nova proposta",
+        "SAVED": "Proposta salva",
+        "DISCARD": "Sair sem salvar as mudanças?",
+        "LOCKED": "Esta proposta já foi decidida e está travada. Para mudar, volte para rascunho.",
+        "READ_ONLY": "Você pode ver esta proposta, mas só o vendedor, quem criou ou um administrador mudam.",
+        "SECTION_PROPOSAL": "Proposta",
+        "SECTION_CUSTOMER": "Dados do cliente",
+        "SECTION_ITEMS": "Itens",
+        "SECTION_CONDITIONS": "Condições",
+        "SECTION_SIGNER": "Assinatura do vendedor",
+        "CONTACT": "Contato",
+        "KIND": "Tipo",
+        "OWNER": "Vendedor",
+        "TITLE": "Título (vai no PDF)",
+        "TITLE_PLACEHOLDER": "Ex.: Empilhadeira 3,5t a diesel",
+        "ISSUED_ON": "Data",
+        "VALID_UNTIL": "Validade",
+        "UNIT": "Unidade (dados da empresa no PDF)",
+        "NO_UNIT": "Dados padrão da empresa",
+        "DEAL": "Negócio",
+        "CUSTOMER_HELP": "Vêm do contato ou da última proposta dele. Mudar aqui não altera o contato no Chatwoot.",
+        "NOTES": "Observações",
+        "NOTES_PLACEHOLDER": "Sai no fim do PDF. Aceita **negrito**."
+      },
+      "CUSTOMER": {
+        "COMPANY": "Empresa / razão social",
+        "DOCUMENT": "CNPJ ou CPF",
+        "STATE_REGISTRATION": "Inscrição estadual",
+        "ADDRESS": "Endereço",
+        "DISTRICT": "Bairro",
+        "CITY": "Cidade",
+        "STATE": "Estado",
+        "ZIP": "CEP",
+        "PHONE": "Telefone",
+        "EMAIL": "E-mail",
+        "ATTENTION": "Aos cuidados de"
+      },
+      "SIGNER": {
+        "NAME": "Nome",
+        "TITLE": "Cargo",
+        "PHONE": "Telefone",
+        "EMAIL": "E-mail"
+      },
+      "ITEMS": {
+        "FREE_ITEM": "Item livre (sem catálogo)",
+        "DESCRIPTION": "Descrição",
+        "QUANTITY": "Qtd.",
+        "UNIT_PRICE": "Valor unitário",
+        "MONTHLY_PRICE": "Valor mensal",
+        "DISCOUNT": "Desconto (R$)",
+        "TOTAL": "Total",
+        "SHOW_DETAILS": "Características e imagem no PDF",
+        "REFRESH": "Atualizar do catálogo",
+        "REFRESH_PENDING": "Vai atualizar do catálogo ao salvar",
+        "MOVE_UP": "Subir",
+        "MOVE_DOWN": "Descer",
+        "REMOVE": "Tirar item",
+        "ADD": "Adicionar item",
+        "EMPTY": "Nenhum item. Adicione uma máquina do catálogo ou um item livre.",
+        "GRAND_TOTAL": "Total da proposta"
+      },
+      "CONDITIONS": {
+        "LABEL": "Título (ex.: Frete)",
+        "TEXT": "Texto da condição",
+        "ADD": "Adicionar condição",
+        "EMPTY": "Nenhuma condição."
+      },
+      "DEAL": {
+        "MODES": {
+          "NONE": "Sem negócio",
+          "EXISTING": "Ligar a um negócio",
+          "CREATE": "Criar negócio com esta proposta"
+        },
+        "CHOOSE": "Escolha o negócio",
+        "UNIT": "Unidade",
+        "PIPELINE": "Pipeline",
+        "OPEN": "Abrir {code}",
+        "NONE_FOR_CONTACT": "Este contato não tem negócio que você veja.",
+        "CREATE_HELP": "O negócio nasce com o valor total desta proposta."
+      },
+      "ERRORS": {
+        "CONTACT": "Escolha o contato.",
+        "TITLE": "Dê um título à proposta.",
+        "COMPANY": "Preencha a empresa do cliente.",
+        "ITEM_DESCRIPTION": "Todo item precisa de descrição.",
+        "ITEM_VALUES": "Confira quantidade, valor e desconto dos itens.",
+        "ITEM_DISCOUNT": "O desconto não pode passar do valor do item.",
+        "DEAL": "Escolha o negócio ou marque \"Sem negócio\".",
+        "DEAL_CREATE": "Escolha a unidade e o pipeline do negócio novo."
+      },
+      "MINI": {
+        "COUNT": "Propostas: {count}",
+        "EMPTY": "Nenhuma proposta.",
+        "NEW_SALE": "Venda",
+        "NEW_RENTAL": "Locação",
+        "CONTACT_TITLE": "Propostas do contato"
+      }
+    },
+    "PROPOSAL_SETTINGS": {
+      "TITLE": "Propostas",
+      "DESCRIPTION": "Numeração, dados da empresa, modelos e o que cada pessoa vê nas propostas. Tudo fica nas configurações da conta, não no código.",
+      "LOAD_FAILED": "Não foi possível carregar as configurações das propostas.",
+      "RETRY": "Tentar de novo",
+      "TABS": {
+        "NUMBERING": "Numeração",
+        "COMPANY": "Dados da empresa",
+        "TEMPLATES": "Modelos",
+        "PEOPLE": "Pessoas"
+      },
+      "INVALID": {
+        "NEXT_NUMBER": "Informe um número inteiro entre 1 e 99.999.999.",
+        "UNIT": "Unidade não encontrada.",
+        "VIEW": "Escolha o que a pessoa vê.",
+        "USER_IDS": "Alguma das pessoas escolhidas não é desta conta."
+      },
+      "NUMBERING": {
+        "DESCRIPTION": "Para continuar a numeração que a empresa já usa, informe o número da próxima proposta. Os seguintes vão em sequência.",
+        "NEXT": "Próximo número",
+        "LAST": "Última proposta: {number}",
+        "NONE": "Nenhuma proposta criada ainda.",
+        "REUSE": "Esse número não é maior que o da última proposta: os próximos podem repetir números já usados.",
+        "SAVED": "Numeração salva."
+      },
+      "COMPANY": {
+        "DESCRIPTION": "Esses dados saem impressos na proposta (confirmação de pedido, dados bancários, e-mail para documentação e cidade da data). Ficam nas configurações da conta, não no código, e podem ser alterados aqui a qualquer momento.",
+        "FOR": "Dados de",
+        "DEFAULT": "Padrão (todas as unidades)",
+        "UNIT_CUSTOM": "{name} (personalizado)",
+        "UNIT_HELP": "Só os campos preenchidos trocam os dados padrão nas propostas desta unidade. Os vazios usam o padrão, mostrado em cinza.",
+        "CLEAR_UNIT": "Usar só os dados padrão",
+        "SAVED": "Dados da empresa salvos.",
+        "FIELDS": {
+          "LEGAL_NAME": "Razão social",
+          "TRADE_NAME": "Nome fantasia",
+          "CNPJ": "CNPJ",
+          "ADDRESS": "Endereço",
+          "CITY": "Cidade",
+          "DOCUMENTS_EMAIL": "E-mail para documentação",
+          "BANK_DETAILS": "Dados bancários"
+        },
+        "HELP": {
+          "LEGAL_NAME": "Na confirmação de pedido e nas partes da locação.",
+          "TRADE_NAME": "Acima do e-mail para documentação.",
+          "CNPJ": "Nas partes da locação.",
+          "ADDRESS": "Uma linha por parte do endereço. Na confirmação de pedido sai em linhas; nos textos, separado por vírgulas.",
+          "CITY": "Usada na linha de data: {example}",
+          "DOCUMENTS_EMAIL": "Para onde o cliente manda a documentação.",
+          "BANK_DETAILS": "Banco, agência, conta e PIX, como devem sair na proposta (uma informação por linha)."
+        }
+      },
+      "TEMPLATES": {
+        "DESCRIPTION": "Cada modelo traz os textos, as condições e o papel timbrado que a proposta nova recebe. Quem faz a proposta ainda pode ajustar tudo nela.",
+        "EMPTY": "Nenhum modelo de proposta ainda. Eles são criados na primeira vez que alguém abre as propostas.",
+        "KINDS": {
+          "SALE": "Venda",
+          "RENTAL": "Locação"
+        },
+        "INACTIVE": "inativo",
+        "INACTIVE_HELP": "Modelo inativo não aparece para escolher em propostas novas.",
+        "NAME": "Nome do modelo",
+        "UNSAVED": "Alterações não salvas",
+        "DISCARD": "Descartar alterações",
+        "SAVED": "Modelo salvo.",
+        "LETTERHEAD": "Papel timbrado",
+        "LETTERHEAD_HELP": "Imagens PNG ou JPEG na largura da folha A4. O editor para posicionar elementos livremente no papel timbrado chega numa próxima entrega.",
+        "IMAGE": {
+          "HEADER": "Cabeçalho",
+          "FOOTER": "Rodapé",
+          "DEFAULT": "Papel timbrado padrão do CRM",
+          "NONE": "Sem imagem",
+          "UPLOAD": "Enviar imagem",
+          "REPLACE": "Trocar imagem",
+          "REMOVE": "Remover",
+          "RESTORE": "Voltar ao padrão"
+        },
+        "IMAGE_INVALID": "Envie uma imagem PNG ou JPEG.",
+        "SHOW": "O que aparece na proposta",
+        "FLAGS": {
+          "SHOW_SPECS": "Especificações técnicas",
+          "SHOW_DISCOUNT": "Desconto nos itens",
+          "SHOW_PARTIES": "Partes (proponente e aceitante)",
+          "SHOW_BANK": "Confirmação de pedido e dados bancários"
+        },
+        "FLAGS_HELP": {
+          "SHOW_SPECS": "Ficha técnica da máquina logo após a abertura.",
+          "SHOW_DISCOUNT": "Coluna de desconto na tabela de itens.",
+          "SHOW_PARTIES": "Bloco PARTES com o texto das partes e o texto de aceite, como na locação.",
+          "SHOW_BANK": "Na última página: confirmação de pedido, dados bancários e e-mail para documentação."
+        },
+        "VALIDITY": "Validade (dias)",
+        "VALIDITY_HELP": "De 0 a 365. Define o vencimento da proposta nova e o campo {'{'}proposta.validade{'}'}.",
+        "STYLE": "Estilo das condições",
+        "STYLE_HELP": "Quadro: nome à esquerda e texto à direita (como a venda). Lista: com marcadores (como a locação).",
+        "STYLES": {
+          "TABLE": "Quadro",
+          "LIST": "Lista"
+        },
+        "TEXTS_TITLE": "Textos",
+        "TEXTS": {
+          "TITLE_PREFIX": "Título",
+          "INTRO": "Abertura",
+          "TOTAL_LABEL": "Rótulo do total",
+          "CONDITIONS_HEADING": "Título das condições",
+          "PARTIES_TEXT": "Texto das partes",
+          "ACCEPTANCE_TEXT": "Texto de aceite",
+          "CLOSING": "Fechamento",
+          "ORDER_HEADING": "Título da confirmação de pedido",
+          "BANK_HEADING": "Título dos dados bancários",
+          "DOCUMENTS_HEADING": "Título da documentação",
+          "SIGNATURE_BOX": "Quadro de aceite do cliente"
+        },
+        "TEXTS_HELP": {
+          "TITLE_PREFIX": "Vem antes do título da proposta. Ex.: PROPOSTA COMERCIAL.",
+          "INTRO": "Primeiro parágrafo, logo após os dados do cliente.",
+          "TOTAL_LABEL": "Ao lado do valor total. Vazio: \"Total:\".",
+          "CONDITIONS_HEADING": "Só no estilo lista, acima das condições.",
+          "PARTIES_TEXT": "Proponente e aceitante. Sai quando as partes estão ligadas.",
+          "ACCEPTANCE_TEXT": "Logo após o texto das partes. Sai quando as partes estão ligadas.",
+          "CLOSING": "Parágrafo final, após as condições.",
+          "ORDER_HEADING": "Acima da razão social e do endereço, na última página.",
+          "BANK_HEADING": "Acima dos dados bancários, na última página.",
+          "DOCUMENTS_HEADING": "Acima do e-mail para documentação, na última página.",
+          "SIGNATURE_BOX": "Texto do quadro onde o cliente assina, na última página."
+        },
+        "CONDITIONS": {
+          "TITLE": "Condições padrão",
+          "HELP": "A proposta nova começa com estas condições. Nome e texto aceitam negrito e campos automáticos; linhas vazias são descartadas ao salvar.",
+          "EMPTY": "Nenhuma condição.",
+          "LABEL": "Nome (ex.: Frete)",
+          "TEXT": "Texto da condição",
+          "ADD": "Adicionar condição",
+          "UP": "Subir",
+          "DOWN": "Descer",
+          "REMOVE": "Remover condição",
+          "COUNT": "{count} de {max}"
+        }
+      },
+      "FIELDS": {
+        "HELP": "Nos textos, use **palavra** para negrito e campos automáticos entre chaves, que o PDF troca pelos dados da proposta (cliente, número, validade, vendedor, empresa, máquina).",
+        "SHOW": "Ver campos",
+        "HIDE": "Esconder campos",
+        "CLICK": "Clique num campo para inseri-lo no texto em edição. Sem texto em edição, ele é copiado. Campo escrito errado aparece como está no PDF.",
+        "COPIED": "{field} copiado.",
+        "GROUPS": {
+          "CLIENTE": "Cliente",
+          "PROPOSTA": "Proposta",
+          "EMPRESA": "Empresa",
+          "MAQUINA": "Máquina",
+          "VENDEDOR": "Vendedor"
+        },
+        "CLIENTE": {
+          "EMPRESA": "Empresa ou nome do cliente",
+          "DOCUMENTO": "CNPJ ou CPF",
+          "IE": "Inscrição estadual",
+          "ENDERECO": "Endereço",
+          "BAIRRO": "Bairro",
+          "CIDADE": "Cidade",
+          "ESTADO": "Estado",
+          "CEP": "CEP",
+          "TELEFONE": "Telefone",
+          "EMAIL": "E-mail",
+          "ATENCAO": "Aos cuidados de",
+          "ENDERECO_COMPLETO": "Endereço completo (rua, bairro, cidade, estado e CEP)"
+        },
+        "PROPOSTA": {
+          "NUMERO": "Número da proposta",
+          "TITULO": "Título da proposta",
+          "VALIDADE": "Validade, ex.: 5 DIAS",
+          "DATA": "Cidade e data, ex.: Goiânia, 21 de Outubro de 2026",
+          "TOTAL": "Valor total, ex.: R$ 68.000,00"
+        },
+        "EMPRESA": {
+          "RAZAO_SOCIAL": "Razão social",
+          "NOME_FANTASIA": "Nome fantasia",
+          "CNPJ": "CNPJ",
+          "ENDERECO": "Endereço em uma linha",
+          "CIDADE": "Cidade",
+          "EMAIL_DOCUMENTOS": "E-mail para documentação"
+        },
+        "MAQUINA": {
+          "NOME": "Nome da máquina principal",
+          "MARCA": "Marca da máquina principal"
+        },
+        "VENDEDOR": {
+          "NOME": "Nome de quem assina",
+          "CARGO": "Cargo",
+          "TELEFONE": "Telefone"
+        }
+      },
+      "PEOPLE": {
+        "DESCRIPTION": "De quem cada pessoa vê as propostas, quem cadastra no catálogo e a assinatura (cargo e telefone abaixo do nome do vendedor na proposta). Administradores sempre veem todas.",
+        "SEARCH": "Buscar pessoa",
+        "EMPTY_SEARCH": "Ninguém encontrado.",
+        "ADMIN": "Administrador",
+        "VIEW": "Vê as propostas de",
+        "ADMIN_VIEW": "Administrador: vê todas",
+        "VIEWS": {
+          "OWN": "Só as próprias",
+          "USERS": "As próprias e as destes agentes…",
+          "ALL": "Todas"
+        },
+        "PICK": "Escolher pessoas",
+        "PICK_HELP": "Escolha ao menos uma pessoa; sem ninguém, vê só as próprias.",
+        "CATALOG": "Cadastra no catálogo",
+        "ADMIN_CATALOG": "Administradores sempre cadastram no catálogo.",
+        "TITLE": "Cargo",
+        "TITLE_PLACEHOLDER": "Ex.: Consultor de vendas",
+        "PHONE": "Telefone",
+        "PHONE_PLACEHOLDER": "Ex.: (62) 99999-0000",
+        "SAVED": "{name}: alterações salvas."
+      }
     }
   }
 }

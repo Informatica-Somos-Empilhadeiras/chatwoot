@@ -8,7 +8,9 @@
       "SETTINGS": "Settings",
       "TASKS": "Tasks",
       "REPORTS": "Reports",
-      "GOALS": "Goals"
+      "GOALS": "Goals",
+      "PROPOSALS": "Proposals",
+      "CATALOG": "Catalog"
     },
     "STATES": {
       "NO_ACCESS": "You are not part of any CRM business unit yet. Ask an administrator to add you.",
@@ -79,7 +81,8 @@
         "AUTOMATIONS": "Automations",
         "GOALS": "Goals",
         "COMMISSION": "Commission",
-        "ACCESS": "Access"
+        "ACCESS": "Access",
+        "PROPOSALS": "Proposals"
       },
       "UNITS": {
         "TITLE": "Business units",
@@ -501,7 +504,8 @@
     "ACTIVITY_TABS": {
       "TASKS": "Tasks",
       "TIMELINE": "Timeline",
-      "AUDIT": "Audit"
+      "AUDIT": "Audit",
+      "PROPOSALS": "Proposals"
     },
     "TASKS": {
       "NEW": "New task",
@@ -625,7 +629,18 @@
       "CHAIN_FORWARDED": "Sequential handoff sent it to {unit} ({code})",
       "CHAIN_FAILED": "Sequential handoff could not send it to {unit}",
       "CHAIN_EXHAUSTED": "Sequential handoff: no units left to try",
-      "CHAIN_NO_OWNER": "Arrived without owner: the unit was notified so someone takes it"
+      "CHAIN_NO_OWNER": "Arrived without owner: the unit was notified so someone takes it",
+      "PROPOSAL": {
+        "CREATED": "{name} created proposal {number} ({total})",
+        "LINKED": "{name} linked proposal {number} ({total}) to this deal",
+        "DRAFT": "{name} moved proposal {number} back to draft",
+        "SENT": "{name} marked proposal {number} as sent ({total})",
+        "ACCEPTED": "{name} marked proposal {number} as accepted ({total})",
+        "REJECTED": "{name} marked proposal {number} as rejected",
+        "CANCELED": "{name} canceled proposal {number}",
+        "CHANGED": "{name} changed proposal {number}",
+        "OPEN": "Open proposal"
+      }
     },
     "AUDIT": {
       "HINT": "Every change to the deal and its tasks, with who and when.",
@@ -845,7 +860,8 @@
         "HAS_OPPORTUNITIES": "Cannot delete: there are still opportunities here ({count}). Delete or move them first.",
         "USED_BY_RULES": "Cannot delete: used by the automation rules {names}. Change or delete those rules first.",
         "HAS_VALUES": "Cannot delete: the field is filled in on opportunities ({count}). Turn the field off to hide it.",
-        "FORWARDED_OUT": "Cannot delete: this opportunity was forwarded to {unit} ({code}). Delete {code} first, then this one."
+        "FORWARDED_OUT": "Cannot delete: this opportunity was forwarded to {unit} ({code}). Delete {code} first, then this one.",
+        "USED_IN_PROPOSALS": "Can't delete: the item is used in proposals ({count}). Deactivate it to keep it out of new proposals."
       }
     },
     "NOTICE": {
@@ -928,6 +944,452 @@
       "THEN": "then",
       "PARALLEL": "In the same journey, opened directly in another unit:",
       "UPCOMING": "Next in the handoff"
+    },
+    "CATALOG": {
+      "TITLE": "Catalog",
+      "DESCRIPTION": "Machines and accessories used in proposals.",
+      "SEARCH": "Search by name, code or brand",
+      "FILTERS": {
+        "ALL": "All",
+        "MACHINE": "Machines",
+        "ACCESSORY": "Accessories",
+        "SHOW_INACTIVE": "Show inactive"
+      },
+      "COUNT": "{n} item | {n} items",
+      "NEW": "New item",
+      "EDIT": "Edit item",
+      "CLOSE": "Close",
+      "EMPTY": "The catalog is still empty. Ask an administrator to add the machines and accessories.",
+      "EMPTY_MANAGER": "Add the machines and accessories used in proposals: photo, main specifications, equipment and prices.",
+      "NO_RESULTS": "No items match these filters.",
+      "KINDS": {
+        "MACHINE": "Machine",
+        "ACCESSORY": "Accessory"
+      },
+      "INACTIVE": "Inactive",
+      "SALE": "Sale",
+      "RENTAL": "Rental",
+      "FORM": {
+        "KIND": "Type",
+        "NAME": "Name",
+        "NAME_PLACEHOLDER": "E.g.: Diesel forklift 3.5 t",
+        "CODE": "Code",
+        "CODE_PLACEHOLDER": "E.g.: CPCD35",
+        "BRAND": "Brand",
+        "BRAND_PLACEHOLDER": "E.g.: Heli",
+        "DESCRIPTION": "Description",
+        "DESCRIPTION_PLACEHOLDER": "Internal catalog note (not printed on the PDF)",
+        "SALE_PRICE": "Sale price (R$)",
+        "RENTAL_PRICE": "Rental price (R$)",
+        "PRICE_PLACEHOLDER": "0,00",
+        "PRICE_INVALID": "Invalid amount. Use, for example, 185.000,00.",
+        "ACTIVE": "Active",
+        "ACTIVE_HELP": "Inactive items can't be added to new proposals; existing proposals don't change."
+      },
+      "SPECS": {
+        "TITLE": "Main specifications",
+        "ADD": "Add row",
+        "EMPTY": "No specifications yet.",
+        "LABEL_PLACEHOLDER": "E.g.: Load capacity",
+        "VALUE_PLACEHOLDER": "E.g.: 3500 kg",
+        "BOLD": "Bold",
+        "BOLD_HELP": "Shows the row in bold in the proposal PDF",
+        "HELP": "Rows of the specifications table in the proposal, in this order. Rows without a name are discarded."
+      },
+      "FEATURES": {
+        "TITLE": "Equipment",
+        "ADD": "Add",
+        "EMPTY": "No equipment items yet.",
+        "ADD_PLACEHOLDER": "E.g.: Xinchai C490 Diesel engine",
+        "HELP": "Type and press Enter. To add several at once, paste the list (one item per line) and press Enter."
+      },
+      "IMAGE": {
+        "TITLE": "Image",
+        "DROP": "Click or drop an image here",
+        "CHOOSE": "Choose image",
+        "REPLACE": "Replace image",
+        "REMOVE": "Remove image",
+        "HELP": "PNG or JPG. Large images are reduced to 1200 px.",
+        "PENDING": "The image change applies when you save.",
+        "INVALID_TYPE": "Use a PNG or JPG image.",
+        "FAILED": "The item was saved, but the image wasn't: {message}"
+      },
+      "MOVE_UP": "Move up",
+      "MOVE_DOWN": "Move down",
+      "REMOVE": "Remove",
+      "SAVED": "\"{name}\" saved to the catalog.",
+      "DELETED": "\"{name}\" removed from the catalog.",
+      "DELETE_TITLE": "Delete catalog item",
+      "DELETE_TEXT": "The item \"{name}\" and its image will be removed from the catalog. Only items not used in any proposal can be deleted; if it was used, deactivate it. This can't be undone.",
+      "DEACTIVATE_HINT": "Deactivate the item to keep it out of new proposals. Existing proposals stay the same.",
+      "DEACTIVATE": "Deactivate and save"
+    },
+    "PROPOSALS": {
+      "NEW": "New proposal",
+      "EMPTY": "No proposals found.",
+      "LOAD_MORE": "Load more",
+      "SUMMARY": "{count} proposals · {total}",
+      "VALID_UNTIL_SHORT": "valid until {date}",
+      "STATUS_CHANGED": "Proposal marked as: {status}",
+      "KIND": {
+        "SALE": "Sale",
+        "RENTAL": "Rental"
+      },
+      "STATUS": {
+        "DRAFT": "Draft",
+        "SENT": "Sent",
+        "ACCEPTED": "Accepted",
+        "REJECTED": "Rejected",
+        "EXPIRED": "Expired",
+        "CANCELED": "Canceled"
+      },
+      "ACTIONS": {
+        "SENT": "Mark as sent",
+        "ACCEPTED": "Accepted",
+        "REJECTED": "Rejected",
+        "CANCELED": "Cancel",
+        "DRAFT": "Back to draft"
+      },
+      "FILTERS": {
+        "SEARCH": "Search by number, customer or machine",
+        "ALL_STATUSES": "All statuses",
+        "ALL_KINDS": "Sale and rental",
+        "ALL_OWNERS": "All sellers",
+        "FROM": "From",
+        "TO": "to"
+      },
+      "TABLE": {
+        "NUMBER": "Number",
+        "CUSTOMER": "Customer",
+        "TITLE": "Title",
+        "TOTAL": "Total",
+        "DATE": "Date",
+        "OWNER": "Seller",
+        "STATUS": "Status"
+      },
+      "PDF": {
+        "VIEW": "View PDF",
+        "DOWNLOAD": "Download",
+        "TITLE": "{code}"
+      },
+      "DELETE": {
+        "TITLE": "Delete proposal",
+        "TEXT": "{code} will be removed from the CRM. Only never-sent drafts can be deleted; others are canceled. This can't be undone.",
+        "DONE": "Proposal deleted"
+      },
+      "FORM": {
+        "BACK": "Proposals",
+        "NEW_TITLE": "New proposal",
+        "SAVED": "Proposal saved",
+        "DISCARD": "Leave without saving your changes?",
+        "LOCKED": "This proposal has been decided and is locked. Move it back to draft to change it.",
+        "READ_ONLY": "You can view this proposal, but only the seller, its creator or an administrator can change it.",
+        "SECTION_PROPOSAL": "Proposal",
+        "SECTION_CUSTOMER": "Customer details",
+        "SECTION_ITEMS": "Items",
+        "SECTION_CONDITIONS": "Conditions",
+        "SECTION_SIGNER": "Seller signature",
+        "CONTACT": "Contact",
+        "KIND": "Type",
+        "OWNER": "Seller",
+        "TITLE": "Title (printed on the PDF)",
+        "TITLE_PLACEHOLDER": "E.g. 3.5t diesel forklift",
+        "ISSUED_ON": "Date",
+        "VALID_UNTIL": "Valid until",
+        "UNIT": "Unit (company details on the PDF)",
+        "NO_UNIT": "Default company details",
+        "DEAL": "Deal",
+        "CUSTOMER_HELP": "Taken from the contact or their last proposal. Changing them here doesn't change the Chatwoot contact.",
+        "NOTES": "Notes",
+        "NOTES_PLACEHOLDER": "Printed at the end of the PDF. Supports **bold**."
+      },
+      "CUSTOMER": {
+        "COMPANY": "Company / legal name",
+        "DOCUMENT": "Tax ID",
+        "STATE_REGISTRATION": "State registration",
+        "ADDRESS": "Address",
+        "DISTRICT": "District",
+        "CITY": "City",
+        "STATE": "State",
+        "ZIP": "ZIP code",
+        "PHONE": "Phone",
+        "EMAIL": "Email",
+        "ATTENTION": "Attention of"
+      },
+      "SIGNER": {
+        "NAME": "Name",
+        "TITLE": "Job title",
+        "PHONE": "Phone",
+        "EMAIL": "Email"
+      },
+      "ITEMS": {
+        "FREE_ITEM": "Free item (not in catalog)",
+        "DESCRIPTION": "Description",
+        "QUANTITY": "Qty",
+        "UNIT_PRICE": "Unit price",
+        "MONTHLY_PRICE": "Monthly price",
+        "DISCOUNT": "Discount",
+        "TOTAL": "Total",
+        "SHOW_DETAILS": "Specs and image on the PDF",
+        "REFRESH": "Refresh from catalog",
+        "REFRESH_PENDING": "Will refresh from catalog on save",
+        "MOVE_UP": "Move up",
+        "MOVE_DOWN": "Move down",
+        "REMOVE": "Remove item",
+        "ADD": "Add item",
+        "EMPTY": "No items. Add a machine from the catalog or a free item.",
+        "GRAND_TOTAL": "Proposal total"
+      },
+      "CONDITIONS": {
+        "LABEL": "Title (e.g. Freight)",
+        "TEXT": "Condition text",
+        "ADD": "Add condition",
+        "EMPTY": "No conditions."
+      },
+      "DEAL": {
+        "MODES": {
+          "NONE": "No deal",
+          "EXISTING": "Link to a deal",
+          "CREATE": "Create a deal with this proposal"
+        },
+        "CHOOSE": "Choose the deal",
+        "UNIT": "Unit",
+        "PIPELINE": "Pipeline",
+        "OPEN": "Open {code}",
+        "NONE_FOR_CONTACT": "This contact has no deal you can see.",
+        "CREATE_HELP": "The deal starts with this proposal's total value."
+      },
+      "ERRORS": {
+        "CONTACT": "Choose the contact.",
+        "TITLE": "Give the proposal a title.",
+        "COMPANY": "Fill in the customer's company.",
+        "ITEM_DESCRIPTION": "Every item needs a description.",
+        "ITEM_VALUES": "Check the items' quantity, price and discount.",
+        "ITEM_DISCOUNT": "The discount can't exceed the item value.",
+        "DEAL": "Choose the deal or pick \"No deal\".",
+        "DEAL_CREATE": "Choose the new deal's unit and pipeline."
+      },
+      "MINI": {
+        "COUNT": "Proposals: {count}",
+        "EMPTY": "No proposals.",
+        "NEW_SALE": "Sale",
+        "NEW_RENTAL": "Rental",
+        "CONTACT_TITLE": "Contact proposals"
+      }
+    },
+    "PROPOSAL_SETTINGS": {
+      "TITLE": "Proposals",
+      "DESCRIPTION": "Numbering, company details, templates and what each person sees in proposals. Everything lives in the account settings, not in the code.",
+      "LOAD_FAILED": "Could not load the proposal settings.",
+      "RETRY": "Try again",
+      "TABS": {
+        "NUMBERING": "Numbering",
+        "COMPANY": "Company details",
+        "TEMPLATES": "Templates",
+        "PEOPLE": "People"
+      },
+      "INVALID": {
+        "NEXT_NUMBER": "Enter a whole number between 1 and 99,999,999.",
+        "UNIT": "Business unit not found.",
+        "VIEW": "Choose what this person sees.",
+        "USER_IDS": "One of the selected people is not in this account."
+      },
+      "NUMBERING": {
+        "DESCRIPTION": "To continue the numbering your company already uses, enter the number of the next proposal. The following ones go in sequence.",
+        "NEXT": "Next number",
+        "LAST": "Last proposal: {number}",
+        "NONE": "No proposals created yet.",
+        "REUSE": "This number is not greater than the last proposal's: upcoming proposals may repeat numbers already used.",
+        "SAVED": "Numbering saved."
+      },
+      "COMPANY": {
+        "DESCRIPTION": "These details are printed on the proposal (order confirmation, bank details, documents e-mail and the city in the date line). They live in the account settings, not in the code, and can be changed here at any time.",
+        "FOR": "Details for",
+        "DEFAULT": "Default (all units)",
+        "UNIT_CUSTOM": "{name} (custom)",
+        "UNIT_HELP": "Only filled fields replace the default details on this unit's proposals. Empty ones use the default, shown in grey.",
+        "CLEAR_UNIT": "Use default details only",
+        "SAVED": "Company details saved.",
+        "FIELDS": {
+          "LEGAL_NAME": "Legal name",
+          "TRADE_NAME": "Trade name",
+          "CNPJ": "CNPJ",
+          "ADDRESS": "Address",
+          "CITY": "City",
+          "DOCUMENTS_EMAIL": "Documents e-mail",
+          "BANK_DETAILS": "Bank details"
+        },
+        "HELP": {
+          "LEGAL_NAME": "In the order confirmation and in the rental parties.",
+          "TRADE_NAME": "Above the documents e-mail.",
+          "CNPJ": "In the rental parties.",
+          "ADDRESS": "One line per address part. Printed in lines in the order confirmation; comma-separated in texts.",
+          "CITY": "Used in the date line: {example}",
+          "DOCUMENTS_EMAIL": "Where the customer sends their documents.",
+          "BANK_DETAILS": "Bank, branch, account and PIX, as they should appear on the proposal (one item per line)."
+        }
+      },
+      "TEMPLATES": {
+        "DESCRIPTION": "Each template holds the texts, conditions and letterhead a new proposal starts with. Whoever writes the proposal can still adjust everything in it.",
+        "EMPTY": "No proposal templates yet. They are created the first time someone opens proposals.",
+        "KINDS": {
+          "SALE": "Sale",
+          "RENTAL": "Rental"
+        },
+        "INACTIVE": "inactive",
+        "INACTIVE_HELP": "Inactive templates are not offered for new proposals.",
+        "NAME": "Template name",
+        "UNSAVED": "Unsaved changes",
+        "DISCARD": "Discard changes",
+        "SAVED": "Template saved.",
+        "LETTERHEAD": "Letterhead",
+        "LETTERHEAD_HELP": "PNG or JPEG images at A4 page width. The editor to freely position elements on the letterhead comes in a later delivery.",
+        "IMAGE": {
+          "HEADER": "Header",
+          "FOOTER": "Footer",
+          "DEFAULT": "CRM default letterhead",
+          "NONE": "No image",
+          "UPLOAD": "Upload image",
+          "REPLACE": "Replace image",
+          "REMOVE": "Remove",
+          "RESTORE": "Back to default"
+        },
+        "IMAGE_INVALID": "Upload a PNG or JPEG image.",
+        "SHOW": "What shows on the proposal",
+        "FLAGS": {
+          "SHOW_SPECS": "Technical specifications",
+          "SHOW_DISCOUNT": "Item discount",
+          "SHOW_PARTIES": "Parties (proposer and acceptor)",
+          "SHOW_BANK": "Order confirmation and bank details"
+        },
+        "FLAGS_HELP": {
+          "SHOW_SPECS": "Machine spec sheet right after the opening.",
+          "SHOW_DISCOUNT": "Discount column in the items table.",
+          "SHOW_PARTIES": "PARTIES block with the parties text and the acceptance text, as in rentals.",
+          "SHOW_BANK": "On the last page: order confirmation, bank details and documents e-mail."
+        },
+        "VALIDITY": "Validity (days)",
+        "VALIDITY_HELP": "From 0 to 365. Sets the new proposal's expiry and the {'{'}proposta.validade{'}'} field.",
+        "STYLE": "Conditions style",
+        "STYLE_HELP": "Table: name on the left and text on the right (like sales). List: bulleted (like rentals).",
+        "STYLES": {
+          "TABLE": "Table",
+          "LIST": "List"
+        },
+        "TEXTS_TITLE": "Texts",
+        "TEXTS": {
+          "TITLE_PREFIX": "Title",
+          "INTRO": "Opening",
+          "TOTAL_LABEL": "Total label",
+          "CONDITIONS_HEADING": "Conditions heading",
+          "PARTIES_TEXT": "Parties text",
+          "ACCEPTANCE_TEXT": "Acceptance text",
+          "CLOSING": "Closing",
+          "ORDER_HEADING": "Order confirmation heading",
+          "BANK_HEADING": "Bank details heading",
+          "DOCUMENTS_HEADING": "Documents heading",
+          "SIGNATURE_BOX": "Customer acceptance box"
+        },
+        "TEXTS_HELP": {
+          "TITLE_PREFIX": "Comes before the proposal title. E.g.: PROPOSTA COMERCIAL.",
+          "INTRO": "First paragraph, right after the customer details.",
+          "TOTAL_LABEL": "Next to the total amount. Empty: \"Total:\".",
+          "CONDITIONS_HEADING": "List style only, above the conditions.",
+          "PARTIES_TEXT": "Proposer and acceptor. Shown when parties are on.",
+          "ACCEPTANCE_TEXT": "Right after the parties text. Shown when parties are on.",
+          "CLOSING": "Final paragraph, after the conditions.",
+          "ORDER_HEADING": "Above the legal name and address, on the last page.",
+          "BANK_HEADING": "Above the bank details, on the last page.",
+          "DOCUMENTS_HEADING": "Above the documents e-mail, on the last page.",
+          "SIGNATURE_BOX": "Text of the box where the customer signs, on the last page."
+        },
+        "CONDITIONS": {
+          "TITLE": "Default conditions",
+          "HELP": "New proposals start with these conditions. Name and text accept bold and automatic fields; empty rows are dropped on save.",
+          "EMPTY": "No conditions.",
+          "LABEL": "Name (e.g. Freight)",
+          "TEXT": "Condition text",
+          "ADD": "Add condition",
+          "UP": "Move up",
+          "DOWN": "Move down",
+          "REMOVE": "Remove condition",
+          "COUNT": "{count} of {max}"
+        }
+      },
+      "FIELDS": {
+        "HELP": "In texts, use **word** for bold and automatic fields in braces, which the PDF replaces with the proposal data (customer, number, validity, seller, company, machine).",
+        "SHOW": "Show fields",
+        "HIDE": "Hide fields",
+        "CLICK": "Click a field to insert it into the text being edited. With no text being edited, it is copied. A misspelled field is printed as is on the PDF.",
+        "COPIED": "{field} copied.",
+        "GROUPS": {
+          "CLIENTE": "Customer",
+          "PROPOSTA": "Proposal",
+          "EMPRESA": "Company",
+          "MAQUINA": "Machine",
+          "VENDEDOR": "Seller"
+        },
+        "CLIENTE": {
+          "EMPRESA": "Customer company or name",
+          "DOCUMENTO": "CNPJ or CPF",
+          "IE": "State registration",
+          "ENDERECO": "Address",
+          "BAIRRO": "District",
+          "CIDADE": "City",
+          "ESTADO": "State",
+          "CEP": "ZIP code",
+          "TELEFONE": "Phone",
+          "EMAIL": "E-mail",
+          "ATENCAO": "Attention of",
+          "ENDERECO_COMPLETO": "Full address (street, district, city, state and ZIP)"
+        },
+        "PROPOSTA": {
+          "NUMERO": "Proposal number",
+          "TITULO": "Proposal title",
+          "VALIDADE": "Validity, e.g. 5 DIAS",
+          "DATA": "City and date, e.g. Goiânia, 21 de Outubro de 2026",
+          "TOTAL": "Total amount, e.g. R$ 68.000,00"
+        },
+        "EMPRESA": {
+          "RAZAO_SOCIAL": "Legal name",
+          "NOME_FANTASIA": "Trade name",
+          "CNPJ": "CNPJ",
+          "ENDERECO": "Address in one line",
+          "CIDADE": "City",
+          "EMAIL_DOCUMENTOS": "Documents e-mail"
+        },
+        "MAQUINA": {
+          "NOME": "Main machine name",
+          "MARCA": "Main machine brand"
+        },
+        "VENDEDOR": {
+          "NOME": "Signer name",
+          "CARGO": "Job title",
+          "TELEFONE": "Phone"
+        }
+      },
+      "PEOPLE": {
+        "DESCRIPTION": "Whose proposals each person sees, who adds to the catalog, and the signature (job title and phone under the seller's name on the proposal). Administrators always see all.",
+        "SEARCH": "Search person",
+        "EMPTY_SEARCH": "No one found.",
+        "ADMIN": "Administrator",
+        "VIEW": "Sees proposals from",
+        "ADMIN_VIEW": "Administrator: sees all",
+        "VIEWS": {
+          "OWN": "Own only",
+          "USERS": "Own and these agents'…",
+          "ALL": "All"
+        },
+        "PICK": "Choose people",
+        "PICK_HELP": "Choose at least one person; with no one, they see only their own.",
+        "CATALOG": "Adds to catalog",
+        "ADMIN_CATALOG": "Administrators can always add to the catalog.",
+        "TITLE": "Job title",
+        "TITLE_PLACEHOLDER": "E.g.: Sales consultant",
+        "PHONE": "Phone",
+        "PHONE_PLACEHOLDER": "E.g.: (62) 99999-0000",
+        "SAVED": "{name}: changes saved."
+      }
     }
   }
 }

@@ -28,6 +28,8 @@ class Outsider::Crm::Opportunity < ApplicationRecord
                              inverse_of: :to_opportunity, dependent: :restrict_with_error
   has_many :tasks, class_name: 'Outsider::Crm::Task', dependent: :destroy
   has_many :activities, class_name: 'Outsider::Crm::Activity', dependent: :destroy
+  # Propostas continuam existindo sem o negócio (a ligação é opcional)
+  has_many :proposals, class_name: 'Outsider::Crm::Proposal', dependent: :nullify
 
   enum :status, { open: 0, won: 1, lost: 2, forwarded: 3 }, validate: true
 

@@ -1,6 +1,6 @@
 source 'https://rubygems.org'
 
-ruby '3.4.4'
+ruby '>= 3.3'
 
 ##-- base gems for rails --##
 gem 'rack-cors', '2.0.0', require: 'rack/cors'
@@ -57,6 +57,10 @@ gem 'aws-sdk-s3', require: false
 gem 'azure-storage-blob', git: 'https://github.com/chatwoot/azure-storage-ruby', branch: 'chatwoot', require: false
 gem 'google-cloud-storage', '>= 1.48.0', require: false
 gem 'image_processing'
+# OUTSIDER: PDF das propostas do CRM (Outsider::Crm::ProposalPdf). matrix: o prawn 2.4 usa e não declara (Ruby >= 3.1)
+gem 'matrix'
+gem 'prawn', '~> 2.4.0'
+gem 'prawn-table', '~> 0.2.2'
 
 ##-- for actionmailbox --##
 gem 'aws-actionmailbox-ses', '~> 0'

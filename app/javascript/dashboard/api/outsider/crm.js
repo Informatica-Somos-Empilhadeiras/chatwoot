@@ -313,6 +313,138 @@ class CrmAPI extends ApiClient {
   updateAgentAccess(userId, enabled) {
     return axios.patch(`${this.url}/agent_accesses/${userId}`, { enabled });
   }
+
+  // ---------- propostas (Entrega 14) ----------
+
+  // catálogo de máquinas e acessórios; params: q, kind (machine|accessory), all (inativos também)
+  getProducts(params) {
+    return axios.get(`${this.url}/products`, { params });
+  }
+
+  createProduct(product) {
+    return axios.post(`${this.url}/products`, { product });
+  }
+
+  updateProduct(id, product) {
+    return axios.patch(`${this.url}/products/${id}`, { product });
+  }
+
+  deleteProduct(id) {
+    return axios.delete(`${this.url}/products/${id}`);
+  }
+
+  uploadProductImage(id, file) {
+    const data = new FormData();
+    data.append('image', file);
+    return axios.put(`${this.url}/products/${id}/image`, data);
+  }
+
+  removeProductImage(id) {
+    return axios.delete(`${this.url}/products/${id}/image`);
+  }
+
+  // params: q, status (draft|sent|accepted|rejected|canceled|expired), kind, owner_id, contact_id,
+  // opportunity_id, from, to, sort (recent|number|value), page
+  getProposals(params) {
+    return axios.get(`${this.url}/proposals`, { params });
+  }
+
+  getProposal(id) {
+    return axios.get(`${this.url}/proposals/${id}`);
+  }
+
+  // dados com que a proposta nova abre: contact_id, opportunity_id, kind
+  getProposalPrefill(params) {
+    return axios.get(`${this.url}/proposals/prefill`, { params });
+  }
+
+  createProposal(proposal) {
+    return axios.post(`${this.url}/proposals`, { proposal });
+  }
+
+  updateProposal(id, proposal) {
+    return axios.patch(`${this.url}/proposals/${id}`, { proposal });
+  }
+
+  updateProposalStatus(id, status) {
+    return axios.patch(`${this.url}/proposals/${id}/status`, { status });
+  }
+
+  deleteProposal(id) {
+    return axios.delete(`${this.url}/proposals/${id}`);
+  }
+
+  // PDF montado na hora, como arquivo (blob) para mostrar ou baixar
+  getProposalPdf(id) {
+    return axios.get(`${this.url}/proposals/${id}/pdf`, {
+      responseType: 'blob',
+    });
+  }
+
+  getProposalTemplates() {
+    return axios.get(`${this.url}/proposal_templates`);
+  }
+
+  updateProposalTemplate(id, proposalTemplate) {
+    return axios.patch(`${this.url}/proposal_templates/${id}`, {
+      proposal_template: proposalTemplate,
+    });
+  }
+
+  // slot: header | footer (papel timbrado)
+  uploadProposalTemplateImage(id, slot, file) {
+    const data = new FormData();
+    data.append('image', file);
+    return axios.put(
+      `${this.url}/proposal_templates/${id}/images/${slot}`,
+      data
+    );
+  }
+
+  removeProposalTemplateImage(id, slot) {
+    return axios.delete(`${this.url}/proposal_templates/${id}/images/${slot}`);
+  }
+
+  // Configurações > Propostas (só administrador)
+  getProposalSettings() {
+    return axios.get(`${this.url}/proposal_settings`);
+  }
+
+  updateProposalGeneral(nextNumber) {
+    return axios.patch(`${this.url}/proposal_settings/general`, {
+      next_number: nextNumber,
+    });
+  }
+
+  // unitId vazio: dados padrão da empresa
+  updateProposalCompany(company, unitId) {
+    return axios.patch(`${this.url}/proposal_settings/company`, {
+      company,
+      unit_id: unitId || undefined,
+    });
+  }
+
+  // access: { view: own|users|all, user_ids, catalog }
+  updateProposalAccess(userId, access) {
+    return axios.patch(`${this.url}/proposal_settings/access/${userId}`, {
+      access,
+    });
+  }
+
+  updateProposalSignatureOf(userId, signature) {
+    return axios.patch(`${this.url}/proposal_settings/signatures/${userId}`, {
+      signature,
+    });
+  }
+
+  // a própria assinatura (cargo e telefone que saem na proposta)
+  getMyProposalSignature() {
+    return axios.get(`${this.url}/proposal_signature`);
+  }
+
+  updateMyProposalSignature(signature) {
+    return axios.patch(`${this.url}/proposal_signature`, { signature });
+  }
 }
 
 export default new CrmAPI();

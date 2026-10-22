@@ -15,6 +15,8 @@ import TasksPanel from '../components/TasksPanel.vue';
 import CrmSettingsPanel from '../components/settings/CrmSettingsPanel.vue';
 import ReportsPanel from '../components/reports/ReportsPanel.vue';
 import GoalsPanel from '../components/goals/GoalsPanel.vue';
+import ProposalsPanel from '../components/proposals/ProposalsPanel.vue';
+import CatalogPanel from '../components/catalog/CatalogPanel.vue';
 import { errorMessage } from '../helpers';
 import { crmSections } from '../sections';
 import {
@@ -162,6 +164,15 @@ onMounted(async () => {
               v-else-if="activeTab === 'tasks'"
               :access="access"
               :pipelines="pipelines"
+            />
+            <ProposalsPanel
+              v-else-if="activeTab === 'proposals'"
+              :access="access"
+              :pipelines="pipelines"
+            />
+            <CatalogPanel
+              v-else-if="activeTab === 'catalog'"
+              :access="access"
             />
             <GoalsPanel v-else-if="activeTab === 'goals'" :access="access" />
             <ReportsPanel

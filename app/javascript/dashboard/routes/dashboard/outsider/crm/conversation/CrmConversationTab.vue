@@ -20,6 +20,7 @@ import LostReasonDialog from '../components/LostReasonDialog.vue';
 import ForwardDialog from '../components/ForwardDialog.vue';
 import JourneyHistory from '../components/JourneyHistory.vue';
 import OpportunityActivity from '../activity/OpportunityActivity.vue';
+import ProposalMiniList from '../components/proposals/ProposalMiniList.vue';
 import StageProgress from './StageProgress.vue';
 import {
   crmState,
@@ -565,7 +566,21 @@ onMounted(async () => {
           <OpportunityActivity
             :opportunity="primary"
             :conversation-display-id="chat.id"
+            :show-proposals="false"
             @changed="afterChange"
+          />
+        </section>
+
+        <section
+          v-if="!summary.group"
+          class="flex flex-col gap-2 p-4 rounded-xl bg-n-solid-2 outline outline-1 -outline-offset-1 outline-n-container"
+        >
+          <span class="text-sm font-medium text-n-slate-12">
+            {{ t('OUTSIDER_CRM.PROPOSALS.MINI.CONTACT_TITLE') }}
+          </span>
+          <ProposalMiniList
+            :contact-id="contact.id"
+            :new-opportunity-id="primary?.status === 'open' ? primary.id : null"
           />
         </section>
 

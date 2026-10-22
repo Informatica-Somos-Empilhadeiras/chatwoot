@@ -165,7 +165,8 @@ class Outsider::Crm::Access
       manager: manager?,
       all_deals: all_deals?,
       enabled: true,
-      units: visible_units.map { |unit| { id: unit.id, name: unit.name, role: role_in(unit.id) } }
+      units: visible_units.map { |unit| { id: unit.id, name: unit.name, role: role_in(unit.id) } },
+      proposals: Outsider::Crm::ProposalAccess.new(account_user).as_json
     }
   end
 

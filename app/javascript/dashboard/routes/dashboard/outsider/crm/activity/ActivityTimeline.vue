@@ -12,7 +12,13 @@ import Icon from 'dashboard/components-next/icon/Icon.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 import LoadError from './LoadError.vue';
 import { crmState } from '../crmStore';
-import { errorMessage, formatDateTime, isHandedOff } from '../helpers';
+import {
+  errorMessage,
+  formatDateTime,
+  formatMoney,
+  isHandedOff,
+} from '../helpers';
+import { CRM_ROUTE } from '../sections';
 
 const props = defineProps({
   opportunity: { type: Object, required: true },
@@ -37,7 +43,19 @@ const KIND_ICONS = {
   received: 'i-lucide-inbox',
   message_linked: 'i-lucide-message-square',
   automation: 'i-lucide-bot',
+  proposal: 'i-lucide-file-text',
 };
+
+// proposta ligada ao negócio: criada, ligada depois, enviada, aceita, recusada, cancelada
+const PROPOSAL_ACTIONS = [
+  'created',
+  'linked',
+  'draft',
+  'sent',
+  'accepted',
+  'rejected',
+  'canceled',
+];
 
 // texto de cada regra de automação (metadata.rule)
 const AUTOMATION_TEXTS = {
@@ -232,6 +250,15 @@ const describe = item => {
         unit: meta.from_unit || '—',
         code: meta.from_code || '',
       });
+    case 'proposal':
+      return t(
+        `OUTSIDER_CRM.TIMELINE.PROPOSAL.${
+          PROPOSAL_ACTIONS.includes(meta.action)
+            ? meta.action.toUpperCase()
+            : 'CHANGED'
+        }`,
+        { name, number: meta.number, total: formatMoney(meta.total_cents) }
+      );
     case 'automation':
       if (meta.rule === 'chain') return chainText(meta);
       return t(
@@ -396,9 +423,26 @@ onMounted(() => load());
             {{ detail(item) }}
           </span>
           <div
-            v-if="item.metadata?.conversation_display_id || item.can_delete"
+            v-if="
+              item.metadata?.conversation_display_id ||
+              item.can_delete ||
+              item.kind === 'proposal'
+            "
             class="flex items-center gap-3 text-xs"
           >
+            <router-link
+              v-if="item.kind === 'proposal' && item.metadata?.proposal_id"
+              :to="
+                accountScopedRoute(
+                  CRM_ROUTE,
+                  { tab: 'proposals' },
+                  { proposta: item.metadata.proposal_id }
+                )
+              "
+              class="text-n-blue-11 hover:underline"
+            >
+              {{ t('OUTSIDER_CRM.TIMELINE.PROPOSAL.OPEN') }}
+            </router-link>
             <router-link
               v-if="item.metadata?.conversation_display_id"
               :to="

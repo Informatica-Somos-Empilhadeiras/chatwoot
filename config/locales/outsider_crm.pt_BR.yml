@@ -16,6 +16,9 @@ pt_BR:
       rule_name: Repasse em sequência
     claim:
       taken: Outra pessoa pegou este negócio antes de você
+    proposals:
+      locked: Proposta aceita, recusada ou cancelada não muda mais. Volte para rascunho para alterar
+      invalid_image: Envie uma imagem PNG ou JPG
     forward:
       task_title: "Contatar cliente encaminhado por %{unit}"
       errors:
@@ -85,6 +88,41 @@ pt_BR:
         body: Nota
         kind: Tipo
         opportunity: Negócio
+      outsider/crm/product:
+        name: Nome
+        code: Código
+        brand: Marca
+        kind: Tipo
+        description: Descrição
+        specs: Características
+        features: Equipamento
+        image: Imagem
+        sale_price_cents: Valor de venda
+        rental_price_cents: Valor de locação
+      outsider/crm/proposal:
+        title: Título da proposta
+        contact: Contato
+        opportunity: Negócio
+        business_unit: Unidade
+        template: Modelo
+        owner: Responsável
+        issued_on: Data
+        customer: Dados do cliente
+        conditions: Condições
+        signer: Assinatura
+        notes: Observações
+        items: Itens
+      outsider/crm/proposal_item:
+        description: Descrição do item
+        quantity: Quantidade
+        unit_price_cents: Valor unitário
+        discount_cents: Desconto
+        product: Produto
+      outsider/crm/proposal_template:
+        name: Nome do modelo
+        content: Textos do modelo
+        header_image: Cabeçalho
+        footer_image: Rodapé
     errors:
       models:
         outsider/crm/opportunity:
@@ -211,6 +249,62 @@ pt_BR:
           in: "deve estar entre %{count}"
           not_an_integer: "deve ser um número inteiro"
           too_long: "é muito longo (máximo de %{count} caracteres)"
+          required: "é obrigatório"
+          restrict_dependent_destroy:
+            has_many: "Não é possível apagar porque existem %{record} ligados"
+        outsider/crm/product:
+          blank: "não pode ficar em branco"
+          invalid: "não é válido"
+          taken: "já está em uso"
+          inclusion: "não é uma opção válida"
+          not_a_number: "não é um número"
+          greater_than_or_equal_to: "deve ser maior ou igual a %{count}"
+          greater_than: "deve ser maior que %{count}"
+          less_than: "deve ser menor que %{count}"
+          not_an_integer: "deve ser um número inteiro"
+          too_long: "é muito longo (máximo de %{count})"
+          required: "é obrigatório"
+          restrict_dependent_destroy:
+            has_many: "Não é possível apagar porque existem %{record} ligados"
+        outsider/crm/proposal:
+          blank: "não pode ficar em branco"
+          invalid: "não é válido"
+          taken: "já está em uso"
+          inclusion: "não é uma opção válida"
+          not_a_number: "não é um número"
+          greater_than_or_equal_to: "deve ser maior ou igual a %{count}"
+          greater_than: "deve ser maior que %{count}"
+          less_than: "deve ser menor que %{count}"
+          not_an_integer: "deve ser um número inteiro"
+          too_long: "é muito longo (máximo de %{count})"
+          required: "é obrigatório"
+          restrict_dependent_destroy:
+            has_many: "Não é possível apagar porque existem %{record} ligados"
+        outsider/crm/proposal_item:
+          blank: "não pode ficar em branco"
+          invalid: "não é válido"
+          taken: "já está em uso"
+          inclusion: "não é uma opção válida"
+          not_a_number: "não é um número"
+          greater_than_or_equal_to: "deve ser maior ou igual a %{count}"
+          greater_than: "deve ser maior que %{count}"
+          less_than: "deve ser menor que %{count}"
+          not_an_integer: "deve ser um número inteiro"
+          too_long: "é muito longo (máximo de %{count})"
+          required: "é obrigatório"
+          restrict_dependent_destroy:
+            has_many: "Não é possível apagar porque existem %{record} ligados"
+        outsider/crm/proposal_template:
+          blank: "não pode ficar em branco"
+          invalid: "não é válido"
+          taken: "já está em uso"
+          inclusion: "não é uma opção válida"
+          not_a_number: "não é um número"
+          greater_than_or_equal_to: "deve ser maior ou igual a %{count}"
+          greater_than: "deve ser maior que %{count}"
+          less_than: "deve ser menor que %{count}"
+          not_an_integer: "deve ser um número inteiro"
+          too_long: "é muito longo (máximo de %{count})"
           required: "é obrigatório"
           restrict_dependent_destroy:
             has_many: "Não é possível apagar porque existem %{record} ligados"

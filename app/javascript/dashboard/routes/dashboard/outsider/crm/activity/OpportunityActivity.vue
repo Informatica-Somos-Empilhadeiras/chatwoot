@@ -1,17 +1,20 @@
 <script setup>
-// OUTSIDER: abas Tarefas, Linha do tempo e Auditoria de um negócio. Usado na aba CRM da conversa
-// e no painel do negócio na tela do CRM.
+// OUTSIDER: abas Tarefas, Linha do tempo, Auditoria e Propostas de um negócio. Usado na aba CRM da
+// conversa e no painel do negócio na tela do CRM (na conversa, as propostas do contato ficam num
+// bloco próprio, então a aba Propostas sai: showProposals false).
 import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
 import TaskList from './TaskList.vue';
 import ActivityTimeline from './ActivityTimeline.vue';
 import AuditList from './AuditList.vue';
+import ProposalMiniList from '../components/proposals/ProposalMiniList.vue';
 import { bumpActivity } from '../crmStore';
 
 const props = defineProps({
   opportunity: { type: Object, required: true },
   conversationDisplayId: { type: Number, default: null },
+  showProposals: { type: Boolean, default: true },
 });
 
 const emit = defineEmits(['changed']);
@@ -38,6 +41,15 @@ const tabs = computed(() => [
     icon: 'i-lucide-shield-check',
     label: t('OUTSIDER_CRM.ACTIVITY_TABS.AUDIT'),
   },
+  ...(props.showProposals
+    ? [
+        {
+          key: 'proposals',
+          icon: 'i-lucide-file-text',
+          label: t('OUTSIDER_CRM.ACTIVITY_TABS.PROPOSALS'),
+        },
+      ]
+    : []),
 ]);
 
 // tarefa criada ou concluída também entra na linha do tempo
@@ -87,6 +99,11 @@ const onTasksChanged = () => {
       :opportunity="opportunity"
       :conversation-display-id="conversationDisplayId"
       @changed="emit('changed')"
+    />
+    <ProposalMiniList
+      v-else-if="active === 'proposals'"
+      :contact-id="opportunity.contact.id"
+      :opportunity-id="opportunity.id"
     />
     <AuditList v-else :opportunity="opportunity" />
   </div>

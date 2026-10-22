@@ -48,6 +48,33 @@ Rails.application.routes.prepend do
                 resource :forward, controller: 'opportunity_forwards', only: [:show, :create]
               end
               resources :tasks, only: [:index]
+              # propostas (Outsider::Crm::Proposal), catálogo e modelos
+              resources :products, only: [:index, :show, :create, :update, :destroy] do
+                member do
+                  put :image, action: :upload_image
+                  delete :image, action: :remove_image
+                end
+              end
+              resources :proposal_templates, only: [:index, :show, :update] do
+                member do
+                  put 'images/:slot', action: :upload_image
+                  delete 'images/:slot', action: :remove_image
+                end
+              end
+              resource :proposal_settings, only: [:show] do
+                patch :general
+                patch :company
+                patch 'access/:user_id', action: :access
+                patch 'signatures/:user_id', action: :signature
+              end
+              resource :proposal_signature, only: [:show, :update]
+              resources :proposals, only: [:index, :show, :create, :update, :destroy] do
+                collection { get :prefill }
+                member do
+                  get :pdf
+                  patch :status
+                end
+              end
             end
           end
         end

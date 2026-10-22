@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_10_19_190000) do
+ActiveRecord::Schema[7.1].define(version: 2026_10_21_220000) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -446,8 +446,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_19_190000) do
     t.integer "status", default: 0, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["account_id"], name: "index_captain_faq_suggestions_on_account_id"
     t.index ["account_id", "assistant_id", "status", "language"], name: "idx_cap_faq_suggestions_on_account_assistant_status_language"
+    t.index ["account_id"], name: "index_captain_faq_suggestions_on_account_id"
     t.index ["assistant_id"], name: "index_captain_faq_suggestions_on_assistant_id"
     t.index ["embedding"], name: "vector_idx_captain_faq_suggestions_embedding", opclass: :vector_cosine_ops, using: :ivfflat
   end
@@ -988,10 +988,10 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_19_190000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "inbox_id"
-    t.index ["account_id", "name", "template_type", "locale"], name: "index_email_templates_on_account_scope", unique: true, where: "(account_id IS NOT NULL) AND (inbox_id IS NULL)"
+    t.index ["account_id", "name", "template_type", "locale"], name: "index_email_templates_on_account_scope", unique: true, where: "((account_id IS NOT NULL) AND (inbox_id IS NULL))"
     t.index ["inbox_id", "name", "template_type", "locale"], name: "index_email_templates_on_inbox_scope", unique: true, where: "(inbox_id IS NOT NULL)"
     t.index ["inbox_id"], name: "index_email_templates_on_inbox_id"
-    t.index ["name", "template_type", "locale"], name: "index_email_templates_on_installation_scope", unique: true, where: "(account_id IS NULL) AND (inbox_id IS NULL)"
+    t.index ["name", "template_type", "locale"], name: "index_email_templates_on_installation_scope", unique: true, where: "((account_id IS NULL) AND (inbox_id IS NULL))"
   end
 
   create_table "folders", force: :cascade do |t|
@@ -1382,6 +1382,107 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_19_190000) do
     t.index ["business_unit_id"], name: "index_outsider_crm_pipelines_on_business_unit_id"
   end
 
+  create_table "outsider_crm_products", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.integer "kind", default: 0, null: false
+    t.string "name", null: false
+    t.string "code"
+    t.string "brand"
+    t.text "description"
+    t.jsonb "specs", default: [], null: false
+    t.jsonb "features", default: [], null: false
+    t.bigint "sale_price_cents", default: 0, null: false
+    t.bigint "rental_price_cents", default: 0, null: false
+    t.boolean "active", default: true, null: false
+    t.bigint "created_by_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_outsider_crm_products_on_account_id"
+  end
+
+  create_table "outsider_crm_proposal_items", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.bigint "proposal_id", null: false
+    t.bigint "product_id"
+    t.integer "position", default: 0, null: false
+    t.string "description", null: false
+    t.decimal "quantity", precision: 12, scale: 2, default: "1.0", null: false
+    t.bigint "unit_price_cents", default: 0, null: false
+    t.bigint "discount_cents", default: 0, null: false
+    t.bigint "total_cents", default: 0, null: false
+    t.boolean "show_details", default: true, null: false
+    t.jsonb "details", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_outsider_crm_proposal_items_on_account_id"
+    t.index ["product_id"], name: "index_outsider_crm_proposal_items_on_product_id"
+    t.index ["proposal_id"], name: "index_outsider_crm_proposal_items_on_proposal_id"
+  end
+
+  create_table "outsider_crm_proposal_sends", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.bigint "proposal_id", null: false
+    t.integer "channel", default: 0, null: false
+    t.bigint "contact_id"
+    t.string "recipient"
+    t.bigint "conversation_id"
+    t.bigint "message_id"
+    t.bigint "user_id"
+    t.integer "status", default: 0, null: false
+    t.string "error"
+    t.string "digest"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_outsider_crm_proposal_sends_on_account_id"
+    t.index ["proposal_id"], name: "index_outsider_crm_proposal_sends_on_proposal_id"
+  end
+
+  create_table "outsider_crm_proposal_templates", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.string "name", null: false
+    t.integer "kind", default: 0, null: false
+    t.jsonb "content", default: {}, null: false
+    t.jsonb "layout", default: {}, null: false
+    t.boolean "active", default: true, null: false
+    t.integer "position", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_outsider_crm_proposal_templates_on_account_id"
+  end
+
+  create_table "outsider_crm_proposals", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.integer "number", null: false
+    t.integer "kind", default: 0, null: false
+    t.integer "status", default: 0, null: false
+    t.string "title", null: false
+    t.bigint "contact_id", null: false
+    t.bigint "opportunity_id"
+    t.bigint "business_unit_id"
+    t.bigint "template_id", null: false
+    t.bigint "owner_id"
+    t.bigint "created_by_id"
+    t.date "issued_on", null: false
+    t.date "valid_until"
+    t.jsonb "customer", default: {}, null: false
+    t.jsonb "conditions", default: [], null: false
+    t.jsonb "signer", default: {}, null: false
+    t.text "notes"
+    t.bigint "total_cents", default: 0, null: false
+    t.string "currency", default: "BRL", null: false
+    t.datetime "sent_at"
+    t.datetime "decided_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id", "contact_id"], name: "idx_ocrm_proposals_on_account_contact"
+    t.index ["account_id", "number"], name: "idx_ocrm_proposals_on_account_number", unique: true
+    t.index ["account_id", "owner_id"], name: "idx_ocrm_proposals_on_account_owner"
+    t.index ["account_id"], name: "index_outsider_crm_proposals_on_account_id"
+    t.index ["business_unit_id"], name: "index_outsider_crm_proposals_on_business_unit_id"
+    t.index ["opportunity_id"], name: "index_outsider_crm_proposals_on_opportunity_id"
+    t.index ["template_id"], name: "index_outsider_crm_proposals_on_template_id"
+  end
+
   create_table "outsider_crm_stages", force: :cascade do |t|
     t.bigint "account_id", null: false
     t.bigint "pipeline_id", null: false
@@ -1451,7 +1552,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_19_190000) do
     t.text "header_text"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.jsonb "config", default: {"allowed_locales" => ["en"]}
+    t.jsonb "config", default: {"allowed_locales"=>["en"]}
     t.boolean "archived", default: false
     t.bigint "channel_web_widget_id"
     t.jsonb "ssl_settings", default: {}, null: false
@@ -1701,6 +1802,12 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_19_190000) do
   add_foreign_key "outsider_crm_opportunities", "outsider_crm_pipelines", column: "pipeline_id"
   add_foreign_key "outsider_crm_opportunities", "outsider_crm_stages", column: "stage_id"
   add_foreign_key "outsider_crm_pipelines", "outsider_crm_business_units", column: "business_unit_id"
+  add_foreign_key "outsider_crm_proposal_items", "outsider_crm_products", column: "product_id"
+  add_foreign_key "outsider_crm_proposal_items", "outsider_crm_proposals", column: "proposal_id", on_delete: :cascade
+  add_foreign_key "outsider_crm_proposal_sends", "outsider_crm_proposals", column: "proposal_id", on_delete: :cascade
+  add_foreign_key "outsider_crm_proposals", "outsider_crm_business_units", column: "business_unit_id", on_delete: :nullify
+  add_foreign_key "outsider_crm_proposals", "outsider_crm_opportunities", column: "opportunity_id", on_delete: :nullify
+  add_foreign_key "outsider_crm_proposals", "outsider_crm_proposal_templates", column: "template_id"
   add_foreign_key "outsider_crm_stages", "outsider_crm_pipelines", column: "pipeline_id"
   add_foreign_key "outsider_crm_tasks", "outsider_crm_opportunities", column: "opportunity_id"
   add_foreign_key "user_sessions", "users"

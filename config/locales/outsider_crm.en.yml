@@ -16,6 +16,9 @@ en:
       rule_name: Sequential handoff
     claim:
       taken: Someone else took this deal before you
+    proposals:
+      locked: An accepted, rejected or canceled proposal can no longer change. Move it back to draft to edit
+      invalid_image: Upload a PNG or JPG image
     forward:
       task_title: "Contact the customer forwarded by %{unit}"
       errors:
