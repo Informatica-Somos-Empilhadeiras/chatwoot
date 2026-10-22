@@ -49,6 +49,51 @@
       },
       "SENT_ONE": "Contact sent. It shows in the conversation once WhatsApp confirms.",
       "SENT_MANY": "Contacts sent. They show in the conversation once WhatsApp confirms."
+    },
+    "LOCATION_CARD": {
+      "TITLE": "Location",
+      "OPEN_MAPS": "Open in Maps",
+      "WAZE": "Waze"
+    },
+    "SEND_LOCATION": {
+      "BUTTON": "Location",
+      "TOOLTIP": "Send location (WhatsApp map pin)",
+      "TITLE": "Send location",
+      "DESCRIPTION": "The customer gets a map pin that opens in Maps or Waze.",
+      "SEARCH": "Search an address or place, or paste a Google Maps link",
+      "SEARCHING": "Searching...",
+      "NO_RESULTS": "No address found. Try adding the city or district.",
+      "CURRENT": "Use my current location",
+      "SAVED_TITLE": "Saved addresses",
+      "SAVED_EMPTY": "No saved addresses yet. Ask an administrator to save the company ones.",
+      "SAVED_EMPTY_ADMIN": "No saved addresses yet. Search an address and tap \"Save to addresses\".",
+      "HINT": "Tip: you can paste coordinates (-16.68, -49.25) or a Google Maps link.",
+      "NAME": "Name the customer sees",
+      "NAME_PLACEHOLDER": "E.g. Head office",
+      "ADDRESS": "Address",
+      "SAVE": "Save to addresses",
+      "ALREADY_SAVED": "Already saved",
+      "SAVED": "Address saved.",
+      "CHANGE": "Change",
+      "REMOVE": "Remove from saved",
+      "REMOVE_CONFIRM": "Remove this address from the saved list?",
+      "SEND": "Send location",
+      "SENT": "Location sent. It shows up in the conversation once WhatsApp confirms.",
+      "ERRORS": {
+        "DEFAULT": "Could not send the location.",
+        "SEARCH": "Could not search right now. Try again.",
+        "GEOCODER_UNAVAILABLE": "The address search did not answer. Try again or paste the coordinates.",
+        "GEOLOCATION": "The browser did not share your location.",
+        "NOT_EVOLUTION": "This inbox is not WhatsApp through Evolution.",
+        "NO_RECIPIENT": "The conversation has no WhatsApp number.",
+        "INVALID_COORDINATES": "The place coordinates are not valid.",
+        "MISSING_NAME": "Give the address a name to save it.",
+        "TOO_MANY_LOCATIONS": "Limit of 50 saved addresses. Remove one first.",
+        "NOT_CONFIGURED": "The Evolution key (EVOLUTION_API_KEY) is missing on the server.",
+        "EVOLUTION_UNAUTHORIZED": "Evolution refused the key (EVOLUTION_API_KEY).",
+        "EVOLUTION_TIMEOUT": "Evolution took too long. Check the conversation before trying again.",
+        "EVOLUTION_UNREACHABLE": "Could not reach Evolution."
+      }
     }
   }
 }

@@ -46,6 +46,8 @@ import { isMediaAlbum } from 'dashboard/helper/outsider/mediaAlbum'; // OUTSIDER
 import ContactCardBubble from './outsider/ContactCard.vue'; // OUTSIDER: cartão de contato
 import { isContactCardMessage } from 'dashboard/helper/outsider/contactCard'; // OUTSIDER
 import { isVoiceWithHeader } from 'dashboard/helper/outsider/voiceNote'; // OUTSIDER: áudio de grupo
+import LocationCardBubble from './outsider/LocationCard.vue'; // OUTSIDER: localização
+import { isLocationMessage } from 'dashboard/helper/outsider/location'; // OUTSIDER
 
 import MessageError from './MessageError.vue';
 import ContextMenu from 'dashboard/modules/conversations/components/MessageContextMenu.vue';
@@ -298,6 +300,7 @@ const shouldShowAvatar = computed(() => {
 const componentToRender = computed(() => {
   if (isMediaAlbum(props)) return MediaAlbumBubble; // OUTSIDER: álbum
   if (isContactCardMessage(props)) return ContactCardBubble; // OUTSIDER: cartão de contato
+  if (isLocationMessage(props)) return LocationCardBubble; // OUTSIDER: localização
   if (isVoiceWithHeader(props)) return AudioBubble; // OUTSIDER: áudio de grupo
 
   if (props.isEmailInbox && !props.private) {

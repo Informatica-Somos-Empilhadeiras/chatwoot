@@ -78,6 +78,11 @@ class Outsider::EvolutionApi
     post("/message/sendContact/#{@instance}", { number: number, contact: contact })
   end
 
+  # Envia uma localização (o pin de mapa do WhatsApp). Devolve a mensagem enviada, com key.id
+  def send_location(number:, latitude:, longitude:, name: nil, address: nil)
+    post("/message/sendLocation/#{@instance}", { number: number, latitude: latitude, longitude: longitude, name: name, address: address }.compact)
+  end
+
   # Devolve [{ 'exists', 'jid', 'number' }]
   def whatsapp_numbers(numbers)
     post("/chat/whatsappNumbers/#{@instance}", { numbers: numbers })

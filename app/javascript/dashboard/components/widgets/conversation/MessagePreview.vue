@@ -2,6 +2,7 @@
 import { MESSAGE_TYPE } from 'widget/helpers/constants';
 import { useMessageFormatter } from 'shared/composables/useMessageFormatter';
 import { ATTACHMENT_ICONS } from 'shared/constants/messages';
+import { locationPreview } from 'dashboard/helper/outsider/location'; // OUTSIDER: localização
 
 export default {
   name: 'MessagePreview',
@@ -41,6 +42,14 @@ export default {
     parsedLastMessage() {
       const { content_attributes: contentAttributes } = this.message;
       const { email: { subject } = {} } = contentAttributes || {};
+      // OUTSIDER: localização do WhatsApp com o nome do lugar
+      const location = locationPreview({
+        content: this.message.content,
+        contentAttributes: {
+          outsiderLocation: contentAttributes?.outsider_location,
+        },
+      });
+      if (location) return location;
       return this.getPlainText(subject || this.message.content);
     },
     lastMessageFileType() {

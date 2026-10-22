@@ -49,6 +49,51 @@
       },
       "SENT_ONE": "Contato enviado. Ele aparece na conversa assim que o WhatsApp confirmar.",
       "SENT_MANY": "Contatos enviados. Eles aparecem na conversa assim que o WhatsApp confirmar."
+    },
+    "LOCATION_CARD": {
+      "TITLE": "Localização",
+      "OPEN_MAPS": "Abrir no Maps",
+      "WAZE": "Waze"
+    },
+    "SEND_LOCATION": {
+      "BUTTON": "Localização",
+      "TOOLTIP": "Enviar localização (pin de mapa do WhatsApp)",
+      "TITLE": "Enviar localização",
+      "DESCRIPTION": "O cliente recebe o pin no mapa e abre direto no Maps ou no Waze.",
+      "SEARCH": "Buscar endereço ou lugar, ou colar um link do Google Maps",
+      "SEARCHING": "Buscando...",
+      "NO_RESULTS": "Nenhum endereço encontrado. Tente com cidade ou bairro.",
+      "CURRENT": "Usar minha localização atual",
+      "SAVED_TITLE": "Endereços salvos",
+      "SAVED_EMPTY": "Nenhum endereço salvo ainda. Peça para um administrador salvar os da empresa.",
+      "SAVED_EMPTY_ADMIN": "Nenhum endereço salvo ainda. Busque um endereço e toque em \"Salvar nos endereços\".",
+      "HINT": "Dica: dá para colar coordenadas (-16.68, -49.25) ou um link do Google Maps.",
+      "NAME": "Nome que o cliente vê",
+      "NAME_PLACEHOLDER": "Ex.: Somos Empilhadeiras - Matriz",
+      "ADDRESS": "Endereço",
+      "SAVE": "Salvar nos endereços",
+      "ALREADY_SAVED": "Já está salvo",
+      "SAVED": "Endereço salvo.",
+      "CHANGE": "Trocar",
+      "REMOVE": "Apagar dos salvos",
+      "REMOVE_CONFIRM": "Apagar este endereço dos salvos?",
+      "SEND": "Enviar localização",
+      "SENT": "Localização enviada. Ela aparece na conversa assim que o WhatsApp confirmar.",
+      "ERRORS": {
+        "DEFAULT": "Não foi possível enviar a localização.",
+        "SEARCH": "Não foi possível buscar agora. Tente de novo.",
+        "GEOCODER_UNAVAILABLE": "A busca de endereços não respondeu. Tente de novo ou cole as coordenadas.",
+        "GEOLOCATION": "O navegador não liberou a sua localização.",
+        "NOT_EVOLUTION": "Esta caixa não é do WhatsApp pela Evolution.",
+        "NO_RECIPIENT": "A conversa não tem número de WhatsApp.",
+        "INVALID_COORDINATES": "As coordenadas do local não são válidas.",
+        "MISSING_NAME": "Dê um nome para salvar o endereço.",
+        "TOO_MANY_LOCATIONS": "Limite de 50 endereços salvos. Apague algum antes.",
+        "NOT_CONFIGURED": "Falta a chave da Evolution (EVOLUTION_API_KEY) no servidor.",
+        "EVOLUTION_UNAUTHORIZED": "A Evolution recusou a chave (EVOLUTION_API_KEY).",
+        "EVOLUTION_TIMEOUT": "A Evolution demorou para responder. Veja na conversa se a localização saiu antes de tentar de novo.",
+        "EVOLUTION_UNREACHABLE": "Não foi possível falar com a Evolution."
+      }
     }
   }
 }

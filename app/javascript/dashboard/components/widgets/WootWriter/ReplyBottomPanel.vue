@@ -12,10 +12,17 @@ import { INBOX_TYPES } from 'dashboard/helper/inbox';
 import { mapGetters } from 'vuex';
 import NextButton from 'dashboard/components-next/button/Button.vue';
 import SendContactButton from './outsider/SendContactButton.vue'; // OUTSIDER: enviar contato
+import SendLocationButton from './outsider/SendLocationButton.vue'; // OUTSIDER: enviar localização
 
 export default {
   name: 'ReplyBottomPanel',
-  components: { NextButton, FileUpload, VideoCallButton, SendContactButton },
+  components: {
+    NextButton,
+    FileUpload,
+    VideoCallButton,
+    SendContactButton,
+    SendLocationButton, // OUTSIDER
+  },
   mixins: [inboxMixin],
   props: {
     isNote: {
@@ -318,6 +325,12 @@ export default {
       </FileUpload>
       <!-- OUTSIDER: enviar contato (cartão do WhatsApp, só caixas da Evolution) -->
       <SendContactButton
+        v-if="!isOnPrivateNote && !isEditorDisabled"
+        :inbox="inbox"
+        :conversation-id="conversationId"
+      />
+      <!-- OUTSIDER: enviar localização (pin de mapa do WhatsApp, só caixas da Evolution) -->
+      <SendLocationButton
         v-if="!isOnPrivateNote && !isEditorDisabled"
         :inbox="inbox"
         :conversation-id="conversationId"
