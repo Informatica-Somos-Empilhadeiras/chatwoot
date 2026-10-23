@@ -11,6 +11,8 @@ class Outsider::EvolutionApi
   WEBHOOK_PATTERN = %r{\A(?<base_url>https?://.+?)/chatwoot/webhook/(?<instance>[^/?#]+)}
   # abaixo dos 15 s do rack-timeout da produção, para a página mostrar "a Evolution demorou" e não um erro genérico
   DEFAULT_TIMEOUT = 12
+  # reiniciar e reconectar só voltam depois de abrir a conexão de novo com o WhatsApp (roda no Sidekiq)
+  RECONNECT_TIMEOUT = 45
   MAX_PAGES = 20
 
   class Error < StandardError
@@ -35,13 +37,31 @@ class Outsider::EvolutionApi
     { gte: since.iso8601, lte: 1.hour.from_now.iso8601 }
   end
 
+  attr_reader :instance
+
   def initialize(inbox)
     match = inbox.channel.webhook_url.to_s.match(WEBHOOK_PATTERN)
     @base_url = (ENV['EVOLUTION_API_URL'].presence || match[:base_url]).chomp('/')
     @instance = match[:instance]
   end
 
-  # Devolve a instância com ownerJid, profileName e profilePicUrl
+  # 'open', 'connecting' ou 'close'; nil quando a instância não está carregada na Evolution
+  def connection_state
+    request { self.class.get("#{@base_url}/instance/connectionState/#{@instance}", headers: headers, timeout: DEFAULT_TIMEOUT) }
+      .dig('instance', 'state')
+  end
+
+  # Fecha a conexão com o WhatsApp e abre outra; o WhatsApp entrega de novo o que ficou pendente
+  def restart
+    post("/instance/restart/#{@instance}", {}, timeout: RECONNECT_TIMEOUT)
+  end
+
+  # Abre de novo uma instância fechada que ainda tem a sessão (sem QR code)
+  def connect
+    request { self.class.get("#{@base_url}/instance/connect/#{@instance}", headers: headers, timeout: RECONNECT_TIMEOUT) }
+  end
+
+  # Devolve a instância com ownerJid, profileName, profilePicUrl e disconnectionReasonCode
   def instance_info
     request do
       self.class.get("#{@base_url}/instance/fetchInstances", query: { instanceName: CGI.unescape(@instance) },

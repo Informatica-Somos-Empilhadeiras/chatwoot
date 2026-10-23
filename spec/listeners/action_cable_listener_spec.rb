@@ -49,7 +49,8 @@ describe ActionCableListener do
       # HACK: to reload conversation inbox members
       expect(conversation.inbox.reload.inbox_members.count).to eq(1)
 
-      expect(ActionCableBroadcastJob).to receive(:perform_later).with(
+      # OUTSIDER: message.created sai na hora, sem fila (Outsider::InstantBroadcast)
+      expect(ActionCableBroadcastJob).to receive(:perform_now).with(
         a_collection_containing_exactly(
           agent.pubsub_token, admin.pubsub_token, conversation.contact_inbox.pubsub_token
         ),
@@ -67,7 +68,7 @@ describe ActionCableListener do
       create(:contact_inbox, contact: conversation.contact, inbox: inbox)
       verified_contact_inbox = create(:contact_inbox, contact: conversation.contact, inbox: inbox, hmac_verified: true)
 
-      expect(ActionCableBroadcastJob).to receive(:perform_later).with(
+      expect(ActionCableBroadcastJob).to receive(:perform_now).with(
         a_collection_containing_exactly(
           agent.pubsub_token, admin.pubsub_token, conversation.contact_inbox.pubsub_token, verified_contact_inbox.pubsub_token
         ),
