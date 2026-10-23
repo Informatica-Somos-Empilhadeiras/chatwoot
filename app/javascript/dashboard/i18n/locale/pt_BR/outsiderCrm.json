@@ -1073,7 +1073,12 @@
         "PRICE_PLACEHOLDER": "0,00",
         "PRICE_INVALID": "Valor inválido. Use, por exemplo, 185.000,00.",
         "ACTIVE": "Ativo",
-        "ACTIVE_HELP": "Item inativo não aparece para montar novas propostas; as propostas já feitas não mudam."
+        "ACTIVE_HELP": "Item inativo não aparece para montar novas propostas; as propostas já feitas não mudam.",
+        "AVAILABLE": "Quantidade disponível",
+        "RESERVED": "Quantidade reservada",
+        "QUANTITY_PLACEHOLDER": "Em branco = não controla",
+        "QUANTITY_HELP": "Opcional. Aparece no catálogo e na escolha do item da proposta.",
+        "QUANTITY_INVALID": "Use um número inteiro, de 0 para cima."
       },
       "SPECS": {
         "TITLE": "Principais características",
@@ -1111,7 +1116,17 @@
       "DELETE_TITLE": "Apagar item do catálogo",
       "DELETE_TEXT": "O item \"{name}\" sai do catálogo com a imagem. Só dá para apagar item que não está em nenhuma proposta; se já foi usado, desative. Não tem como desfazer.",
       "DEACTIVATE_HINT": "Desative o item para tirá-lo das novas propostas. As propostas já feitas continuam iguais.",
-      "DEACTIVATE": "Desativar e salvar"
+      "DEACTIVATE": "Desativar e salvar",
+      "STOCK": {
+        "AVAILABLE": "Disponível: {count}",
+        "RESERVED": "Reservado: {count}"
+      },
+      "PROPOSE": {
+        "AFTER_SAVE": "Criar uma proposta com este item ao salvar",
+        "AFTER_SAVE_HELP": "Opcional. Depois de salvar, abre uma proposta nova já com o item; falta só escolher o contato.",
+        "SAVE_AND_CREATE": "Salvar e criar proposta",
+        "CREATE": "Criar proposta"
+      }
     },
     "PROPOSALS": {
       "NEW": "Nova proposta",
@@ -1238,7 +1253,8 @@
           "ALL": "Desconto em todos os itens",
           "ALL_APPLY": "Aplicar",
           "ALL_HELP": "Calcula o desconto de cada item pelo percentual. Dá para ajustar item por item depois."
-        }
+        },
+        "PRODUCT_WITH_STOCK": "{name} ({count} disp.)"
       },
       "CONDITIONS": {
         "LABEL": "Título (ex.: Frete)",
@@ -1317,6 +1333,23 @@
           "FILE": "PDF enviado",
           "CONVERSATION": "Abrir conversa"
         }
+      },
+      "PAYMENT": {
+        "LABEL": "Condição de pagamento",
+        "CHOOSE": "Escolher opção",
+        "CUSTOM": "Texto da linha (personalizado)",
+        "HELP": "Troca o texto da linha de pagamento. Dá para ajustar o texto na própria linha."
+      },
+      "LOOKUP": {
+        "BUTTON": "Buscar dados pelo CNPJ",
+        "NEEDS_CNPJ": "Digite o CNPJ do cliente para buscar os dados.",
+        "FILLED": "Dados preenchidos pela Receita Federal e pelo cadastro de contribuintes (SEFAZ/SINTEGRA). Confira antes de salvar.",
+        "FILLED_WITHOUT_IE": "Dados preenchidos pela Receita Federal. Inscrição estadual não encontrada: preencha se o cliente tiver.",
+        "ERRORS": {
+          "INVALID_DOCUMENT": "CNPJ inválido. Confira os números.",
+          "NOT_FOUND": "CNPJ não encontrado na Receita Federal.",
+          "UNAVAILABLE": "Os serviços de consulta não responderam agora (eles aceitam poucas consultas por minuto). Tente de novo em instantes."
+        }
       }
     },
     "PROPOSAL_SETTINGS": {
@@ -1329,7 +1362,8 @@
         "COMPANY": "Dados da empresa",
         "TEMPLATES": "Modelos",
         "PEOPLE": "Pessoas",
-        "SENDING": "Envio e aceite"
+        "SENDING": "Envio e aceite",
+        "PAYMENT": "Pagamento"
       },
       "INVALID": {
         "NEXT_NUMBER": "Informe um número inteiro entre 1 e 99.999.999.",
@@ -1720,6 +1754,13 @@
         "LEAVE_TITLE": "Sair sem salvar?",
         "LEAVE_TEXT": "As alterações deste modelo ainda não foram salvas e serão perdidas.",
         "LEAVE": "Sair sem salvar"
+      },
+      "PAYMENT": {
+        "DESCRIPTION": "Opções de condição de pagamento que aparecem na proposta. A opção escolhida vira o texto da linha de pagamento; mudar esta lista não muda as propostas já feitas.",
+        "EMPTY": "Nenhuma opção. Sem opções, a proposta não mostra a escolha da condição de pagamento.",
+        "PLACEHOLDER": "Ex.: 50% + 03X NO BOLETO",
+        "ADD": "Adicionar opção",
+        "SAVED": "Opções de pagamento salvas."
       }
     }
   }

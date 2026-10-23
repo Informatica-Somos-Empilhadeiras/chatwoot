@@ -12,10 +12,12 @@ import Select from 'dashboard/components-next/select/Select.vue';
 import Checkbox from 'dashboard/components-next/checkbox/Checkbox.vue';
 import { centsToInput, formatMoney } from '../../helpers';
 import {
+  blankItem,
   discountPercent,
   itemTotal,
   parsePercent,
   percentDiscount,
+  productItemFields,
 } from './proposalHelpers';
 
 const props = defineProps({
@@ -31,36 +33,28 @@ const PERCENT_PLACEHOLDER = '0';
 
 const { t } = useI18n();
 
+// com quantidade disponível anotada no catálogo, ela aparece na escolha do item
+const productLabel = product => {
+  const name = [product.code, product.name].filter(Boolean).join(' · ');
+  return product.available_quantity == null
+    ? name
+    : t('OUTSIDER_CRM.PROPOSALS.ITEMS.PRODUCT_WITH_STOCK', {
+        name,
+        count: product.available_quantity,
+      });
+};
+
 const productOptions = computed(() => [
   { value: '', label: t('OUTSIDER_CRM.PROPOSALS.ITEMS.FREE_ITEM') },
   ...props.products.map(product => ({
     value: product.id,
-    label: [product.code, product.name].filter(Boolean).join(' · '),
+    label: productLabel(product),
   })),
 ]);
 
 const total = computed(() =>
   items.value.reduce((sum, item) => sum + (itemTotal(item) || 0), 0)
 );
-
-const suggestedPrice = product =>
-  props.kind === 'rental'
-    ? product.rental_price_cents
-    : product.sale_price_cents;
-
-const blankItem = () => ({
-  id: null,
-  product_id: '',
-  description: '',
-  quantity: '1',
-  unit_price: '',
-  discount: '',
-  discount_mode: 'money',
-  discount_percent: '',
-  show_details: false,
-  refresh_details: false,
-  image_url: null,
-});
 
 const add = () => {
   items.value = [...items.value, blankItem()];
@@ -81,12 +75,7 @@ const move = (index, step) => {
 const chooseProduct = (item, productId) => {
   item.product_id = productId;
   const product = props.products.find(entry => entry.id === productId);
-  if (!product) return;
-  item.description = product.name;
-  item.unit_price = centsToInput(suggestedPrice(product));
-  item.show_details = product.kind === 'machine';
-  item.image_url = product.image_url;
-  item.refresh_details = true;
+  if (product) Object.assign(item, productItemFields(product, props.kind));
 };
 
 const isPercent = item => item.discount_mode === 'percent';

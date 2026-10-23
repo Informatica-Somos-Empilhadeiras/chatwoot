@@ -1,6 +1,6 @@
 // OUTSIDER: utilidades das propostas do CRM (situações, cores, contas dos itens e links).
 import { CRM_ROUTE } from '../../sections';
-import { parseMoney } from '../../helpers';
+import { centsToInput, normalize, parseMoney } from '../../helpers';
 
 // "vencida" não é gravada: rascunho ou enviada com a validade passada (display_status)
 export const PROPOSAL_STATUSES = [
@@ -93,6 +93,51 @@ export const discountPercent = item => {
   }
   const value = Math.round(((discount * 100) / gross) * 10000) / 100;
   return String(value).replace('.', ',');
+};
+
+// item novo da proposta, ainda livre (sem produto do catálogo)
+export const blankItem = () => ({
+  id: null,
+  product_id: '',
+  description: '',
+  quantity: '1',
+  unit_price: '',
+  discount: '',
+  discount_mode: 'money',
+  discount_percent: '',
+  show_details: false,
+  refresh_details: false,
+  image_url: null,
+});
+
+// valor sugerido do item do catálogo para o tipo da proposta
+export const catalogPrice = (product, kind) =>
+  kind === 'rental' ? product.rental_price_cents : product.sale_price_cents;
+
+// campos do item da proposta que vêm do catálogo: descrição, valor sugerido e características (máquina)
+export const productItemFields = (product, kind) => ({
+  product_id: product.id,
+  description: product.name,
+  unit_price: centsToInput(catalogPrice(product, kind)),
+  show_details: product.kind === 'machine',
+  image_url: product.image_url,
+  refresh_details: true,
+});
+
+// linha "pagamento" das condições (ex.: "Pagamento com recurso próprio", "Condição de pagamento"),
+// sem contar "Atraso de pagamento"; -1 quando não tem
+export const paymentConditionIndex = conditions =>
+  conditions.findIndex(condition => {
+    const label = normalize(condition.label);
+    return label.includes('pagamento') && !label.includes('atraso');
+  });
+
+// CNPJ com 14 caracteres, inclusive o alfanumérico (letras nas 12 primeiras posições)
+export const lookupDocument = text => {
+  const value = String(text || '')
+    .toUpperCase()
+    .replace(/[^0-9A-Z]/g, '');
+  return /^[0-9A-Z]{12}[0-9]{2}$/.test(value) ? value : '';
 };
 
 export const proposalRoute = (accountScopedRoute, query) =>

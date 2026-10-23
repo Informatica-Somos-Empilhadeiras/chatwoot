@@ -1,5 +1,6 @@
 # OUTSIDER: Configurações > Propostas (só administrador): próximo número, dados da empresa (padrão e por
-# unidade), quem vê as propostas de quem, quem mexe no catálogo e a assinatura de cada pessoa.
+# unidade), quem vê as propostas de quem, quem mexe no catálogo, a assinatura de cada pessoa e as opções
+# de condição de pagamento.
 class Api::V1::Accounts::Outsider::Crm::ProposalSettingsController < Api::V1::Accounts::Outsider::Crm::ProposalBaseController
   before_action :ensure_crm_admin
 
@@ -12,7 +13,8 @@ class Api::V1::Accounts::Outsider::Crm::ProposalSettingsController < Api::V1::Ac
   end
 
   def general
-    proposal_config.update_general(params.permit(:next_number, :win_deal_on_accept, *::Outsider::Crm::ProposalConfig::SEND_TEXT_KEYS))
+    proposal_config.update_general(params.permit(:next_number, :win_deal_on_accept, *::Outsider::Crm::ProposalConfig::SEND_TEXT_KEYS,
+                                                 payment_options: []))
     render json: payload
   end
 
@@ -49,6 +51,7 @@ class Api::V1::Accounts::Outsider::Crm::ProposalSettingsController < Api::V1::Ac
       next_number: settings.next_number,
       win_deal_on_accept: settings.win_deal_on_accept?,
       send_texts: settings.send_texts,
+      payment_options: settings.payment_options,
       default_send_texts: ::Outsider::Crm::ProposalConfig::SEND_TEXT_KEYS.index_with { |key| I18n.t("outsider_crm.proposals.send.defaults.#{key}") },
       last_number: crm_scope(::Outsider::Crm::Proposal).maximum(:number),
       company: settings.company,

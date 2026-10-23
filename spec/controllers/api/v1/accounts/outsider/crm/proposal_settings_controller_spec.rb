@@ -32,6 +32,19 @@ RSpec.describe 'Outsider CRM proposal settings', type: :request do
     expect(response).to have_http_status(:unprocessable_entity)
   end
 
+  it 'starts with the default payment options, which only the admin changes and everyone reads' do
+    expect(call(:get, seller, 'proposal_payment_options')['payload']).to eq(['A VISTA', '30% + 06X NO BOLETO', 'CARTÃO DE CRÉDITO'])
+
+    body = call(:patch, admin, 'proposal_settings/general', payment_options: ['  A VISTA ', '50% +  03X NO BOLETO', '', 'A VISTA'])
+    expect(body['payment_options']).to eq(['A VISTA', '50% + 03X NO BOLETO'])
+    expect(call(:get, seller, 'proposal_payment_options')['payload']).to eq(['A VISTA', '50% + 03X NO BOLETO'])
+
+    expect(call(:patch, admin, 'proposal_settings/general', payment_options: [])['payment_options']).to eq([])
+
+    call(:patch, admin, 'proposal_settings/general', payment_options: ['x' * 201])
+    expect(response).to have_http_status(:unprocessable_entity)
+  end
+
   it 'keeps company data per unit on top of the default' do
     call(:patch, admin, 'proposal_settings/company', company: { legal_name: 'Matriz Ltda', city: 'Goiânia' })
     body = call(:patch, admin, 'proposal_settings/company', unit_id: unit.id, company: { city: 'Brasília', legal_name: '' })

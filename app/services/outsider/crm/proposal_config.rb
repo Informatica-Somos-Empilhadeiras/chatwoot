@@ -3,6 +3,8 @@
 # vendedor e quem vê as propostas de quem. Ficam fora do código porque o repositório é público.
 #
 # win_deal_on_accept: proposta aceita marca o negócio ligado como ganho (desligado de início)
+# payment_options: opções de condição de pagamento que a proposta oferece (Entrega 19); até o
+# administrador mudar, valem as DEFAULT_PAYMENT_OPTIONS
 # send_message / email_subject: textos que abrem a janela de envio, com {contato}, {numero}, {titulo},
 # {vendedor} e {empresa}; em branco vale o padrão do idioma da conta.
 #
@@ -15,6 +17,9 @@ class Outsider::Crm::ProposalConfig
   VIEWS = %w[own users all].freeze
   SEND_TEXT_KEYS = %w[send_message email_subject].freeze
   SEND_TEXT_LIMIT = 2_000
+  DEFAULT_PAYMENT_OPTIONS = ['A VISTA', '30% + 06X NO BOLETO', 'CARTÃO DE CRÉDITO'].freeze
+  MAX_PAYMENT_OPTIONS = 30
+  PAYMENT_OPTION_LIMIT = 200
 
   class Invalid < StandardError; end
 
@@ -59,6 +64,10 @@ class Outsider::Crm::ProposalConfig
     to_h['win_deal_on_accept'] == true
   end
 
+  def payment_options
+    to_h.fetch('payment_options', DEFAULT_PAYMENT_OPTIONS)
+  end
+
   # Textos gravados (podem estar em branco) e os padrão, para a tela mostrar o que vale
   def send_texts
     SEND_TEXT_KEYS.index_with { |key| to_h[key].to_s }
@@ -68,13 +77,14 @@ class Outsider::Crm::ProposalConfig
     SEND_TEXT_KEYS.index_with { |key| to_h[key].presence || I18n.t("outsider_crm.proposals.send.defaults.#{key}") }
   end
 
-  # Só muda o que vier: próximo número, ganhar o negócio ao aceitar e os textos do envio
+  # Só muda o que vier: próximo número, ganhar o negócio ao aceitar, os textos do envio e as opções de pagamento
   def update_general(values)
     values = values.to_h.stringify_keys
     changes = {}
     changes['next_number'] = valid_number(values['next_number']) if values.key?('next_number')
     changes['win_deal_on_accept'] = ActiveModel::Type::Boolean.new.cast(values['win_deal_on_accept']) || false if values.key?('win_deal_on_accept')
     SEND_TEXT_KEYS.each { |key| changes[key] = values[key].to_s.strip[0, SEND_TEXT_LIMIT] if values.key?(key) }
+    changes['payment_options'] = valid_payment_options(values['payment_options']) if values.key?('payment_options')
     write { |data| data.merge(changes) }
   end
 
@@ -112,6 +122,14 @@ class Outsider::Crm::ProposalConfig
     raise Invalid, 'next_number' unless number&.between?(1, 99_999_999)
 
     number
+  end
+
+  # Sem linhas vazias nem repetidas, na ordem em que vieram
+  def valid_payment_options(list)
+    options = Array(list).map { |option| option.to_s.squish }.compact_blank.uniq
+    raise Invalid, 'payment_options' if options.size > MAX_PAYMENT_OPTIONS || options.any? { |option| option.length > PAYMENT_OPTION_LIMIT }
+
+    options
   end
 
   # Pessoas da conta, sem a própria

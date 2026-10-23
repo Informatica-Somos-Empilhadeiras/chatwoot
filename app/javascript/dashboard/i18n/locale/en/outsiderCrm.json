@@ -1073,7 +1073,12 @@
         "PRICE_PLACEHOLDER": "0,00",
         "PRICE_INVALID": "Invalid amount. Use, for example, 185.000,00.",
         "ACTIVE": "Active",
-        "ACTIVE_HELP": "Inactive items can't be added to new proposals; existing proposals don't change."
+        "ACTIVE_HELP": "Inactive items can't be added to new proposals; existing proposals don't change.",
+        "AVAILABLE": "Available quantity",
+        "RESERVED": "Reserved quantity",
+        "QUANTITY_PLACEHOLDER": "Blank = not tracked",
+        "QUANTITY_HELP": "Optional. Shown in the catalog and when picking the proposal item.",
+        "QUANTITY_INVALID": "Use a whole number, 0 or more."
       },
       "SPECS": {
         "TITLE": "Main specifications",
@@ -1111,7 +1116,17 @@
       "DELETE_TITLE": "Delete catalog item",
       "DELETE_TEXT": "The item \"{name}\" and its image will be removed from the catalog. Only items not used in any proposal can be deleted; if it was used, deactivate it. This can't be undone.",
       "DEACTIVATE_HINT": "Deactivate the item to keep it out of new proposals. Existing proposals stay the same.",
-      "DEACTIVATE": "Deactivate and save"
+      "DEACTIVATE": "Deactivate and save",
+      "STOCK": {
+        "AVAILABLE": "Available: {count}",
+        "RESERVED": "Reserved: {count}"
+      },
+      "PROPOSE": {
+        "AFTER_SAVE": "Create a proposal with this item on save",
+        "AFTER_SAVE_HELP": "Optional. After saving, opens a new proposal with the item; you only need to pick the contact.",
+        "SAVE_AND_CREATE": "Save and create proposal",
+        "CREATE": "Create proposal"
+      }
     },
     "PROPOSALS": {
       "NEW": "New proposal",
@@ -1238,7 +1253,8 @@
           "ALL": "Discount on every item",
           "ALL_APPLY": "Apply",
           "ALL_HELP": "Computes each item discount from the percentage. You can still adjust item by item."
-        }
+        },
+        "PRODUCT_WITH_STOCK": "{name} ({count} available)"
       },
       "CONDITIONS": {
         "LABEL": "Title (e.g. Freight)",
@@ -1317,6 +1333,23 @@
           "FILE": "Sent PDF",
           "CONVERSATION": "Open conversation"
         }
+      },
+      "PAYMENT": {
+        "LABEL": "Payment terms",
+        "CHOOSE": "Choose an option",
+        "CUSTOM": "Row text (custom)",
+        "HELP": "Replaces the text of the payment row. You can still adjust the text in the row."
+      },
+      "LOOKUP": {
+        "BUTTON": "Look up by CNPJ",
+        "NEEDS_CNPJ": "Type the customer's CNPJ to look up the details.",
+        "FILLED": "Filled from the Federal Revenue and the taxpayer registry (SEFAZ/SINTEGRA). Check before saving.",
+        "FILLED_WITHOUT_IE": "Filled from the Federal Revenue. State registration not found: fill it in if the customer has one.",
+        "ERRORS": {
+          "INVALID_DOCUMENT": "Invalid CNPJ. Check the digits.",
+          "NOT_FOUND": "CNPJ not found at the Federal Revenue.",
+          "UNAVAILABLE": "The lookup services didn't answer right now (they allow only a few lookups per minute). Try again in a moment."
+        }
       }
     },
     "PROPOSAL_SETTINGS": {
@@ -1329,7 +1362,8 @@
         "COMPANY": "Company details",
         "TEMPLATES": "Templates",
         "PEOPLE": "People",
-        "SENDING": "Sending and acceptance"
+        "SENDING": "Sending and acceptance",
+        "PAYMENT": "Payment"
       },
       "INVALID": {
         "NEXT_NUMBER": "Enter a whole number between 1 and 99,999,999.",
@@ -1720,6 +1754,13 @@
         "LEAVE_TITLE": "Leave without saving?",
         "LEAVE_TEXT": "This template has unsaved changes that will be lost.",
         "LEAVE": "Leave without saving"
+      },
+      "PAYMENT": {
+        "DESCRIPTION": "Payment terms offered in the proposal. The chosen option becomes the text of the payment row; changing this list does not change existing proposals.",
+        "EMPTY": "No options. Without options, the proposal does not show the payment terms picker.",
+        "PLACEHOLDER": "E.g.: 50% + 03X BANK SLIP",
+        "ADD": "Add option",
+        "SAVED": "Payment options saved."
       }
     }
   }

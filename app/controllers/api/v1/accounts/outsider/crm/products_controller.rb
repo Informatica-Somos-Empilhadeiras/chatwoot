@@ -67,7 +67,7 @@ class Api::V1::Accounts::Outsider::Crm::ProductsController < Api::V1::Accounts::
   end
 
   def product_params
-    params.require(:product).permit(:kind, :name, :code, :brand, :description, :sale_price_cents, :rental_price_cents, :active,
-                                    specs: [:label, :value, :bold], features: [])
+    params.require(:product).permit(:kind, :name, :code, :brand, :description, :sale_price_cents, :rental_price_cents,
+                                    :available_quantity, :reserved_quantity, :active, specs: [:label, :value, :bold], features: [])
   end
 end

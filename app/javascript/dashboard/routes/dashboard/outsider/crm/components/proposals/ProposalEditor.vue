@@ -4,6 +4,8 @@
 // condições e textos vêm do modelo. "Ver PDF" salva e mostra o PDF montado na hora. "Enviar" salva e
 // manda o PDF por WhatsApp ou e-mail; os envios ficam no histórico. Aceita, recusada ou cancelada fica
 // travada até voltar para rascunho.
+// Entrega 19: aberta pelo catálogo (?produto=), a proposta nova já vem com o item; o CNPJ preenche os
+// dados do cliente (CustomerLookup) e a condição de pagamento sai de uma lista (ProposalConditions).
 import { ref, computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useAlert } from 'dashboard/composables';
@@ -16,6 +18,7 @@ import ComboBox from 'dashboard/components-next/combobox/ComboBox.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 import ProposalItems from './ProposalItems.vue';
 import ProposalConditions from './ProposalConditions.vue';
+import CustomerLookup from './CustomerLookup.vue';
 import ProposalDealLink from './ProposalDealLink.vue';
 import ProposalPdfDialog from './ProposalPdfDialog.vue';
 import ProposalSendDialog from './ProposalSendDialog.vue';
@@ -26,8 +29,11 @@ import { withCrmAccess } from '../../crmStore';
 import {
   CUSTOMER_FIELDS,
   PROPOSAL_STATUS_COLORS,
+  blankItem,
+  catalogPrice,
   itemTotal,
   parseQuantity,
+  productItemFields,
   quantityToInput,
 } from './proposalHelpers';
 
@@ -35,7 +41,7 @@ const props = defineProps({
   proposalId: { type: [String, Number], required: true },
   access: { type: Object, required: true },
   pipelines: { type: Array, required: true },
-  // proposta nova aberta do negócio ou da conversa: { contactId, opportunityId, kind }
+  // proposta nova aberta do negócio, da conversa ou do catálogo: { contactId, opportunityId, kind, productId }
   initial: { type: Object, default: () => ({}) },
 });
 
@@ -50,6 +56,7 @@ const proposal = ref(null);
 const isLoading = ref(true);
 const isSaving = ref(false);
 const products = ref([]);
+const paymentOptions = ref([]);
 const contactOptions = ref([]);
 const pdfRef = ref(null);
 const sendRef = ref(null);
@@ -243,9 +250,36 @@ const chooseContact = async contactId => {
   await applyPrefill();
 };
 
+// itens do catálogo que ainda estão com o valor sugerido passam para o valor do outro tipo
+const repriceItems = (from, to) => {
+  form.value.items.forEach(item => {
+    const product = products.value.find(entry => entry.id === item.product_id);
+    if (
+      !product ||
+      item.unit_price !== centsToInput(catalogPrice(product, from))
+    ) {
+      return;
+    }
+    item.unit_price = centsToInput(catalogPrice(product, to));
+  });
+};
+
 const chooseKind = async kind => {
+  repriceItems(form.value.kind, kind);
   form.value.kind = kind;
   await applyPrefill();
+};
+
+// proposta nova aberta pelo catálogo: o item já entra, e o título começa com o nome dele
+const addInitialProduct = () => {
+  const product = products.value.find(
+    entry => entry.id === props.initial.productId
+  );
+  if (!product) return;
+  form.value.items = [
+    { ...blankItem(), ...productItemFields(product, form.value.kind) },
+  ];
+  form.value.title = form.value.title || product.name;
 };
 
 const itemPayload = item => ({
@@ -393,6 +427,7 @@ onMounted(async () => {
   }
   try {
     const productRequest = CrmAPI.getProducts();
+    const paymentRequest = CrmAPI.getProposalPaymentOptions();
     if (isNew.value) {
       form.value = emptyForm();
       if (form.value.contact_id) {
@@ -407,7 +442,11 @@ onMounted(async () => {
       fromProposal(data);
     }
     products.value = (await productRequest).data;
-    if (isNew.value) markSaved();
+    paymentOptions.value = (await paymentRequest).data.payload;
+    if (isNew.value) {
+      addInitialProduct();
+      markSaved();
+    }
   } catch (error) {
     useAlert(errorMessage(t, error));
     emit('close');
@@ -635,9 +674,12 @@ onMounted(async () => {
     </section>
 
     <section class="flex flex-col gap-3">
-      <h3 class="mb-0 text-sm font-medium text-n-slate-12">
-        {{ t('OUTSIDER_CRM.PROPOSALS.FORM.SECTION_CUSTOMER') }}
-      </h3>
+      <div class="flex flex-wrap items-center gap-x-3 gap-y-2">
+        <h3 class="mb-0 text-sm font-medium text-n-slate-12">
+          {{ t('OUTSIDER_CRM.PROPOSALS.FORM.SECTION_CUSTOMER') }}
+        </h3>
+        <CustomerLookup v-model="form.customer" :read-only="readOnly" />
+      </div>
       <p class="-mt-2 mb-0 text-xs text-n-slate-11">
         {{ t('OUTSIDER_CRM.PROPOSALS.FORM.CUSTOMER_HELP') }}
       </p>
@@ -680,7 +722,11 @@ onMounted(async () => {
       <h3 class="mb-0 text-sm font-medium text-n-slate-12">
         {{ t('OUTSIDER_CRM.PROPOSALS.FORM.SECTION_CONDITIONS') }}
       </h3>
-      <ProposalConditions v-model="form.conditions" :read-only="readOnly" />
+      <ProposalConditions
+        v-model="form.conditions"
+        :payment-options="paymentOptions"
+        :read-only="readOnly"
+      />
     </section>
 
     <section class="grid gap-5 lg:grid-cols-2">

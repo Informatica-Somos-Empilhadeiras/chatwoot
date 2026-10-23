@@ -5,7 +5,7 @@ module Outsider::Crm::ProposalSerializer
 
   def product(product)
     product.slice(:id, :kind, :name, :code, :brand, :description, :specs, :features, :sale_price_cents, :rental_price_cents,
-                  :active, :created_at, :updated_at).merge(image_url: file_path(product.image))
+                  :available_quantity, :reserved_quantity, :active, :created_at, :updated_at).merge(image_url: file_path(product.image))
   end
 
   # content sai com os blocos e o papel timbrado efetivos (os do modelo ou os derivados dos textos antigos)

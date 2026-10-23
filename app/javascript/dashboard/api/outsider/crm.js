@@ -363,6 +363,16 @@ class CrmAPI extends ApiClient {
     return axios.get(`${this.url}/proposals/prefill`, { params });
   }
 
+  // dados da empresa do cliente pelo CNPJ (cadastro das SEFAZ e SINTEGRA), só os campos da proposta
+  lookupCompany(document) {
+    return axios.get(`${this.url}/company_lookup`, { params: { document } });
+  }
+
+  // opções de condição de pagamento (Configurações > Propostas > Pagamento)
+  getProposalPaymentOptions() {
+    return axios.get(`${this.url}/proposal_payment_options`);
+  }
+
   createProposal(proposal) {
     return axios.post(`${this.url}/proposals`, { proposal });
   }
@@ -460,7 +470,7 @@ class CrmAPI extends ApiClient {
     return axios.get(`${this.url}/proposal_settings`);
   }
 
-  // values: next_number, win_deal_on_accept, send_message, email_subject (só o que mudar)
+  // values: next_number, win_deal_on_accept, send_message, email_subject, payment_options (só o que mudar)
   updateProposalGeneral(values) {
     return axios.patch(`${this.url}/proposal_settings/general`, values);
   }

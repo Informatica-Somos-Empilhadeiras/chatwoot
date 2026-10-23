@@ -26,6 +26,17 @@ RSpec.describe 'Outsider CRM proposal catalog', type: :request do
     expect(body['features']).to eq(['Motor diesel'])
   end
 
+  it 'keeps the optional available and reserved quantities' do
+    body = call(:post, admin, '', { product: product_params[:product].merge(available_quantity: 4, reserved_quantity: 1) })
+    expect(body).to include('available_quantity' => 4, 'reserved_quantity' => 1)
+
+    body = call(:patch, admin, "/#{body['id']}", { product: { available_quantity: nil } })
+    expect(body).to include('available_quantity' => nil, 'reserved_quantity' => 1)
+
+    call(:patch, admin, "/#{body['id']}", { product: { reserved_quantity: -1 } })
+    expect(response).to have_http_status(:unprocessable_entity)
+  end
+
   it 'keeps agents to reading until the admin allows them' do
     product = crm_product(account)
     expect(call(:get, seller).pluck('id')).to eq([product.id])

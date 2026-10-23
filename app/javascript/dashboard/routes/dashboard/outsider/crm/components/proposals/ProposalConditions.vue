@@ -1,16 +1,61 @@
 <script setup>
 // OUTSIDER: condições da proposta (pagamento, frete, prazo, garantia...). Vêm do modelo e mudam só
 // nesta proposta. Aceitam **negrito** e campos automáticos como {proposta.validade}.
+// Condição de pagamento (Entrega 19): escolher uma das opções de Configurações > Propostas > Pagamento
+// troca o texto da linha de pagamento (ou cria a linha no topo, quando o modelo não tem). O texto
+// continua editável na própria linha.
+import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import Button from 'dashboard/components-next/button/Button.vue';
+import Select from 'dashboard/components-next/select/Select.vue';
+import { paymentConditionIndex } from './proposalHelpers';
 
-defineProps({
+const props = defineProps({
   readOnly: { type: Boolean, default: false },
+  paymentOptions: { type: Array, default: () => [] },
 });
 
 const conditions = defineModel({ type: Array, required: true });
 
 const { t } = useI18n();
+
+// texto da linha de pagamento que não é nenhuma das opções
+const CUSTOM_PAYMENT = '__custom__';
+
+const paymentIndex = computed(() => paymentConditionIndex(conditions.value));
+
+const paymentValue = computed(() => {
+  const text = conditions.value[paymentIndex.value]?.text?.trim() || '';
+  if (!text) return '';
+  return props.paymentOptions.includes(text) ? text : CUSTOM_PAYMENT;
+});
+
+const paymentSelectOptions = computed(() => [
+  { value: '', label: t('OUTSIDER_CRM.PROPOSALS.PAYMENT.CHOOSE') },
+  ...props.paymentOptions.map(option => ({ value: option, label: option })),
+  ...(paymentValue.value === CUSTOM_PAYMENT
+    ? [
+        {
+          value: CUSTOM_PAYMENT,
+          label: t('OUTSIDER_CRM.PROPOSALS.PAYMENT.CUSTOM'),
+        },
+      ]
+    : []),
+]);
+
+const choosePayment = option => {
+  if (!option || option === CUSTOM_PAYMENT) return;
+  const index = paymentIndex.value;
+  conditions.value =
+    index < 0
+      ? [
+          { label: t('OUTSIDER_CRM.PROPOSALS.PAYMENT.LABEL'), text: option },
+          ...conditions.value,
+        ]
+      : conditions.value.map((condition, position) =>
+          position === index ? { ...condition, text: option } : condition
+        );
+};
 
 const add = () => {
   conditions.value = [...conditions.value, { label: '', text: '' }];
@@ -32,6 +77,24 @@ const move = (index, step) => {
 
 <template>
   <div class="flex flex-col gap-2">
+    <label
+      v-if="paymentOptions.length"
+      class="flex flex-wrap items-center gap-2 pb-2 mb-1 text-sm border-b border-n-weak"
+    >
+      <span class="font-medium text-n-slate-12">
+        {{ t('OUTSIDER_CRM.PROPOSALS.PAYMENT.LABEL') }}
+      </span>
+      <Select
+        :model-value="paymentValue"
+        :options="paymentSelectOptions"
+        :disabled="readOnly"
+        class="min-w-[16rem] [&>select]:w-full"
+        @update:model-value="choosePayment"
+      />
+      <span class="text-xs text-n-slate-11">
+        {{ t('OUTSIDER_CRM.PROPOSALS.PAYMENT.HELP') }}
+      </span>
+    </label>
     <div
       v-for="(condition, index) in conditions"
       :key="index"

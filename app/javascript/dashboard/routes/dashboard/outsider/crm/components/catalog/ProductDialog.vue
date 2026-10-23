@@ -2,6 +2,8 @@
 // OUTSIDER: cadastro de máquina ou acessório do catálogo (para quem gerencia o catálogo) ou ficha só
 // de consulta (os demais). A imagem escolhida fica guardada e sobe depois de salvar o item; item que
 // já está em proposta não se apaga, então o diálogo oferece desativar.
+// Quantidade disponível e reservada são opcionais. "Criar proposta" (Entrega 19) abre uma proposta nova
+// já com o item: no cadastro é uma opção que vale ao salvar; na ficha de consulta, um botão.
 import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useAlert } from 'dashboard/composables';
@@ -16,13 +18,19 @@ import SpecsEditor from './SpecsEditor.vue';
 import FeaturesEditor from './FeaturesEditor.vue';
 import ProductDetails from './ProductDetails.vue';
 import { centsToInput, errorMessage, parseMoney } from '../../helpers';
-import { IMAGE_TYPES, PRODUCT_KINDS, kindLabel, newRowId } from './catalog';
+import {
+  IMAGE_TYPES,
+  PRODUCT_KINDS,
+  kindLabel,
+  newRowId,
+  parseStock,
+} from './catalog';
 
 const props = defineProps({
   canManage: { type: Boolean, default: false },
 });
 
-const emit = defineEmits(['saved', 'deleted']);
+const emit = defineEmits(['saved', 'deleted', 'createProposal']);
 
 const { t } = useI18n();
 
@@ -40,6 +48,8 @@ const imagePreview = ref('');
 const removeImage = ref(false);
 // apagar recusado porque o item está em propostas
 const blockedMessage = ref('');
+// abrir uma proposta nova com o item depois de salvar
+const proposeAfterSave = ref(false);
 
 const emptyForm = kind => ({
   kind: PRODUCT_KINDS.includes(kind) ? kind : 'machine',
@@ -49,18 +59,29 @@ const emptyForm = kind => ({
   description: '',
   sale: '',
   rental: '',
+  available: '',
+  reserved: '',
   active: true,
 });
 
 const salePrice = computed(() => parseMoney(form.value.sale));
 const rentalPrice = computed(() => parseMoney(form.value.rental));
 const validPrice = value => Number.isFinite(value) && value >= 0;
+const available = computed(() => parseStock(form.value.available));
+const reserved = computed(() => parseStock(form.value.reserved));
+const validStock = value => !Number.isNaN(value);
 
 const isValid = computed(
   () =>
     Boolean(form.value.name?.trim()) &&
     validPrice(salePrice.value) &&
-    validPrice(rentalPrice.value)
+    validPrice(rentalPrice.value) &&
+    validStock(available.value) &&
+    validStock(reserved.value)
+);
+
+const canPropose = computed(() =>
+  props.canManage ? form.value.active : Boolean(product.value?.active)
 );
 
 const shownImage = computed(
@@ -112,6 +133,8 @@ const formFrom = item => ({
   description: item.description || '',
   sale: centsToInput(item.sale_price_cents),
   rental: centsToInput(item.rental_price_cents),
+  available: item.available_quantity ?? '',
+  reserved: item.reserved_quantity ?? '',
   active: item.active,
 });
 
@@ -130,6 +153,7 @@ const open = (item = null, kind = 'machine') => {
     text,
   }));
   blockedMessage.value = '';
+  proposeAfterSave.value = false;
   removeImage.value = false;
   setImageFile(null);
   dialogRef.value?.open();
@@ -147,6 +171,8 @@ const payload = () => ({
   description: form.value.description.trim(),
   sale_price_cents: Math.round(salePrice.value * 100),
   rental_price_cents: Math.round(rentalPrice.value * 100),
+  available_quantity: available.value,
+  reserved_quantity: reserved.value,
   active: form.value.active,
   specs: specs.value
     .filter(spec => spec.label.trim())
@@ -206,6 +232,12 @@ const save = async () => {
   useAlert(t('OUTSIDER_CRM.CATALOG.SAVED', { name: saved.name }));
   emit('saved', saved);
   close();
+  if (proposeAfterSave.value && saved.active) emit('createProposal', saved);
+};
+
+const propose = () => {
+  close();
+  emit('createProposal', product.value);
 };
 
 const askDelete = () => {
@@ -422,6 +454,36 @@ defineExpose({ open });
           "
           :message-type="validPrice(rentalPrice) ? 'info' : 'error'"
         />
+        <Input
+          v-model="form.available"
+          type="number"
+          min="0"
+          step="1"
+          inputmode="numeric"
+          :label="t('OUTSIDER_CRM.CATALOG.FORM.AVAILABLE')"
+          :placeholder="t('OUTSIDER_CRM.CATALOG.FORM.QUANTITY_PLACEHOLDER')"
+          :message="
+            validStock(available)
+              ? t('OUTSIDER_CRM.CATALOG.FORM.QUANTITY_HELP')
+              : t('OUTSIDER_CRM.CATALOG.FORM.QUANTITY_INVALID')
+          "
+          :message-type="validStock(available) ? 'info' : 'error'"
+        />
+        <Input
+          v-model="form.reserved"
+          type="number"
+          min="0"
+          step="1"
+          inputmode="numeric"
+          :label="t('OUTSIDER_CRM.CATALOG.FORM.RESERVED')"
+          :placeholder="t('OUTSIDER_CRM.CATALOG.FORM.QUANTITY_PLACEHOLDER')"
+          :message="
+            validStock(reserved)
+              ? ''
+              : t('OUTSIDER_CRM.CATALOG.FORM.QUANTITY_INVALID')
+          "
+          :message-type="validStock(reserved) ? 'info' : 'error'"
+        />
       </div>
 
       <label class="flex items-start gap-2 text-sm text-n-slate-12">
@@ -430,6 +492,19 @@ defineExpose({ open });
           {{ t('OUTSIDER_CRM.CATALOG.FORM.ACTIVE') }}
           <span class="text-xs text-n-slate-11">
             {{ t('OUTSIDER_CRM.CATALOG.FORM.ACTIVE_HELP') }}
+          </span>
+        </span>
+      </label>
+
+      <label
+        v-if="canPropose"
+        class="flex items-start gap-2 text-sm text-n-slate-12"
+      >
+        <Switch v-model="proposeAfterSave" class="mt-0.5" />
+        <span class="flex flex-col">
+          {{ t('OUTSIDER_CRM.CATALOG.PROPOSE.AFTER_SAVE') }}
+          <span class="text-xs text-n-slate-11">
+            {{ t('OUTSIDER_CRM.CATALOG.PROPOSE.AFTER_SAVE_HELP') }}
           </span>
         </span>
       </label>
@@ -466,9 +541,21 @@ defineExpose({ open });
           v-if="canManage"
           type="submit"
           color="blue"
-          :label="t('OUTSIDER_CRM.SAVE')"
+          :label="
+            proposeAfterSave && canPropose
+              ? t('OUTSIDER_CRM.CATALOG.PROPOSE.SAVE_AND_CREATE')
+              : t('OUTSIDER_CRM.SAVE')
+          "
           :is-loading="isSaving"
           :disabled="!isValid || isSaving"
+        />
+        <Button
+          v-else-if="canPropose"
+          type="button"
+          color="blue"
+          icon="i-lucide-file-plus"
+          :label="t('OUTSIDER_CRM.CATALOG.PROPOSE.CREATE')"
+          @click="propose"
         />
       </div>
     </template>

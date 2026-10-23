@@ -1,7 +1,9 @@
 <script setup>
-// OUTSIDER: cartão de um item do catálogo na grade: foto, nome, código, marca, tipo e preços.
+// OUTSIDER: cartão de um item do catálogo na grade: foto, nome, código, marca, tipo, preços e, quando
+// o item controla, as quantidades disponível e reservada.
 import { useI18n } from 'vue-i18n';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
+import ProductStock from './ProductStock.vue';
 import { formatMoney } from '../../helpers';
 import { KIND_COLORS, kindLabel } from './catalog';
 
@@ -59,6 +61,7 @@ const price = cents => (cents ? formatMoney(cents) : '—');
       >
         {{ [product.code, product.brand].filter(Boolean).join(' · ') }}
       </span>
+      <ProductStock :product="product" />
       <div class="flex-1" />
       <div class="grid grid-cols-2 gap-2 pt-2 mt-1 border-t border-n-weak">
         <div class="flex flex-col min-w-0">

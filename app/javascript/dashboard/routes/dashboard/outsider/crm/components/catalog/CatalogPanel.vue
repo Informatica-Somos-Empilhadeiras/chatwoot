@@ -2,10 +2,13 @@
 // OUTSIDER: aba Catálogo do CRM. Máquinas e acessórios que entram nas propostas, com foto,
 // características, equipamento e preços. Todos consultam; quem gerencia o catálogo
 // (access.proposals.manage_catalog) cadastra, altera, troca a imagem, desativa e apaga.
+// "Criar proposta" abre CRM > Propostas com uma proposta nova já com o item (Entrega 19).
 import { ref, computed, watch, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useRouter } from 'vue-router';
 import { useDebounceFn } from '@vueuse/core';
 import { useAlert } from 'dashboard/composables';
+import { useAccount } from 'dashboard/composables/useAccount';
 import CrmAPI from 'dashboard/api/outsider/crm';
 import Button from 'dashboard/components-next/button/Button.vue';
 import Input from 'dashboard/components-next/input/Input.vue';
@@ -15,12 +18,16 @@ import Icon from 'dashboard/components-next/icon/Icon.vue';
 import ProductCard from './ProductCard.vue';
 import ProductDialog from './ProductDialog.vue';
 import { errorMessage } from '../../helpers';
+import { proposalRoute } from '../proposals/proposalHelpers';
+import { proposalKindFor } from './catalog';
 
 const props = defineProps({
   access: { type: Object, required: true },
 });
 
 const { t } = useI18n();
+const router = useRouter();
+const { accountScopedRoute } = useAccount();
 
 const dialogRef = ref(null);
 const isLoading = ref(false);
@@ -74,6 +81,15 @@ const applySearch = useDebounceFn(() => {
 const openNew = () => dialogRef.value?.open(null, filters.value.kind);
 
 const openProduct = product => dialogRef.value?.open(product);
+
+const createProposal = product =>
+  router.push(
+    proposalRoute(accountScopedRoute, {
+      proposta: 'nova',
+      produto: product.id,
+      tipo: proposalKindFor(product),
+    })
+  );
 
 watch(searchText, applySearch);
 watch(filters, load, { deep: true });
@@ -179,6 +195,7 @@ onMounted(load);
       :can-manage="canManage"
       @saved="load"
       @deleted="load"
+      @create-proposal="createProposal"
     />
   </div>
 </template>

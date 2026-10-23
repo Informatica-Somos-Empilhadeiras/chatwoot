@@ -1,7 +1,7 @@
 <script setup>
 // OUTSIDER: CRM > Propostas. Lista com busca (número, cliente, contato, máquina) e filtros; cada um vê
 // as próprias, o administrador vê todas e libera para os agentes em Configurações > Propostas.
-// ?proposta=<id> abre a proposta e ?proposta=nova (com contato, negocio e tipo) abre uma nova.
+// ?proposta=<id> abre a proposta e ?proposta=nova (com contato, negocio, tipo e produto) abre uma nova.
 import { ref, computed, watch, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
@@ -97,7 +97,9 @@ const openProposal = (id, extra = {}) =>
 
 const closeEditor = () => {
   const query = { ...route.query };
-  ['proposta', 'contato', 'negocio', 'tipo'].forEach(key => delete query[key]);
+  ['proposta', 'contato', 'negocio', 'tipo', 'produto'].forEach(
+    key => delete query[key]
+  );
   router.push({ query });
   load(1);
 };
@@ -128,6 +130,7 @@ watch(openId, (now, before) => {
       contactId: Number(route.query.contato) || null,
       opportunityId: Number(route.query.negocio) || null,
       kind: route.query.tipo || 'sale',
+      productId: Number(route.query.produto) || null,
     }"
     @close="closeEditor"
     @created="id => router.replace({ query: { proposta: id } })"

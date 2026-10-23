@@ -71,6 +71,9 @@ Rails.application.routes.prepend do
                 patch 'signatures/:user_id', action: :signature
               end
               resource :proposal_signature, only: [:show, :update]
+              resource :proposal_payment_options, only: [:show]
+              # dados da empresa do cliente pelo CNPJ (Outsider::Crm::CompanyLookup)
+              resource :company_lookup, only: [:show]
               resource :proposal_reports, only: [:show]
               resources :proposals, only: [:index, :show, :create, :update, :destroy] do
                 collection { get :prefill }

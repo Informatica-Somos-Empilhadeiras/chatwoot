@@ -1,8 +1,9 @@
 <script setup>
 // OUTSIDER: ficha de um item do catálogo só para consulta (quem não gerencia o catálogo): foto,
-// preços, descrição, principais características e equipamento, como entram na proposta.
+// preços, quantidades, descrição, principais características e equipamento, como entram na proposta.
 import { useI18n } from 'vue-i18n';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
+import ProductStock from './ProductStock.vue';
 import { formatMoney } from '../../helpers';
 import { KIND_COLORS, kindLabel } from './catalog';
 
@@ -74,6 +75,7 @@ const price = cents => (cents ? formatMoney(cents) : '—');
             </dd>
           </div>
         </dl>
+        <ProductStock :product="product" />
       </div>
     </div>
 

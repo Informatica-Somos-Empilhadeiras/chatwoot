@@ -1,6 +1,7 @@
 # OUTSIDER: máquina ou acessório do catálogo do CRM, usado nos itens das propostas. A imagem fica no
 # armazenamento de arquivos do Chatwoot (Active Storage) uma vez só; as propostas apontam para o produto.
 # Produto que já está numa proposta não se apaga (fica inativo), para a proposta continuar com a imagem.
+# Quantidade disponível e reservada são anotadas à mão no cadastro; em branco = o item não controla estoque.
 class Outsider::Crm::Product < ApplicationRecord
   include Outsider::Crm::AccountScoped
 
@@ -8,6 +9,7 @@ class Outsider::Crm::Product < ApplicationRecord
   IMAGE_MAX_SIZE = 5.megabytes
   MAX_SPECS = 40
   MAX_FEATURES = 60
+  MAX_QUANTITY = 1_000_000
 
   audited associated_with: :account
 
@@ -20,6 +22,8 @@ class Outsider::Crm::Product < ApplicationRecord
   validates :code, :brand, length: { maximum: 120 }
   validates :description, length: { maximum: 5_000 }
   validates :sale_price_cents, :rental_price_cents, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
+  validates :available_quantity, :reserved_quantity,
+            numericality: { only_integer: true, greater_than_or_equal_to: 0, less_than: MAX_QUANTITY }, allow_nil: true
   validate :valid_specs
   validate :valid_features
   validate :valid_image
