@@ -3,6 +3,7 @@ import {
   locationOf,
   locationPreview,
   mapTiles,
+  movePoint,
   parseLocationText,
   wazeUrl,
 } from '../location';
@@ -119,5 +120,13 @@ describe('location', () => {
     expect(wazeUrl({ latitude: 1, longitude: 2 })).toBe(
       'https://waze.com/ul?ll=1,2&navigate=yes'
     );
+  });
+
+  it('moves the point by the pixels clicked on the map', () => {
+    const start = { latitude: -16.693, longitude: -49.27 };
+    expect(movePoint({ ...start, dx: 0, dy: 0, zoom: 18 })).toEqual(start);
+    const moved = movePoint({ ...start, dx: 60, dy: -30, zoom: 18 });
+    expect(moved.longitude).toBeCloseTo(-49.269678, 6);
+    expect(moved.latitude).toBeGreaterThan(start.latitude);
   });
 });

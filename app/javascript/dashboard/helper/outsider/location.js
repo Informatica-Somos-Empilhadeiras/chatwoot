@@ -131,3 +131,21 @@ export const mapTiles = ({ latitude, longitude, width, height, zoom = 16 }) => {
   }
   return tiles;
 };
+
+// Ponto que fica dx, dy pixels do ponto dado num mapa com este zoom (clique no mapa para ajustar o pin)
+export const movePoint = ({ latitude, longitude, dx, dy, zoom = 16 }) => {
+  const scale = TILE_SIZE * 2 ** zoom;
+  const radians = (latitude * Math.PI) / 180;
+  const x = ((longitude + 180) / 360) * scale + dx;
+  const y =
+    ((1 - Math.log(Math.tan(radians) + 1 / Math.cos(radians)) / Math.PI) / 2) *
+      scale +
+    dy;
+  const lng = (x / scale) * 360 - 180;
+  const lat =
+    (Math.atan(Math.sinh(Math.PI * (1 - (2 * y) / scale))) * 180) / Math.PI;
+  return {
+    latitude: Number(lat.toFixed(6)),
+    longitude: Number((((lng + 540) % 360) - 180).toFixed(6)),
+  };
+};

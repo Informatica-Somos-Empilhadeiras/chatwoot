@@ -4,10 +4,13 @@
 // os endereços salvos da conta e a localização atual do navegador. Depois de escolher, dá para
 // ajustar o nome que o cliente vê e enviar como o pin de mapa do WhatsApp
 // (ver app/services/outsider/location_sender.rb). Só o administrador salva e apaga endereços.
+// O mapa da escolha aceita clique para levar o pin ao ponto exato: o OpenStreetMap costuma achar só
+// a rua (exact: false) e a localização do navegador num computador pode errar por centenas de metros.
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useDebounceFn } from '@vueuse/core';
 import { useAlert } from 'dashboard/composables';
+import { useStore } from 'dashboard/composables/store';
 import NextButton from 'dashboard/components-next/button/Button.vue';
 import Dialog from 'dashboard/components-next/dialog/Dialog.vue';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
@@ -20,8 +23,11 @@ const props = defineProps({
 });
 
 const MIN_QUERY = 3;
+// a partir daqui a localização do navegador merece o aviso para conferir o pin
+const LOOSE_ACCURACY = 50;
 
 const { t } = useI18n();
+const store = useStore();
 
 const dialogRef = ref(null);
 const query = ref('');
@@ -99,14 +105,34 @@ const loadSaved = async () => {
   }
 };
 
-const choose = item => {
+const choose = (item, accuracy = null) => {
   selected.value = {
     name: item.name || '',
     address: item.address || '',
     latitude: Number(item.latitude),
     longitude: Number(item.longitude),
+    // endereço salvo e coordenada colada já são o ponto certo
+    exact: item.exact !== false,
+    accuracy,
+    moved: false,
   };
 };
+
+const movePin = point => {
+  selected.value = { ...selected.value, ...point, moved: true };
+};
+
+const pinNotice = computed(() => {
+  const place = selected.value;
+  if (!place || place.moved) return '';
+  if (place.accuracy > LOOSE_ACCURACY) {
+    return t('OUTSIDER_WHATSAPP.SEND_LOCATION.ACCURACY', {
+      meters: Math.round(place.accuracy),
+    });
+  }
+  if (!place.exact) return t('OUTSIDER_WHATSAPP.SEND_LOCATION.APPROXIMATE');
+  return '';
+});
 
 const useCurrentPosition = () => {
   if (!navigator.geolocation) {
@@ -116,7 +142,7 @@ const useCurrentPosition = () => {
   isLocating.value = true;
   navigator.geolocation.getCurrentPosition(
     async position => {
-      const { latitude, longitude } = position.coords;
+      const { latitude, longitude, accuracy } = position.coords;
       const point = `${latitude.toFixed(6)},${longitude.toFixed(6)}`;
       let found = null;
       try {
@@ -125,7 +151,8 @@ const useCurrentPosition = () => {
       } catch {
         // sem o endereço do ponto, vai só o pin
       }
-      choose(found || { latitude, longitude });
+      // o pin fica onde o navegador disse; da busca vem só o endereço do ponto
+      choose({ ...found, latitude, longitude, exact: true }, accuracy);
       isLocating.value = false;
     },
     () => {
@@ -140,9 +167,12 @@ const saveSelected = async () => {
   if (!selected.value?.name.trim() || isSaving.value) return;
   isSaving.value = true;
   try {
+    const { name, address, latitude, longitude } = selected.value;
     const { data } = await LocationsAPI.save({
-      ...selected.value,
-      name: selected.value.name.trim(),
+      name: name.trim(),
+      address,
+      latitude,
+      longitude,
     });
     saved.value = [...saved.value, data];
     useAlert(t('OUTSIDER_WHATSAPP.SEND_LOCATION.SAVED'));
@@ -179,11 +209,14 @@ const send = async () => {
   if (!selected.value || isSending.value) return;
   isSending.value = true;
   try {
-    await LocationsAPI.send(props.conversationId, {
-      ...selected.value,
-      name: selected.value.name.trim(),
-      address: selected.value.address.trim(),
+    const { name, address, latitude, longitude } = selected.value;
+    const { data } = await LocationsAPI.send(props.conversationId, {
+      name: name.trim(),
+      address: address.trim(),
+      latitude,
+      longitude,
     });
+    if (data?.message) store.dispatch('addMessage', data.message);
     dialogRef.value?.close();
     useAlert(t('OUTSIDER_WHATSAPP.SEND_LOCATION.SENT'));
   } catch (error) {
@@ -219,10 +252,25 @@ const rowClass =
             :latitude="selected.latitude"
             :longitude="selected.longitude"
             :width="560"
-            :height="180"
+            :height="220"
+            :zoom="17"
+            adjustable
             class="!w-full"
+            @pick="movePin"
           />
         </div>
+        <p
+          class="mb-0 -mt-2 text-xs"
+          :class="pinNotice ? 'text-n-amber-11' : 'text-n-slate-11'"
+          data-location-pin-hint
+        >
+          {{
+            pinNotice ||
+            (selected.moved
+              ? t('OUTSIDER_WHATSAPP.SEND_LOCATION.MOVED')
+              : t('OUTSIDER_WHATSAPP.SEND_LOCATION.ADJUST_HINT'))
+          }}
+        </p>
         <label class="flex flex-col gap-1">
           <span class="text-xs font-medium text-n-slate-11">
             {{ t('OUTSIDER_WHATSAPP.SEND_LOCATION.NAME') }}

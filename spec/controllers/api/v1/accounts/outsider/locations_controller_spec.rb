@@ -24,6 +24,15 @@ RSpec.describe 'Outsider locations', type: :request do
       .with(conversation: conversation, user: agent, location: ActionController::Parameters.new(place).permit!)
   end
 
+  it 'returns the sent message so the screen shows it right away' do
+    message = create(:message, conversation: conversation, account: account, inbox: inbox, message_type: :outgoing, content: 'Localização')
+    allow(Outsider::LocationSender).to receive(:new).and_return(instance_double(Outsider::LocationSender, perform: message))
+
+    post url, params: { conversation_id: conversation.display_id, location: place }, headers: agent.create_new_auth_token, as: :json
+
+    expect(response.parsed_body['message']).to include('id' => message.id, 'conversation_id' => conversation.display_id)
+  end
+
   it 'refuses an agent outside the inbox and answers errors with a code' do
     post url, params: { conversation_id: conversation.display_id, location: place }, headers: outsider.create_new_auth_token, as: :json
     expect(response).to have_http_status(:unauthorized)

@@ -5,6 +5,12 @@
 #
 # Coordenadas digitadas ("-16.68, -49.25") ou coladas de um link do Google Maps não precisam de busca:
 # viram o resultado direto, com o endereço do ponto quando o Nominatim responde.
+#
+# O OpenStreetMap quase não tem número de casa no Brasil: o resultado costuma ser a rua, com o pin no
+# meio dela. Quando a busca tem o número depois de uma vírgula ("Rua 10, 250") e o resultado não, o
+# número digitado entra no nome e no endereço, e "exact: false" avisa a tela para pedir o ajuste do pin
+# no mapa. Com OUTSIDER_GOOGLE_MAPS_KEY a busca vai para o Google (Outsider::GoogleGeocoder), que
+# acha o número na maioria dos endereços, mas é pago acima da cota grátis do Google.
 class Outsider::Geocoder
   include HTTParty
 
@@ -27,6 +33,17 @@ class Outsider::Geocoder
     [latitude, longitude] if latitude.between?(-90, 90) && longitude.between?(-180, 180) && match[1].include?('.')
   end
 
+  # número depois de uma vírgula: "Rua 10, 250", "Rua 10, nº 250", "Av. T-63, 1200A, Setor Bueno"
+  HOUSE_NUMBER = /\A(?:n[º°o.]?\s*)?(\d{1,5}[a-z]?)\z/i
+
+  def self.house_number(query)
+    query.to_s.split(',').drop(1).each do |part|
+      match = part.strip.match(HOUSE_NUMBER)
+      return match[1].upcase if match
+    end
+    nil
+  end
+
   def search(query)
     query = query.to_s.squish.first(200)
     return [] if query.length < 3
@@ -34,22 +51,52 @@ class Outsider::Geocoder
     point = self.class.coordinates(query)
     return [reverse(*point)] if point
 
-    cached("search/#{query.downcase}") do
-      request('/search', q: query, countrycodes: 'br', limit: LIMIT).map { |row| result(row) }
-    end
+    found = cached("search/#{query.downcase}") { provider_search(query) }
+    number = self.class.house_number(query)
+    number ? found.map { |place| with_typed_number(place, number) } : found
   end
 
   private
 
+  def google
+    key = ENV.fetch('OUTSIDER_GOOGLE_MAPS_KEY', nil).presence
+    @google = Outsider::GoogleGeocoder.new(key) if key && @google.nil?
+    @google
+  end
+
+  def provider_search(query)
+    return google.search(query) if google
+
+    request('/search', q: query, countrycodes: 'br', limit: LIMIT).map { |row| result(row) }
+  end
+
+  def provider_reverse(latitude, longitude)
+    return google.reverse(latitude, longitude) if google
+
+    result(request('/reverse', lat: latitude, lon: longitude))
+  end
+
   def reverse(latitude, longitude)
-    found = cached("reverse/#{latitude},#{longitude}") { result(request('/reverse', lat: latitude, lon: longitude)) }
+    found = cached("reverse/#{latitude},#{longitude}") { provider_reverse(latitude, longitude) }
     found.merge(latitude: latitude, longitude: longitude)
   rescue Error
-    { name: nil, address: nil, latitude: latitude, longitude: longitude }
+    { name: nil, address: nil, latitude: latitude, longitude: longitude, exact: false }
+  end
+
+  # o resultado achou a rua, mas não o número: usa o número digitado; o pin continua na rua
+  def with_typed_number(place, number)
+    return place if place[:exact] || place[:road].blank?
+
+    road = place[:road]
+    street = "#{road}, #{number}"
+    address = place[:address].to_s
+    place.merge(name: place[:name] == road ? street : place[:name],
+                address: address.include?(road) ? address.sub(road, street) : address.presence)
   end
 
   def cached(key, &)
-    Rails.cache.fetch("outsider_geocoder/#{Digest::SHA256.hexdigest(key)}", expires_in: CACHE_TTL, &)
+    provider = google ? 'google' : 'osm'
+    Rails.cache.fetch("outsider_geocoder/#{provider}/#{Digest::SHA256.hexdigest(key)}", expires_in: CACHE_TTL, &)
   end
 
   def request(path, params)
@@ -66,7 +113,8 @@ class Outsider::Geocoder
     (ENV['OUTSIDER_GEOCODER_URL'].presence || DEFAULT_URL).chomp('/')
   end
 
-  # Nome curto (o lugar ou rua e número) e o endereço completo como o Nominatim escreve
+  # Nome curto (o lugar ou rua e número) e o endereço completo como o Nominatim escreve. exact: achou o
+  # número da casa (ou é um lugar com nome); road fica para encaixar o número digitado.
   def result(row)
     row = row.to_h
     address = row['address'].to_h
@@ -75,7 +123,13 @@ class Outsider::Geocoder
       name: row['name'].presence || street || row['display_name'].to_s.split(',').first,
       address: row['display_name'].presence,
       latitude: row['lat'].to_f.round(6),
-      longitude: row['lon'].to_f.round(6)
+      longitude: row['lon'].to_f.round(6),
+      road: address['road'].presence,
+      exact: exact_row?(row, address)
     }
+  end
+
+  def exact_row?(row, address)
+    address['house_number'].present? || (row['name'].present? && row['name'] != address['road'])
   end
 end

@@ -40,6 +40,16 @@ const WAVE_STYLE = {
   cursorWidth: 0,
 };
 
+// Nas caixas da Evolution o áudio vai em OGG/Opus, só reempacotado (instantâneo). O MP3 que o
+// Chatwoot usa nas caixas de API é codificado no navegador e trava a tela por muito tempo; a
+// Evolution converte qualquer áudio para mensagem de voz do WhatsApp de qualquer jeito.
+const EVOLUTION_WEBHOOK = /\/chatwoot\/webhook\//;
+const recordFormat = computed(() =>
+  EVOLUTION_WEBHOOK.test(props.inbox?.webhook_url || '')
+    ? 'audio/ogg'
+    : props.audioRecordFormat
+);
+
 const liveWave = ref(null);
 const previewWave = ref(null);
 const state = ref(RECORDING);
@@ -96,8 +106,8 @@ const showPreview = blob => {
 
 const uploadRecording = async blob => {
   try {
-    const audio = await convertAudio(blob, props.audioRecordFormat);
-    const type = audio.type || props.audioRecordFormat;
+    const audio = await convertAudio(blob, recordFormat.value);
+    const type = (audio.type || recordFormat.value).split(';')[0];
     const name = `${getUuid()}.${EXTENSIONS[type] || 'mp3'}`;
     const file = new File([audio], name, { type });
     onFileUpload({ name, type, size: file.size, file, isVoiceMessage: true });
@@ -129,7 +139,7 @@ const togglePlay = () => preview?.playPause();
 onMounted(async () => {
   const options = { scrollingWaveform: true, renderRecordedAudio: false };
   if (
-    props.audioRecordFormat === 'audio/ogg' &&
+    recordFormat.value === 'audio/ogg' &&
     MediaRecorder.isTypeSupported('audio/ogg;codecs=opus')
   ) {
     options.mimeType = 'audio/ogg;codecs=opus';

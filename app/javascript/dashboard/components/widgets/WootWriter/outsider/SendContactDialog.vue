@@ -7,6 +7,7 @@ import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useDebounceFn } from '@vueuse/core';
 import { useAlert } from 'dashboard/composables';
+import { useStore } from 'dashboard/composables/store';
 import NextButton from 'dashboard/components-next/button/Button.vue';
 import Dialog from 'dashboard/components-next/dialog/Dialog.vue';
 import Avatar from 'dashboard/components-next/avatar/Avatar.vue';
@@ -21,6 +22,7 @@ const props = defineProps({
 const MAX_CONTACTS = 10;
 
 const { t } = useI18n();
+const store = useStore();
 
 const dialogRef = ref(null);
 const query = ref('');
@@ -31,7 +33,6 @@ const manualName = ref('');
 const manualPhone = ref('');
 const isSending = ref(false);
 let searchController = null;
-
 
 const digits = value => String(value || '').replace(/\D/g, '');
 const keyOf = item => `${item.name}|${digits(item.phone)}`;
@@ -131,7 +132,7 @@ const send = async () => {
   if (!selected.value.length || isSending.value) return;
   isSending.value = true;
   try {
-    await ContactCardsAPI.send(
+    const { data } = await ContactCardsAPI.send(
       props.conversationId,
       selected.value.map(({ name, phone, email, company }) => ({
         name,
@@ -140,6 +141,7 @@ const send = async () => {
         company: company || undefined,
       }))
     );
+    if (data?.message) store.dispatch('addMessage', data.message);
     dialogRef.value?.close();
     useAlert(
       selected.value.length > 1

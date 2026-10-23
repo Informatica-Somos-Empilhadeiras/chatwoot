@@ -14,7 +14,8 @@ class Api::V1::Accounts::Outsider::ContactCardsController < Api::V1::Accounts::B
     authorize conversation, :show?
 
     message = ::Outsider::ContactCardSender.new(conversation: conversation, user: Current.user, contacts: contact_params).perform
-    render json: { message_id: message&.id }
+    # a mensagem vai junto para a tela mostrar na hora, sem esperar o aviso em tempo real
+    render json: { message_id: message&.id, message: message&.push_event_data }
   end
 
   private
