@@ -17,8 +17,6 @@
       "ERROR": "Não foi possível abrir o contato."
     },
     "SEND_CONTACT": {
-      "BUTTON": "Contato",
-      "TOOLTIP": "Enviar contato (cartão do WhatsApp)",
       "TITLE": "Enviar contato",
       "DESCRIPTION": "O cliente recebe um cartão de contato, igual ao que você manda pelo celular.",
       "SEARCH": "Buscar pelo nome ou telefone",
@@ -56,8 +54,6 @@
       "WAZE": "Waze"
     },
     "SEND_LOCATION": {
-      "BUTTON": "Localização",
-      "TOOLTIP": "Enviar localização (pin de mapa do WhatsApp)",
       "TITLE": "Enviar localização",
       "DESCRIPTION": "O cliente recebe o pin no mapa e abre direto no Maps ou no Waze.",
       "SEARCH": "Buscar endereço ou lugar, ou colar um link do Google Maps",
@@ -94,6 +90,24 @@
         "EVOLUTION_TIMEOUT": "A Evolution demorou para responder. Veja na conversa se a localização saiu antes de tentar de novo.",
         "EVOLUTION_UNREACHABLE": "Não foi possível falar com a Evolution."
       }
+    },
+    "MESSAGE_MENU": "Opções",
+    "COMPOSER": {
+      "ATTACH": "Anexar",
+      "MENU": {
+        "DOCUMENT": "Documento",
+        "MEDIA": "Fotos e vídeos",
+        "CONTACT": "Contato",
+        "LOCATION": "Localização",
+        "QUICK_REPLY": "Resposta rápida"
+      },
+      "DISCARD": "Descartar áudio",
+      "PAUSE": "Pausar gravação",
+      "RESUME": "Continuar gravando",
+      "PLAY": "Ouvir",
+      "STOP_PLAY": "Parar",
+      "SEND": "Enviar áudio",
+      "MIC_ERROR": "Não foi possível usar o microfone. Verifique a permissão do navegador."
     }
   }
 }

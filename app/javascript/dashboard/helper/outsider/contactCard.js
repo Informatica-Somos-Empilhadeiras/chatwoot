@@ -1,16 +1,16 @@
 // OUTSIDER: cartão de contato do WhatsApp.
 // A Evolution grava o contato recebido (ou enviado pelo celular) como texto, no idioma dela:
 //   *Contato:*\n\n_Nome:_ Daniel\n_Número (1):_ +55 62 9183-4188
+// Nas recebidas a marcação vem trocada ("**Contato:**", "*Nome:*"; ver whatsappText.js).
 // Vários contatos vêm separados por linha em branco. Nos grupos, o texto começa com quem
 // enviou ("**+55 ... - Nome:**"). O contato enviado pelo Chatwoot (botão Contato) traz os
 // dados prontos em content_attributes.outsider_contacts. Daqui sai a lista de cartões que o
 // Message.vue desenha com o ContactCard.vue.
-import { splitSenderHeader } from './mediaAlbum';
+import { splitTypedContent, typeHeaderRegex } from './whatsappText';
 
-const HEADER = '\\*(?:Contato|Contact|Contacto):\\*';
-const NAME = /^_(?:Nome|Name|Nombre):_\s*(.*)$/;
-const NUMBER = /^_(?:Número|Number|Numero)\s*\(\d+\):_\s*(.*)$/;
-const BLOCK_START = new RegExp(`^${HEADER}\\s*$`);
+const NAME = /^[_*](?:Nome|Name|Nombre):[_*]\s*(.*)$/;
+const NUMBER = /^[_*](?:Número|Number|Numero)\s*\(\d+\):[_*]\s*(.*)$/;
+const BLOCK_START = typeHeaderRegex('Contato|Contact|Contacto');
 
 const digitsOf = phone => String(phone || '').replace(/\D/g, '');
 
@@ -29,7 +29,7 @@ const parseBlock = lines => {
 
 // devolve null quando o texto não é só contatos (aí fica a bolha de texto normal)
 export const parseContactText = content => {
-  const { header, body } = splitSenderHeader(content);
+  const { header, body } = splitTypedContent(content, BLOCK_START);
   if (!body || !BLOCK_START.test(body.split('\n')[0].trim())) return null;
 
   const blocks = [];
@@ -46,7 +46,7 @@ export const parseContactText = content => {
 export const contactCardsOf = ({ content, contentAttributes } = {}) => {
   const sent = contentAttributes?.outsiderContacts;
   if (Array.isArray(sent) && sent.length) {
-    const { header } = splitSenderHeader(content);
+    const { header } = splitTypedContent(content, BLOCK_START);
     return {
       header,
       cards: sent.map(card => ({

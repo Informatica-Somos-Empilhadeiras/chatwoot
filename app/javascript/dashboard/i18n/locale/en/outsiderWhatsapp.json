@@ -17,8 +17,6 @@
       "ERROR": "Could not open the contact."
     },
     "SEND_CONTACT": {
-      "BUTTON": "Contact",
-      "TOOLTIP": "Send contact (WhatsApp card)",
       "TITLE": "Send contact",
       "DESCRIPTION": "The customer gets a contact card, the same as one sent from the phone.",
       "SEARCH": "Search by name or phone",
@@ -56,8 +54,6 @@
       "WAZE": "Waze"
     },
     "SEND_LOCATION": {
-      "BUTTON": "Location",
-      "TOOLTIP": "Send location (WhatsApp map pin)",
       "TITLE": "Send location",
       "DESCRIPTION": "The customer gets a map pin that opens in Maps or Waze.",
       "SEARCH": "Search an address or place, or paste a Google Maps link",
@@ -94,6 +90,24 @@
         "EVOLUTION_TIMEOUT": "Evolution took too long. Check the conversation before trying again.",
         "EVOLUTION_UNREACHABLE": "Could not reach Evolution."
       }
+    },
+    "MESSAGE_MENU": "Options",
+    "COMPOSER": {
+      "ATTACH": "Attach",
+      "MENU": {
+        "DOCUMENT": "Document",
+        "MEDIA": "Photos & videos",
+        "CONTACT": "Contact",
+        "LOCATION": "Location",
+        "QUICK_REPLY": "Quick reply"
+      },
+      "DISCARD": "Discard audio",
+      "PAUSE": "Pause recording",
+      "RESUME": "Keep recording",
+      "PLAY": "Listen",
+      "STOP_PLAY": "Stop",
+      "SEND": "Send audio",
+      "MIC_ERROR": "Could not use the microphone. Check the browser permission."
     }
   }
 }

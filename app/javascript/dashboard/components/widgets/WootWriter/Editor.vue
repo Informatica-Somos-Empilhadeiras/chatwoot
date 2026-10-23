@@ -999,18 +999,20 @@ useEmitter(BUS_EVENTS.INSERT_INTO_RICH_EDITOR, insertContentIntoEditor);
 
 // Resizable editor wrapper styles
 .resizable-editor-wrapper {
-  /* Anula qualquer altura injetada pelo JS no elemento pai */
-  height: auto !important;
-
   .ProseMirror-woot-style {
-    /* Força altura de 1 linha */
-    min-height: 1.5rem !important;
-
-    /* Cresce conforme a digitação */
-    height: auto !important;
-
-    /* Mantém o limite para não empurrar a tela inteira se colar texto gigante */
-    max-height: 15rem !important;
+    min-height: clamp(
+      var(--editor-min-allowed, var(--editor-min-height, 5rem)),
+      var(--editor-height, var(--editor-min-height, 5rem)),
+      var(--editor-max-allowed, var(--editor-max-height, 7.5rem))
+    );
+    max-height: clamp(
+      var(--editor-min-allowed, var(--editor-min-height, 5rem)),
+      var(--editor-height, var(--editor-min-height, 5rem)),
+      var(--editor-max-allowed, var(--editor-max-height, 7.5rem))
+    );
+    transition:
+      min-height var(--editor-height-transition, 180ms ease),
+      max-height var(--editor-height-transition, 180ms ease);
   }
 }
 

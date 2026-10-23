@@ -82,13 +82,10 @@ const translateValue = computed(() => {
     <div ref="wootEditorPrivateMode" class="flex items-center gap-1 px-2 z-20">
       {{ $t('CONVERSATION.REPLYBOX.PRIVATE_NOTE') }}
     </div>
-    <!-- OUTSIDER: marcador amarelo na mensagem privada -->
     <div
-      class="absolute shadow-sm rounded-full h-6 w-[var(--chip-width)] ease-in-out translate-x-[var(--translate-x)] rtl:translate-x-[var(--rtl-translate-x)]"
+      class="absolute shadow-sm rounded-full h-6 w-[var(--chip-width)] ease-in-out translate-x-[var(--translate-x)] rtl:translate-x-[var(--rtl-translate-x)] bg-n-solid-1"
       :class="{
         'transition-all duration-300': !disabled && !isReplyRestricted,
-        'bg-n-amber-5 dark:bg-n-amber-7': isPrivate,
-        'bg-n-solid-1': !isPrivate,
       }"
       :style="{
         '--chip-width': width,

@@ -11,18 +11,10 @@ import VideoCallButton from '../VideoCallButton.vue';
 import { INBOX_TYPES } from 'dashboard/helper/inbox';
 import { mapGetters } from 'vuex';
 import NextButton from 'dashboard/components-next/button/Button.vue';
-import SendContactButton from './outsider/SendContactButton.vue'; // OUTSIDER: enviar contato
-import SendLocationButton from './outsider/SendLocationButton.vue'; // OUTSIDER: enviar localização
 
 export default {
   name: 'ReplyBottomPanel',
-  components: {
-    NextButton,
-    FileUpload,
-    VideoCallButton,
-    SendContactButton,
-    SendLocationButton, // OUTSIDER
-  },
+  components: { NextButton, FileUpload, VideoCallButton },
   mixins: [inboxMixin],
   props: {
     isNote: {
@@ -284,17 +276,15 @@ export default {
 </script>
 
 <template>
-  <div class="flex justify-between gap-2 p-3" :class="wrapClass">
-    <!-- OUTSIDER: botões maiores, com nome; escondidos enquanto grava áudio -->
-    <div class="left-wrap" :class="{ invisible: isRecordingAudio }">
+  <div class="flex justify-between p-3" :class="wrapClass">
+    <div class="left-wrap">
       <NextButton
         v-if="!isEditorDisabled"
         v-tooltip.top-end="$t('CONVERSATION.REPLYBOX.TIP_EMOJI_ICON')"
         icon="i-ph-smiley-sticker"
-        :label="$t('CONVERSATION.REPLYBOX.OUTSIDER_COMPOSER.EMOJI')"
         slate
         faded
-        md
+        sm
         @click="toggleEmojiPicker"
       />
       <FileUpload
@@ -317,24 +307,11 @@ export default {
           v-if="showAttachButton"
           v-tooltip.top-end="$t('CONVERSATION.REPLYBOX.TIP_ATTACH_ICON')"
           icon="i-ph-paperclip"
-          :label="$t('CONVERSATION.REPLYBOX.OUTSIDER_COMPOSER.ATTACH')"
           slate
           faded
-          md
+          sm
         />
       </FileUpload>
-      <!-- OUTSIDER: enviar contato (cartão do WhatsApp, só caixas da Evolution) -->
-      <SendContactButton
-        v-if="!isOnPrivateNote && !isEditorDisabled"
-        :inbox="inbox"
-        :conversation-id="conversationId"
-      />
-      <!-- OUTSIDER: enviar localização (pin de mapa do WhatsApp, só caixas da Evolution) -->
-      <SendLocationButton
-        v-if="!isOnPrivateNote && !isEditorDisabled"
-        :inbox="inbox"
-        :conversation-id="conversationId"
-      />
       <NextButton
         v-if="showAudioRecorderButton"
         v-tooltip.top-end="$t('CONVERSATION.REPLYBOX.TIP_AUDIORECORDER_ICON')"
@@ -357,14 +334,9 @@ export default {
         v-if="showMessageSignatureButton"
         v-tooltip.top-end="signatureToggleTooltip"
         icon="i-ph-signature"
-        :label="
-          sendWithSignature
-            ? $t('CONVERSATION.REPLYBOX.OUTSIDER_COMPOSER.SIGNATURE_ON')
-            : $t('CONVERSATION.REPLYBOX.OUTSIDER_COMPOSER.SIGNATURE_OFF')
-        "
-        :color="sendWithSignature ? 'teal' : 'slate'"
+        slate
         faded
-        md
+        sm
         @click="toggleMessageSignature"
       />
       <NextButton
@@ -373,7 +345,7 @@ export default {
         icon="i-ph-quotes"
         :variant="quotedReplyEnabled ? 'solid' : 'faded'"
         color="slate"
-        md
+        sm
         :aria-pressed="quotedReplyEnabled"
         @click="$emit('toggleQuotedReply')"
       />
@@ -383,7 +355,7 @@ export default {
         icon="i-ph-whatsapp-logo"
         slate
         faded
-        md
+        sm
         @click="$emit('selectWhatsappTemplate')"
       />
       <NextButton
@@ -392,7 +364,7 @@ export default {
         icon="i-ph-whatsapp-logo"
         slate
         faded
-        md
+        sm
         @click="$emit('selectContentTemplate')"
       />
       <VideoCallButton
@@ -420,7 +392,7 @@ export default {
         icon="i-ph-article-ny-times"
         slate
         faded
-        md
+        sm
         @click="toggleInsertArticle"
       />
     </div>
@@ -428,10 +400,10 @@ export default {
       <NextButton
         :label="sendButtonText"
         type="submit"
-        md
+        sm
         :color="isNote ? 'amber' : 'blue'"
-        :disabled="isSendDisabled || isRecordingAudio"
-        class="flex-shrink-0 !rounded-full"
+        :disabled="isSendDisabled"
+        class="flex-shrink-0"
         @click="onSend"
       />
     </div>
@@ -440,16 +412,7 @@ export default {
 
 <style lang="scss" scoped>
 .left-wrap {
-  @apply items-center flex flex-wrap gap-2;
-
-  // OUTSIDER: botões redondos com ícone maior
-  :deep(button) {
-    @apply rounded-full;
-  }
-
-  :deep(button [class^='i-']) {
-    @apply size-5;
-  }
+  @apply items-center flex gap-2;
 }
 
 .right-wrap {

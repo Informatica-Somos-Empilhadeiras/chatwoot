@@ -31,6 +31,31 @@ describe('location', () => {
     });
   });
 
+  it('reads the received text, where Evolution swaps the WhatsApp marks for Chatwoot ones', () => {
+    expect(
+      parseLocationText(
+        '**Localização:**\n\n*Latitude:* -16.6869 \n*Longitude:* -49.2648 \n*Nome:* Somos\n*Endereço:* Av. Caiapó \n*URL:* https://www.google.com/maps/search/?api=1&query=-16.6869,-49.2648'
+      )
+    ).toEqual({
+      header: null,
+      latitude: -16.6869,
+      longitude: -49.2648,
+      name: 'Somos',
+      address: 'Av. Caiapó',
+    });
+    expect(
+      parseLocationText(
+        '**+55 62 99999-0003 - Marcos:**\n\n**Localização:**\n\n*Latitude:* 1 \n*Longitude:* 2 \n'
+      )
+    ).toMatchObject({ header: '+55 62 99999-0003 - Marcos', latitude: 1 });
+    expect(
+      locationOf({
+        content: '**Localização:**\n\n*Latitude:* 1 \n*Longitude:* 2 \n',
+        contentAttributes: { outsiderLocation: { latitude: 1, longitude: 2 } },
+      }).header
+    ).toBeNull();
+  });
+
   it('keeps normal text as text', () => {
     expect(parseLocationText('*Localização:* fica na rua 10')).toBeNull();
     expect(

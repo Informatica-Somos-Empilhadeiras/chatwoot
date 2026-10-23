@@ -1,0 +1,12 @@
+/* OUTSIDER: caixa de texto da resposta com uma linha que cresce com o texto, como no WhatsApp.
+   Vale só para a caixa de resposta da conversa (ResizableEditorWrapper > .reply-box); os outros
+   editores ficam como o Chatwoot fez. */
+.resizable-editor-wrapper:has(.reply-box) {
+  height: auto !important;
+}
+
+.resizable-editor-wrapper .reply-box .ProseMirror-woot-style {
+  min-height: 1.5rem !important;
+  height: auto !important;
+  max-height: 15rem !important;
+}

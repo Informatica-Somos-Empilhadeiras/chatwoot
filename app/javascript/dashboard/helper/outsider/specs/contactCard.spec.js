@@ -23,6 +23,30 @@ describe('contactCard', () => {
     expect(many.cards.map(card => card.name)).toEqual(['Ana', 'Bia']);
   });
 
+  it('reads the received text, where Evolution swaps the WhatsApp marks for Chatwoot ones', () => {
+    expect(
+      contactCardsOf({
+        content:
+          '**Contato:**\n\n*Nome:* Daniel\n*Número (1):* +55 62 9183-4188\n\n**Contato:**\n\n*Nome:* Ana\n*Número (1):* +55 11 98888-7777',
+      })
+    ).toEqual({
+      header: null,
+      cards: [
+        { name: 'Daniel', phones: ['+55 62 9183-4188'] },
+        { name: 'Ana', phones: ['+55 11 98888-7777'] },
+      ],
+    });
+    expect(
+      contactCardsOf({
+        content:
+          '**+55 62 99999-0003 - Marcos:**\n\n**Contato:**\n\n*Nome:* Bia\n*Número (1):* +55 62 3333-0000',
+      }).header
+    ).toBe('+55 62 99999-0003 - Marcos');
+    expect(
+      contactCardsOf({ content: '**Contato:** me liga amanhã' })
+    ).toBeNull();
+  });
+
   it('prefers the card data saved when the contact went out from Chatwoot', () => {
     expect(
       contactCardsOf({

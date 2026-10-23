@@ -155,7 +155,7 @@ onMounted(async () => {
   try {
     await record.startRecording();
   } catch (error) {
-    useAlert(t('CONVERSATION.REPLYBOX.OUTSIDER_COMPOSER.MIC_ERROR'));
+    useAlert(t('OUTSIDER_WHATSAPP.COMPOSER.MIC_ERROR'));
     emit('close');
   }
 });
@@ -171,7 +171,7 @@ onBeforeUnmount(() => {
     class="flex items-center w-full gap-2 px-1.5 py-1.5 my-1 border rounded-3xl bg-white dark:bg-[#2A2F32] border-n-strong"
   >
     <NextButton
-      v-tooltip.top="$t('CONVERSATION.REPLYBOX.OUTSIDER_COMPOSER.DISCARD')"
+      v-tooltip.top="$t('OUTSIDER_WHATSAPP.COMPOSER.DISCARD')"
       icon="i-ph-trash"
       slate
       ghost
@@ -200,8 +200,8 @@ onBeforeUnmount(() => {
       <NextButton
         v-tooltip.top="
           isPlaying
-            ? $t('CONVERSATION.REPLYBOX.OUTSIDER_COMPOSER.STOP_PLAY')
-            : $t('CONVERSATION.REPLYBOX.OUTSIDER_COMPOSER.PLAY')
+            ? $t('OUTSIDER_WHATSAPP.COMPOSER.STOP_PLAY')
+            : $t('OUTSIDER_WHATSAPP.COMPOSER.PLAY')
         "
         :icon="isPlaying ? 'i-ph-pause-fill' : 'i-ph-play-fill'"
         slate
@@ -217,7 +217,7 @@ onBeforeUnmount(() => {
 
     <NextButton
       v-if="state === RECORDING"
-      v-tooltip.top="$t('CONVERSATION.REPLYBOX.OUTSIDER_COMPOSER.PAUSE')"
+      v-tooltip.top="$t('OUTSIDER_WHATSAPP.COMPOSER.PAUSE')"
       icon="i-ph-pause-fill"
       ruby
       faded
@@ -226,7 +226,7 @@ onBeforeUnmount(() => {
     />
     <NextButton
       v-else-if="state === PAUSED"
-      v-tooltip.top="$t('CONVERSATION.REPLYBOX.OUTSIDER_COMPOSER.RESUME')"
+      v-tooltip.top="$t('OUTSIDER_WHATSAPP.COMPOSER.RESUME')"
       icon="i-ph-microphone-fill"
       ruby
       faded
@@ -234,7 +234,7 @@ onBeforeUnmount(() => {
       @click="resume"
     />
     <NextButton
-      v-tooltip.top="$t('CONVERSATION.REPLYBOX.OUTSIDER_COMPOSER.SEND')"
+      v-tooltip.top="$t('OUTSIDER_WHATSAPP.COMPOSER.SEND')"
       icon="i-ph-paper-plane-right-fill"
       :is-loading="state === SENDING"
       :disabled="state === SENDING"

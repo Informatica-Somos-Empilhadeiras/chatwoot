@@ -1,5 +1,5 @@
 <script setup>
-// OUTSIDER: botão "Contato" da caixa de resposta. Só aparece nas caixas do WhatsApp pela Evolution.
+// OUTSIDER: janela "Enviar contato", aberta pelo menu do clipe (ComposerAttachMenu.vue), só nas caixas da Evolution.
 // Abre a escolha de contatos (busca no Chatwoot pelo nome ou telefone, ou nome e número digitados)
 // e envia como cartão de contato do WhatsApp (ver app/services/outsider/contact_card_sender.rb).
 // A mensagem aparece na conversa quando a Evolution confirma o envio.
@@ -15,12 +15,10 @@ import ContactAPI from 'dashboard/api/contacts';
 import ContactCardsAPI from 'dashboard/api/outsider/contactCards';
 
 const props = defineProps({
-  inbox: { type: Object, default: () => ({}) },
   conversationId: { type: Number, default: null },
 });
 
 const MAX_CONTACTS = 10;
-const EVOLUTION_WEBHOOK = /\/chatwoot\/webhook\//;
 
 const { t } = useI18n();
 
@@ -34,9 +32,6 @@ const manualPhone = ref('');
 const isSending = ref(false);
 let searchController = null;
 
-const isEvolution = computed(() =>
-  EVOLUTION_WEBHOOK.test(props.inbox?.webhook_url || '')
-);
 
 const digits = value => String(value || '').replace(/\D/g, '');
 const keyOf = item => `${item.name}|${digits(item.phone)}`;
@@ -158,23 +153,13 @@ const send = async () => {
   }
 };
 
+defineExpose({ open });
+
 const fieldClass =
   'w-full !mb-0 px-3 py-2 text-sm rounded-lg reset-base bg-n-alpha-black2 text-n-slate-12 outline outline-1 -outline-offset-1 outline-n-weak focus:outline-n-brand';
 </script>
 
 <template>
-  <NextButton
-    v-if="isEvolution && conversationId"
-    v-tooltip.top-end="t('OUTSIDER_WHATSAPP.SEND_CONTACT.TOOLTIP')"
-    type="button"
-    icon="i-ph-address-book"
-    :label="t('OUTSIDER_WHATSAPP.SEND_CONTACT.BUTTON')"
-    slate
-    faded
-    md
-    data-send-contact
-    @click="open"
-  />
   <Dialog
     ref="dialogRef"
     :title="t('OUTSIDER_WHATSAPP.SEND_CONTACT.TITLE')"

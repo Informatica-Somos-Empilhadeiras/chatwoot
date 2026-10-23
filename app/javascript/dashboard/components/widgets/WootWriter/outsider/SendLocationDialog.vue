@@ -1,5 +1,5 @@
 <script setup>
-// OUTSIDER: botão "Localização" da caixa de resposta. Só aparece nas caixas do WhatsApp pela Evolution.
+// OUTSIDER: janela "Enviar localização", aberta pelo menu do clipe (ComposerAttachMenu.vue), só nas caixas da Evolution.
 // Busca o endereço no OpenStreetMap (ou aceita coordenadas e links do Google Maps colados), mostra
 // os endereços salvos da conta e a localização atual do navegador. Depois de escolher, dá para
 // ajustar o nome que o cliente vê e enviar como o pin de mapa do WhatsApp
@@ -16,11 +16,9 @@ import LocationsAPI from 'dashboard/api/outsider/locations';
 import { formatCoordinates } from 'dashboard/helper/outsider/location';
 
 const props = defineProps({
-  inbox: { type: Object, default: () => ({}) },
   conversationId: { type: Number, default: null },
 });
 
-const EVOLUTION_WEBHOOK = /\/chatwoot\/webhook\//;
 const MIN_QUERY = 3;
 
 const { t } = useI18n();
@@ -38,9 +36,6 @@ const isSaving = ref(false);
 const isLocating = ref(false);
 let searchController = null;
 
-const isEvolution = computed(() =>
-  EVOLUTION_WEBHOOK.test(props.inbox?.webhook_url || '')
-);
 const hasQuery = computed(() => query.value.trim().length >= MIN_QUERY);
 const samePoint = (a, b) =>
   Number(a.latitude).toFixed(6) === Number(b.latitude).toFixed(6) &&
@@ -198,6 +193,8 @@ const send = async () => {
   }
 };
 
+defineExpose({ open });
+
 const fieldClass =
   'w-full !mb-0 px-3 py-2 text-sm rounded-lg reset-base bg-n-alpha-black2 text-n-slate-12 outline outline-1 -outline-offset-1 outline-n-weak focus:outline-n-brand';
 const rowClass =
@@ -205,18 +202,6 @@ const rowClass =
 </script>
 
 <template>
-  <NextButton
-    v-if="isEvolution && conversationId"
-    v-tooltip.top-end="t('OUTSIDER_WHATSAPP.SEND_LOCATION.TOOLTIP')"
-    type="button"
-    icon="i-lucide-map-pin"
-    :label="t('OUTSIDER_WHATSAPP.SEND_LOCATION.BUTTON')"
-    slate
-    faded
-    md
-    data-send-location
-    @click="open"
-  />
   <Dialog
     ref="dialogRef"
     :title="t('OUTSIDER_WHATSAPP.SEND_LOCATION.TITLE')"

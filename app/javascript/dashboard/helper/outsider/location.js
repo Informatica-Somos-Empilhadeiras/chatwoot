@@ -1,13 +1,13 @@
 // OUTSIDER: localização do WhatsApp.
 // A Evolution grava a localização recebida (ou enviada) como texto, no idioma dela:
 //   *Localização:*\n\n_Latitude:_ -16.68 \n_Longitude:_ -49.25 \n_Nome:_ ...\n_Endereço:_ ...\n_URL:_ https://...
-// Nome e endereço só vêm quando o pin tem. Nos grupos, o texto começa com quem enviou. A enviada
+// Nome e endereço só vêm quando o pin tem. Nas recebidas a marcação vem trocada ("**Localização:**",
+// "*Latitude:*"; ver whatsappText.js). Nos grupos, o texto começa com quem enviou. A enviada
 // pelo Chatwoot (botão Localização) traz os dados prontos em content_attributes.outsider_location.
 // Daqui sai o local que o Message.vue desenha com o LocationCard.vue, e as contas do mapa.
-import { splitSenderHeader } from './mediaAlbum';
+import { FIELD, splitTypedContent, typeHeaderRegex } from './whatsappText';
 
-const HEADER = /^\*(?:Localiza[çc][ãa]o|Location|Ubicaci[óo]n)[^*:]*:\*$/i;
-const FIELD = /^_([^:_]+):_\s*(.*)$/;
+const HEADER = typeHeaderRegex('Localiza[çc][ãa]o|Location|Ubicaci[óo]n');
 const TILE_SIZE = 256;
 const TILE_URL = 'https://tile.openstreetmap.org';
 
@@ -36,7 +36,7 @@ const validPoint = place =>
 
 // devolve null quando o texto não é uma localização (aí fica a bolha de texto normal)
 export const parseLocationText = content => {
-  const { header, body } = splitSenderHeader(content);
+  const { header, body } = splitTypedContent(content, HEADER);
   const lines = body ? body.split('\n').map(line => line.trim()) : [];
   if (!lines.length || !HEADER.test(lines[0])) return null;
 
@@ -66,7 +66,7 @@ export const locationOf = ({ content, contentAttributes } = {}) => {
       address: sent.address || '',
     };
     if (validPoint(place)) {
-      return { header: splitSenderHeader(content).header, ...place };
+      return { header: splitTypedContent(content, HEADER).header, ...place };
     }
   }
   return parseLocationText(content);
@@ -77,7 +77,7 @@ export const locationPreview = ({ content, contentAttributes } = {}) => {
   const place = locationOf({ content, contentAttributes });
   if (!place) return null;
   const label =
-    splitSenderHeader(content)
+    splitTypedContent(content, HEADER)
       .body.split('\n')[0]
       .replace(/[*:]/g, '')
       .trim() || 'Localização';
