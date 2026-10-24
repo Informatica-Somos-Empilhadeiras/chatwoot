@@ -1,4 +1,6 @@
 import {
+  addDays,
+  conditionLabel,
   discountPercent,
   itemTotal,
   lookupDocument,
@@ -80,5 +82,20 @@ describe('payment row and CNPJ lookup (Entrega 19)', () => {
     expect(lookupDocument('11.222.333/0001-81')).toBe('11222333000181');
     expect(lookupDocument('12.abc.345/01de-35')).toBe('12ABC34501DE35');
     expect(lookupDocument('123.456.789-09')).toBe('');
+  });
+});
+
+describe('simpler proposal editor (Entrega 20)', () => {
+  it('shows condition titles without the bold marks and the colon', () => {
+    expect(conditionLabel('**Impostos:**')).toBe('Impostos');
+    expect(
+      conditionLabel('**Documentos para análise de crédito PJ:**\n\n* Primeira')
+    ).toBe('Documentos para análise de crédito PJ');
+    expect(conditionLabel('Frete:')).toBe('Frete');
+  });
+
+  it('counts the validity days from the proposal date', () => {
+    expect(addDays('2026-10-24', 5)).toBe('2026-10-29');
+    expect(addDays('2026-12-30', 5)).toBe('2027-01-04');
   });
 });

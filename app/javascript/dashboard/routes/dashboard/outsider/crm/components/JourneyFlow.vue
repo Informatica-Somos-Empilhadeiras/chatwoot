@@ -321,7 +321,7 @@ watch(() => [props.opportunityId, props.journey], showCurrent);
               <template v-else>
                 <button
                   type="button"
-                  class="relative z-[1] grid border-2 border-dashed rounded-full size-10 place-content-center bg-n-solid-1 border-n-slate-7 text-n-slate-10 hover:border-n-slate-9 focus:outline-none"
+                  class="relative z-[1] grid rounded-full outline-dashed outline-2 -outline-offset-2 size-10 place-content-center bg-n-solid-1 outline-n-slate-7 text-n-slate-10 hover:outline-n-slate-9"
                   :aria-label="node.unit.name"
                   data-journey-node
                   @mouseenter="show($event, upcomingEntry(node.unit))"

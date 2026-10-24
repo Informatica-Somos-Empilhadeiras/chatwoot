@@ -21,18 +21,17 @@ export const PROPOSAL_STATUS_COLORS = {
   canceled: 'bg-n-alpha-2 text-n-slate-10 line-through',
 };
 
-export const CUSTOMER_FIELDS = [
-  { key: 'company', wide: true },
-  { key: 'document' },
-  { key: 'state_registration' },
-  { key: 'address', wide: true },
-  { key: 'district' },
-  { key: 'city' },
-  { key: 'state' },
-  { key: 'zip' },
-  { key: 'phone' },
-  { key: 'email' },
-  { key: 'attention', wide: true },
+// dados do cliente (Entrega 20): os principais ficam à vista; os outros, em "Mais dados do cliente"
+// (a busca pelo CNPJ preenche quase todos)
+export const MAIN_CUSTOMER_FIELDS = ['company', 'document', 'city', 'state'];
+export const EXTRA_CUSTOMER_FIELDS = [
+  'state_registration',
+  'address',
+  'district',
+  'zip',
+  'phone',
+  'email',
+  'attention',
 ];
 
 // quantidade "1,5" ou "2" vira número; vazio vira 1
@@ -131,6 +130,23 @@ export const paymentConditionIndex = conditions =>
     const label = normalize(condition.label);
     return label.includes('pagamento') && !label.includes('atraso');
   });
+
+// título de uma condição para mostrar em lista: sem **negrito**, só a primeira linha e sem ":" no fim
+export const conditionLabel = label =>
+  String(label || '')
+    .replace(/\*\*/g, '')
+    .split('\n')[0]
+    .trim()
+    .replace(/:$/, '')
+    .trim();
+
+// "AAAA-MM-DD" daqui a tantos dias a partir da data dada (ou de hoje)
+export const addDays = (from, days) => {
+  const date = from ? new Date(`${from}T12:00:00`) : new Date();
+  date.setDate(date.getDate() + days);
+  const pad = number => String(number).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+};
 
 // CNPJ com 14 caracteres, inclusive o alfanumérico (letras nas 12 primeiras posições)
 export const lookupDocument = text => {

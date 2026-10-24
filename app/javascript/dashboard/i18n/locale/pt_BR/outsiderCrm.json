@@ -33,7 +33,9 @@
       "ALL_OWNERS": "Todos os responsáveis",
       "MINE": "Meus negócios",
       "NO_OWNER": "Sem responsável",
-      "MINE_AND_UNOWNED": "Meus e sem responsável"
+      "MINE_AND_UNOWNED": "Meus e sem responsável",
+      "MORE": "Filtros",
+      "MORE_COUNT": "Filtros ({count})"
     },
     "TABLE": {
       "OPPORTUNITY": "Negócio",
@@ -444,13 +446,15 @@
       "WON": "Ganhos no período",
       "CONVERSION": "Conversão",
       "AVERAGE_DAYS": "Tempo médio até ganhar",
-      "DEALS": "{count} negócios",
+      "DEALS": "{count} negócio | {count} negócios",
       "WEIGHTED_HINT": "Valor × probabilidade",
       "CONVERSION_HINT": "{won} ganhos de {closed} fechados",
       "DAYS": "{days} dias",
       "AVERAGE_DAYS_HINT": "Da criação até o ganho",
       "OWN_ONLY": "Nas unidades em que você é vendedor, os números contam só os seus negócios.",
-      "MINE_ONLY": "Os números contam só os negócios em que você é o responsável."
+      "MINE_ONLY": "Os números contam só os negócios em que você é o responsável.",
+      "MORE": "Mais números",
+      "LESS": "Menos números"
     },
     "BOARD": {
       "ADD": "Adicionar negócio",
@@ -519,8 +523,6 @@
       "DUE_TODAY": "Vence hoje",
       "DAYS_LATE": "Vencida há {days} dias",
       "PROBABILITY": "Probabilidade",
-      "FROM_STAGE": "Padrão da etapa",
-      "FROM_DEAL": "Definida no negócio",
       "TOTAL_OPEN": "Total em aberto do contato",
       "OPEN_DEALS": "Negócios abertos: {count}",
       "OTHERS": "Outros negócios e histórico",
@@ -529,7 +531,9 @@
       "DEALS": "Negócios: {count}",
       "SWITCH": "{n} negócio aberto deste contato | {n} negócios abertos deste contato: escolha qual ver",
       "YOURS": "Seu",
-      "NO_OWNER": "Sem responsável"
+      "NO_OWNER": "Sem responsável",
+      "STAGE_OF": "etapa {current} de {total}",
+      "CONTACT_DEALS": "Negócios em aberto"
     },
     "CANCEL": "Cancelar",
     "DATES": {
@@ -1132,7 +1136,7 @@
       "NEW": "Nova proposta",
       "EMPTY": "Nenhuma proposta encontrada.",
       "LOAD_MORE": "Carregar mais",
-      "SUMMARY": "{count} propostas · {total}",
+      "SUMMARY": "{count} proposta · {total} | {count} propostas · {total}",
       "VALID_UNTIL_SHORT": "vale até {date}",
       "STATUS_CHANGED": "Proposta marcada como: {status}",
       "KIND": {
@@ -1151,16 +1155,29 @@
         "SENT": "Marcar como enviada",
         "ACCEPTED": "Aceita",
         "REJECTED": "Recusada",
-        "CANCELED": "Cancelar",
-        "DRAFT": "Voltar para rascunho"
+        "CANCELED": "Cancelar proposta",
+        "DRAFT": "Voltar para rascunho",
+        "CUSTOMER_ACCEPTED": "Cliente aceitou",
+        "CUSTOMER_REJECTED": "Cliente recusou",
+        "MORE": "Mais ações"
       },
       "FILTERS": {
         "SEARCH": "Buscar por número, cliente ou máquina",
-        "ALL_STATUSES": "Todas as situações",
         "ALL_KINDS": "Venda e locação",
         "ALL_OWNERS": "Todos os vendedores",
         "FROM": "De",
-        "TO": "até"
+        "TO": "até",
+        "ALL": "Todas",
+        "MORE": "Mais filtros",
+        "MORE_COUNT": "Mais filtros ({count})",
+        "STATUS": {
+          "DRAFT": "Rascunhos",
+          "SENT": "Enviadas",
+          "ACCEPTED": "Aceitas",
+          "REJECTED": "Recusadas",
+          "EXPIRED": "Vencidas",
+          "CANCELED": "Canceladas"
+        }
       },
       "TABLE": {
         "NUMBER": "Número",
@@ -1188,22 +1205,15 @@
         "DISCARD": "Sair sem salvar as mudanças?",
         "LOCKED": "Esta proposta já foi decidida e está travada. Para mudar, volte para rascunho.",
         "READ_ONLY": "Você pode ver esta proposta, mas só o vendedor, quem criou ou um administrador mudam.",
-        "SECTION_PROPOSAL": "Proposta",
-        "SECTION_CUSTOMER": "Dados do cliente",
-        "SECTION_ITEMS": "Itens",
-        "SECTION_CONDITIONS": "Condições",
         "SECTION_SIGNER": "Assinatura do vendedor",
         "CONTACT": "Contato",
-        "KIND": "Tipo",
         "OWNER": "Vendedor",
         "TITLE": "Título (vai no PDF)",
         "TITLE_PLACEHOLDER": "Ex.: Empilhadeira 3,5t a diesel",
         "ISSUED_ON": "Data",
-        "VALID_UNTIL": "Validade",
         "UNIT": "Unidade (dados da empresa no PDF)",
         "NO_UNIT": "Dados padrão da empresa",
         "DEAL": "Negócio",
-        "CUSTOMER_HELP": "Vêm do contato ou da última proposta dele. Mudar aqui não altera o contato no Chatwoot.",
         "NOTES": "Observações",
         "NOTES_PLACEHOLDER": "Sai no fim do PDF. Aceita **negrito**."
       },
@@ -1242,7 +1252,6 @@
         "REMOVE": "Tirar item",
         "ADD": "Adicionar item",
         "EMPTY": "Nenhum item. Adicione uma máquina do catálogo ou um item livre.",
-        "GRAND_TOTAL": "Total da proposta",
         "DISCOUNT_MODE": {
           "LABEL": "Desconto",
           "MONEY": "R$",
@@ -1277,7 +1286,6 @@
       },
       "ERRORS": {
         "CONTACT": "Escolha o contato.",
-        "TITLE": "Dê um título à proposta.",
         "COMPANY": "Preencha a empresa do cliente.",
         "ITEM_DESCRIPTION": "Todo item precisa de descrição.",
         "ITEM_VALUES": "Confira quantidade, valor e desconto dos itens.",
@@ -1336,9 +1344,7 @@
       },
       "PAYMENT": {
         "LABEL": "Condição de pagamento",
-        "CHOOSE": "Escolher opção",
-        "CUSTOM": "Texto da linha (personalizado)",
-        "HELP": "Troca o texto da linha de pagamento. Dá para ajustar o texto na própria linha."
+        "PLACEHOLDER": "Ou escreva a condição de pagamento"
       },
       "LOOKUP": {
         "BUTTON": "Buscar dados pelo CNPJ",
@@ -1350,6 +1356,24 @@
           "NOT_FOUND": "CNPJ não encontrado na Receita Federal.",
           "UNAVAILABLE": "Os serviços de consulta não responderam agora (eles aceitam poucas consultas por minuto). Tente de novo em instantes."
         }
+      },
+      "STEPS": {
+        "CUSTOMER": "Para quem é a proposta",
+        "CUSTOMER_HINT": "Escolha o contato e confira a empresa. Com o CNPJ, o resto se preenche sozinho.",
+        "MORE_CUSTOMER": "Mais dados do cliente",
+        "MORE_CUSTOMER_SUMMARY": "{filled} de {total} preenchidos",
+        "ITEMS": "O que você está oferecendo",
+        "ITEMS_HINT": "Máquinas e acessórios do catálogo, ou um item livre (frete, serviço).",
+        "PAYMENT": "Pagamento e validade",
+        "PAYMENT_HINT": "Como o cliente vai pagar e até quando a proposta vale.",
+        "VALID_UNTIL": "Válida até",
+        "VALID_DAYS": "{days} dias",
+        "OTHER_CONDITIONS": "Outras condições ({count})",
+        "OTHER_CONDITIONS_HINT": "Vêm do modelo da proposta. Mude só se este cliente tiver algo diferente.",
+        "MORE": "Mais opções",
+        "MORE_SUMMARY": "título, data, vendedor, unidade, negócio, assinatura e observações",
+        "TOTAL": "Total da proposta",
+        "DEFAULT_TITLE": "Proposta comercial"
       }
     },
     "PROPOSAL_SETTINGS": {

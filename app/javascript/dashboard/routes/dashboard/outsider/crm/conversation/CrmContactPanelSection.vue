@@ -1,7 +1,8 @@
 <script setup>
 // OUTSIDER: bloco "CRM" no painel do contato dentro da conversa. Resume os negócios do contato,
 // mostra as unidades do grupo com quem ele já negociou (histórico multiempresa) e leva para a aba
-// CRM da conversa (o detalhe e as ações ficam lá).
+// CRM da conversa (o detalhe e as ações ficam lá). Entrega 20: cada negócio aberto mostra o pipeline
+// (ContactDeals); quem pode editar muda a etapa ali mesmo.
 import { computed, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { emitter } from 'shared/helpers/mitt';
@@ -10,15 +11,14 @@ import { useAccount } from 'dashboard/composables/useAccount';
 import AccordionItem from 'dashboard/components/Accordion/AccordionItem.vue';
 import Button from 'dashboard/components-next/button/Button.vue';
 import JourneyHistory from '../components/JourneyHistory.vue';
+import ContactDeals from './ContactDeals.vue';
 import {
   OPEN_CRM_TAB_EVENT,
   crmState,
-  findPipeline,
   loadContactSummary,
   summaryKey,
-  unitName,
 } from '../crmStore';
-import { STATUS_COLORS, formatMoney } from '../helpers';
+import { formatMoney } from '../helpers';
 
 const props = defineProps({
   contactId: { type: Number, default: null },
@@ -35,22 +35,6 @@ const summary = computed(
       summaryKey(props.contactId, Number(props.conversationId))
     ]
 );
-// o negócio principal (o desta conversa) primeiro
-const openDeals = computed(() =>
-  (summary.value?.opportunities || [])
-    .filter(item => item.status === 'open')
-    .sort(
-      (a, b) =>
-        (b.id === summary.value.primary_id) -
-        (a.id === summary.value.primary_id)
-    )
-);
-
-const stageName = opportunity =>
-  findPipeline(opportunity.pipeline_id)?.stages.find(
-    stage => stage.id === opportunity.stage_id
-  )?.name;
-
 const openTab = () => emitter.emit(OPEN_CRM_TAB_EVENT);
 
 const createDeal = () => {
@@ -109,34 +93,11 @@ watch(
         </div>
       </div>
 
-      <button
-        v-for="deal in openDeals"
-        :key="deal.id"
-        type="button"
-        class="flex flex-col gap-0.5 p-2 text-start rounded-lg outline outline-1 -outline-offset-1 outline-n-weak hover:bg-n-alpha-1"
-        @click="openTab"
-      >
-        <span class="flex items-center justify-between gap-2">
-          <span class="font-medium truncate text-n-slate-12">
-            {{ deal.title }}
-          </span>
-          <span class="font-medium shrink-0 text-n-slate-12">
-            {{ formatMoney(deal.value_cents) }}
-          </span>
-        </span>
-        <span class="flex items-center gap-1.5 text-xs text-n-slate-11">
-          <span class="px-1.5 rounded-md" :class="STATUS_COLORS[deal.status]">
-            {{ stageName(deal) }}
-          </span>
-          <span class="truncate">
-            {{ deal.code }} · {{ unitName(deal.business_unit_id) }}
-          </span>
-        </span>
-      </button>
-
-      <p v-if="!openDeals.length" class="mb-0 text-n-slate-11">
-        {{ t('OUTSIDER_CRM.CONVERSATION.PANEL_EMPTY') }}
-      </p>
+      <ContactDeals
+        :contact-id="contactId"
+        :conversation-id="Number(conversationId)"
+        @open="openTab"
+      />
 
       <JourneyHistory :contact-id="contactId" compact />
 

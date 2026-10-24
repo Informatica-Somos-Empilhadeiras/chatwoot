@@ -4,6 +4,8 @@
 // automações, negócio aberto sem tarefa pendente mostra "Sem próxima tarefa". Recebido por
 // encaminhamento e ainda não aberto pelo usuário mostra "Novo" em vermelho. Sem responsável, quem é
 // da unidade vê o botão "Pegar" (fica com o negócio). Com proposta, o selo dela (Entrega 18).
+// Entrega 20 (mais simples): sem a probabilidade em % e sem o código no rodapé (o código fica na dica do
+// card e na busca); o card mostra o que o vendedor usa: cliente, valor, prazo e o que está atrasado.
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import Avatar from 'dashboard/components-next/avatar/Avatar.vue';
@@ -28,6 +30,7 @@ const isNew = computed(() => isReceived(props.opportunity.id));
 
 <template>
   <div
+    :title="opportunity.code"
     class="flex flex-col gap-2 p-3 text-sm border rounded-lg shadow-sm bg-n-solid-1"
     :class="[
       opportunity.can_edit ? 'cursor-grab' : 'cursor-pointer',
@@ -82,14 +85,9 @@ const isNew = computed(() => isReceived(props.opportunity.id));
       :proposal="opportunity.proposal"
     />
 
-    <div class="flex items-center justify-between gap-2">
-      <span class="font-semibold text-n-slate-12">
-        {{ formatMoney(opportunity.value_cents) }}
-      </span>
-      <span class="text-xs text-n-slate-10">
-        {{ opportunity.effective_probability }}%
-      </span>
-    </div>
+    <span class="font-semibold text-n-slate-12">
+      {{ formatMoney(opportunity.value_cents) }}
+    </span>
 
     <div class="flex flex-wrap items-center gap-1.5 text-xs">
       <span
@@ -149,7 +147,6 @@ const isNew = computed(() => isReceived(props.opportunity.id));
         {{ t('OUTSIDER_CRM.BOARD.SLA') }}
       </span>
       <div class="flex-1" />
-      <span class="text-n-slate-10">{{ opportunity.code }}</span>
       <Avatar
         v-if="opportunity.owner"
         v-tooltip="opportunity.owner.name"

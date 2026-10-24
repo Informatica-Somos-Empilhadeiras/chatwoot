@@ -33,7 +33,9 @@
       "ALL_OWNERS": "All owners",
       "MINE": "My deals",
       "NO_OWNER": "No owner",
-      "MINE_AND_UNOWNED": "Mine and unowned"
+      "MINE_AND_UNOWNED": "Mine and unowned",
+      "MORE": "Filters",
+      "MORE_COUNT": "Filters ({count})"
     },
     "TABLE": {
       "OPPORTUNITY": "Deal",
@@ -444,13 +446,15 @@
       "WON": "Won in period",
       "CONVERSION": "Conversion",
       "AVERAGE_DAYS": "Average time to win",
-      "DEALS": "{count} deals",
+      "DEALS": "{count} deal | {count} deals",
       "WEIGHTED_HINT": "Value × probability",
       "CONVERSION_HINT": "{won} won of {closed} closed",
       "DAYS": "{days} days",
       "AVERAGE_DAYS_HINT": "From creation to win",
       "OWN_ONLY": "In the units where you are a seller, the numbers count only your deals.",
-      "MINE_ONLY": "The numbers count only the deals you own."
+      "MINE_ONLY": "The numbers count only the deals you own.",
+      "MORE": "More numbers",
+      "LESS": "Fewer numbers"
     },
     "BOARD": {
       "ADD": "Add deal",
@@ -519,8 +523,6 @@
       "DUE_TODAY": "Due today",
       "DAYS_LATE": "{days} days overdue",
       "PROBABILITY": "Probability",
-      "FROM_STAGE": "Stage default",
-      "FROM_DEAL": "Set on the deal",
       "TOTAL_OPEN": "Contact's open total",
       "OPEN_DEALS": "Open deals: {count}",
       "OTHERS": "Other deals and history",
@@ -529,7 +531,9 @@
       "DEALS": "Deals: {count}",
       "SWITCH": "{n} open deal for this contact | {n} open deals for this contact: pick one to view",
       "YOURS": "Yours",
-      "NO_OWNER": "No owner"
+      "NO_OWNER": "No owner",
+      "STAGE_OF": "stage {current} of {total}",
+      "CONTACT_DEALS": "Open deals"
     },
     "CANCEL": "Cancel",
     "DATES": {
@@ -1132,7 +1136,7 @@
       "NEW": "New proposal",
       "EMPTY": "No proposals found.",
       "LOAD_MORE": "Load more",
-      "SUMMARY": "{count} proposals · {total}",
+      "SUMMARY": "{count} proposal · {total} | {count} proposals · {total}",
       "VALID_UNTIL_SHORT": "valid until {date}",
       "STATUS_CHANGED": "Proposal marked as: {status}",
       "KIND": {
@@ -1151,16 +1155,29 @@
         "SENT": "Mark as sent",
         "ACCEPTED": "Accepted",
         "REJECTED": "Rejected",
-        "CANCELED": "Cancel",
-        "DRAFT": "Back to draft"
+        "CANCELED": "Cancel proposal",
+        "DRAFT": "Back to draft",
+        "CUSTOMER_ACCEPTED": "Customer accepted",
+        "CUSTOMER_REJECTED": "Customer declined",
+        "MORE": "More actions"
       },
       "FILTERS": {
         "SEARCH": "Search by number, customer or machine",
-        "ALL_STATUSES": "All statuses",
         "ALL_KINDS": "Sale and rental",
         "ALL_OWNERS": "All sellers",
         "FROM": "From",
-        "TO": "to"
+        "TO": "to",
+        "ALL": "All",
+        "MORE": "More filters",
+        "MORE_COUNT": "More filters ({count})",
+        "STATUS": {
+          "DRAFT": "Drafts",
+          "SENT": "Sent",
+          "ACCEPTED": "Accepted",
+          "REJECTED": "Declined",
+          "EXPIRED": "Expired",
+          "CANCELED": "Canceled"
+        }
       },
       "TABLE": {
         "NUMBER": "Number",
@@ -1188,22 +1205,15 @@
         "DISCARD": "Leave without saving your changes?",
         "LOCKED": "This proposal has been decided and is locked. Move it back to draft to change it.",
         "READ_ONLY": "You can view this proposal, but only the seller, its creator or an administrator can change it.",
-        "SECTION_PROPOSAL": "Proposal",
-        "SECTION_CUSTOMER": "Customer details",
-        "SECTION_ITEMS": "Items",
-        "SECTION_CONDITIONS": "Conditions",
         "SECTION_SIGNER": "Seller signature",
         "CONTACT": "Contact",
-        "KIND": "Type",
         "OWNER": "Seller",
         "TITLE": "Title (printed on the PDF)",
         "TITLE_PLACEHOLDER": "E.g. 3.5t diesel forklift",
         "ISSUED_ON": "Date",
-        "VALID_UNTIL": "Valid until",
         "UNIT": "Unit (company details on the PDF)",
         "NO_UNIT": "Default company details",
         "DEAL": "Deal",
-        "CUSTOMER_HELP": "Taken from the contact or their last proposal. Changing them here doesn't change the Chatwoot contact.",
         "NOTES": "Notes",
         "NOTES_PLACEHOLDER": "Printed at the end of the PDF. Supports **bold**."
       },
@@ -1242,7 +1252,6 @@
         "REMOVE": "Remove item",
         "ADD": "Add item",
         "EMPTY": "No items. Add a machine from the catalog or a free item.",
-        "GRAND_TOTAL": "Proposal total",
         "DISCOUNT_MODE": {
           "LABEL": "Discount",
           "MONEY": "R$",
@@ -1277,7 +1286,6 @@
       },
       "ERRORS": {
         "CONTACT": "Choose the contact.",
-        "TITLE": "Give the proposal a title.",
         "COMPANY": "Fill in the customer's company.",
         "ITEM_DESCRIPTION": "Every item needs a description.",
         "ITEM_VALUES": "Check the items' quantity, price and discount.",
@@ -1336,9 +1344,7 @@
       },
       "PAYMENT": {
         "LABEL": "Payment terms",
-        "CHOOSE": "Choose an option",
-        "CUSTOM": "Row text (custom)",
-        "HELP": "Replaces the text of the payment row. You can still adjust the text in the row."
+        "PLACEHOLDER": "Or type the payment terms"
       },
       "LOOKUP": {
         "BUTTON": "Look up by CNPJ",
@@ -1350,6 +1356,24 @@
           "NOT_FOUND": "CNPJ not found at the Federal Revenue.",
           "UNAVAILABLE": "The lookup services didn't answer right now (they allow only a few lookups per minute). Try again in a moment."
         }
+      },
+      "STEPS": {
+        "CUSTOMER": "Who is this proposal for",
+        "CUSTOMER_HINT": "Pick the contact and check the company. The CNPJ fills in the rest.",
+        "MORE_CUSTOMER": "More customer details",
+        "MORE_CUSTOMER_SUMMARY": "{filled} of {total} filled",
+        "ITEMS": "What you are offering",
+        "ITEMS_HINT": "Machines and accessories from the catalog, or a free item (freight, service).",
+        "PAYMENT": "Payment and validity",
+        "PAYMENT_HINT": "How the customer will pay and until when the proposal is valid.",
+        "VALID_UNTIL": "Valid until",
+        "VALID_DAYS": "{days} days",
+        "OTHER_CONDITIONS": "Other conditions ({count})",
+        "OTHER_CONDITIONS_HINT": "They come from the proposal template. Change them only if this customer needs something different.",
+        "MORE": "More options",
+        "MORE_SUMMARY": "title, date, salesperson, unit, deal, signature and notes",
+        "TOTAL": "Proposal total",
+        "DEFAULT_TITLE": "Commercial proposal"
       }
     },
     "PROPOSAL_SETTINGS": {

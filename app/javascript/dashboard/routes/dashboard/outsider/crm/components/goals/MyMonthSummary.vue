@@ -2,6 +2,7 @@
 // OUTSIDER: resumo do mês da própria pessoa na tela principal do CRM (só texto): vendido, quanto da
 // meta já atingiu, quanto falta e a comissão. O detalhe, negócio a negócio, fica na seção Metas.
 // Some para quem não vende nem tem meta (GET /performance?only=me devolve "me" vazio).
+// Entrega 20: sem meta, não mostra "Meta" nem "Falta"; sem comissão, não mostra a comissão.
 import { ref, computed, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
@@ -39,7 +40,7 @@ const items = computed(() => {
   if (!me.value) return [];
   const goal = me.value.goal_cents;
   const missing = goal ? Math.max(goal - me.value.won_cents, 0) : null;
-  return [
+  const list = [
     {
       key: 'SOLD',
       value: formatMoney(me.value.won_cents),
@@ -64,6 +65,11 @@ const items = computed(() => {
       commission: true,
     },
   ];
+  return list.filter(
+    item =>
+      (goal || !['GOAL', 'MISSING'].includes(item.key)) &&
+      (item.key !== 'COMMISSION' || me.value.commission_cents)
+  );
 });
 
 const load = async () => {

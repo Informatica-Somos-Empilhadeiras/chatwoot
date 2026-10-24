@@ -5,7 +5,11 @@
 // manda o PDF por WhatsApp ou e-mail; os envios ficam no histórico. Aceita, recusada ou cancelada fica
 // travada até voltar para rascunho.
 // Entrega 19: aberta pelo catálogo (?produto=), a proposta nova já vem com o item; o CNPJ preenche os
-// dados do cliente (CustomerLookup) e a condição de pagamento sai de uma lista (ProposalConditions).
+// dados do cliente (CustomerLookup) e a condição de pagamento sai de uma lista (PaymentPicker).
+// Entrega 20 (mais simples): três passos na ordem em que o vendedor pensa (para quem, o quê, como paga);
+// o que é menos usado fica recolhido em "Mais dados do cliente", "Outras condições" e "Mais opções"; o
+// título sai do primeiro item quando fica em branco; a barra de baixo mostra o total e os botões de
+// salvar e enviar; cancelar e apagar ficam no menu "Mais ações" (ProposalStatusActions).
 import { ref, computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useAlert } from 'dashboard/composables';
@@ -16,23 +20,36 @@ import Button from 'dashboard/components-next/button/Button.vue';
 import Select from 'dashboard/components-next/select/Select.vue';
 import ComboBox from 'dashboard/components-next/combobox/ComboBox.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
+import EditorStep from './EditorStep.vue';
+import MoreSection from './MoreSection.vue';
 import ProposalItems from './ProposalItems.vue';
 import ProposalConditions from './ProposalConditions.vue';
+import PaymentPicker from './PaymentPicker.vue';
+import ProposalStatusActions from './ProposalStatusActions.vue';
 import CustomerLookup from './CustomerLookup.vue';
 import ProposalDealLink from './ProposalDealLink.vue';
 import ProposalPdfDialog from './ProposalPdfDialog.vue';
 import ProposalSendDialog from './ProposalSendDialog.vue';
 import ProposalSendHistory from './ProposalSendHistory.vue';
 import ConfirmDelete from '../ConfirmDelete.vue';
-import { centsToInput, errorMessage, parseMoney } from '../../helpers';
+import {
+  centsToInput,
+  errorMessage,
+  formatMoney,
+  parseMoney,
+} from '../../helpers';
 import { withCrmAccess } from '../../crmStore';
 import {
-  CUSTOMER_FIELDS,
+  EXTRA_CUSTOMER_FIELDS,
+  MAIN_CUSTOMER_FIELDS,
   PROPOSAL_STATUS_COLORS,
+  addDays,
   blankItem,
   catalogPrice,
+  conditionLabel,
   itemTotal,
   parseQuantity,
+  paymentConditionIndex,
   productItemFields,
   quantityToInput,
 } from './proposalHelpers';
@@ -62,6 +79,12 @@ const pdfRef = ref(null);
 const sendRef = ref(null);
 const confirmRef = ref(null);
 const savedSnapshot = ref('');
+const showCustomerMore = ref(false);
+const showConditions = ref(false);
+const showMore = ref(false);
+
+// prazos de validade mais usados, em dias a partir da data da proposta
+const VALIDITY_DAYS = [5, 15, 30];
 
 const emptyForm = () => ({
   kind: props.initial.kind === 'rental' ? 'rental' : 'sale',
@@ -95,13 +118,6 @@ const isDirty = computed(
   () => JSON.stringify(form.value) !== savedSnapshot.value
 );
 
-const kindOptions = computed(() =>
-  ['sale', 'rental'].map(kind => ({
-    value: kind,
-    label: t(`OUTSIDER_CRM.PROPOSALS.KIND.${kind.toUpperCase()}`),
-  }))
-);
-
 const unitOptions = computed(() => [
   { value: '', label: t('OUTSIDER_CRM.PROPOSALS.FORM.NO_UNIT') },
   ...props.access.units.map(unit => ({ value: unit.id, label: unit.name })),
@@ -124,11 +140,43 @@ const heading = computed(() =>
     : `${proposal.value?.code || ''} · ${proposal.value?.title || ''}`
 );
 
+// título em branco: o nome do primeiro item (o PDF sempre tem título)
+const autoTitle = computed(
+  () =>
+    form.value.items.find(item => item.description.trim())?.description.trim() ||
+    t('OUTSIDER_CRM.PROPOSALS.STEPS.DEFAULT_TITLE')
+);
+
+const grandTotal = computed(() =>
+  form.value.items.reduce((sum, item) => sum + (itemTotal(item) || 0), 0)
+);
+
+const extraCustomerSummary = computed(() =>
+  t('OUTSIDER_CRM.PROPOSALS.STEPS.MORE_CUSTOMER_SUMMARY', {
+    filled: EXTRA_CUSTOMER_FIELDS.filter(key =>
+      form.value.customer[key]?.trim()
+    ).length,
+    total: EXTRA_CUSTOMER_FIELDS.length,
+  })
+);
+
+// as outras condições (sem a de pagamento, que tem o próprio campo), só os títulos
+const otherConditions = computed(() => {
+  const payment = paymentConditionIndex(form.value.conditions);
+  return form.value.conditions
+    .filter((_, index) => index !== payment)
+    .map(condition => conditionLabel(condition.label))
+    .filter(Boolean);
+});
+
+const setValidity = days => {
+  form.value.valid_until = addDays(form.value.issued_on, days);
+};
+
 // o que falta para salvar, na ordem em que aparece na tela
 const problem = computed(() => {
   const value = form.value;
   if (!value.contact_id) return t('OUTSIDER_CRM.PROPOSALS.ERRORS.CONTACT');
-  if (!value.title.trim()) return t('OUTSIDER_CRM.PROPOSALS.ERRORS.TITLE');
   if (!value.customer.company?.trim())
     return t('OUTSIDER_CRM.PROPOSALS.ERRORS.COMPANY');
   if (value.items.some(item => !item.description.trim()))
@@ -200,13 +248,26 @@ const applyPrefill = async () => {
       opportunity_id: props.initial.opportunityId || undefined,
       kind: form.value.kind,
     });
+    // a condição de pagamento já escolhida continua valendo com as condições do modelo
+    const paymentText =
+      form.value.conditions[paymentConditionIndex(form.value.conditions)]?.text;
+    const conditions = data.conditions.map(condition => ({ ...condition }));
+    const paymentIndex = paymentConditionIndex(conditions);
+    if (paymentText?.trim() && paymentIndex >= 0) {
+      conditions[paymentIndex].text = paymentText;
+    } else if (paymentText?.trim()) {
+      conditions.unshift({
+        label: t('OUTSIDER_CRM.PROPOSALS.PAYMENT.LABEL'),
+        text: paymentText,
+      });
+    }
     Object.assign(form.value, {
       template_id: data.template_id,
       owner_id: data.owner_id,
       issued_on: data.issued_on,
       valid_until: data.valid_until || '',
       customer: { ...data.customer },
-      conditions: data.conditions.map(condition => ({ ...condition })),
+      conditions,
       signer: { ...data.signer },
       business_unit_id: data.business_unit_id || '',
     });
@@ -279,7 +340,6 @@ const addInitialProduct = () => {
   form.value.items = [
     { ...blankItem(), ...productItemFields(product, form.value.kind) },
   ];
-  form.value.title = form.value.title || product.name;
 };
 
 const itemPayload = item => ({
@@ -298,7 +358,7 @@ const payload = () => {
   const data = {
     kind: value.kind,
     template_id: value.template_id || undefined,
-    title: value.title.trim(),
+    title: value.title.trim() || autoTitle.value,
     business_unit_id: value.business_unit_id || null,
     issued_on: value.issued_on || undefined,
     valid_until: value.valid_until || null,
@@ -377,28 +437,6 @@ const changeStatus = async next => {
   }
 };
 
-// próximas situações possíveis a partir da atual
-const statusActions = computed(() => {
-  const current = proposal.value?.status;
-  if (!current || !canEdit.value) return [];
-  const map = {
-    draft: ['sent', 'canceled'],
-    sent: ['accepted', 'rejected', 'canceled'],
-    accepted: ['draft'],
-    rejected: ['draft'],
-    canceled: ['draft'],
-  };
-  return map[current] || [];
-});
-
-const STATUS_ACTION_ICONS = {
-  sent: 'i-lucide-send',
-  accepted: 'i-lucide-circle-check',
-  rejected: 'i-lucide-circle-x',
-  canceled: 'i-lucide-ban',
-  draft: 'i-lucide-undo-2',
-};
-
 const askDelete = () => {
   confirmRef.value?.open(
     t('OUTSIDER_CRM.PROPOSALS.DELETE.TITLE'),
@@ -460,82 +498,33 @@ onMounted(async () => {
   <div v-if="isLoading" class="flex justify-center p-8">
     <Spinner class="text-n-slate-10" />
   </div>
-  <div v-else class="flex flex-col gap-5">
+  <div v-else class="flex flex-col gap-4">
     <div class="flex flex-wrap items-center gap-2">
-      <div class="flex items-center flex-1 min-w-0 gap-2">
-        <Button
-          size="sm"
-          variant="ghost"
-          color="slate"
-          icon="i-lucide-arrow-left"
-          :label="t('OUTSIDER_CRM.PROPOSALS.FORM.BACK')"
-          @click="close"
-        />
-        <span class="text-base font-medium truncate text-n-slate-12">
-          {{ heading }}
-        </span>
-        <span
-          class="px-2 py-0.5 text-xs rounded-md"
-          :class="PROPOSAL_STATUS_COLORS[status]"
-        >
-          {{ t(`OUTSIDER_CRM.PROPOSALS.STATUS.${status.toUpperCase()}`) }}
-        </span>
-      </div>
-      <div class="flex flex-wrap items-center justify-end gap-2">
-        <Button
-          v-for="next in statusActions"
-          :key="next"
-          size="sm"
-          variant="faded"
-          :color="
-            next === 'accepted'
-              ? 'teal'
-              : next === 'rejected' || next === 'canceled'
-                ? 'ruby'
-                : 'slate'
-          "
-          :icon="STATUS_ACTION_ICONS[next]"
-          :label="t(`OUTSIDER_CRM.PROPOSALS.ACTIONS.${next.toUpperCase()}`)"
-          @click="changeStatus(next)"
-        />
-        <Button
-          v-if="proposal?.can_delete"
-          size="sm"
-          variant="ghost"
-          color="ruby"
-          icon="i-lucide-trash-2"
-          :label="t('OUTSIDER_CRM.DELETE.CONFIRM')"
-          @click="askDelete"
-        />
-        <Button
-          size="sm"
-          variant="faded"
-          color="slate"
-          icon="i-lucide-file-search"
-          :label="t('OUTSIDER_CRM.PROPOSALS.PDF.VIEW')"
-          :is-loading="isSaving"
-          @click="viewPdf"
-        />
-        <Button
-          v-if="!readOnly"
-          size="sm"
-          :variant="proposal?.can_send ? 'faded' : 'solid'"
-          :color="proposal?.can_send ? 'slate' : 'blue'"
-          icon="i-lucide-save"
-          :label="t('OUTSIDER_CRM.SAVE')"
-          :is-loading="isSaving"
-          :disabled="!isDirty && !isNew"
-          @click="save()"
-        />
-        <Button
-          v-if="proposal?.can_send"
-          size="sm"
-          icon="i-lucide-send"
-          :label="t('OUTSIDER_CRM.PROPOSALS.SEND.OPEN')"
-          :is-loading="isSaving"
-          @click="openSend"
-        />
-      </div>
+      <Button
+        size="sm"
+        variant="ghost"
+        color="slate"
+        icon="i-lucide-arrow-left"
+        :label="t('OUTSIDER_CRM.PROPOSALS.FORM.BACK')"
+        @click="close"
+      />
+      <span class="flex-1 min-w-0 text-base font-medium truncate text-n-slate-12">
+        {{ heading }}
+      </span>
+      <span
+        class="px-2 py-0.5 text-xs rounded-md"
+        :class="PROPOSAL_STATUS_COLORS[status]"
+      >
+        {{ t(`OUTSIDER_CRM.PROPOSALS.STATUS.${status.toUpperCase()}`) }}
+      </span>
+      <ProposalStatusActions
+        v-if="proposal"
+        :status="proposal.status"
+        :can-edit="canEdit"
+        :can-delete="proposal.can_delete"
+        @change="changeStatus"
+        @delete="askDelete"
+      />
     </div>
 
     <p
@@ -549,23 +538,47 @@ onMounted(async () => {
       }}
     </p>
 
-    <section v-if="proposal?.sends?.length" class="flex flex-col gap-3">
-      <h3 class="mb-0 text-sm font-medium text-n-slate-12">
-        {{
-          t('OUTSIDER_CRM.PROPOSALS.SEND.HISTORY.TITLE', {
-            count: proposal.sends.length,
-          })
-        }}
-      </h3>
+    <MoreSection
+      v-if="proposal?.sends?.length"
+      :label="
+        t('OUTSIDER_CRM.PROPOSALS.SEND.HISTORY.TITLE', {
+          count: proposal.sends.length,
+        })
+      "
+    >
       <ProposalSendHistory :sends="proposal.sends" />
-    </section>
+    </MoreSection>
 
-    <section class="flex flex-col gap-3">
-      <h3 class="mb-0 text-sm font-medium text-n-slate-12">
-        {{ t('OUTSIDER_CRM.PROPOSALS.FORM.SECTION_PROPOSAL') }}
-      </h3>
-      <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <label class="flex flex-col gap-1 text-xs lg:col-span-2">
+    <EditorStep
+      :number="1"
+      :title="t('OUTSIDER_CRM.PROPOSALS.STEPS.CUSTOMER')"
+      :hint="t('OUTSIDER_CRM.PROPOSALS.STEPS.CUSTOMER_HINT')"
+    >
+      <template #actions>
+        <div
+          v-if="isNew"
+          class="flex p-0.5 rounded-lg bg-n-alpha-2 outline outline-1 -outline-offset-1 outline-n-weak"
+        >
+          <Button
+            v-for="kind in ['sale', 'rental']"
+            :key="kind"
+            type="button"
+            size="sm"
+            :variant="form.kind === kind ? 'solid' : 'ghost'"
+            :color="form.kind === kind ? 'blue' : 'slate'"
+            :label="t(`OUTSIDER_CRM.PROPOSALS.KIND.${kind.toUpperCase()}`)"
+            @click="form.kind !== kind && chooseKind(kind)"
+          />
+        </div>
+        <span
+          v-else
+          class="px-2 py-0.5 text-xs rounded-md bg-n-alpha-2 text-n-slate-11"
+        >
+          {{ t(`OUTSIDER_CRM.PROPOSALS.KIND.${form.kind.toUpperCase()}`) }}
+        </span>
+      </template>
+      <div class="grid gap-3 sm:grid-cols-2">
+        <label class="flex flex-col gap-1 text-xs sm:col-span-2">
           <span class="text-n-slate-11">
             {{ t('OUTSIDER_CRM.PROPOSALS.FORM.CONTACT') }}
           </span>
@@ -581,60 +594,87 @@ onMounted(async () => {
             @update:model-value="chooseContact"
           />
         </label>
-        <label class="flex flex-col gap-1 text-xs">
+        <label
+          v-for="key in MAIN_CUSTOMER_FIELDS"
+          :key="key"
+          class="flex flex-col gap-1 text-xs"
+        >
           <span class="text-n-slate-11">
-            {{ t('OUTSIDER_CRM.PROPOSALS.FORM.KIND') }}
-          </span>
-          <Select
-            :model-value="form.kind"
-            :options="kindOptions"
-            :disabled="!isNew"
-            class="!w-full [&>select]:w-full"
-            @update:model-value="chooseKind"
-          />
-        </label>
-        <label class="flex flex-col gap-1 text-xs">
-          <span class="text-n-slate-11">
-            {{ t('OUTSIDER_CRM.PROPOSALS.FORM.OWNER') }}
-          </span>
-          <Select
-            v-if="access.proposals?.assign_owner"
-            v-model="form.owner_id"
-            :options="ownerOptions"
-            :disabled="readOnly"
-            class="!w-full [&>select]:w-full"
-          />
-          <span v-else class="flex items-center h-10 text-sm text-n-slate-12">
-            {{ proposal?.owner?.name || form.signer.name || '—' }}
-          </span>
-        </label>
-        <label class="flex flex-col gap-1 text-xs lg:col-span-2">
-          <span class="text-n-slate-11">
-            {{ t('OUTSIDER_CRM.PROPOSALS.FORM.TITLE') }}
+            {{ t(`OUTSIDER_CRM.PROPOSALS.CUSTOMER.${key.toUpperCase()}`) }}
           </span>
           <input
-            v-model="form.title"
+            v-model="form.customer[key]"
             type="text"
-            maxlength="255"
+            maxlength="500"
             :disabled="readOnly"
-            :placeholder="t('OUTSIDER_CRM.PROPOSALS.FORM.TITLE_PLACEHOLDER')"
             class="!mb-0 !text-sm rounded-lg"
           />
+          <CustomerLookup
+            v-if="key === 'document'"
+            v-model="form.customer"
+            :read-only="readOnly"
+          />
         </label>
-        <label class="flex flex-col gap-1 text-xs">
+      </div>
+      <MoreSection
+        v-model:open="showCustomerMore"
+        :label="t('OUTSIDER_CRM.PROPOSALS.STEPS.MORE_CUSTOMER')"
+        :summary="extraCustomerSummary"
+      >
+        <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <label
+            v-for="key in EXTRA_CUSTOMER_FIELDS"
+            :key="key"
+            class="flex flex-col gap-1 text-xs"
+            :class="{ 'sm:col-span-2': key === 'address' }"
+          >
+            <span class="text-n-slate-11">
+              {{ t(`OUTSIDER_CRM.PROPOSALS.CUSTOMER.${key.toUpperCase()}`) }}
+            </span>
+            <input
+              v-model="form.customer[key]"
+              type="text"
+              maxlength="500"
+              :disabled="readOnly"
+              class="!mb-0 !text-sm rounded-lg"
+            />
+          </label>
+        </div>
+      </MoreSection>
+    </EditorStep>
+
+    <EditorStep
+      :number="2"
+      :title="t('OUTSIDER_CRM.PROPOSALS.STEPS.ITEMS')"
+      :hint="t('OUTSIDER_CRM.PROPOSALS.STEPS.ITEMS_HINT')"
+    >
+      <ProposalItems
+        v-model="form.items"
+        :kind="form.kind"
+        :products="products"
+        :read-only="readOnly"
+      />
+    </EditorStep>
+
+    <EditorStep
+      :number="3"
+      :title="t('OUTSIDER_CRM.PROPOSALS.STEPS.PAYMENT')"
+      :hint="t('OUTSIDER_CRM.PROPOSALS.STEPS.PAYMENT_HINT')"
+    >
+      <div class="grid gap-4 lg:grid-cols-[1fr_18rem]">
+        <div class="flex flex-col gap-1 text-xs">
           <span class="text-n-slate-11">
-            {{ t('OUTSIDER_CRM.PROPOSALS.FORM.ISSUED_ON') }}
+            {{ t('OUTSIDER_CRM.PROPOSALS.PAYMENT.LABEL') }}
           </span>
-          <input
-            v-model="form.issued_on"
-            type="date"
-            :disabled="readOnly"
-            class="!mb-0 !text-sm rounded-lg"
+          <PaymentPicker
+            v-model="form.conditions"
+            :options="paymentOptions"
+            :read-only="readOnly"
           />
-        </label>
-        <label class="flex flex-col gap-1 text-xs">
+        </div>
+        <div class="flex flex-col gap-1 text-xs">
           <span class="text-n-slate-11">
-            {{ t('OUTSIDER_CRM.PROPOSALS.FORM.VALID_UNTIL') }}
+            {{ t('OUTSIDER_CRM.PROPOSALS.STEPS.VALID_UNTIL') }}
           </span>
           <input
             v-model="form.valid_until"
@@ -642,143 +682,198 @@ onMounted(async () => {
             :disabled="readOnly"
             class="!mb-0 !text-sm rounded-lg"
           />
-        </label>
-        <label
-          v-if="access.units.length"
-          class="flex flex-col gap-1 text-xs lg:col-span-2"
-        >
-          <span class="text-n-slate-11">
-            {{ t('OUTSIDER_CRM.PROPOSALS.FORM.UNIT') }}
-          </span>
-          <Select
-            v-model="form.business_unit_id"
-            :options="unitOptions"
-            :disabled="readOnly"
-            class="!w-full [&>select]:w-full"
-          />
-        </label>
-        <div class="flex flex-col gap-1 text-xs lg:col-span-2">
-          <span class="text-n-slate-11">
-            {{ t('OUTSIDER_CRM.PROPOSALS.FORM.DEAL') }}
-          </span>
-          <ProposalDealLink
-            v-model="form.link"
-            :contact-id="form.contact_id"
-            :units="access.units"
-            :pipelines="pipelines"
-            :current="proposal?.opportunity"
-            :read-only="readOnly"
-          />
+          <div v-if="!readOnly" class="flex flex-wrap gap-1.5">
+            <Button
+              v-for="days in VALIDITY_DAYS"
+              :key="days"
+              type="button"
+              size="xs"
+              variant="faded"
+              color="slate"
+              :label="t('OUTSIDER_CRM.PROPOSALS.STEPS.VALID_DAYS', { days })"
+              @click="setValidity(days)"
+            />
+          </div>
         </div>
       </div>
-    </section>
+      <MoreSection
+        v-model:open="showConditions"
+        :label="
+          t('OUTSIDER_CRM.PROPOSALS.STEPS.OTHER_CONDITIONS', {
+            count: otherConditions.length,
+          })
+        "
+        :summary="otherConditions.slice(0, 4).join(', ')"
+      >
+        <p class="mb-0 text-xs text-n-slate-11">
+          {{ t('OUTSIDER_CRM.PROPOSALS.STEPS.OTHER_CONDITIONS_HINT') }}
+        </p>
+        <ProposalConditions v-model="form.conditions" :read-only="readOnly" />
+      </MoreSection>
+    </EditorStep>
 
-    <section class="flex flex-col gap-3">
-      <div class="flex flex-wrap items-center gap-x-3 gap-y-2">
-        <h3 class="mb-0 text-sm font-medium text-n-slate-12">
-          {{ t('OUTSIDER_CRM.PROPOSALS.FORM.SECTION_CUSTOMER') }}
-        </h3>
-        <CustomerLookup v-model="form.customer" :read-only="readOnly" />
-      </div>
-      <p class="-mt-2 mb-0 text-xs text-n-slate-11">
-        {{ t('OUTSIDER_CRM.PROPOSALS.FORM.CUSTOMER_HELP') }}
-      </p>
-      <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <label
-          v-for="field in CUSTOMER_FIELDS"
-          :key="field.key"
-          class="flex flex-col gap-1 text-xs"
-          :class="{ 'lg:col-span-2': field.wide }"
-        >
-          <span class="text-n-slate-11">
-            {{
-              t(`OUTSIDER_CRM.PROPOSALS.CUSTOMER.${field.key.toUpperCase()}`)
-            }}
-          </span>
-          <input
-            v-model="form.customer[field.key]"
-            type="text"
-            maxlength="500"
-            :disabled="readOnly"
-            class="!mb-0 !text-sm rounded-lg"
-          />
-        </label>
-      </div>
-    </section>
-
-    <section class="flex flex-col gap-3">
-      <h3 class="mb-0 text-sm font-medium text-n-slate-12">
-        {{ t('OUTSIDER_CRM.PROPOSALS.FORM.SECTION_ITEMS') }}
-      </h3>
-      <ProposalItems
-        v-model="form.items"
-        :kind="form.kind"
-        :products="products"
-        :read-only="readOnly"
-      />
-    </section>
-
-    <section class="flex flex-col gap-3">
-      <h3 class="mb-0 text-sm font-medium text-n-slate-12">
-        {{ t('OUTSIDER_CRM.PROPOSALS.FORM.SECTION_CONDITIONS') }}
-      </h3>
-      <ProposalConditions
-        v-model="form.conditions"
-        :payment-options="paymentOptions"
-        :read-only="readOnly"
-      />
-    </section>
-
-    <section class="grid gap-5 lg:grid-cols-2">
-      <div class="flex flex-col gap-3">
-        <h3 class="mb-0 text-sm font-medium text-n-slate-12">
-          {{ t('OUTSIDER_CRM.PROPOSALS.FORM.SECTION_SIGNER') }}
-        </h3>
-        <div class="grid gap-3 sm:grid-cols-2">
-          <label
-            v-for="key in ['name', 'title', 'phone', 'email']"
-            :key="key"
-            class="flex flex-col gap-1 text-xs"
-          >
+    <section
+      class="p-4 rounded-xl bg-n-solid-2 outline outline-1 -outline-offset-1 outline-n-container sm:px-5"
+    >
+      <MoreSection
+        v-model:open="showMore"
+        :label="t('OUTSIDER_CRM.PROPOSALS.STEPS.MORE')"
+        :summary="t('OUTSIDER_CRM.PROPOSALS.STEPS.MORE_SUMMARY')"
+      >
+        <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <label class="flex flex-col gap-1 text-xs lg:col-span-2">
             <span class="text-n-slate-11">
-              {{ t(`OUTSIDER_CRM.PROPOSALS.SIGNER.${key.toUpperCase()}`) }}
+              {{ t('OUTSIDER_CRM.PROPOSALS.FORM.TITLE') }}
             </span>
             <input
-              v-model="form.signer[key]"
+              v-model="form.title"
               type="text"
               maxlength="255"
+              :disabled="readOnly"
+              :placeholder="autoTitle"
+              class="!mb-0 !text-sm rounded-lg"
+            />
+          </label>
+          <label class="flex flex-col gap-1 text-xs">
+            <span class="text-n-slate-11">
+              {{ t('OUTSIDER_CRM.PROPOSALS.FORM.ISSUED_ON') }}
+            </span>
+            <input
+              v-model="form.issued_on"
+              type="date"
               :disabled="readOnly"
               class="!mb-0 !text-sm rounded-lg"
             />
           </label>
+          <label class="flex flex-col gap-1 text-xs">
+            <span class="text-n-slate-11">
+              {{ t('OUTSIDER_CRM.PROPOSALS.FORM.OWNER') }}
+            </span>
+            <Select
+              v-if="access.proposals?.assign_owner"
+              v-model="form.owner_id"
+              :options="ownerOptions"
+              :disabled="readOnly"
+              class="!w-full [&>select]:w-full"
+            />
+            <span v-else class="flex items-center h-10 text-sm text-n-slate-12">
+              {{ proposal?.owner?.name || form.signer.name || '—' }}
+            </span>
+          </label>
+          <label
+            v-if="access.units.length"
+            class="flex flex-col gap-1 text-xs lg:col-span-2"
+          >
+            <span class="text-n-slate-11">
+              {{ t('OUTSIDER_CRM.PROPOSALS.FORM.UNIT') }}
+            </span>
+            <Select
+              v-model="form.business_unit_id"
+              :options="unitOptions"
+              :disabled="readOnly"
+              class="!w-full [&>select]:w-full"
+            />
+          </label>
+          <div class="flex flex-col gap-1 text-xs lg:col-span-2">
+            <span class="text-n-slate-11">
+              {{ t('OUTSIDER_CRM.PROPOSALS.FORM.DEAL') }}
+            </span>
+            <ProposalDealLink
+              v-model="form.link"
+              :contact-id="form.contact_id"
+              :units="access.units"
+              :pipelines="pipelines"
+              :current="proposal?.opportunity"
+              :read-only="readOnly"
+            />
+          </div>
         </div>
-      </div>
-      <div class="flex flex-col gap-3">
-        <h3 class="mb-0 text-sm font-medium text-n-slate-12">
-          {{ t('OUTSIDER_CRM.PROPOSALS.FORM.NOTES') }}
-        </h3>
-        <textarea
-          v-model="form.notes"
-          rows="4"
-          maxlength="10000"
-          :disabled="readOnly"
-          :placeholder="t('OUTSIDER_CRM.PROPOSALS.FORM.NOTES_PLACEHOLDER')"
-          class="!mb-0 !text-sm rounded-lg"
-        />
-      </div>
+        <div class="grid gap-5 lg:grid-cols-2">
+          <div class="flex flex-col gap-2">
+            <span class="text-sm font-medium text-n-slate-12">
+              {{ t('OUTSIDER_CRM.PROPOSALS.FORM.SECTION_SIGNER') }}
+            </span>
+            <div class="grid gap-3 sm:grid-cols-2">
+              <label
+                v-for="key in ['name', 'title', 'phone', 'email']"
+                :key="key"
+                class="flex flex-col gap-1 text-xs"
+              >
+                <span class="text-n-slate-11">
+                  {{ t(`OUTSIDER_CRM.PROPOSALS.SIGNER.${key.toUpperCase()}`) }}
+                </span>
+                <input
+                  v-model="form.signer[key]"
+                  type="text"
+                  maxlength="255"
+                  :disabled="readOnly"
+                  class="!mb-0 !text-sm rounded-lg"
+                />
+              </label>
+            </div>
+          </div>
+          <label class="flex flex-col gap-2">
+            <span class="text-sm font-medium text-n-slate-12">
+              {{ t('OUTSIDER_CRM.PROPOSALS.FORM.NOTES') }}
+            </span>
+            <textarea
+              v-model="form.notes"
+              rows="4"
+              maxlength="10000"
+              :disabled="readOnly"
+              :placeholder="t('OUTSIDER_CRM.PROPOSALS.FORM.NOTES_PLACEHOLDER')"
+              class="!mb-0 !text-sm rounded-lg"
+            />
+          </label>
+        </div>
+      </MoreSection>
     </section>
 
-    <div v-if="!readOnly" class="flex flex-wrap items-center justify-end gap-2">
-      <span v-if="problem && isDirty" class="text-xs text-n-slate-11">
+    <div
+      class="sticky bottom-0 z-20 flex flex-wrap items-center gap-3 px-4 py-3 rounded-xl bg-n-solid-2 outline outline-1 -outline-offset-1 outline-n-container shadow-lg"
+    >
+      <div class="flex flex-col">
+        <span class="text-xs text-n-slate-11">
+          {{ t('OUTSIDER_CRM.PROPOSALS.STEPS.TOTAL') }}
+        </span>
+        <strong class="text-lg tabular-nums text-n-slate-12">
+          {{ formatMoney(grandTotal) }}
+        </strong>
+      </div>
+      <span
+        v-if="problem && !readOnly && (isDirty || isNew)"
+        class="flex-1 min-w-[12rem] text-xs text-n-amber-11"
+      >
         {{ problem }}
       </span>
+      <span v-else class="flex-1" />
       <Button
         size="sm"
+        variant="faded"
+        color="slate"
+        icon="i-lucide-file-search"
+        :label="t('OUTSIDER_CRM.PROPOSALS.PDF.VIEW')"
+        :is-loading="isSaving"
+        @click="viewPdf"
+      />
+      <Button
+        v-if="!readOnly"
+        size="sm"
+        :variant="proposal?.can_send ? 'faded' : 'solid'"
+        :color="proposal?.can_send ? 'slate' : 'blue'"
         icon="i-lucide-save"
         :label="t('OUTSIDER_CRM.SAVE')"
         :is-loading="isSaving"
         :disabled="!isDirty && !isNew"
         @click="save()"
+      />
+      <Button
+        v-if="proposal?.can_send"
+        size="sm"
+        icon="i-lucide-send"
+        :label="t('OUTSIDER_CRM.PROPOSALS.SEND.OPEN')"
+        :is-loading="isSaving"
+        @click="openSend"
       />
     </div>
 

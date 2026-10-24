@@ -5,6 +5,7 @@
 // muda proposta feita ("Atualizar do catálogo" pega os dados de agora).
 // Desconto em R$ ou em % (Entrega 18): em %, o desconto em R$ é recalculado a cada mudança de
 // quantidade ou valor; o que vai para o servidor e para o PDF continua em R$.
+// O total da proposta fica na barra de baixo do editor (Entrega 20).
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import Button from 'dashboard/components-next/button/Button.vue';
@@ -51,10 +52,6 @@ const productOptions = computed(() => [
     label: productLabel(product),
   })),
 ]);
-
-const total = computed(() =>
-  items.value.reduce((sum, item) => sum + (itemTotal(item) || 0), 0)
-);
 
 const add = () => {
   items.value = [...items.value, blankItem()];
@@ -161,7 +158,7 @@ defineExpose({ add });
           class="min-w-[14rem] max-w-full [&>select]:w-full flex-1"
           @update:model-value="value => chooseProduct(item, value)"
         />
-        <template v-if="!readOnly">
+        <template v-if="!readOnly && items.length > 1">
           <Button
             v-tooltip.top="t('OUTSIDER_CRM.PROPOSALS.ITEMS.MOVE_UP')"
             size="xs"
@@ -180,6 +177,8 @@ defineExpose({ add });
             :disabled="index === items.length - 1"
             @click="move(index, 1)"
           />
+        </template>
+        <template v-if="!readOnly">
           <Button
             v-tooltip.top="t('OUTSIDER_CRM.PROPOSALS.ITEMS.REMOVE')"
             size="xs"
@@ -378,12 +377,6 @@ defineExpose({ add });
           @click="applyToAll"
         />
       </div>
-      <span class="text-sm text-n-slate-11">
-        {{ t('OUTSIDER_CRM.PROPOSALS.ITEMS.GRAND_TOTAL') }}
-        <strong class="ml-1 text-base text-n-slate-12">
-          {{ formatMoney(total) }}
-        </strong>
-      </span>
     </div>
   </div>
 </template>

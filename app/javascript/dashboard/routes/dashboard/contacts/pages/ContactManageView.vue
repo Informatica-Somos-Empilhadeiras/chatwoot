@@ -14,6 +14,11 @@ import ContactHistory from 'dashboard/components-next/Contacts/ContactsSidebar/C
 import ContactMedia from 'dashboard/components-next/Contacts/ContactsSidebar/ContactMedia.vue';
 import ContactMerge from 'dashboard/components-next/Contacts/ContactsSidebar/ContactMerge.vue';
 import ContactCustomAttributes from 'dashboard/components-next/Contacts/ContactsSidebar/ContactCustomAttributes.vue';
+import CrmContactTab from 'dashboard/routes/dashboard/outsider/crm/conversation/CrmContactTab.vue'; // OUTSIDER: aba CRM
+import {
+  crmState,
+  ensureCrmContext,
+} from 'dashboard/routes/dashboard/outsider/crm/crmStore'; // OUTSIDER: aba CRM
 
 const store = useStore();
 const route = useRoute();
@@ -22,7 +27,9 @@ const router = useRouter();
 const contact = useMapGetter('contacts/getContactById');
 const uiFlags = useMapGetter('contacts/getUIFlags');
 const currentUser = useMapGetter('getCurrentUser');
-const isAdministrator = computed(() => currentUser.value?.role === 'administrator');
+const isAdministrator = computed(
+  () => currentUser.value?.role === 'administrator'
+);
 
 const activeTab = ref('attributes');
 const contactMergeRef = ref(null);
@@ -41,6 +48,8 @@ const { t } = useI18n();
 
 const CONTACT_TABS_OPTIONS = [
   { key: 'ATTRIBUTES', value: 'attributes' },
+  // OUTSIDER: negócios do contato com o pipeline (só com o CRM ligado para a pessoa)
+  { key: 'CRM', value: 'crm' },
   { key: 'HISTORY', value: 'history' },
   { key: 'NOTES', value: 'notes' },
   { key: 'MEDIA', value: 'media' },
@@ -48,16 +57,22 @@ const CONTACT_TABS_OPTIONS = [
 ];
 
 const tabs = computed(() => {
-  return CONTACT_TABS_OPTIONS
-    .filter(tab => tab.value !== 'history' || isAdministrator.value)
+  return CONTACT_TABS_OPTIONS.filter(
+    tab => tab.value !== 'history' || isAdministrator.value
+  )
+    .filter(tab => tab.value !== 'crm' || crmState.access.enabled)
     .map(tab => ({
-      label: t(`CONTACTS_LAYOUT.SIDEBAR.TABS.${tab.key}`),
+      label:
+        tab.value === 'crm'
+          ? t('OUTSIDER_CRM.CONVERSATION.TAB')
+          : t(`CONTACTS_LAYOUT.SIDEBAR.TABS.${tab.key}`),
       value: tab.value,
     }));
 });
 
+// OUTSIDER: posição na lista que aparece (sem as abas escondidas)
 const activeTabIndex = computed(() => {
-  return CONTACT_TABS_OPTIONS.findIndex(v => v.value === activeTab.value);
+  return tabs.value.findIndex(v => v.value === activeTab.value);
 });
 
 const goToContactsList = () => {
@@ -128,6 +143,7 @@ onMounted(() => {
   fetchContactNotes();
   fetchContactConversations();
   fetchAttributes();
+  ensureCrmContext().catch(() => {}); // OUTSIDER: decide se a aba CRM aparece
 });
 </script>
 
@@ -176,6 +192,10 @@ onMounted(() => {
           <ContactCustomAttributes
             v-if="activeTab === 'attributes'"
             :selected-contact="selectedContact"
+          />
+          <CrmContactTab
+            v-if="activeTab === 'crm' && selectedContact"
+            :contact="selectedContact"
           />
           <ContactNotes v-if="activeTab === 'notes'" />
           <ContactHistory v-if="activeTab === 'history' && isAdministrator" />

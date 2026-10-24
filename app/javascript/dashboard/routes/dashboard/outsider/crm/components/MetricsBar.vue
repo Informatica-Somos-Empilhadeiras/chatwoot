@@ -3,6 +3,8 @@
 // Em aberto e previsão contam os negócios abertos; ganhos, conversão e tempo médio contam
 // os fechados no período escolhido. Nas unidades em que a pessoa é só vendedor, o servidor conta
 // só os negócios dela (note explica de quem são os números).
+// Entrega 20 (mais simples): à vista só "Em aberto" e "Ganhos"; previsão, conversão e tempo médio
+// ficam em "Mais números" (e nos Relatórios). A explicação de quem são os números vira a dica do ícone.
 import { ref, computed, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useAlert } from 'dashboard/composables';
@@ -18,6 +20,8 @@ const props = defineProps({
 const { t } = useI18n();
 
 const summary = ref(null);
+const showAll = ref(false);
+const MAIN_CARDS = ['OPEN', 'WON'];
 
 const cards = computed(() => {
   const data = summary.value;
@@ -27,7 +31,7 @@ const cards = computed(() => {
     {
       key: 'OPEN',
       value: formatMoney(data.open_value_cents),
-      hint: t('OUTSIDER_CRM.METRICS.DEALS', { count: data.open_count }),
+      hint: t('OUTSIDER_CRM.METRICS.DEALS', { count: data.open_count }, data.open_count),
     },
     {
       key: 'WEIGHTED',
@@ -37,7 +41,7 @@ const cards = computed(() => {
     {
       key: 'WON',
       value: formatMoney(data.won_value_cents),
-      hint: t('OUTSIDER_CRM.METRICS.DEALS', { count: data.won_count }),
+      hint: t('OUTSIDER_CRM.METRICS.DEALS', { count: data.won_count }, data.won_count),
     },
     {
       key: 'CONVERSION',
@@ -62,6 +66,12 @@ const cards = computed(() => {
     },
   ];
 });
+
+const visibleCards = computed(() =>
+  showAll.value
+    ? cards.value
+    : cards.value.filter(card => MAIN_CARDS.includes(card.key))
+);
 
 const load = async () => {
   const params = { period: props.filters.period || 'month' };
@@ -91,18 +101,11 @@ watch(
 </script>
 
 <template>
-  <p
-    v-if="note"
-    class="flex items-center gap-1.5 -mb-1 text-xs text-n-slate-11"
-  >
-    <span class="i-lucide-user-round size-3.5" />
-    {{ note }}
-  </p>
-  <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+  <div v-if="cards.length" class="flex flex-wrap items-stretch gap-3">
     <div
-      v-for="card in cards"
+      v-for="card in visibleCards"
       :key="card.key"
-      class="flex flex-col gap-1 p-3 rounded-xl bg-n-solid-2 outline outline-1 -outline-offset-1 outline-n-container"
+      class="flex flex-col gap-0.5 px-4 py-2.5 rounded-xl min-w-[11rem] bg-n-solid-2 outline outline-1 -outline-offset-1 outline-n-container"
     >
       <span class="text-xs text-n-slate-11">
         {{ t(`OUTSIDER_CRM.METRICS.${card.key}`) }}
@@ -111,6 +114,25 @@ watch(
         {{ card.value }}
       </span>
       <span class="text-xs truncate text-n-slate-10">{{ card.hint }}</span>
+    </div>
+    <div class="flex items-center gap-2">
+      <button
+        type="button"
+        class="text-sm text-n-blue-11 hover:underline"
+        @click="showAll = !showAll"
+      >
+        {{
+          showAll
+            ? t('OUTSIDER_CRM.METRICS.LESS')
+            : t('OUTSIDER_CRM.METRICS.MORE')
+        }}
+      </button>
+      <span
+        v-if="note"
+        v-tooltip.top="note"
+        class="i-lucide-info size-4 text-n-slate-10"
+        :aria-label="note"
+      />
     </div>
   </div>
 </template>

@@ -225,14 +225,19 @@ onMounted(() => {
         >
           <button
             type="button"
-            class="flex items-center justify-center border rounded-full size-5 shrink-0 disabled:cursor-default"
+            class="flex items-center justify-center rounded-full outline outline-2 -outline-offset-2 size-6 shrink-0 disabled:cursor-default"
             :class="
               task.completed_at
-                ? 'bg-n-teal-9 border-n-teal-9 text-white'
-                : 'border-n-slate-8 enabled:hover:border-n-teal-9 enabled:hover:bg-n-teal-3'
+                ? 'bg-n-teal-9 outline-n-teal-9 text-white'
+                : 'outline-n-slate-8 enabled:hover:outline-n-teal-9 enabled:hover:bg-n-teal-3'
             "
             :disabled="!task.can_complete || busyId === task.id"
             :title="
+              task.completed_at
+                ? t('OUTSIDER_CRM.TASKS.REOPEN')
+                : t('OUTSIDER_CRM.TASKS.COMPLETE')
+            "
+            :aria-label="
               task.completed_at
                 ? t('OUTSIDER_CRM.TASKS.REOPEN')
                 : t('OUTSIDER_CRM.TASKS.COMPLETE')

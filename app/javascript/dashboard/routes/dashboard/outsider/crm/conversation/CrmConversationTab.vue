@@ -5,6 +5,7 @@
 // negócios" ou do histórico também troca. Para o negócio mostrado: barra de etapas, tarefas, linha do
 // tempo, auditoria e histórico multiempresa. "Encaminhar" leva o negócio para outra unidade do grupo.
 // Usa o contato do Chatwoot: nada de cadastro duplicado. Grupos do WhatsApp não têm negócio.
+// Entrega 20: sem o quadro de probabilidade (fica no negócio, para quem usa); a etapa já diz onde está.
 import { ref, computed, watch, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
@@ -500,7 +501,7 @@ onMounted(async () => {
             />
           </div>
 
-          <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <div class="grid grid-cols-2 gap-3 lg:grid-cols-3">
             <div class="flex flex-col gap-0.5 p-3 rounded-lg bg-n-alpha-1">
               <span class="text-xs text-n-slate-11">
                 {{ t('OUTSIDER_CRM.OPPORTUNITY.CLOSE_DATE') }}
@@ -513,21 +514,6 @@ onMounted(async () => {
                 :class="primary.overdue ? 'text-n-ruby-11' : 'text-n-slate-10'"
               >
                 {{ closeInfo }}
-              </span>
-            </div>
-            <div class="flex flex-col gap-0.5 p-3 rounded-lg bg-n-alpha-1">
-              <span class="text-xs text-n-slate-11">
-                {{ t('OUTSIDER_CRM.CONVERSATION.PROBABILITY') }}
-              </span>
-              <span class="text-sm font-medium text-n-slate-12">
-                {{ primary.effective_probability }}%
-              </span>
-              <span class="text-xs text-n-slate-10">
-                {{
-                  primary.probability === null
-                    ? t('OUTSIDER_CRM.CONVERSATION.FROM_STAGE')
-                    : t('OUTSIDER_CRM.CONVERSATION.FROM_DEAL')
-                }}
               </span>
             </div>
             <div class="flex flex-col gap-0.5 p-3 rounded-lg bg-n-alpha-1">

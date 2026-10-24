@@ -6,6 +6,9 @@
 // sem responsável das suas unidades, para pegar (o servidor aplica a mesma regra). Um aviso no topo
 // mostra quantos negócios sem responsável estão esperando alguém pegar. Recarrega sozinha quando
 // alguém muda um negócio ou uma tarefa (live.js).
+// Entrega 20 (mais simples): à vista ficam a visualização, a busca, de quem são os negócios e o botão de
+// novo negócio; unidade, pipeline, situação e período ficam em "Filtros" (o botão mostra quantos estão
+// em uso).
 import { ref, computed, watch, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
@@ -81,8 +84,20 @@ const filters = ref({
   sort: 'recent',
   q: '',
 });
-
 const isBoard = computed(() => view.value === 'board');
+
+const showFilters = ref(false);
+
+// filtros de "Filtros" mudados do padrão
+const activeFilterCount = computed(
+  () =>
+    [
+      filters.value.business_unit_id,
+      filters.value.pipeline_id,
+      !isBoard.value && filters.value.status !== 'open',
+      filters.value.period !== 'month',
+    ].filter(Boolean).length
+);
 
 const unitOptions = computed(() => [
   { value: '', label: t('OUTSIDER_CRM.FILTERS.ALL_UNITS') },
@@ -422,7 +437,7 @@ onMounted(async () => {
         type="search"
         :placeholder="t('OUTSIDER_CRM.FILTERS.SEARCH')"
         :custom-input-class="['h-8 ltr:!pl-8 rtl:!pr-8 !py-1']"
-        class="w-full sm:w-56"
+        class="w-full sm:w-64"
       >
         <template #prefix>
           <Icon
@@ -431,6 +446,33 @@ onMounted(async () => {
           />
         </template>
       </Input>
+      <Select v-model="filters.owner_id" :options="ownerOptions" />
+      <Button
+        size="sm"
+        variant="faded"
+        color="slate"
+        icon="i-lucide-sliders-horizontal"
+        :label="
+          activeFilterCount
+            ? t('OUTSIDER_CRM.FILTERS.MORE_COUNT', { count: activeFilterCount })
+            : t('OUTSIDER_CRM.FILTERS.MORE')
+        "
+        @click="showFilters = !showFilters"
+      />
+      <Spinner v-if="isLoading" :size="16" class="text-n-slate-10" />
+      <div class="flex-1" />
+      <Button
+        icon="i-lucide-plus"
+        :label="t('OUTSIDER_CRM.OPPORTUNITY.NEW')"
+        :disabled="!pipelines.length"
+        @click="openNew"
+      />
+    </div>
+
+    <div
+      v-if="showFilters"
+      class="flex flex-wrap items-center gap-2 p-3 -mt-1 rounded-xl bg-n-alpha-1"
+    >
       <Select
         v-if="units.length > 1"
         v-model="filters.business_unit_id"
@@ -442,20 +484,10 @@ onMounted(async () => {
         v-model="filters.status"
         :options="statusOptions"
       />
-      <Select v-model="filters.owner_id" :options="ownerOptions" />
       <Select
         v-model="filters.period"
         v-tooltip="t('OUTSIDER_CRM.METRICS.PERIOD')"
         :options="periodOptions"
-      />
-      <Spinner v-if="isLoading" :size="16" class="text-n-slate-10" />
-      <div class="flex-1" />
-      <Button
-        icon="i-lucide-plus"
-        size="sm"
-        :label="t('OUTSIDER_CRM.OPPORTUNITY.NEW')"
-        :disabled="!pipelines.length"
-        @click="openNew"
       />
     </div>
 

@@ -2,6 +2,8 @@
 // OUTSIDER: CRM > Propostas. Lista com busca (número, cliente, contato, máquina) e filtros; cada um vê
 // as próprias, o administrador vê todas e libera para os agentes em Configurações > Propostas.
 // ?proposta=<id> abre a proposta e ?proposta=nova (com contato, negocio, tipo e produto) abre uma nova.
+// Entrega 20 (mais simples): a situação é escolhida em botões de um clique; tipo, vendedor e datas ficam
+// em "Mais filtros"; a tabela junta cliente e título numa coluna e situação e validade em outra.
 import { ref, computed, watch, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
@@ -35,16 +37,24 @@ const isLoading = ref(false);
 const searchText = ref('');
 const filters = ref({ status: '', kind: '', owner_id: '', from: '', to: '' });
 const pdfRef = ref(null);
+const showMoreFilters = ref(false);
+
+// filtros recolhidos que estão em uso: o botão "Mais filtros" mostra quantos
+const moreFiltersCount = computed(
+  () =>
+    ['kind', 'owner_id', 'from', 'to'].filter(key => filters.value[key] !== '')
+      .length
+);
 
 const openId = computed(() => route.query.proposta || null);
 
 const canSeeOthers = computed(() => props.access.proposals?.view_all);
 
 const statusOptions = computed(() => [
-  { value: '', label: t('OUTSIDER_CRM.PROPOSALS.FILTERS.ALL_STATUSES') },
+  { value: '', label: t('OUTSIDER_CRM.PROPOSALS.FILTERS.ALL') },
   ...PROPOSAL_STATUSES.map(status => ({
     value: status,
-    label: t(`OUTSIDER_CRM.PROPOSALS.STATUS.${status.toUpperCase()}`),
+    label: t(`OUTSIDER_CRM.PROPOSALS.FILTERS.STATUS.${status.toUpperCase()}`),
   })),
 ]);
 
@@ -141,8 +151,8 @@ watch(openId, (now, before) => {
         v-model="searchText"
         type="search"
         :placeholder="t('OUTSIDER_CRM.PROPOSALS.FILTERS.SEARCH')"
-        :custom-input-class="['h-8 ltr:!pl-8 rtl:!pr-8 !py-1']"
-        class="w-full sm:w-72"
+        :custom-input-class="['h-9 ltr:!pl-8 rtl:!pr-8 !py-1']"
+        class="flex-1 min-w-[14rem] max-w-xl"
       >
         <template #prefix>
           <Icon
@@ -151,7 +161,52 @@ watch(openId, (now, before) => {
           />
         </template>
       </Input>
-      <Select v-model="filters.status" :options="statusOptions" />
+      <Button
+        size="sm"
+        variant="faded"
+        color="slate"
+        icon="i-lucide-sliders-horizontal"
+        :label="
+          moreFiltersCount
+            ? t('OUTSIDER_CRM.PROPOSALS.FILTERS.MORE_COUNT', {
+                count: moreFiltersCount,
+              })
+            : t('OUTSIDER_CRM.PROPOSALS.FILTERS.MORE')
+        "
+        @click="showMoreFilters = !showMoreFilters"
+      />
+      <Spinner v-if="isLoading" :size="16" class="text-n-slate-10" />
+      <div class="flex-1" />
+      <Button
+        icon="i-lucide-plus"
+        :label="t('OUTSIDER_CRM.PROPOSALS.NEW')"
+        @click="openProposal('nova')"
+      />
+    </div>
+
+    <div class="flex flex-wrap gap-1.5" role="radiogroup">
+      <button
+        v-for="option in statusOptions"
+        :key="option.value"
+        type="button"
+        role="radio"
+        :aria-checked="filters.status === option.value"
+        class="px-3 py-1.5 text-sm rounded-full outline outline-1 -outline-offset-1 transition-colors"
+        :class="
+          filters.status === option.value
+            ? 'bg-n-brand text-white outline-n-brand font-medium'
+            : 'outline-n-weak text-n-slate-11 hover:text-n-slate-12 hover:outline-n-slate-6'
+        "
+        @click="filters.status = option.value"
+      >
+        {{ option.label }}
+      </button>
+    </div>
+
+    <div
+      v-if="showMoreFilters"
+      class="flex flex-wrap items-center gap-2 p-3 rounded-xl bg-n-alpha-1"
+    >
       <Select v-model="filters.kind" :options="kindOptions" />
       <Select
         v-if="canSeeOthers"
@@ -174,29 +229,22 @@ watch(openId, (now, before) => {
           class="!mb-0 !h-8 !py-1 !text-sm rounded-lg !w-36"
         />
       </label>
-      <Spinner v-if="isLoading" :size="16" class="text-n-slate-10" />
-      <div class="flex-1" />
-      <Button
-        icon="i-lucide-plus"
-        size="sm"
-        :label="t('OUTSIDER_CRM.PROPOSALS.NEW')"
-        @click="openProposal('nova')"
-      />
     </div>
 
     <p class="mb-0 text-sm text-n-slate-11">
       {{
-        t('OUTSIDER_CRM.PROPOSALS.SUMMARY', {
-          count: meta.count,
-          total: formatMoney(meta.total_cents),
-        })
+        t(
+          'OUTSIDER_CRM.PROPOSALS.SUMMARY',
+          { count: meta.count, total: formatMoney(meta.total_cents) },
+          meta.count
+        )
       }}
     </p>
 
     <div
       class="overflow-x-auto outline outline-1 -outline-offset-1 outline-n-container rounded-xl bg-n-solid-2"
     >
-      <table class="w-full text-sm min-w-[60rem]">
+      <table class="w-full text-sm min-w-[44rem]">
         <thead>
           <tr class="text-xs text-left border-b text-n-slate-11 border-n-weak">
             <th class="px-4 py-3 font-medium">
@@ -205,27 +253,24 @@ watch(openId, (now, before) => {
             <th class="px-4 py-3 font-medium">
               {{ t('OUTSIDER_CRM.PROPOSALS.TABLE.CUSTOMER') }}
             </th>
-            <th class="px-4 py-3 font-medium">
-              {{ t('OUTSIDER_CRM.PROPOSALS.TABLE.TITLE') }}
-            </th>
             <th class="px-4 py-3 font-medium text-right">
               {{ t('OUTSIDER_CRM.PROPOSALS.TABLE.TOTAL') }}
             </th>
             <th class="px-4 py-3 font-medium">
-              {{ t('OUTSIDER_CRM.PROPOSALS.TABLE.DATE') }}
-            </th>
-            <th class="px-4 py-3 font-medium">
-              {{ t('OUTSIDER_CRM.PROPOSALS.TABLE.OWNER') }}
-            </th>
-            <th class="px-4 py-3 font-medium">
               {{ t('OUTSIDER_CRM.PROPOSALS.TABLE.STATUS') }}
+            </th>
+            <th v-if="canSeeOthers" class="px-4 py-3 font-medium">
+              {{ t('OUTSIDER_CRM.PROPOSALS.TABLE.OWNER') }}
             </th>
             <th class="w-10 px-2 py-3" />
           </tr>
         </thead>
         <tbody>
           <tr v-if="!proposals.length && !isLoading">
-            <td colspan="8" class="px-4 py-10 text-center text-n-slate-11">
+            <td
+              :colspan="canSeeOthers ? 6 : 5"
+              class="px-4 py-10 text-center text-n-slate-11"
+            >
               {{ t('OUTSIDER_CRM.PROPOSALS.EMPTY') }}
             </td>
           </tr>
@@ -248,43 +293,19 @@ watch(openId, (now, before) => {
               </span>
             </td>
             <td class="px-4 py-3">
-              <span class="block truncate max-w-[16rem] text-n-slate-12">
+              <span class="block truncate max-w-[22rem] text-n-slate-12">
                 {{ contactLine(proposal) }}
               </span>
-              <span
-                v-if="proposal.opportunity"
-                class="block text-xs text-n-slate-11"
-              >
-                {{ proposal.opportunity.code }}
-              </span>
-            </td>
-            <td class="px-4 py-3">
-              <span class="block truncate max-w-[16rem] text-n-slate-12">
+              <span class="block truncate max-w-[22rem] text-xs text-n-slate-11">
                 {{ proposal.title }}
               </span>
             </td>
             <td class="px-4 py-3 text-right whitespace-nowrap text-n-slate-12">
               {{ formatMoney(proposal.total_cents) }}
             </td>
-            <td class="px-4 py-3 whitespace-nowrap text-n-slate-11">
-              {{ formatDate(proposal.issued_on) }}
+            <td class="px-4 py-3 whitespace-nowrap">
               <span
-                v-if="proposal.valid_until"
-                class="block text-xs text-n-slate-10"
-              >
-                {{
-                  t('OUTSIDER_CRM.PROPOSALS.VALID_UNTIL_SHORT', {
-                    date: formatDate(proposal.valid_until),
-                  })
-                }}
-              </span>
-            </td>
-            <td class="px-4 py-3 text-n-slate-11">
-              {{ proposal.owner?.name || '—' }}
-            </td>
-            <td class="px-4 py-3">
-              <span
-                class="px-2 py-0.5 text-xs rounded-md whitespace-nowrap"
+                class="px-2 py-0.5 text-xs rounded-md"
                 :class="PROPOSAL_STATUS_COLORS[proposal.display_status]"
               >
                 {{
@@ -293,6 +314,19 @@ watch(openId, (now, before) => {
                   )
                 }}
               </span>
+              <span
+                v-if="proposal.valid_until"
+                class="block mt-1 text-xs text-n-slate-10"
+              >
+                {{
+                  t('OUTSIDER_CRM.PROPOSALS.VALID_UNTIL_SHORT', {
+                    date: formatDate(proposal.valid_until),
+                  })
+                }}
+              </span>
+            </td>
+            <td v-if="canSeeOthers" class="px-4 py-3 text-n-slate-11">
+              {{ proposal.owner?.name || '—' }}
             </td>
             <td class="px-2 py-3">
               <Button
