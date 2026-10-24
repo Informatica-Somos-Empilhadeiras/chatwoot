@@ -1081,7 +1081,7 @@
         "AVAILABLE": "Available quantity",
         "RESERVED": "Reserved quantity",
         "QUANTITY_PLACEHOLDER": "Blank = not tracked",
-        "QUANTITY_HELP": "Optional. Shown in the catalog and when picking the proposal item.",
+        "QUANTITY_HELP": "Optional. Shown in the catalog and when picking the proposal item. When a proposal is accepted, its quantity moves from available to reserved.",
         "QUANTITY_INVALID": "Use a whole number, 0 or more."
       },
       "SPECS": {
@@ -1139,6 +1139,8 @@
       "SUMMARY": "{count} proposal · {total} | {count} proposals · {total}",
       "VALID_UNTIL_SHORT": "valid until {date}",
       "STATUS_CHANGED": "Proposal marked as: {status}",
+      "STOCK_RESERVED": "Proposal accepted. {count} unit reserved in the catalog. | Proposal accepted. {count} units reserved in the catalog.",
+      "STOCK_RELEASED": "Proposal marked as: {status}. The catalog reservation was undone.",
       "KIND": {
         "SALE": "Sale",
         "RENTAL": "Rental"

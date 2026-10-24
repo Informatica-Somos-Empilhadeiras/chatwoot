@@ -2,7 +2,7 @@
 // OUTSIDER: aba Catálogo do CRM. Máquinas e acessórios que entram nas propostas, com foto,
 // características, equipamento e preços. Todos consultam; quem gerencia o catálogo
 // (access.proposals.manage_catalog) cadastra, altera, troca a imagem, desativa e apaga.
-// "Criar proposta" abre CRM > Propostas com uma proposta nova já com o item (Entrega 19).
+// "Criar proposta" (no cartão e no item) abre CRM > Propostas com uma proposta nova já com o item.
 import { ref, computed, watch, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
@@ -186,7 +186,8 @@ onMounted(load);
         v-for="product in products"
         :key="product.id"
         :product="product"
-        @click="openProduct(product)"
+        @open="openProduct(product)"
+        @create-proposal="createProposal(product)"
       />
     </div>
 

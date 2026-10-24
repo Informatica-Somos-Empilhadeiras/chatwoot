@@ -28,6 +28,8 @@ const openMenu = event => {
 <template>
   <div class="relative flex max-w-full group isolate">
     <slot />
+    <!-- botões ao lado da bolha (BubbleSideActions.vue) -->
+    <slot name="actions" />
     <button
       v-if="showMenu"
       type="button"

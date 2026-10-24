@@ -6,6 +6,7 @@ import MessageStatus from './MessageStatus.vue';
 import Icon from 'next/icon/Icon.vue';
 import { useInbox } from 'dashboard/composables/useInbox';
 import { useMessageContext } from './provider.js';
+import { useI18n } from 'vue-i18n'; // OUTSIDER
 
 import { MESSAGE_STATUS, MESSAGE_TYPES } from './constants';
 
@@ -31,6 +32,8 @@ const {
   messageType,
   contentAttributes,
 } = useMessageContext();
+
+const { t } = useI18n(); // OUTSIDER
 
 const readableTime = computed(() =>
   messageTimestamp(createdAt.value, 'LLL d, h:mm a')
@@ -133,6 +136,10 @@ const statusToShow = computed(() => {
 
 <template>
   <div class="text-xs flex items-center gap-1.5">
+    <!-- OUTSIDER: mensagem editada no WhatsApp (Entrega 21) -->
+    <span v-if="contentAttributes?.outsiderEditedAt" class="italic">
+      {{ t('OUTSIDER_WHATSAPP.EDIT.EDITED') }}
+    </span>
     <div class="inline">
       <time class="inline">{{ readableTime }}</time>
     </div>

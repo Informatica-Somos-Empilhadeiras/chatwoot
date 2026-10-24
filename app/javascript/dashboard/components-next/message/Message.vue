@@ -2,7 +2,7 @@
 import { onMounted, computed, ref, toRefs } from 'vue';
 import { useTimeoutFn } from '@vueuse/core';
 import { provideMessageContext } from './provider.js';
-import { useTrack } from 'dashboard/composables';
+import { useAlert, useTrack } from 'dashboard/composables';
 import { useMapGetter } from 'dashboard/composables/store';
 import { emitter } from 'shared/helpers/mitt';
 import { useI18n } from 'vue-i18n';
@@ -43,6 +43,13 @@ import FormBubble from './bubbles/Form.vue';
 import VoiceCallBubble from './bubbles/VoiceCall.vue';
 import { outsiderBubbleFor } from './outsider/bubbleFor'; // OUTSIDER: bolhas estilo WhatsApp
 import BubbleMenuFrame from './outsider/BubbleMenuFrame.vue'; // OUTSIDER
+import BubbleSideActions from './outsider/BubbleSideActions.vue'; // OUTSIDER: reagir e encaminhar
+import ReactionBar from './outsider/ReactionBar.vue'; // OUTSIDER: reações
+import WhatsappMessagesAPI from 'dashboard/api/outsider/whatsappMessages'; // OUTSIDER
+import {
+  EDIT_WINDOW_SECONDS,
+  isEvolutionInbox,
+} from 'dashboard/helper/outsider/whatsappMessage'; // OUTSIDER
 
 import MessageError from './MessageError.vue';
 import ContextMenu from 'dashboard/modules/conversations/components/MessageContextMenu.vue';
@@ -138,6 +145,7 @@ const props = defineProps({
   senderId: { type: Number, default: null },
   senderType: { type: String, default: null },
   sourceId: { type: String, default: '' }, // eslint-disable-line vue/no-unused-properties
+  outsiderReactions: { type: Array, default: () => [] }, // OUTSIDER: reações do WhatsApp
 });
 
 const emit = defineEmits(['retry']);
@@ -150,6 +158,7 @@ const route = useRoute();
 const inboxGetter = useMapGetter('inboxes/getInbox');
 const inbox = computed(() => inboxGetter.value(props.inboxId) || {});
 const isOnChatwootCloud = useMapGetter('globalConfig/isOnChatwootCloud');
+const currentRole = useMapGetter('getCurrentRole'); // OUTSIDER
 const { replaceInstallationName } = useBranding();
 
 const isCaptainMessage = computed(() => {
@@ -370,6 +379,63 @@ const isMessageDeleted = computed(() => {
   return props.contentAttributes?.deleted;
 });
 
+// OUTSIDER: reagir, encaminhar e editar pelo WhatsApp (Entrega 21)
+const isUnsent = computed(() =>
+  [MESSAGE_STATUS.FAILED, MESSAGE_STATUS.PROGRESS].includes(props.status)
+);
+const canForward = computed(
+  () =>
+    isBubble.value &&
+    !props.private &&
+    !isMessageDeleted.value &&
+    !isUnsent.value &&
+    (!!props.content || props.attachments?.length > 0)
+);
+const canReact = computed(
+  () =>
+    isEvolutionInbox(inbox.value) &&
+    [MESSAGE_TYPES.INCOMING, MESSAGE_TYPES.OUTGOING].includes(
+      props.messageType
+    ) &&
+    !props.private &&
+    !isMessageDeleted.value &&
+    !isUnsent.value
+);
+const myReaction = computed(
+  () => props.outsiderReactions.find(reaction => reaction.isMe)?.emoji || ''
+);
+// o prazo de 15 minutos é conferido na hora de abrir o menu
+const canEditNow = ref(false);
+const editAllowed = () =>
+  canReact.value &&
+  props.messageType === MESSAGE_TYPES.OUTGOING &&
+  !!props.content &&
+  !props.attachments?.length &&
+  Date.now() / 1000 - props.createdAt < EDIT_WINDOW_SECONDS &&
+  ((props.senderId ?? props.sender?.id) === props.currentUserId ||
+    currentRole.value === 'administrator');
+
+const openForward = () =>
+  emitter.emit('CMD_OPEN_CUSTOM_FORWARD', {
+    content: props.content,
+    attachments: props.attachments,
+    inboxId: props.inboxId,
+  });
+
+const react = async emoji => {
+  try {
+    await WhatsappMessagesAPI.react(props.id, emoji);
+  } catch (error) {
+    const code = error?.response?.data?.error;
+    const key = `OUTSIDER_WHATSAPP.REACTIONS.ERRORS.${String(code || '').toUpperCase()}`;
+    useAlert(
+      code && t(key) !== key
+        ? t(key)
+        : t('OUTSIDER_WHATSAPP.REACTIONS.ERRORS.DEFAULT')
+    );
+  }
+};
+
 const payloadForContextMenu = computed(() => {
   return {
     id: props.id,
@@ -377,6 +443,7 @@ const payloadForContextMenu = computed(() => {
     content: props.content,
     conversation_id: props.conversationId,
     attachments: props.attachments, // VARIÁVEL ADICIONADA: Repassa os anexos para o menu
+    inbox_id: props.inboxId, // OUTSIDER: encaminhar pela caixa da conversa
   };
 });
 
@@ -406,6 +473,8 @@ const contextMenuEnabledOptions = computed(() => {
       isOnChatwootCloud.value &&
       isCaptainMessage.value &&
       !isMessageDeleted.value,
+    forward: canForward.value, // OUTSIDER
+    outsiderEdit: canEditNow.value, // OUTSIDER
   };
 });
 
@@ -441,6 +510,7 @@ function openContextMenu(e) {
   if (e.type === 'contextmenu') {
     useTrack(ACCOUNT_EVENTS.OPEN_MESSAGE_CONTEXT_MENU);
   }
+  canEditNow.value = editAllowed(); // OUTSIDER
   contextMenuPosition.value = {
     x: e.pageX || e.clientX,
     y: e.pageY || e.clientY,
@@ -580,13 +650,37 @@ provideMessageContext({
         }"
         @contextmenu="openContextMenu($event)"
       >
-        <!-- OUTSIDER: setinha de opções na bolha -->
-        <BubbleMenuFrame
-          :show-menu="shouldShowContextMenu"
-          @open-menu="openContextMenu"
+        <!-- OUTSIDER: setinha de opções, botões de reagir e encaminhar e reações (Entrega 21) -->
+        <div
+          class="flex flex-col max-w-full min-w-0"
+          :class="
+            orientation === ORIENTATION.RIGHT ? 'items-end' : 'items-start'
+          "
         >
-          <Component :is="componentToRender" />
-        </BubbleMenuFrame>
+          <BubbleMenuFrame
+            :show-menu="shouldShowContextMenu"
+            @open-menu="openContextMenu"
+          >
+            <Component :is="componentToRender" />
+            <template #actions>
+              <BubbleSideActions
+                :side="orientation === ORIENTATION.RIGHT ? 'left' : 'right'"
+                :can-react="canReact"
+                :can-forward="canForward"
+                :my-reaction="myReaction"
+                @react="react"
+                @forward="openForward"
+              />
+            </template>
+          </BubbleMenuFrame>
+          <ReactionBar
+            v-if="outsiderReactions.length"
+            :reactions="outsiderReactions"
+            :align="orientation === ORIENTATION.RIGHT ? 'end' : 'start'"
+            :can-remove="canReact"
+            @remove="react('')"
+          />
+        </div>
       </div>
       <MessageError
         v-if="contentAttributes.externalError"

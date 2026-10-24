@@ -13,7 +13,7 @@ class Outsider::Crm::Proposal < ApplicationRecord
   MAX_CONDITIONS = 40
   MAX_ITEMS = 50
 
-  audited associated_with: :account, except: [:total_cents]
+  audited associated_with: :account, except: [:total_cents, :reserved_stock]
 
   belongs_to :contact
   belongs_to :opportunity, class_name: 'Outsider::Crm::Opportunity', optional: true

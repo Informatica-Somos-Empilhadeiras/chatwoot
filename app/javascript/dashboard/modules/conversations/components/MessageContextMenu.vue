@@ -146,10 +146,20 @@ export default {
         text: this.plainTextContent,
         // texto original: o modal tira o cabeçalho de grupo ("**+55 ... - Nome:**")
         content: this.message.content,
-        attachments: this.message.attachments || []
+        attachments: this.message.attachments || [],
+        // OUTSIDER: a mensagem sai pela caixa da conversa aberta
+        inboxId: this.message.inbox_id,
       };
       // Nome do evento alterado para isolamento total
       emitter.emit('CMD_OPEN_CUSTOM_FORWARD', payload);
+      this.handleClose();
+    },
+    // OUTSIDER: editar no WhatsApp (EditMessageDialog.vue)
+    handleEdit() {
+      emitter.emit('OUTSIDER_EDIT_MESSAGE', {
+        id: this.messageId,
+        content: this.messageContent,
+      });
       this.handleClose();
     },
     openDeleteModal() {
@@ -231,12 +241,23 @@ export default {
         />
         <!-- Novo Botão de Encaminhar -->
         <MenuItem
+          v-if="enabledOptions['forward']"
           :option="{
             icon: 'share',
-            label: 'Encaminhar',
+            label: $t('OUTSIDER_WHATSAPP.FORWARD.BUTTON'),
           }"
           variant="icon"
           @click.stop="handleForward"
+        />
+        <!-- OUTSIDER: editar no WhatsApp -->
+        <MenuItem
+          v-if="enabledOptions['outsiderEdit']"
+          :option="{
+            lucideIcon: 'i-lucide-pencil',
+            label: $t('OUTSIDER_WHATSAPP.EDIT.MENU'),
+          }"
+          variant="icon"
+          @click.stop="handleEdit"
         />
         <MenuItem
           v-if="enabledOptions['copy']"

@@ -16,6 +16,9 @@ describe('outsiderPreview', () => {
     ).toBe('👤 Daniel +1');
     expect(outsiderPreview({ content: 'Bom dia' })).toBeNull();
     expect(
+      outsiderPreview({ content: '\n\n`Mensagem editada:`\n\nBom dia a todos' })
+    ).toBe('✏️ Bom dia a todos');
+    expect(
       outsiderPreview({
         content: '*Contato:*\n\n_Nome:_ X\n_Número (1):_ 1',
         private: true,

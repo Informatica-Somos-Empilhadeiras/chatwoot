@@ -6,6 +6,7 @@ import WootKeyShortcutModal from 'dashboard/components/widgets/modal/WootKeyShor
 import AddAccountModal from 'dashboard/components/app/AddAccountModal.vue';
 import UpgradePage from 'dashboard/routes/dashboard/upgrade/UpgradePage.vue';
 import FowardMessageModal from 'dashboard/components-next/message/FowardMessageModal.vue';
+import EditMessageDialog from 'dashboard/components-next/message/outsider/EditMessageDialog.vue'; // OUTSIDER
 
 import { useUISettings } from 'dashboard/composables/useUISettings';
 import { useAccount } from 'dashboard/composables/useAccount';
@@ -41,6 +42,7 @@ export default {
     FloatingCallWidget,
     MobileSidebarLauncher,
     FowardMessageModal,
+    EditMessageDialog,
     WaitingConversationsAlert, // OUTSIDER
   },
   setup() {
@@ -183,4 +185,5 @@ export default {
     </main>
   </div>
   <FowardMessageModal />
+  <EditMessageDialog />
 </template>

@@ -1,4 +1,5 @@
-# OUTSIDER: cliente da Evolution API usado pela página Status do WhatsApp.
+# OUTSIDER: cliente da Evolution API usado pela página Status do WhatsApp, pelo vigia da conexão e pelas
+# ações na mensagem (reagir e editar).
 #
 # A caixa criada pela integração Chatwoot da Evolution tem o webhook
 # "<url da evolution>/chatwoot/webhook/<instância>", então a URL e a instância
@@ -101,6 +102,16 @@ class Outsider::EvolutionApi
   # Envia uma localização (o pin de mapa do WhatsApp). Devolve a mensagem enviada, com key.id
   def send_location(number:, latitude:, longitude:, name: nil, address: nil)
     post("/message/sendLocation/#{@instance}", { number: number, latitude: latitude, longitude: longitude, name: name, address: address }.compact)
+  end
+
+  # Reage a uma mensagem (key: id, remoteJid, fromMe e, nos grupos, participant); reação vazia tira a reação
+  def send_reaction(key:, reaction:)
+    post("/message/sendReaction/#{@instance}", { key: key, reaction: reaction })
+  end
+
+  # Edita o texto de uma mensagem enviada pela empresa; o WhatsApp só aceita até 15 minutos depois do envio
+  def update_message(number:, key:, text:)
+    post("/chat/updateMessage/#{@instance}", { number: number, key: key, text: text })
   end
 
   # Devolve [{ 'exists', 'jid', 'number' }]

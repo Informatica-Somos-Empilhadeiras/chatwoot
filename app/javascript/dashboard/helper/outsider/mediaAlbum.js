@@ -67,7 +67,10 @@ const belongsToSameAlbum = (previous, current, firstUnreadId) =>
 const toAlbum = run => {
   const attachments = run.flatMap(message => message.attachments);
   if (run.length < 2 || attachments.length < ALBUM_MIN_ITEMS) return run;
-  return [{ ...run[0], attachments }];
+  // ids das mensagens do álbum: as reações de cada foto aparecem no álbum
+  return [
+    { ...run[0], attachments, outsiderAlbumIds: run.map(item => item.id) },
+  ];
 };
 
 /**

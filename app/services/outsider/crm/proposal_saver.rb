@@ -42,12 +42,13 @@ class Outsider::Crm::ProposalSaver
   end
 
   # Aceita, recusada, cancelada, enviada ou de volta a rascunho. Aceita pode ganhar o negócio ligado
-  # (Configurações > Propostas > Geral)
+  # (Configurações > Propostas > Geral) e reserva os itens do catálogo; deixar de ser aceita devolve a reserva
   def change_status(proposal, status)
     raise Forbidden, 'status' unless Outsider::Crm::Proposal.statuses.key?(status.to_s)
 
     Outsider::Crm::Proposal.transaction do
       accepting = !proposal.accepted? && status.to_s == 'accepted'
+      Outsider::Crm::ProposalStock.new(proposal).apply(status)
       apply_status(proposal, status)
       log(proposal, status.to_s) if proposal.opportunity
       win_opportunity(proposal) if accepting

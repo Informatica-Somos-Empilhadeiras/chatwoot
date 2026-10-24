@@ -140,6 +140,23 @@ RSpec.describe 'Outsider CRM proposals', type: :request do
       expect(proposal.reload.title).to eq('Outro')
     end
 
+    it 'reserves the catalog stock while accepted and gives it back when it stops being accepted' do
+      machine = crm_product(account, available_quantity: 1, reserved_quantity: 0)
+      untracked = crm_product(account, name: 'Garfo')
+      stocked = crm_proposal(account, owner: seller, contact: contact,
+                                      items: [{ description: 'Máquina', product: machine, quantity: 1.5, unit_price_cents: 100 },
+                                              { description: 'Garfo', product: untracked, quantity: 1, unit_price_cents: 100 }])
+
+      body = call(:patch, seller, "/#{stocked.id}/status", status: 'accepted')
+      expect(machine.reload).to have_attributes(available_quantity: 0, reserved_quantity: 2)
+      expect(untracked.reload).to have_attributes(available_quantity: nil, reserved_quantity: nil)
+      expect(body['reserved_stock']).to eq([{ 'product_id' => machine.id, 'reserved' => 2, 'taken' => 1 }])
+
+      call(:patch, seller, "/#{stocked.id}/status", status: 'rejected')
+      expect(machine.reload).to have_attributes(available_quantity: 1, reserved_quantity: 0)
+      expect(stocked.reload.reserved_stock).to eq([])
+    end
+
     it 'deletes only drafts' do
       proposal.update!(status: :canceled)
       call(:delete, seller, "/#{proposal.id}")

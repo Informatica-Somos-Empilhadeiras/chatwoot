@@ -1,7 +1,8 @@
 # OUTSIDER: máquina ou acessório do catálogo do CRM, usado nos itens das propostas. A imagem fica no
 # armazenamento de arquivos do Chatwoot (Active Storage) uma vez só; as propostas apontam para o produto.
 # Produto que já está numa proposta não se apaga (fica inativo), para a proposta continuar com a imagem.
-# Quantidade disponível e reservada são anotadas à mão no cadastro; em branco = o item não controla estoque.
+# Quantidade disponível e reservada são anotadas no cadastro (em branco = o item não controla estoque); a proposta
+# aceita passa a quantidade dela da disponível para a reservada (Outsider::Crm::ProposalStock).
 class Outsider::Crm::Product < ApplicationRecord
   include Outsider::Crm::AccountScoped
 

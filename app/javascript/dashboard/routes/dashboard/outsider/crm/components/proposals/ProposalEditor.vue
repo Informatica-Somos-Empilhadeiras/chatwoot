@@ -143,8 +143,9 @@ const heading = computed(() =>
 // título em branco: o nome do primeiro item (o PDF sempre tem título)
 const autoTitle = computed(
   () =>
-    form.value.items.find(item => item.description.trim())?.description.trim() ||
-    t('OUTSIDER_CRM.PROPOSALS.STEPS.DEFAULT_TITLE')
+    form.value.items
+      .find(item => item.description.trim())
+      ?.description.trim() || t('OUTSIDER_CRM.PROPOSALS.STEPS.DEFAULT_TITLE')
 );
 
 const grandTotal = computed(() =>
@@ -425,13 +426,34 @@ const changeStatus = async next => {
     return;
   }
   try {
+    const released = proposal.value.reserved_stock?.length;
     const { data } = await CrmAPI.updateProposalStatus(proposal.value.id, next);
     fromProposal(data);
-    useAlert(
-      t('OUTSIDER_CRM.PROPOSALS.STATUS_CHANGED', {
-        status: t(`OUTSIDER_CRM.PROPOSALS.STATUS.${next.toUpperCase()}`),
-      })
+    const statusLabel = t(
+      `OUTSIDER_CRM.PROPOSALS.STATUS.${next.toUpperCase()}`
     );
+    // reserva do catálogo (Entrega 21): diz quantas unidades a proposta aceita separou ou devolveu
+    const reserved = (data.reserved_stock || []).reduce(
+      (sum, row) => sum + row.reserved,
+      0
+    );
+    if (reserved) {
+      useAlert(
+        t(
+          'OUTSIDER_CRM.PROPOSALS.STOCK_RESERVED',
+          { count: reserved },
+          reserved
+        )
+      );
+    } else if (released) {
+      useAlert(
+        t('OUTSIDER_CRM.PROPOSALS.STOCK_RELEASED', { status: statusLabel })
+      );
+    } else {
+      useAlert(
+        t('OUTSIDER_CRM.PROPOSALS.STATUS_CHANGED', { status: statusLabel })
+      );
+    }
   } catch (error) {
     useAlert(errorMessage(t, error));
   }
@@ -508,7 +530,9 @@ onMounted(async () => {
         :label="t('OUTSIDER_CRM.PROPOSALS.FORM.BACK')"
         @click="close"
       />
-      <span class="flex-1 min-w-0 text-base font-medium truncate text-n-slate-12">
+      <span
+        class="flex-1 min-w-0 text-base font-medium truncate text-n-slate-12"
+      >
         {{ heading }}
       </span>
       <span

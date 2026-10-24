@@ -1,8 +1,9 @@
 <script setup>
 // OUTSIDER: preenche os dados do cliente pelo CNPJ (Entrega 19). O servidor consulta o Cadastro
 // Centralizado de Contribuintes das SEFAZ e o SINTEGRA (Outsider::Crm::CompanyLookup) e devolve só os
-// campos da proposta. Razão social, IE e endereço trocam pelo que veio; telefone e e-mail só entram se
-// estiverem vazios, porque os do contato costumam valer mais que os do cadastro.
+// campos da proposta. Razão social, IE e endereço sempre trocam pelo que veio, inclusive em branco, para não
+// sobrar nada da empresa consultada antes (Entrega 21). Telefone e e-mail do contato ficam, porque costumam
+// valer mais que os do cadastro; só trocam quando estão vazios ou quando vieram de uma consulta anterior.
 import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useAlert } from 'dashboard/composables';
@@ -34,17 +35,23 @@ const { t } = useI18n();
 
 const isLoading = ref(false);
 const notice = ref('');
+// telefone e e-mail que a última consulta preencheu
+const filled = ref({});
 
 const cnpj = computed(() => lookupDocument(customer.value.document));
 
 const merge = found => {
   const next = { ...customer.value };
   REGISTRY_FIELDS.forEach(key => {
-    if (found[key]) next[key] = found[key];
+    next[key] = found[key] || '';
   });
   CONTACT_FIELDS.forEach(key => {
-    if (found[key] && !next[key]?.trim()) next[key] = found[key];
+    const current = next[key]?.trim();
+    if (!current || current === filled.value[key]) next[key] = found[key] || '';
   });
+  filled.value = Object.fromEntries(
+    CONTACT_FIELDS.map(key => [key, next[key] === found[key] ? found[key] : ''])
+  );
   customer.value = next;
 };
 

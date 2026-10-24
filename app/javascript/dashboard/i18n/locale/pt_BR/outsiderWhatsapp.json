@@ -96,6 +96,136 @@
       }
     },
     "MESSAGE_MENU": "Opções",
+    "FORWARD": {
+      "TITLE": "Encaminhar mensagem",
+      "VIA": "Sai pela caixa {inbox}, a da conversa aberta.",
+      "SEARCH": "Buscar contato ou grupo pelo nome ou telefone",
+      "GROUP": "Grupo",
+      "ATTACHMENTS": "{count} anexo | {count} anexos",
+      "SEND": "Encaminhar",
+      "SEND_TO": "Encaminhar para {name}",
+      "HEADER": "[Mensagem Encaminhada]",
+      "SENT": "Mensagem encaminhada para {name}.",
+      "BUTTON": "Encaminhar",
+      "ERRORS": {
+        "DEFAULT": "Não foi possível encaminhar a mensagem. Tente de novo.",
+        "MISSING_RECIPIENT": "Esse contato não tem telefone ou e-mail para receber pela caixa {inbox}.",
+        "NOTHING_TO_FORWARD": "Essa mensagem não tem texto nem anexo para encaminhar."
+      }
+    },
+    "REACTIONS": {
+      "REACT": "Reagir",
+      "REMOVE": "Tirar sua reação",
+      "WHO": "Ver quem reagiu",
+      "ALL": "Todas {count}",
+      "YOU": "Você",
+      "SOMEONE": "Participante",
+      "TAP_TO_REMOVE": "Clique para tirar",
+      "ERRORS": {
+        "DEFAULT": "Não foi possível reagir. Tente de novo.",
+        "NOT_FOUND": "Não achei essa mensagem no WhatsApp para reagir.",
+        "NOT_EVOLUTION": "Esta caixa não é do WhatsApp pela Evolution.",
+        "NOT_AVAILABLE": "Não dá para reagir a esta mensagem.",
+        "NOT_CONFIGURED": "Falta a chave da Evolution (EVOLUTION_API_KEY) no servidor.",
+        "EVOLUTION_UNAUTHORIZED": "A Evolution recusou a chave (EVOLUTION_API_KEY).",
+        "EVOLUTION_TIMEOUT": "A Evolution demorou para responder. Veja no WhatsApp se a reação foi antes de tentar de novo.",
+        "EVOLUTION_UNREACHABLE": "Não foi possível falar com a Evolution."
+      }
+    },
+    "EDIT": {
+      "MENU": "Editar",
+      "TITLE": "Editar mensagem",
+      "DESCRIPTION": "O texto muda aqui e no WhatsApp do cliente, que vê a mensagem como \"Editada\". O WhatsApp só deixa editar até 15 minutos depois do envio.",
+      "SAVE": "Salvar",
+      "DONE": "Mensagem editada.",
+      "EDITED": "Editada",
+      "ERRORS": {
+        "DEFAULT": "Não foi possível editar a mensagem.",
+        "NOT_EDITABLE": "Só dá para editar texto que você enviou, até 15 minutos depois.",
+        "INVALID_TEXT": "Escreva o texto novo (até 4096 caracteres).",
+        "NOT_FOUND": "Não achei essa mensagem no WhatsApp para editar.",
+        "NOT_EVOLUTION": "Esta caixa não é do WhatsApp pela Evolution.",
+        "NOT_AVAILABLE": "Esta mensagem não pode ser editada.",
+        "NOT_CONFIGURED": "Falta a chave da Evolution (EVOLUTION_API_KEY) no servidor.",
+        "EVOLUTION_UNAUTHORIZED": "A Evolution recusou a chave (EVOLUTION_API_KEY).",
+        "EVOLUTION_ERROR": "O WhatsApp não aceitou a edição. Passados 15 minutos do envio, não dá mais para editar.",
+        "EVOLUTION_TIMEOUT": "A Evolution demorou para responder. Veja no WhatsApp se a edição foi antes de tentar de novo.",
+        "EVOLUTION_UNREACHABLE": "Não foi possível falar com a Evolution."
+      }
+    },
+    "NOTICES": {
+      "LEVELS": {
+        "ERROR": "Erro",
+        "WARNING": "Atenção",
+        "SUCCESS": "Tudo certo",
+        "INFO": "Aviso"
+      },
+      "DETAIL": "Motivo:",
+      "DETAILS": {
+        "CONNECTION_CLOSED": "a conexão com o WhatsApp caiu.",
+        "TIMEOUT": "o WhatsApp demorou demais para responder.",
+        "INSTANCE_NOT_FOUND": "a instância não está carregada na Evolution.",
+        "LOGGED_OUT": "o WhatsApp desconectou o aparelho da instância.",
+        "RATE_LIMIT": "muitas mensagens em pouco tempo; o WhatsApp segurou o envio."
+      },
+      "STATES": {
+        "OPEN": "conectada",
+        "CONNECTING": "conectando",
+        "CLOSE": "desconectada"
+      },
+      "NUMBER_NOT_ON_WHATSAPP": {
+        "TITLE": "Número sem WhatsApp",
+        "TEXT": "A mensagem não foi enviada: este número não tem WhatsApp. Confira o DDD e o 9º dígito no cadastro do contato."
+      },
+      "NOT_SENT": {
+        "TITLE": "Mensagem não enviada",
+        "TEXT": "A Evolution não conseguiu entregar a mensagem ao WhatsApp. Confira se o WhatsApp da caixa está conectado e envie de novo."
+      },
+      "DISCONNECTED": {
+        "TITLE": "WhatsApp desconectado",
+        "TEXT": "A caixa {inbox} perdeu a conexão com o WhatsApp. Nada sai nem chega até ler o QR Code de novo na Evolution."
+      },
+      "ALREADY_CONNECTED": {
+        "TITLE": "WhatsApp já conectado",
+        "TEXT": "A caixa {inbox} já está conectada ao WhatsApp."
+      },
+      "CONNECTED": {
+        "TITLE": "WhatsApp conectado",
+        "TEXT": "A conexão com o WhatsApp está ativa."
+      },
+      "CACHE_CLEARED": {
+        "TITLE": "Cache limpo",
+        "TEXT": "O cache da caixa {inbox} foi limpo."
+      },
+      "INSTANCE_NOT_FOUND": {
+        "TITLE": "Instância não encontrada",
+        "TEXT": "A Evolution não achou a instância {inbox}. Confira o nome dela na Evolution."
+      },
+      "INSTANCE_STATUS": {
+        "TITLE": "Situação da conexão",
+        "TEXT": "Caixa {inbox}: {state}."
+      },
+      "IMPORT_STARTED": {
+        "TITLE": "Importação de mensagens",
+        "TEXT": "Começou a importar as mensagens antigas. Aguarde..."
+      },
+      "IMPORTING": {
+        "TITLE": "Importação de mensagens",
+        "TEXT": "Importando as mensagens. Só mais um pouco..."
+      },
+      "IMPORTED": {
+        "TITLE": "Importação concluída",
+        "TEXT": "{count} mensagens importadas. Atualize a página para ver."
+      },
+      "IMPORT_FAILED": {
+        "TITLE": "Importação não concluída",
+        "TEXT": "Não foi possível importar as mensagens antigas."
+      },
+      "QR_LIMIT": {
+        "TITLE": "Limite de QR Code",
+        "TEXT": "Acabaram as tentativas de QR Code. Para gerar outro, envie init nesta conversa."
+      }
+    },
     "COMPOSER": {
       "ATTACH": "Anexar",
       "MENU": {

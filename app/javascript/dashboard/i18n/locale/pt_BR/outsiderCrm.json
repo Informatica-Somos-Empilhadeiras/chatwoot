@@ -1081,7 +1081,7 @@
         "AVAILABLE": "Quantidade disponível",
         "RESERVED": "Quantidade reservada",
         "QUANTITY_PLACEHOLDER": "Em branco = não controla",
-        "QUANTITY_HELP": "Opcional. Aparece no catálogo e na escolha do item da proposta.",
+        "QUANTITY_HELP": "Opcional. Aparece no catálogo e na escolha do item da proposta. Quando uma proposta é aceita, a quantidade dela sai da disponível e vai para a reservada.",
         "QUANTITY_INVALID": "Use um número inteiro, de 0 para cima."
       },
       "SPECS": {
@@ -1139,6 +1139,8 @@
       "SUMMARY": "{count} proposta · {total} | {count} propostas · {total}",
       "VALID_UNTIL_SHORT": "vale até {date}",
       "STATUS_CHANGED": "Proposta marcada como: {status}",
+      "STOCK_RESERVED": "Proposta aceita. {count} unidade reservada no catálogo. | Proposta aceita. {count} unidades reservadas no catálogo.",
+      "STOCK_RELEASED": "Proposta marcada como: {status}. A reserva no catálogo foi desfeita.",
       "KIND": {
         "SALE": "Venda",
         "RENTAL": "Locação"

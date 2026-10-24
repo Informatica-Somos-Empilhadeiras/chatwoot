@@ -7,6 +7,10 @@ import { useMapGetter } from 'dashboard/composables/store.js';
 import MessageApi from 'dashboard/api/inbox/message.js';
 import { groupMediaAlbums } from 'dashboard/helper/outsider/mediaAlbum'; // OUTSIDER: álbum
 import { dayStarts } from 'dashboard/helper/outsider/conversationHistory'; // OUTSIDER: dias
+import {
+  collectReactions,
+  isHiddenEcho,
+} from 'dashboard/helper/outsider/whatsappMessage'; // OUTSIDER: reações e edições
 import DaySeparator from './outsider/DaySeparator.vue'; // OUTSIDER: dias
 import CurrentDayPill from './outsider/CurrentDayPill.vue'; // OUTSIDER: dias
 
@@ -52,10 +56,22 @@ const allMessages = computed(() => {
   });
 });
 
-// OUTSIDER: junta fotos/vídeos seguidos em um álbum
+// OUTSIDER: reações e edições do WhatsApp não aparecem como mensagem (viram o emoji no balão e o texto
+// novo da original); fotos/vídeos seguidos viram um álbum
 const renderedMessages = computed(() =>
-  groupMediaAlbums(allMessages.value, props.firstUnreadId)
+  groupMediaAlbums(
+    allMessages.value.filter(message => !isHiddenEcho(message)),
+    props.firstUnreadId
+  )
 );
+
+const reactionsByMessage = computed(() => collectReactions(allMessages.value));
+
+// no álbum, as reações de todas as fotos
+const reactionsOf = message => {
+  const ids = message.outsiderAlbumIds || [message.id];
+  return ids.flatMap(id => reactionsByMessage.value.get(id) || []);
+};
 
 // OUTSIDER: primeira mensagem de cada dia -> separador de dia
 const dayStartKeys = computed(() => dayStarts(renderedMessages.value));
@@ -196,6 +212,7 @@ const getInReplyToMessage = parentMessage => {
         :group-with-next="shouldGroupWithNext(index, renderedMessages)"
         :inbox-supports-reply-to="inboxSupportsReplyTo"
         :current-user-id="currentUserId"
+        :outsider-reactions="reactionsOf(message)"
         data-clarity-mask="True"
         @retry="emit('retry', message)"
       />

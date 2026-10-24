@@ -7,11 +7,10 @@ class MessageForwardAPI extends ApiClient {
     super('outsider/message_forwards', { accountScoped: true });
   }
 
-  forward({ contactId, inboxId, sourceId, content, attachmentIds }) {
+  forward({ contactId, inboxId, content, attachmentIds }) {
     return axios.post(this.url, {
       contact_id: contactId,
       inbox_id: inboxId,
-      source_id: sourceId,
       content,
       attachment_ids: attachmentIds,
     });

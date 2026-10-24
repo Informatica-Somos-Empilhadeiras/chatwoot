@@ -37,7 +37,7 @@ module Outsider::Crm::ProposalSerializer
 
   def proposal(proposal, access: nil)
     proposal_row(proposal, access: access).merge(
-      proposal.slice(:customer, :conditions, :signer, :notes, :contact_id, :opportunity_id, :owner_id),
+      proposal.slice(:customer, :conditions, :signer, :notes, :contact_id, :opportunity_id, :owner_id, :reserved_stock),
       items: proposal.items.map { |item| item(item) },
       created_by: Outsider::Crm::Serializer.user(proposal.created_by),
       sends: sends(proposal)
