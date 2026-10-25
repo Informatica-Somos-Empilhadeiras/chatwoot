@@ -27,7 +27,15 @@
         "IN_CALL": "Finish the current call before making another one.",
         "INVALID": "Type a number to call.",
         "OTHER_TAB": "The phone is in another tab. Call from there or bring it to this tab with the phone button in the sidebar."
-      }
+      },
+      "MINIMIZE": "Minimize",
+      "TABS": {
+        "KEYPAD": "Keypad",
+        "TEAM": "Team"
+      },
+      "TEAM_EMPTY": "No colleague with an active extension.",
+      "TEAM_ONLINE": "Phone connected",
+      "TEAM_OFFLINE": "Phone disconnected"
     },
     "CALL": {
       "INCOMING": "Incoming call",
@@ -55,8 +63,18 @@
         "UNAVAILABLE": "Number not allowed or line unavailable",
         "MICROPHONE": "The browser did not allow the microphone",
         "FAILED": "The call dropped",
-        "EXTENSION_OFFLINE": "Extension offline: the person does not have Chatwoot open or the extension is off"
-      }
+        "EXTENSION_OFFLINE": "Extension offline: the person does not have Chatwoot open or the extension is off",
+        "TRANSFERRED": "Transferred to extension {extension}"
+      },
+      "HOLD": "Hold",
+      "RESUME": "Resume",
+      "ON_HOLD": "On hold · {time}",
+      "TRANSFER": "Transfer",
+      "TRANSFER_HINT": "The call goes straight to the chosen extension.",
+      "TRANSFER_PLACEHOLDER": "Extension (e.g. 202)",
+      "YOU": "You",
+      "OTHER_SIDE": "Other side",
+      "EXPAND": "Open the phone"
     },
     "CLICK_TO_CALL": "Call with the CRM phone",
     "CALLING": "Calling {number}…",
@@ -164,37 +182,12 @@
       "HELP": "Leave empty for no goal. The change applies to the chosen month and the following ones; earlier months stay as they were."
     },
     "PANEL": {
-      "KPIS": {
-        "OUTBOUND": "Calls made",
-        "OUTBOUND_HINT": "{count} answered by the customer",
-        "INBOUND": "Received and answered",
-        "INBOUND_HINT": "of {count} received",
-        "MISSED": "Missed",
-        "MISSED_HINT": "{count} to call back",
-        "TALK": "Time on calls",
-        "TALK_HINT": "made and received",
-        "TODAY": "Today: {value}"
-      },
       "SELLERS": {
-        "TITLE": "Call goals",
-        "DESCRIPTION": "Calls made and minutes on calls per seller. The mark on the bar shows where they should be today to reach the monthly goal.",
-        "DAYS_LEFT": "{left} of {total} business days left",
-        "SELLER": "Seller",
-        "TODAY": "Today",
-        "CALLS": "Calls this month",
-        "MINUTES": "Minutes this month",
         "VALUE_OF_GOAL": "{value} of {goal}",
         "NO_GOAL": "{value} · no goal",
-        "DAY_GOAL": "daily goal: {calls} calls, {minutes} min",
-        "TODAY_VALUE": "{calls} calls · {minutes} min",
         "ON_PACE": "On pace",
         "BELOW_PACE": "Below pace",
-        "REACHED": "Goal reached",
-        "ONLINE": "Phone connected now",
-        "OFFLINE": "Phone disconnected",
-        "EXTENSION": "Extension {extension}",
-        "EMPTY": "Nobody has an active extension yet. The administrator sets them up in Settings > Telephony.",
-        "SET_GOALS": "Set goals"
+        "REACHED": "Goal reached"
       },
       "RETURN": {
         "TITLE": "To call back",
@@ -237,6 +230,75 @@
       "INBOUND_MISSED": "Missed call from {number}",
       "OUTBOUND_ANSWERED": "{name} called {number} ({duration})",
       "OUTBOUND_OTHER": "{name} called {number}: {status}"
+    },
+    "SECTION": {
+      "TITLE": "Telephony",
+      "NO_ACCESS": "Telephony is off. The administrator turns it on in Telephony > Settings.",
+      "TABS": {
+        "DASHBOARD": "Dashboard",
+        "CALLS": "Calls",
+        "SETTINGS": "Settings"
+      },
+      "SETTINGS": {
+        "CENTRAL": "PBX and extensions",
+        "GOALS": "Call goals"
+      }
+    },
+    "WALLBOARD": {
+      "PERIODS": {
+        "today": "Today",
+        "week": "This week",
+        "month": "This month",
+        "last_month": "Last month"
+      },
+      "TEAM": "Sellers",
+      "EVERYONE": "Whole team",
+      "EXTENSION": "Extension {extension}",
+      "STATUS": {
+        "online": "Phone connected",
+        "offline": "Phone disconnected",
+        "in_call": "On a call"
+      },
+      "COUNTERS": {
+        "TOTAL": "Calls",
+        "TOTAL_HINT": "in the period",
+        "INBOUND": "Received",
+        "INBOUND_HINT": "{answered} answered · {missed} missed",
+        "OUTBOUND": "Made",
+        "OUTBOUND_HINT": "{answered} answered by the customer",
+        "INTERNAL": "Between extensions",
+        "INTERNAL_HINT": "between colleagues"
+      },
+      "TIMES": {
+        "AVERAGE_TALK": "Average talk time",
+        "LONGEST": "Longest call",
+        "TALK": "Time on calls",
+        "AVERAGE_ANSWER": "Average time to answer",
+        "TO_RETURN": "To call back"
+      },
+      "GOAL": {
+        "TITLE": "Monthly goal",
+        "CALLS": "Calls made",
+        "MINUTES": "Minutes on calls",
+        "MISSING": "{calls} calls and {minutes} min to go · {perDay} calls per business day in the {days} days left",
+        "REACHED": "Monthly goal reached.",
+        "NO_GOAL": "No call goal this month. The administrator sets it in Telephony > Settings > Call goals."
+      },
+      "BY_HOUR": "Calls per hour",
+      "HEATMAP": "Calls per day and hour",
+      "EMPTY": "No calls in this period.",
+      "LIVE": "On a call now",
+      "LIVE_EMPTY": "Nobody on a call now.",
+      "RINGING": "Ringing",
+      "WEEKDAYS": {
+        "0": "Sun",
+        "1": "Mon",
+        "2": "Tue",
+        "3": "Wed",
+        "4": "Thu",
+        "5": "Fri",
+        "6": "Sat"
+      }
     }
   }
 }

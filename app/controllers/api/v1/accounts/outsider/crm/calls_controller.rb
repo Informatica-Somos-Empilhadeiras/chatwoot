@@ -1,5 +1,5 @@
-# OUTSIDER: ligações no CRM (Entrega 22): lista com filtros, painel do mês (Outsider::Voice::Stats) e a fila
-# de retorno. Cada pessoa vê o que Outsider::Voice::CallAccess deixa.
+# OUTSIDER: ligações da Telefonia (Entrega 22): lista com filtros, a fila de retorno e o painel
+# (Outsider::Voice::Wallboard, Entrega 23). Cada pessoa vê o que Outsider::Voice::CallAccess deixa.
 class Api::V1::Accounts::Outsider::Crm::CallsController < Api::V1::Accounts::Outsider::Crm::BaseController
   PER_PAGE = 50
   FILTERS = %w[direction status user_id].freeze
@@ -11,8 +11,9 @@ class Api::V1::Accounts::Outsider::Crm::CallsController < Api::V1::Accounts::Out
                    meta: { page: page, per_page: PER_PAGE, total: calls.count } }
   end
 
-  def stats
-    render json: ::Outsider::Voice::Stats.new(crm_access, month).to_h
+  # painel da Telefonia (Entrega 23)
+  def wallboard
+    render json: ::Outsider::Voice::Wallboard.new(crm_access, period: params[:period], user_id: params[:user_id], zone: params[:zone]).to_h
   end
 
   private

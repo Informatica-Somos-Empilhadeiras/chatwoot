@@ -20,6 +20,17 @@ class Api::V1::Accounts::Outsider::VoiceController < Api::V1::Accounts::BaseCont
                    conversation_id: contact.conversations.order(last_activity_at: :desc).pick(:display_id) }
   end
 
+  # colegas com ramal ligado, para ligar ou transferir (Entrega 23): online = telefone conectado na central
+  def team
+    agents = settings.enabled? ? settings.enabled_agents : {}
+    online = ::Outsider::Voice::CentralStatus.new(Current.account).to_h[:extensions]
+    render json: User.where(id: agents.keys).order(:name).map { |user|
+      extension = agents[user.id]['extension']
+      { id: user.id, name: user.name, thumbnail: user.avatar_url, extension: extension, state: agents[user.id]['state'],
+        online: online.include?(extension) }
+    }
+  end
+
   private
 
   def settings

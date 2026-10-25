@@ -12,6 +12,11 @@ class VoiceAPI extends ApiClient {
     return axios.get(`${this.url}/voice/me`);
   }
 
+  // colegas com ramal e quem está conectado (Entrega 23)
+  team() {
+    return axios.get(`${this.url}/voice/team`);
+  }
+
   lookup(number) {
     return axios.get(`${this.url}/voice/lookup`, { params: { number } });
   }
@@ -36,8 +41,9 @@ class VoiceAPI extends ApiClient {
     return axios.get(`${this.url}/crm/calls`, { params });
   }
 
-  getStats(month) {
-    return axios.get(`${this.url}/crm/calls/stats`, { params: { month } });
+  // painel (wallboard) da Telefonia: period = today | week | month | last_month
+  getWallboard(params) {
+    return axios.get(`${this.url}/crm/calls/wallboard`, { params });
   }
 }
 

@@ -1,7 +1,7 @@
 <script setup>
-// OUTSIDER: CRM > Ligações (Entrega 22; ver app/services/outsider/voice/stats.rb). Números do mês e de hoje,
-// a meta de ligação de cada vendedor (com o ritmo esperado até hoje), a fila de perdidas para retornar com
-// 1 clique e o histórico do mês. O vendedor vê só os próprios números; atualiza sozinho a cada ligação.
+// OUTSIDER: Telefonia > Ligações (Entrega 22, separada do CRM na 23). A fila de perdidas para retornar com
+// 1 clique e o histórico do mês, com filtros. Cada pessoa vê o que Outsider::Voice::CallAccess deixa (o
+// vendedor, as dele e as perdidas para ele retornar); atualiza sozinho a cada ligação.
 import { ref, computed, watch, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useI18n } from 'vue-i18n';
@@ -9,26 +9,21 @@ import { useAlert } from 'dashboard/composables';
 import VoiceAPI from 'dashboard/api/outsider/voice';
 import Button from 'dashboard/components-next/button/Button.vue';
 import Select from 'dashboard/components-next/select/Select.vue';
-import Avatar from 'dashboard/components-next/avatar/Avatar.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
-import CallButton from '../../../voice/CallButton.vue';
-import PaceBar from './PaceBar.vue';
-import {
-  formatPhone,
-  formatDuration,
-  formatTalkTime,
-} from '../../../voice/format';
+import CallButton from '../CallButton.vue';
+import { formatPhone, formatDuration } from '../format';
 import {
   currentMonth,
   errorMessage,
   formatDateTime,
   formatMonth,
   shiftMonth,
-} from '../../helpers';
-import { useCrmChanges } from '../../live';
+} from '../../crm/helpers';
+import { useCrmChanges } from '../../crm/live';
+import { canConfigure, CRM_ROUTE } from '../../crm/sections';
 
-defineProps({
+const props = defineProps({
   access: { type: Object, required: true },
 });
 
@@ -46,64 +41,18 @@ const STATUS_COLORS = {
 };
 
 const month = ref(currentMonth());
-const stats = ref(null);
+const team = ref([]);
 const toReturn = ref([]);
 const calls = ref([]);
 const total = ref(0);
 const page = ref(1);
 const filters = ref({ direction: '', status: '', user_id: '' });
+const loaded = ref(false);
 const isLoading = ref(true);
 const isLoadingMore = ref(false);
 
-const minutes = seconds => Math.round((seconds || 0) / 60);
-
-const pace = computed(() => {
-  const { business_days: days, business_days_left: left } = stats.value;
-  return days ? (days - left) / days : 0;
-});
-
-const dayGoal = goal =>
-  goal ? Math.ceil(goal / stats.value.business_days) : 0;
-
-const kpis = computed(() => {
-  const { totals, today } = stats.value;
-  return [
-    {
-      key: 'OUTBOUND',
-      icon: 'i-lucide-phone-outgoing',
-      value: totals.outbound,
-      hint: t('OUTSIDER_VOICE.PANEL.KPIS.OUTBOUND_HINT', {
-        count: totals.outbound_answered,
-      }),
-      today: today.outbound,
-    },
-    {
-      key: 'INBOUND',
-      icon: 'i-lucide-phone-incoming',
-      value: totals.inbound_answered,
-      hint: t('OUTSIDER_VOICE.PANEL.KPIS.INBOUND_HINT', {
-        count: totals.inbound,
-      }),
-      today: today.inbound_answered,
-    },
-    {
-      key: 'MISSED',
-      icon: 'i-lucide-phone-missed',
-      value: totals.missed,
-      hint: t('OUTSIDER_VOICE.PANEL.KPIS.MISSED_HINT', {
-        count: totals.to_return,
-      }),
-      today: today.missed,
-    },
-    {
-      key: 'TALK',
-      icon: 'i-lucide-timer',
-      value: formatTalkTime(totals.talk_seconds),
-      hint: t('OUTSIDER_VOICE.PANEL.KPIS.TALK_HINT'),
-      today: formatTalkTime(today.talk_seconds),
-    },
-  ];
-});
+// gestor de unidade e administrador filtram por vendedor
+const manager = computed(() => canConfigure(props.access));
 
 const directionOptions = computed(() => [
   { value: '', label: t('OUTSIDER_VOICE.PANEL.HISTORY.ALL_DIRECTIONS') },
@@ -121,10 +70,7 @@ const statusOptions = computed(() => [
 ]);
 const sellerOptions = computed(() => [
   { value: '', label: t('OUTSIDER_VOICE.PANEL.HISTORY.ALL_SELLERS') },
-  ...(stats.value?.sellers || []).map(seller => ({
-    value: seller.id,
-    label: seller.name,
-  })),
+  ...team.value.map(person => ({ value: person.id, label: person.name })),
 ]);
 
 const customerName = call =>
@@ -132,14 +78,9 @@ const customerName = call =>
 
 const openDeal = id =>
   router.push({
-    params: { ...route.params, tab: 'opportunities' },
+    name: CRM_ROUTE,
+    params: { accountId: route.params.accountId, tab: 'opportunities' },
     query: { negocio: id },
-  });
-
-const openGoals = () =>
-  router.push({
-    params: { ...route.params, tab: 'settings' },
-    query: { secao: 'call_goals' },
   });
 
 const loadCalls = async (more = false) => {
@@ -155,13 +96,14 @@ const loadCalls = async (more = false) => {
 
 const load = async () => {
   try {
-    const [statsResponse, returnResponse] = await Promise.all([
-      VoiceAPI.getStats(month.value),
+    const [returnResponse, teamResponse] = await Promise.all([
       VoiceAPI.getCalls({ to_return: 1 }),
+      VoiceAPI.team(),
       loadCalls(),
     ]);
-    stats.value = statsResponse.data;
     toReturn.value = returnResponse.data.payload;
+    team.value = teamResponse.data;
+    loaded.value = true;
   } catch (error) {
     useAlert(errorMessage(t, error));
   } finally {
@@ -221,174 +163,9 @@ onMounted(load);
         @click="month = shiftMonth(month, 1)"
       />
       <Spinner v-if="isLoading" :size="16" class="text-n-slate-10" />
-      <span v-if="stats" class="text-xs text-n-slate-11">
-        {{
-          t('OUTSIDER_VOICE.PANEL.SELLERS.DAYS_LEFT', {
-            left: stats.business_days_left,
-            total: stats.business_days,
-          })
-        }}
-      </span>
     </div>
 
-    <template v-if="stats">
-      <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <div
-          v-for="kpi in kpis"
-          :key="kpi.key"
-          class="flex flex-col gap-1 p-4 outline outline-1 -outline-offset-1 outline-n-container rounded-xl bg-n-solid-2"
-          :data-testid="`calls-kpi-${kpi.key.toLowerCase()}`"
-        >
-          <span class="flex items-center gap-1.5 text-xs text-n-slate-11">
-            <Icon :icon="kpi.icon" class="size-3.5" />
-            {{ t(`OUTSIDER_VOICE.PANEL.KPIS.${kpi.key}`) }}
-          </span>
-          <span class="text-2xl font-medium tabular-nums text-n-slate-12">
-            {{ kpi.value }}
-          </span>
-          <span class="text-xs text-n-slate-11">{{ kpi.hint }}</span>
-          <span class="text-xs font-medium text-n-slate-12">
-            {{ t('OUTSIDER_VOICE.PANEL.KPIS.TODAY', { value: kpi.today }) }}
-          </span>
-        </div>
-      </div>
-
-      <!-- metas por vendedor -->
-      <section
-        class="overflow-hidden outline outline-1 -outline-offset-1 outline-n-container rounded-xl bg-n-solid-2"
-      >
-        <div
-          class="flex flex-wrap items-start justify-between gap-3 px-4 py-3 border-b border-n-weak"
-        >
-          <div class="flex flex-col gap-0.5 max-w-2xl">
-            <h3 class="mb-0 text-sm font-medium text-n-slate-12">
-              {{ t('OUTSIDER_VOICE.PANEL.SELLERS.TITLE') }}
-            </h3>
-            <p class="mb-0 text-xs text-n-slate-11">
-              {{ t('OUTSIDER_VOICE.PANEL.SELLERS.DESCRIPTION') }}
-            </p>
-          </div>
-          <Button
-            v-if="access.administrator"
-            size="sm"
-            variant="faded"
-            color="slate"
-            icon="i-lucide-target"
-            :label="t('OUTSIDER_VOICE.PANEL.SELLERS.SET_GOALS')"
-            @click="openGoals"
-          />
-        </div>
-        <p
-          v-if="!stats.sellers.length"
-          class="px-4 py-3 mb-0 text-sm text-n-slate-11"
-        >
-          {{ t('OUTSIDER_VOICE.PANEL.SELLERS.EMPTY') }}
-        </p>
-        <div v-else class="overflow-x-auto">
-          <table class="w-full text-sm min-w-[46rem]">
-            <thead>
-              <tr class="text-xs text-left text-n-slate-11">
-                <th class="px-4 py-2 font-medium">
-                  {{ t('OUTSIDER_VOICE.PANEL.SELLERS.SELLER') }}
-                </th>
-                <th class="px-4 py-2 font-medium">
-                  {{ t('OUTSIDER_VOICE.PANEL.SELLERS.TODAY') }}
-                </th>
-                <th class="w-56 px-4 py-2 font-medium">
-                  {{ t('OUTSIDER_VOICE.PANEL.SELLERS.CALLS') }}
-                </th>
-                <th class="w-56 px-4 py-2 font-medium">
-                  {{ t('OUTSIDER_VOICE.PANEL.SELLERS.MINUTES') }}
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr
-                v-for="seller in stats.sellers"
-                :key="seller.id"
-                class="border-t border-n-weak"
-                data-testid="calls-seller-row"
-              >
-                <td class="px-4 py-3">
-                  <span class="flex items-center gap-2 min-w-0">
-                    <span class="relative shrink-0">
-                      <Avatar
-                        :name="seller.name"
-                        :src="seller.thumbnail"
-                        :size="28"
-                        rounded-full
-                      />
-                      <span
-                        class="absolute bottom-0 rounded-full size-2.5 ltr:right-0 rtl:left-0 outline outline-2 outline-n-solid-2"
-                        :class="seller.online ? 'bg-n-teal-9' : 'bg-n-slate-7'"
-                        :title="
-                          seller.online
-                            ? t('OUTSIDER_VOICE.PANEL.SELLERS.ONLINE')
-                            : t('OUTSIDER_VOICE.PANEL.SELLERS.OFFLINE')
-                        "
-                      />
-                    </span>
-                    <span class="flex flex-col min-w-0">
-                      <span class="truncate text-n-slate-12">
-                        {{ seller.name }}
-                      </span>
-                      <span
-                        v-if="seller.extension"
-                        class="text-xs truncate text-n-slate-11"
-                      >
-                        {{
-                          t('OUTSIDER_VOICE.PANEL.SELLERS.EXTENSION', {
-                            extension: seller.extension,
-                          })
-                        }}
-                        <template v-if="seller.state">
-                          · {{ seller.state }}
-                        </template>
-                      </span>
-                    </span>
-                  </span>
-                </td>
-                <td class="px-4 py-3 text-xs tabular-nums">
-                  <div class="text-n-slate-12">
-                    {{
-                      t('OUTSIDER_VOICE.PANEL.SELLERS.TODAY_VALUE', {
-                        calls: seller.today.outbound,
-                        minutes: minutes(seller.today.talk_seconds),
-                      })
-                    }}
-                  </div>
-                  <div
-                    v-if="seller.goal.calls || seller.goal.minutes"
-                    class="text-n-slate-11"
-                  >
-                    {{
-                      t('OUTSIDER_VOICE.PANEL.SELLERS.DAY_GOAL', {
-                        calls: dayGoal(seller.goal.calls),
-                        minutes: dayGoal(seller.goal.minutes),
-                      })
-                    }}
-                  </div>
-                </td>
-                <td class="px-4 py-3">
-                  <PaceBar
-                    :value="seller.month.outbound"
-                    :goal="seller.goal.calls || null"
-                    :pace="pace"
-                  />
-                </td>
-                <td class="px-4 py-3">
-                  <PaceBar
-                    :value="minutes(seller.month.talk_seconds)"
-                    :goal="seller.goal.minutes || null"
-                    :pace="pace"
-                  />
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
-
+    <template v-if="loaded">
       <!-- perdidas para retornar -->
       <section
         class="overflow-hidden outline outline-1 -outline-offset-1 outline-n-container rounded-xl bg-n-solid-2"
@@ -476,7 +253,7 @@ onMounted(load);
             <Select v-model="filters.direction" :options="directionOptions" />
             <Select v-model="filters.status" :options="statusOptions" />
             <Select
-              v-if="stats.manager"
+              v-if="manager"
               v-model="filters.user_id"
               :options="sellerOptions"
             />

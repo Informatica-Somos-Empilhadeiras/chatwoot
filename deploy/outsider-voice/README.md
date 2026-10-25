@@ -4,9 +4,9 @@ Esta pasta tem a central de ligações do CRM. Ela roda no mesmo servidor do Cha
 
 - liga o telefone do navegador dos vendedores (ramais 201, 202...) à operadora;
 - recebe a configuração pronta do Chatwoot a cada 30 segundos: dados da operadora, números e ramais
-  (Configurações > Telefonia no CRM). Não há nada para editar aqui;
+  (Telefonia > Configurações, no menu lateral). Não há nada para editar aqui;
 - pergunta ao Chatwoot, a cada ligação, para quem tocar ou com qual número sair, e avisa quando atendeu e
-  quando terminou (CRM > Ligações).
+  quando terminou (Telefonia > Painel e Ligações).
 
 ```
 navegador do vendedor ──wss──> Cloudflare ──> central :8088 (WebSocket)
@@ -24,7 +24,7 @@ operadora (SIP 5060 + áudio) <──> central ──http──> Chatwoot (127.0
   de origem/BINA em cada ligação), porque cada vendedor liga com o número do seu estado.
 - **Formato de discagem**: DDD + número, 0 + DDD + número, ou 55 + DDD + número.
 
-Quando chegar o e-mail com os dados, cole o texto em **CRM > Configurações > Telefonia > Dados da operadora**
+Quando chegar o e-mail com os dados, cole o texto em **Telefonia > Configurações > Central e ramais > Dados da operadora**
 e clique em **Preencher com o texto**. Confira os campos e salve.
 
 ## 2. Token da central
@@ -41,7 +41,7 @@ Recrie o Chatwoot para ele ler o token: `docker compose up -d rails sidekiq`.
 ## 3. Contêiner da central
 
 Acrescente ao `docker-compose.yaml` do Chatwoot. Troque `1` pelo número da conta: ele aparece em
-Configurações > Telefonia, no item "VOICE_URL".
+Telefonia > Configurações, no item "VOICE_URL".
 
 ```yaml
   central:
@@ -87,7 +87,7 @@ Chatwoot.
          - host.docker.internal:host-gateway
    ```
 
-3. **No CRM**, em Configurações > Telefonia, em "Endereço da central para o navegador", coloque
+3. **No Chatwoot**, em Telefonia > Configurações, em "Endereço da central para o navegador", coloque
    `wss://voz.suaempresa.com.br/ws`.
 
 ## 5. Firewall (ufw)
@@ -105,7 +105,7 @@ Se a operadora usar TCP, troque `udp` por `tcp` na última regra.
 
 ## 6. Configurar no CRM e testar
 
-Em **CRM > Configurações > Telefonia**:
+Em **Telefonia > Configurações** (menu lateral):
 
 1. Ligue a **Telefonia**.
 2. Preencha:
@@ -123,7 +123,9 @@ Para testar, cada vendedor:
 - usa **Testar áudio**: ouve a própria voz de volta, o que confere microfone, fone e internet;
 - liga para um colega pelo ramal (ex.: 202) e depois para um celular.
 
-As metas de ligação ficam em **Configurações > Metas de ligação**. O acompanhamento fica em **CRM > Ligações**.
+As metas de ligação ficam em **Telefonia > Configurações > Metas de ligação**. O acompanhamento fica em
+**Telefonia > Painel** (metas, números do dia e do mês, quem está em ligação) e **Telefonia > Ligações**
+(perdidas para retornar e histórico).
 
 ## Problemas comuns
 
@@ -132,9 +134,9 @@ As metas de ligação ficam em **Configurações > Metas de ligação**. O acomp
 | "A central ainda não se conectou" | Veja `docker compose logs central`. Confira `VOICE_URL` (número da conta) e se o token é o mesmo do Chatwoot. |
 | "Falta o OUTSIDER_VOICE_TOKEN" | Faltou o passo 2, ou o Chatwoot não foi recriado depois dele. |
 | Telefone com ponto vermelho "Sem conexão com a central" | Confira o endereço `wss://` (passo 4) e a regra da porta 8088 no ufw. |
-| Liga, mas sem áudio | Confira as portas 10000-10099/udp e o IP público em Configurações > Telefonia. |
+| Liga, mas sem áudio | Confira as portas 10000-10099/udp e o IP público em Telefonia > Configurações. |
 | "A operadora recusou o usuário ou a senha" | Confira usuário, usuário de autenticação e senha com a operadora. |
-| Ligação da operadora não chega | Libere o IP da operadora na porta 5060 e confira os IPs em Configurações > Telefonia. |
+| Ligação da operadora não chega | Libere o IP da operadora na porta 5060 e confira os IPs em Telefonia > Configurações. |
 
 Comandos úteis dentro da central:
 

@@ -1,5 +1,5 @@
 <script setup>
-// OUTSIDER: Configurações > Telefonia (Entrega 22; ver app/services/outsider/voice/settings.rb). Os dados que a
+// OUTSIDER: Telefonia > Configurações (Entrega 22; ver app/services/outsider/voice/settings.rb). Os dados que a
 // operadora manda (colados no quadro de texto ou digitados), os números por estado, os ramais e as regras de
 // toque. Mostra também se a central está conectada, registrada na operadora e quais ramais estão online.
 import { ref, computed, onMounted } from 'vue';
@@ -12,11 +12,11 @@ import Select from 'dashboard/components-next/select/Select.vue';
 import Switch from 'dashboard/components-next/switch/Switch.vue';
 import Avatar from 'dashboard/components-next/avatar/Avatar.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
-import SettingsSection from './SettingsSection.vue';
-import { errorMessage } from '../../helpers';
-import { STATES, stateForNumber } from '../../../voice/brazil';
-import { formatPhone } from '../../../voice/format';
-import { parseOperatorText } from '../../../voice/operatorText';
+import SettingsSection from '../../../crm/components/settings/SettingsSection.vue';
+import { errorMessage } from '../../../crm/helpers';
+import { STATES, stateForNumber } from '../../brazil';
+import { formatPhone } from '../../format';
+import { parseOperatorText } from '../../operatorText';
 
 const FIRST_EXTENSION = 201;
 

@@ -22,6 +22,7 @@ import SidebarAccountSwitcher from './SidebarAccountSwitcher.vue';
 import Logo from 'next/icon/Logo.vue';
 // OUTSIDER: item do CRM (ícone com aviso de encaminhamento e as seções como subitens; some sem acesso)
 import { crmSidebarItems } from 'dashboard/routes/dashboard/outsider/crm/sidebar';
+import { voiceSidebarItems } from 'dashboard/routes/dashboard/outsider/voice/sidebar'; // OUTSIDER: Telefonia
 import OutsiderPhoneButton from 'dashboard/routes/dashboard/outsider/voice/PhoneButton.vue'; // OUTSIDER: telefonia
 import ComposeConversation from 'dashboard/components-next/NewConversation/ComposeConversation.vue';
 import {
@@ -496,6 +497,8 @@ const menuItems = computed(() => {
     },
     // OUTSIDER: CRM de vendas
     ...crmSidebarItems(t, accountScopedRoute),
+    // OUTSIDER: Telefonia (painel, ligações e configurações)
+    ...voiceSidebarItems(t, accountScopedRoute),
     {
       name: 'Captain',
       icon: 'i-woot-captain',

@@ -34,6 +34,17 @@ RSpec.describe 'Outsider voice API', type: :request do
     end
   end
 
+  describe 'GET voice/team' do
+    it 'lists the colleagues with an extension and who is connected' do
+      Outsider::Voice::CentralStatus.new(account).report(registration: '', extensions: ['201'])
+
+      get "#{base}/voice/team", headers: colleague.create_new_auth_token, as: :json
+
+      expect(response.parsed_body.map { |row| row.slice('extension', 'online') })
+        .to contain_exactly({ 'extension' => '201', 'online' => true }, { 'extension' => '202', 'online' => false })
+    end
+  end
+
   describe 'voice settings' do
     it 'is only for administrators and never returns the operator password' do
       get "#{base}/crm/voice_settings", headers: seller.create_new_auth_token, as: :json
@@ -75,14 +86,32 @@ RSpec.describe 'Outsider voice API', type: :request do
       expect(response.parsed_body['payload'].pluck('id')).to match_array(Outsider::Voice::Call.where(linkedid: %w[mine missed-go]).ids)
     end
 
-    it 'gives the managers the month of every seller with the goals' do
-      get "#{base}/crm/calls/stats", headers: admin.create_new_auth_token, as: :json
+    it 'gives the seller a wallboard with only their own numbers, in their time zone' do
+      started = Time.utc(2026, 10, 20, 13, 30)
+      Outsider::Voice::Call.where(linkedid: 'mine').update_all(started_at: started, answered_at: started + 9.seconds) # rubocop:disable Rails/SkipsModelValidations
+      travel_to Time.utc(2026, 10, 20, 18) do
+        get "#{base}/crm/calls/wallboard", params: { period: 'today', user_id: colleague.id, zone: 'America/Sao_Paulo' },
+                                           headers: seller.create_new_auth_token
+      end
 
       body = response.parsed_body
-      expect(body['totals']).to include('outbound' => 2, 'missed' => 1, 'to_return' => 1, 'talk_seconds' => 180)
-      row = body['sellers'].find { |seller_row| seller_row['id'] == seller.id }
-      expect(row).to include('extension' => '201', 'goal' => { 'calls' => 100, 'minutes' => 300 })
-      expect(row['month']).to include('outbound' => 1, 'talk_seconds' => 120)
+      expect(body).to include('user_id' => seller.id, 'manager' => false, 'agents' => [])
+      expect(body['summary']).to include('total' => 1, 'outbound' => 1, 'talk_seconds' => 120, 'longest_talk' => 120)
+      expect(body['by_hour'][10]).to include('outbound' => 1)
+      expect(body['by_weekday_hour'][2][10]).to eq(1)
+      expect(body['goal']).to include('calls' => 100, 'minutes' => 300)
+    end
+
+    it 'gives the managers every seller, who is online and who is on a call now' do
+      Outsider::Voice::CentralStatus.new(account).report(registration: 'Registered', extensions: ['202'])
+      Outsider::Voice::Call.where(linkedid: 'mine').update_all(ended_at: Time.current) # rubocop:disable Rails/SkipsModelValidations
+
+      get "#{base}/crm/calls/wallboard", params: { period: 'month' }, headers: admin.create_new_auth_token
+
+      body = response.parsed_body
+      expect(body['summary']).to include('total' => 3, 'inbound' => 1, 'missed' => 1)
+      expect(body['agents'].find { |row| row['id'] == colleague.id }).to include('extension' => '202', 'online' => true, 'in_call' => true)
+      expect(body['live'].pluck('user')).to eq([colleague.name])
     end
 
     it 'lists the calls to return' do

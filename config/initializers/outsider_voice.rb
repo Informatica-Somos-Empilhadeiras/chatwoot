@@ -10,12 +10,13 @@ Rails.application.routes.prepend do
             resource :voice, only: [], controller: 'voice' do
               get :me
               get :lookup
+              get :team
             end
             namespace :crm do
               resource :voice_settings, only: [:show, :update]
               resource :call_goals, only: [:show, :update]
               resources :calls, only: [:index] do
-                collection { get :stats }
+                collection { get :wallboard }
               end
             end
           end

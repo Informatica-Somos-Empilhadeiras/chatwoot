@@ -26,6 +26,26 @@ export const phone = reactive({
   call: null,
 });
 
+// painel do telefone aberto (fixo na tela) ou minimizado; guardado no navegador (Entrega 23)
+const PANEL_KEY = 'outsider_phone_panel';
+const readPanel = () => {
+  try {
+    return localStorage.getItem(PANEL_KEY) === 'open';
+  } catch {
+    return false;
+  }
+};
+export const panel = reactive({ open: readPanel() });
+
+export const setPanelOpen = open => {
+  panel.open = open;
+  try {
+    localStorage.setItem(PANEL_KEY, open ? 'open' : 'closed');
+  } catch {
+    // sem localStorage o painel só não lembra como estava
+  }
+};
+
 let JsSIP = null;
 let config = null;
 let accountKey = null;
@@ -77,8 +97,10 @@ const finish = (current, reason) => {
   phone.call.state = 'ended';
   // ramal "indisponível": a pessoa não está com o telefone aberto (ou o ramal está desligado)
   const toExtension = phone.call.number.length <= 4;
-  phone.call.endReason =
-    reason === 'UNAVAILABLE' && toExtension ? 'EXTENSION_OFFLINE' : reason;
+  if (phone.call.transferTo) phone.call.endReason = 'TRANSFERRED';
+  else if (reason === 'UNAVAILABLE' && toExtension) {
+    phone.call.endReason = 'EXTENSION_OFFLINE';
+  } else phone.call.endReason = reason;
   endedTimer = setTimeout(() => {
     if (phone.call?.state === 'ended') phone.call = null;
   }, ENDED_VISIBLE);
@@ -100,6 +122,8 @@ const attach = (current, info) => {
   phone.call = {
     ...info,
     muted: false,
+    held: false,
+    transferTo: '',
     answeredAt: null,
     endReason: '',
     lookup: null,
@@ -315,4 +339,43 @@ export const sendDigit = digit => {
 
 export const clearEndedCall = () => {
   if (phone.call?.state === 'ended') phone.call = null;
+};
+
+// espera: o outro lado fica em silêncio até voltar (Entrega 23)
+export const toggleHold = () => {
+  if (phone.call?.state !== 'active') return;
+  if (phone.call.held) session.unhold();
+  else session.hold();
+  phone.call.held = !phone.call.held;
+};
+
+// transferência direta para outro ramal: a central liga para ele e, quando confirma, esta ligação acaba aqui
+export const transfer = extension => {
+  if (phone.call?.state !== 'active' || !/^\d{3}$/.test(extension)) return;
+  phone.call.transferTo = extension;
+  const current = session;
+  current.refer(`sip:${extension}@${config.domain}`, {
+    eventHandlers: {
+      accepted: () => {
+        if (!current.isEnded()) current.terminate();
+      },
+      requestFailed: () => {
+        if (phone.call) phone.call.transferTo = '';
+      },
+      failed: () => {
+        if (phone.call) phone.call.transferTo = '';
+      },
+    },
+  });
+};
+
+// áudio da ligação (o microfone da pessoa e o som do outro lado), para as barras que mexem com a voz
+export const callStreams = () => {
+  const track = session?.connection
+    ?.getSenders()
+    .find(sender => sender.track?.kind === 'audio')?.track;
+  return {
+    local: track ? new MediaStream([track]) : null,
+    remote: remoteAudio.srcObject,
+  };
 };

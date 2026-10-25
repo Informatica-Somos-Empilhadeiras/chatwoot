@@ -1,4 +1,4 @@
-# OUTSIDER: Configurações > Telefonia (Entrega 22). Dados da operadora, números por estado, ramais e regras
+# OUTSIDER: Telefonia > Configurações (Entrega 22). Dados da operadora, números por estado, ramais e regras
 # de toque (Outsider::Voice::Settings), o estado da central e o que falta para instalar. Só administradores.
 class Api::V1::Accounts::Outsider::Crm::VoiceSettingsController < Api::V1::Accounts::Outsider::Crm::BaseController
   before_action :ensure_crm_admin

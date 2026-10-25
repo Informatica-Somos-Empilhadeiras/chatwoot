@@ -27,7 +27,15 @@
         "IN_CALL": "Termine a ligação atual antes de fazer outra.",
         "INVALID": "Digite um número para ligar.",
         "OTHER_TAB": "O telefone está em outra aba. Ligue por lá ou traga para esta aba no botão do telefone, no menu lateral."
-      }
+      },
+      "MINIMIZE": "Minimizar",
+      "TABS": {
+        "KEYPAD": "Teclado",
+        "TEAM": "Equipe"
+      },
+      "TEAM_EMPTY": "Nenhum colega com ramal ligado.",
+      "TEAM_ONLINE": "Telefone conectado",
+      "TEAM_OFFLINE": "Telefone desconectado"
     },
     "CALL": {
       "INCOMING": "Ligação recebida",
@@ -55,8 +63,18 @@
         "UNAVAILABLE": "Número não permitido ou linha indisponível",
         "MICROPHONE": "O navegador não liberou o microfone",
         "FAILED": "A ligação caiu",
-        "EXTENSION_OFFLINE": "Ramal desconectado: a pessoa não está com o Chatwoot aberto ou o ramal está desligado"
-      }
+        "EXTENSION_OFFLINE": "Ramal desconectado: a pessoa não está com o Chatwoot aberto ou o ramal está desligado",
+        "TRANSFERRED": "Transferida para o ramal {extension}"
+      },
+      "HOLD": "Espera",
+      "RESUME": "Retomar",
+      "ON_HOLD": "Em espera · {time}",
+      "TRANSFER": "Transferir",
+      "TRANSFER_HINT": "A ligação passa direto para o ramal escolhido.",
+      "TRANSFER_PLACEHOLDER": "Ramal (ex.: 202)",
+      "YOU": "Você",
+      "OTHER_SIDE": "Outro lado",
+      "EXPAND": "Abrir o telefone"
     },
     "CLICK_TO_CALL": "Ligar pelo telefone do CRM",
     "CALLING": "Ligando para {number}…",
@@ -164,37 +182,12 @@
       "HELP": "Deixe vazio para não ter meta. A mudança vale para o mês escolhido e os seguintes; os meses anteriores continuam como estavam."
     },
     "PANEL": {
-      "KPIS": {
-        "OUTBOUND": "Ligações feitas",
-        "OUTBOUND_HINT": "{count} atendidas pelo cliente",
-        "INBOUND": "Recebidas atendidas",
-        "INBOUND_HINT": "de {count} recebidas",
-        "MISSED": "Perdidas",
-        "MISSED_HINT": "{count} para retornar",
-        "TALK": "Tempo em ligação",
-        "TALK_HINT": "feitas e recebidas",
-        "TODAY": "Hoje: {value}"
-      },
       "SELLERS": {
-        "TITLE": "Metas de ligação",
-        "DESCRIPTION": "Ligações feitas e minutos em ligação de cada vendedor. O traço na barra mostra onde deveria estar hoje para bater a meta do mês.",
-        "DAYS_LEFT": "{left} de {total} dias úteis restantes",
-        "SELLER": "Vendedor",
-        "TODAY": "Hoje",
-        "CALLS": "Ligações no mês",
-        "MINUTES": "Minutos no mês",
         "VALUE_OF_GOAL": "{value} de {goal}",
         "NO_GOAL": "{value} · sem meta",
-        "DAY_GOAL": "meta do dia: {calls} ligações, {minutes} min",
-        "TODAY_VALUE": "{calls} ligações · {minutes} min",
         "ON_PACE": "No ritmo",
         "BELOW_PACE": "Abaixo do ritmo",
-        "REACHED": "Meta batida",
-        "ONLINE": "Telefone conectado agora",
-        "OFFLINE": "Telefone desconectado",
-        "EXTENSION": "Ramal {extension}",
-        "EMPTY": "Ninguém com ramal ligado ainda. O administrador cadastra em Configurações > Telefonia.",
-        "SET_GOALS": "Definir metas"
+        "REACHED": "Meta batida"
       },
       "RETURN": {
         "TITLE": "Para retornar",
@@ -237,6 +230,75 @@
       "INBOUND_MISSED": "Ligação perdida de {number}",
       "OUTBOUND_ANSWERED": "{name} ligou para {number} ({duration})",
       "OUTBOUND_OTHER": "{name} ligou para {number}: {status}"
+    },
+    "SECTION": {
+      "TITLE": "Telefonia",
+      "NO_ACCESS": "A telefonia está desligada. O administrador liga em Telefonia > Configurações.",
+      "TABS": {
+        "DASHBOARD": "Painel",
+        "CALLS": "Ligações",
+        "SETTINGS": "Configurações"
+      },
+      "SETTINGS": {
+        "CENTRAL": "Central e ramais",
+        "GOALS": "Metas de ligação"
+      }
+    },
+    "WALLBOARD": {
+      "PERIODS": {
+        "today": "Hoje",
+        "week": "Esta semana",
+        "month": "Este mês",
+        "last_month": "Mês passado"
+      },
+      "TEAM": "Vendedores",
+      "EVERYONE": "Equipe toda",
+      "EXTENSION": "Ramal {extension}",
+      "STATUS": {
+        "online": "Telefone conectado",
+        "offline": "Telefone desconectado",
+        "in_call": "Em ligação"
+      },
+      "COUNTERS": {
+        "TOTAL": "Ligações",
+        "TOTAL_HINT": "no período",
+        "INBOUND": "Recebidas",
+        "INBOUND_HINT": "{answered} atendidas · {missed} perdidas",
+        "OUTBOUND": "Feitas",
+        "OUTBOUND_HINT": "{answered} atendidas pelo cliente",
+        "INTERNAL": "Entre ramais",
+        "INTERNAL_HINT": "entre colegas"
+      },
+      "TIMES": {
+        "AVERAGE_TALK": "Tempo médio de conversa",
+        "LONGEST": "Ligação mais longa",
+        "TALK": "Tempo em ligação",
+        "AVERAGE_ANSWER": "Tempo médio para atender",
+        "TO_RETURN": "Para retornar"
+      },
+      "GOAL": {
+        "TITLE": "Meta do mês",
+        "CALLS": "Ligações feitas",
+        "MINUTES": "Minutos em ligação",
+        "MISSING": "Faltam {calls} ligações e {minutes} min · {perDay} ligações por dia útil nos {days} dias que restam",
+        "REACHED": "Meta do mês batida.",
+        "NO_GOAL": "Sem meta de ligação neste mês. O administrador define em Telefonia > Configurações > Metas de ligação."
+      },
+      "BY_HOUR": "Ligações por hora",
+      "HEATMAP": "Ligações por dia e hora",
+      "EMPTY": "Nenhuma ligação neste período.",
+      "LIVE": "Em ligação agora",
+      "LIVE_EMPTY": "Ninguém em ligação agora.",
+      "RINGING": "Tocando",
+      "WEEKDAYS": {
+        "0": "Dom",
+        "1": "Seg",
+        "2": "Ter",
+        "3": "Qua",
+        "4": "Qui",
+        "5": "Sex",
+        "6": "Sáb"
+      }
     }
   }
 }

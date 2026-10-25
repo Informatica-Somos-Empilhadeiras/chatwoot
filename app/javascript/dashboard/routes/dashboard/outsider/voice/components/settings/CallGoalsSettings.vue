@@ -1,5 +1,5 @@
 <script setup>
-// OUTSIDER: metas mensais de ligação por vendedor (Entrega 22; ver app/services/outsider/crm/call_goals.rb):
+// OUTSIDER: Telefonia > Configurações > Metas de ligação (Entrega 22; ver app/services/outsider/crm/call_goals.rb):
 // ligações feitas e minutos em ligação. Como as metas de venda, a meta gravada num mês vale para os
 // seguintes até mudar; vazio = sem meta. Aparecem só vendedores com ramal ligado em Telefonia.
 import { ref, watch, onMounted } from 'vue';
@@ -10,13 +10,13 @@ import Button from 'dashboard/components-next/button/Button.vue';
 import Input from 'dashboard/components-next/input/Input.vue';
 import Avatar from 'dashboard/components-next/avatar/Avatar.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
-import SettingsSection from './SettingsSection.vue';
+import SettingsSection from '../../../crm/components/settings/SettingsSection.vue';
 import {
   currentMonth,
   errorMessage,
   formatMonth,
   shiftMonth,
-} from '../../helpers';
+} from '../../../crm/helpers';
 
 const { t } = useI18n();
 
