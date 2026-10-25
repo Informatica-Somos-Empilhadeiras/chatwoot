@@ -16,6 +16,7 @@ import ConversationAPI from 'dashboard/api/inbox/conversation';
 import Dialog from 'dashboard/components-next/dialog/Dialog.vue';
 import Avatar from 'dashboard/components-next/avatar/Avatar.vue';
 import Button from 'dashboard/components-next/button/Button.vue';
+import { phone } from '../voice/phone';
 import {
   ALERT_AFTER,
   REMIND_EVERY,
@@ -143,9 +144,19 @@ watch(visibility, value => {
   if (value === 'visible') refresh();
 });
 
+// em ligação pelo telefone do CRM o aviso espera: aberto, ele travaria a tela e o botão de atender
+const inCall = computed(() => phone.call && phone.call.state !== 'ended');
+
 watch(overdue, list => {
   if (!list.length) closeByCode();
-  else if (!isOpen.value && Date.now() >= snoozedUntil) open();
+  else if (!isOpen.value && !inCall.value && Date.now() >= snoozedUntil) {
+    open();
+  }
+});
+
+watch(inCall, value => {
+  if (value) closeByCode();
+  else if (overdue.value.length && Date.now() >= snoozedUntil) open();
 });
 
 // com a aba do navegador em segundo plano, o título pisca com o número de clientes esperando

@@ -1,34 +1,47 @@
-// OUTSIDER: toque da ligação que chega (Entrega 22), gerado pelo navegador, sem arquivo de áudio: dois tons
-// por 1,2 s a cada 3 s, até atender, recusar ou a central desistir.
+// OUTSIDER: tons do telefone (Entrega 22), gerados pelo navegador, sem arquivo de áudio. "incoming": a ligação
+// que chega (dois tons por 1,2 s a cada 3 s). "ringback": o "chamando" de quem liga (425 Hz por 1 s a cada
+// 5 s, o padrão brasileiro), enquanto o outro lado não manda o próprio som.
+const TONES = {
+  incoming: { frequencies: [440, 480], seconds: 1.2, every: 3000, volume: 0.2 },
+  ringback: { frequencies: [425], seconds: 1, every: 5000, volume: 0.1 },
+};
+
 let context = null;
 let timer = null;
+let gain = null;
 
-const beep = () => {
+const beep = ({ frequencies, seconds, volume }) => {
   const now = context.currentTime;
-  const gain = context.createGain();
+  gain = context.createGain();
   gain.gain.setValueAtTime(0.0001, now);
-  gain.gain.exponentialRampToValueAtTime(0.2, now + 0.05);
-  gain.gain.setValueAtTime(0.2, now + 1.15);
-  gain.gain.exponentialRampToValueAtTime(0.0001, now + 1.2);
+  gain.gain.exponentialRampToValueAtTime(volume, now + 0.05);
+  gain.gain.setValueAtTime(volume, now + seconds - 0.05);
+  gain.gain.exponentialRampToValueAtTime(0.0001, now + seconds);
   gain.connect(context.destination);
-  [440, 480].forEach(frequency => {
+  frequencies.forEach(frequency => {
     const tone = context.createOscillator();
     tone.frequency.value = frequency;
     tone.connect(gain);
     tone.start(now);
-    tone.stop(now + 1.2);
+    tone.stop(now + seconds);
   });
 };
 
-export const startRinging = () => {
-  if (timer) return;
-  context = context || new AudioContext();
-  context.resume();
-  beep();
-  timer = setInterval(beep, 3000);
-};
-
-export const stopRinging = () => {
+// corta na hora, sem esperar o tom que está tocando acabar
+export const stopTone = () => {
   clearInterval(timer);
   timer = null;
+  if (!gain) return;
+  gain.gain.cancelScheduledValues(context.currentTime);
+  gain.gain.setValueAtTime(0.0001, context.currentTime);
+  gain = null;
+};
+
+export const startTone = name => {
+  stopTone();
+  const tone = TONES[name];
+  context = context || new AudioContext();
+  context.resume();
+  beep(tone);
+  timer = setInterval(() => beep(tone), tone.every);
 };

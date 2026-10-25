@@ -6,7 +6,7 @@
 // O estado fica em `phone` (reativo): as telas leem; para agir, chamam as funções exportadas.
 import { reactive } from 'vue';
 import VoiceAPI from 'dashboard/api/outsider/voice';
-import { startRinging, stopRinging } from './ringtone';
+import { startTone, stopTone } from './ringtone';
 
 const ICE_SERVERS = [{ urls: 'stun:stun.l.google.com:19302' }];
 // a ligação sai com os endereços que o navegador achou até aqui (o endereço público vem do STUN)
@@ -69,7 +69,7 @@ const endReason = ({ originator, cause, message }) => {
 
 const finish = (current, reason) => {
   if (current !== session) return;
-  stopRinging();
+  stopTone();
   session = null;
   remoteAudio.srcObject = null;
   phone.call.state = 'ended';
@@ -107,8 +107,15 @@ const attach = (current, info) => {
   current.on('peerconnection', ({ peerconnection }) =>
     playRemote(peerconnection)
   );
+  // quem liga ouve "chamando" enquanto o outro lado só avisa que está tocando (180); com o som da operadora
+  // (183 com áudio), toca o som dela
+  current.on('progress', ({ originator, response }) => {
+    if (originator !== 'remote' || phone.call?.state !== 'dialing') return;
+    if (response.body) stopTone();
+    else if (response.status_code === 180) startTone('ringback');
+  });
   current.on('accepted', () => {
-    stopRinging();
+    stopTone();
     phone.call.state = 'active';
     phone.call.answeredAt = Date.now();
   });
@@ -135,12 +142,12 @@ const onSession = ({ session: current, originator, request }) => {
     name: request.from.display_name || '',
   });
   phone.call.state = 'ringing';
-  startRinging();
+  startTone('incoming');
 };
 
 const disconnect = () => {
   generation += 1;
-  stopRinging();
+  stopTone();
   if (session && !session.isEnded()) session.terminate();
   session = null;
   ua?.stop();
@@ -268,7 +275,7 @@ export const dial = number => {
 
 export const answer = () => {
   if (phone.call?.state !== 'ringing') return;
-  stopRinging();
+  stopTone();
   session.answer({
     mediaConstraints: MEDIA,
     pcConfig: { iceServers: ICE_SERVERS },
