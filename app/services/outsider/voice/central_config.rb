@@ -40,15 +40,19 @@ class Outsider::Voice::CentralConfig
     options
   end
 
+  # from_domain: o endereço do telefone (ws_url). Sem ele a central usa o nome do servidor nas mensagens ao
+  # navegador, e um nome como "vps-15474911.69.6.250.129" não é endereço válido: o navegador descarta a
+  # checagem e as ligações para o ramal sem responder.
   def agents
     users = User.where(id: @settings.enabled_agents.keys).index_by(&:id)
+    domain = URI(@settings.data['ws_url']).host
     @settings.enabled_agents.map do |user_id, agent|
       extension = agent['extension']
       name = users[user_id]&.name.to_s.delete("\"\r\n").first(40)
       [
         section(extension, type: 'endpoint', transport: 'transport-ws', context: 'from-agents', disallow: 'all', allow: 'opus,alaw,ulaw',
                            webrtc: 'yes', auth: "#{extension}-auth", aors: extension, callerid: "\"#{name}\" <#{extension}>",
-                           device_state_busy_at: 1, rtp_timeout: 60),
+                           device_state_busy_at: 1, rtp_timeout: 60, from_domain: domain),
         section("#{extension}-auth", type: 'auth', auth_type: 'userpass', username: extension,
                                      password: @settings.sip_password(user_id, extension)),
         section(extension, type: 'aor', max_contacts: 1, remove_existing: 'yes', qualify_frequency: 30)

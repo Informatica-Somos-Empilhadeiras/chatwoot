@@ -11,7 +11,7 @@ RSpec.describe 'Outsider voice central', type: :request do
 
   before do
     Outsider::Voice::Settings.new(account).update(
-      'enabled' => true, 'numbers' => [{ 'number' => '6232345678', 'state' => 'GO' }],
+      'enabled' => true, 'ws_url' => 'wss://voip.exemplo.com.br/ws', 'numbers' => [{ 'number' => '6232345678', 'state' => 'GO' }],
       'trunk' => { 'host' => 'sip.operadora.com.br', 'username' => 'somos', 'password' => 'segredo' },
       'agents' => { seller.id.to_s => { 'extension' => '201', 'state' => 'GO', 'enabled' => true } }
     )
@@ -30,7 +30,8 @@ RSpec.describe 'Outsider voice central', type: :request do
   it 'gives the central the extensions and the operator account' do
     get "#{base}/pjsip", headers: headers
 
-    expect(response.body).to include('[201]', 'type=endpoint', 'webrtc=yes', 'server_uri=sip:sip.operadora.com.br:5060',
+    expect(response.body).to include('[201]', 'type=endpoint', 'webrtc=yes', 'from_domain=voip.exemplo.com.br',
+                                     'server_uri=sip:sip.operadora.com.br:5060',
                                      'password=segredo')
     get "#{base}/extensions", headers: headers
     expect(response.body).to include('ALL_AGENTS=PJSIP/201')
