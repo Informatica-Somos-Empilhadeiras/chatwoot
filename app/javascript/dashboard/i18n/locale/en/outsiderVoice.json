@@ -54,7 +54,8 @@
         "ELSEWHERE": "Answered by someone else",
         "UNAVAILABLE": "Number not allowed or line unavailable",
         "MICROPHONE": "The browser did not allow the microphone",
-        "FAILED": "The call dropped"
+        "FAILED": "The call dropped",
+        "EXTENSION_OFFLINE": "Extension offline: the person does not have Chatwoot open or the extension is off"
       }
     },
     "CLICK_TO_CALL": "Call with the CRM phone",

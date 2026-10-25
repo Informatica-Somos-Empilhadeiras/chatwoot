@@ -12,8 +12,11 @@ import Avatar from 'next/avatar/Avatar.vue';
 import Button from 'dashboard/components-next/button/Button.vue';
 import PhoneKeypad from './PhoneKeypad.vue';
 import { formatPhone, formatDuration } from './format';
+import { onCrmChange } from '../crm/live';
 import {
+  CENTRAL_SYNC_WAIT,
   phone,
+  restartPhone,
   startPhone,
   stopPhone,
   answer,
@@ -126,7 +129,19 @@ watch(
 );
 
 watch(accountId, id => id && startPhone(id), { immediate: true });
+
+// Configurações > Telefonia salvas (ramal ligado, trocado ou desligado): o telefone busca o ramal de novo
+// quando a central já tiver a configuração nova
+let settingsTimer = null;
+const stopFollowingSettings = onCrmChange(changes => {
+  if (!changes.some(({ kind }) => kind === 'voice')) return;
+  clearTimeout(settingsTimer);
+  settingsTimer = setTimeout(restartPhone, CENTRAL_SYNC_WAIT);
+});
+
 onBeforeUnmount(() => {
+  stopFollowingSettings();
+  clearTimeout(settingsTimer);
   closeNotification();
   stopPhone();
 });

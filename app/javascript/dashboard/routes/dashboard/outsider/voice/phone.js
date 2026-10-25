@@ -13,6 +13,8 @@ const ICE_SERVERS = [{ urls: 'stun:stun.l.google.com:19302' }];
 const ICE_WAIT = 1500;
 // "Ocupado", "Não atendeu"... ficam na tela por um tempo depois que a ligação acaba
 const ENDED_VISIBLE = 4000;
+// ramal recém-ligado nas Configurações: a central só o conhece depois de buscar a configuração (até 30 s)
+export const CENTRAL_SYNC_WAIT = 35000;
 const MEDIA = { audio: true, video: false };
 
 // status: off (sem telefone: telefonia ou ramal desligados), connecting, ready, offline (sem conexão com a
@@ -73,7 +75,10 @@ const finish = (current, reason) => {
   session = null;
   remoteAudio.srcObject = null;
   phone.call.state = 'ended';
-  phone.call.endReason = reason;
+  // ramal "indisponível": a pessoa não está com o telefone aberto (ou o ramal está desligado)
+  const toExtension = phone.call.number.length <= 4;
+  phone.call.endReason =
+    reason === 'UNAVAILABLE' && toExtension ? 'EXTENSION_OFFLINE' : reason;
   endedTimer = setTimeout(() => {
     if (phone.call?.state === 'ended') phone.call = null;
   }, ENDED_VISIBLE);
@@ -178,7 +183,11 @@ const connect = async () => {
     if (current === generation) phone.status = 'offline';
   });
   ua.on('registrationFailed', () => {
-    if (current === generation) phone.status = 'failed';
+    if (current !== generation) return;
+    phone.status = 'failed';
+    setTimeout(() => {
+      if (current === generation) ua.register();
+    }, CENTRAL_SYNC_WAIT);
   });
   ua.on('newRTCSession', onSession);
   ua.start();
@@ -247,8 +256,9 @@ export const startPhone = async accountId => {
   requestLine(accountId, 'try');
 };
 
-// de novo do zero (ramal ou senha podem ter mudado nas Configurações)
+// de novo do zero (ramal ou senha podem ter mudado nas Configurações); nunca no meio de uma ligação
 export const restartPhone = () => {
+  if (phone.call && phone.call.state !== 'ended') return;
   const accountId = accountKey;
   stopPhone();
   startPhone(accountId);

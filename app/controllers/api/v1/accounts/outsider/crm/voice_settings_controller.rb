@@ -11,8 +11,10 @@ class Api::V1::Accounts::Outsider::Crm::VoiceSettingsController < Api::V1::Accou
     render json: payload
   end
 
+  # os telefones abertos na conta buscam o ramal de novo (ver voice/CallCard.vue)
   def update
     settings.update(params.require(:settings).to_unsafe_h)
+    ::Outsider::Crm::LiveUpdates.broadcast(Current.account.id, 'voice')
     render json: payload
   end
 

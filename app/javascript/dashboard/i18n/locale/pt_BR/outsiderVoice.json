@@ -54,7 +54,8 @@
         "ELSEWHERE": "Atendida por outra pessoa",
         "UNAVAILABLE": "Número não permitido ou linha indisponível",
         "MICROPHONE": "O navegador não liberou o microfone",
-        "FAILED": "A ligação caiu"
+        "FAILED": "A ligação caiu",
+        "EXTENSION_OFFLINE": "Ramal desconectado: a pessoa não está com o Chatwoot aberto ou o ramal está desligado"
       }
     },
     "CLICK_TO_CALL": "Ligar pelo telefone do CRM",
