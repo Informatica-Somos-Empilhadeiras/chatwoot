@@ -8,6 +8,7 @@ import Button from 'dashboard/components-next/button/Button.vue';
 import Breadcrumb from 'dashboard/components-next/breadcrumb/Breadcrumb.vue';
 import ComposeConversation from 'dashboard/components-next/NewConversation/ComposeConversation.vue';
 import VoiceCallButton from 'dashboard/components-next/Contacts/VoiceCallButton.vue';
+import OutsiderCallButton from 'dashboard/routes/dashboard/outsider/voice/CallButton.vue'; // OUTSIDER: telefonia
 
 const props = defineProps({
   selectedContact: {
@@ -105,6 +106,11 @@ const closeMobileSidebar = () => {
                 :contact-id="contactId"
                 :label="$t('CONTACT_PANEL.CALL')"
                 size="sm"
+              />
+              <!-- OUTSIDER: ligar pelo telefone do CRM -->
+              <OutsiderCallButton
+                :number="selectedContact?.phoneNumber"
+                :label="$t('CONTACT_PANEL.CALL')"
               />
               <ComposeConversation :contact-id="contactId">
                 <template #trigger>

@@ -2,6 +2,7 @@ import advancedFilters from './advancedFilters.json';
 import outsiderWhatsappStatus from './outsiderWhatsappStatus.json'; // OUTSIDER: página Status do WhatsApp
 import outsiderCrm from './outsiderCrm.json'; // OUTSIDER: CRM de vendas
 import outsiderWhatsapp from './outsiderWhatsapp.json'; // OUTSIDER: áudio e contato do WhatsApp
+import outsiderVoice from './outsiderVoice.json'; // OUTSIDER: telefonia
 import agentBots from './agentBots.json';
 import agentMgmt from './agentMgmt.json';
 import attributesMgmt from './attributesMgmt.json';
@@ -51,6 +52,7 @@ export default {
   ...outsiderWhatsappStatus, // OUTSIDER
   ...outsiderCrm, // OUTSIDER
   ...outsiderWhatsapp, // OUTSIDER
+  ...outsiderVoice, // OUTSIDER
   ...agentBots,
   ...agentMgmt,
   ...attributesMgmt,

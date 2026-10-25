@@ -1,0 +1,38 @@
+# OUTSIDER: o telefone dentro do Chatwoot (Entrega 22). me: dados para o navegador entrar na central com o
+# ramal da pessoa (vazio se a telefonia ou o ramal estão desligados). lookup: quem é o número que está
+# ligando, para a tela mostrar o nome e o negócio aberto antes de atender.
+class Api::V1::Accounts::Outsider::VoiceController < Api::V1::Accounts::BaseController
+  def me
+    agent = settings.enabled? && settings.agent_for(Current.user.id)
+    return render json: { enabled: false } unless agent && settings.data['ws_url'].present?
+
+    render json: {
+      enabled: true, ws_url: settings.data['ws_url'], extension: agent['extension'], name: Current.user.name,
+      password: settings.sip_password(Current.user.id, agent['extension']), echo_extension: ::Outsider::Voice::Settings::ECHO_EXTENSION
+    }
+  end
+
+  def lookup
+    contact = ::Outsider::Voice::PhoneNumber.find_contact(Current.account, params[:number])
+    return render json: { contact: nil } unless contact
+
+    render json: { contact: contact.slice(:id, :name, :phone_number).merge(thumbnail: contact.avatar_url), deal: deal_json(contact),
+                   conversation_id: contact.conversations.order(last_activity_at: :desc).pick(:display_id) }
+  end
+
+  private
+
+  def settings
+    @settings ||= ::Outsider::Voice::Settings.new(Current.account)
+  end
+
+  # só o negócio que a pessoa pode ver no CRM
+  def deal_json(contact)
+    access = ::Outsider::Crm::Access.new(Current.account_user)
+    return unless access.enabled?
+
+    deal = ::Outsider::Crm::Opportunity.where(account_id: Current.account.id, contact_id: contact.id).open
+                                       .includes(:stage, :owner).order(updated_at: :desc).find { |item| access.view_opportunity?(item) }
+    deal && { id: deal.id, title: deal.title, value_cents: deal.value_cents, stage: deal.stage.name, owner: deal.owner&.name }
+  end
+end

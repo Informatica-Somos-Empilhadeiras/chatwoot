@@ -1,0 +1,241 @@
+{
+  "OUTSIDER_VOICE": {
+    "PHONE": {
+      "TITLE": "Telefone",
+      "EXTENSION": "Ramal {extension}",
+      "STATUS": {
+        "connecting": "Conectando à central…",
+        "ready": "Pronto para ligar",
+        "offline": "Sem conexão com a central",
+        "failed": "A central não aceitou o ramal",
+        "other_tab": "Em uso em outra aba"
+      },
+      "HINTS": {
+        "offline": "O telefone tenta de novo sozinho. Se demorar, confira a internet ou fale com o administrador.",
+        "failed": "O ramal pode ter mudado nas Configurações. Clique em Reconectar.",
+        "other_tab": "O telefone funciona em uma aba por vez, e as ligações tocam lá. Para atender aqui, traga para esta aba."
+      },
+      "USE_HERE": "Usar nesta aba",
+      "RECONNECT": "Reconectar",
+      "NUMBER_PLACEHOLDER": "Número ou ramal",
+      "CALL": "Ligar",
+      "CLEAR": "Apagar",
+      "ECHO_TEST": "Testar áudio",
+      "ECHO_HINT": "Você ouve a própria voz de volta: confere microfone, fone e internet.",
+      "ERRORS": {
+        "NOT_READY": "O telefone não está conectado à central.",
+        "IN_CALL": "Termine a ligação atual antes de fazer outra.",
+        "INVALID": "Digite um número para ligar.",
+        "OTHER_TAB": "O telefone está em outra aba. Ligue por lá ou traga para esta aba no botão do telefone, no menu lateral."
+      }
+    },
+    "CALL": {
+      "INCOMING": "Ligação recebida",
+      "DIALING": "Chamando…",
+      "ACTIVE": "Em ligação",
+      "ANSWER": "Atender",
+      "REJECT": "Recusar",
+      "HANGUP": "Encerrar",
+      "MUTE": "Mudo",
+      "UNMUTE": "Tirar do mudo",
+      "KEYPAD": "Teclado",
+      "CLOSE": "Fechar",
+      "OPEN_DEAL": "Abrir negócio",
+      "OPEN_CONVERSATION": "Abrir conversa",
+      "UNKNOWN": "Número sem cadastro",
+      "INTERNAL": "Ramal {extension}",
+      "NOTIFICATION": "Ligação de {name}",
+      "DEAL": "{title} · {stage}",
+      "ENDED": {
+        "DONE": "Ligação encerrada",
+        "BUSY": "Ocupado",
+        "NO_ANSWER": "Não atendeu",
+        "CANCELED": "Quem ligou desligou",
+        "ELSEWHERE": "Atendida por outra pessoa",
+        "UNAVAILABLE": "Número não permitido ou linha indisponível",
+        "MICROPHONE": "O navegador não liberou o microfone",
+        "FAILED": "A ligação caiu"
+      }
+    },
+    "CLICK_TO_CALL": "Ligar pelo telefone do CRM",
+    "CALLING": "Ligando para {number}…",
+    "SETTINGS": {
+      "TITLE": "Telefonia",
+      "DESCRIPTION": "Central de ligações do CRM: dados da operadora, números por estado e ramais dos vendedores. Ao salvar, a central se atualiza sozinha em até 30 segundos.",
+      "ENABLED": "Telefonia ligada",
+      "ENABLED_HELP": "Desligada, o telefone some para todos e a central fica sem ramais.",
+      "STATUS": {
+        "ONLINE": "Central conectada",
+        "OFFLINE": "Central sem contato desde {time}",
+        "NEVER": "A central ainda não se conectou",
+        "REGISTRATION": {
+          "Registered": "Registrada na operadora",
+          "Rejected": "A operadora recusou o usuário ou a senha",
+          "Unregistered": "Não registrada na operadora",
+          "Retrying": "Tentando registrar na operadora",
+          "Stopped": "Registro na operadora parado",
+          "NONE": "Sem registro na operadora (falta preencher a operadora, ou a autenticação é pelo IP)"
+        },
+        "EXTENSIONS": "Ramais conectados agora: {list}",
+        "NO_EXTENSIONS": "Nenhum ramal conectado agora",
+        "TOKEN_OK": "Token da central configurado no servidor",
+        "TOKEN_MISSING": "Falta o OUTSIDER_VOICE_TOKEN no .env do servidor (veja o guia de instalação)",
+        "CENTRAL_URL": "VOICE_URL da central (no mesmo servidor):"
+      },
+      "PASTE": {
+        "TITLE": "Dados da operadora",
+        "DESCRIPTION": "Cole o e-mail ou o texto que a operadora enviou e clique em Preencher: o sistema acha servidor, usuário, senha, IPs e números (com o estado pelo DDD). Depois confira e salve.",
+        "PLACEHOLDER": "Servidor: sip.operadora.com.br\nUsuário: 6232345678\nSenha: ********\nNúmeros: (62) 3234-5678, (11) 3234-5678",
+        "APPLY": "Preencher com o texto",
+        "FILLED": "Preenchido: {fields}. Confira e salve.",
+        "NOTHING": "Não achamos dados da conta SIP nesse texto. Preencha os campos à mão.",
+        "FIELDS": {
+          "host": "servidor",
+          "port": "porta",
+          "transport": "transporte",
+          "username": "usuário",
+          "auth_username": "usuário de autenticação",
+          "password": "senha",
+          "ips": "IPs",
+          "numbers": "números"
+        }
+      },
+      "TRUNK": {
+        "HOST": "Servidor SIP (domínio ou IP)",
+        "PORT": "Porta",
+        "TRANSPORT": "Transporte",
+        "AUTH": "Autenticação",
+        "AUTH_OPTIONS": {
+          "register": "Usuário e senha",
+          "ip": "Pelo IP do servidor"
+        },
+        "USERNAME": "Usuário",
+        "AUTH_USERNAME": "Usuário de autenticação (se for diferente)",
+        "PASSWORD": "Senha",
+        "PASSWORD_SET": "Senha guardada. Deixe em branco para manter.",
+        "IPS": "IPs da operadora",
+        "IPS_HELP": "Um por linha: de onde a operadora manda as ligações. Vazio usa o servidor acima.",
+        "DIAL_FORMAT": "Como a operadora quer o número discado",
+        "DIAL_FORMATS": {
+          "ddd": "DDD + número (62 99999-8888)",
+          "zero_ddd": "0 + DDD + número (062 99999-8888)",
+          "country": "55 + DDD + número (55 62 99999-8888)"
+        }
+      },
+      "NUMBERS": {
+        "TITLE": "Números por estado",
+        "DESCRIPTION": "Ligação que chega num número toca para os vendedores do estado dele, e cada vendedor liga com o número do seu estado.",
+        "NUMBER": "Número",
+        "STATE": "Estado",
+        "LABEL": "Apelido (opcional)",
+        "ADD": "Adicionar número",
+        "REMOVE": "Remover",
+        "EMPTY": "Nenhum número ainda."
+      },
+      "AGENTS": {
+        "TITLE": "Ramais",
+        "DESCRIPTION": "Quem tem ramal ligado usa o telefone no Chatwoot. Ramais de 100 a 599 (o 600 é o teste de áudio).",
+        "EXTENSION": "Ramal",
+        "STATE": "UF"
+      },
+      "RINGING": {
+        "TITLE": "Toque e endereços",
+        "RING_SECONDS": "Segundos de toque em cada etapa",
+        "RING_HELP": "Ligação recebida: toca para o dono do negócio do cliente, depois soma os vendedores do estado do número e por fim todos.",
+        "OWNER_FIRST": "Tocar primeiro para o dono do negócio do cliente",
+        "WS_URL": "Endereço da central para o navegador",
+        "WS_URL_HELP": "Ex.: wss://voz.suaempresa.com.br/ws (o endereço criado no túnel da Cloudflare).",
+        "PUBLIC_IP": "IP público do servidor",
+        "PUBLIC_IP_HELP": "Ex.: 69.6.250.129. Necessário para a voz da operadora chegar à central."
+      },
+      "SAVED": "Telefonia salva. A central se atualiza em até 30 segundos.",
+      "INVALID": "Confira os campos marcados em vermelho."
+    },
+    "GOALS_SETTINGS": {
+      "TITLE": "Metas de ligação",
+      "DESCRIPTION": "Meta do mês por vendedor: ligações feitas e minutos em ligação. No painel, a meta do dia é a do mês dividida pelos dias úteis.",
+      "CALLS": "Ligações feitas",
+      "MINUTES": "Minutos em ligação",
+      "PLACEHOLDER": "Sem meta",
+      "NO_PEOPLE": "Ninguém tem ramal ligado. Cadastre os ramais em Telefonia.",
+      "SAVED": "Metas de ligação de {month} salvas.",
+      "EXTENSION": "Ramal {extension}",
+      "HELP": "Deixe vazio para não ter meta. A mudança vale para o mês escolhido e os seguintes; os meses anteriores continuam como estavam."
+    },
+    "PANEL": {
+      "KPIS": {
+        "OUTBOUND": "Ligações feitas",
+        "OUTBOUND_HINT": "{count} atendidas pelo cliente",
+        "INBOUND": "Recebidas atendidas",
+        "INBOUND_HINT": "de {count} recebidas",
+        "MISSED": "Perdidas",
+        "MISSED_HINT": "{count} para retornar",
+        "TALK": "Tempo em ligação",
+        "TALK_HINT": "feitas e recebidas",
+        "TODAY": "Hoje: {value}"
+      },
+      "SELLERS": {
+        "TITLE": "Metas de ligação",
+        "DESCRIPTION": "Ligações feitas e minutos em ligação de cada vendedor. O traço na barra mostra onde deveria estar hoje para bater a meta do mês.",
+        "DAYS_LEFT": "{left} de {total} dias úteis restantes",
+        "SELLER": "Vendedor",
+        "TODAY": "Hoje",
+        "CALLS": "Ligações no mês",
+        "MINUTES": "Minutos no mês",
+        "VALUE_OF_GOAL": "{value} de {goal}",
+        "NO_GOAL": "{value} · sem meta",
+        "DAY_GOAL": "meta do dia: {calls} ligações, {minutes} min",
+        "TODAY_VALUE": "{calls} ligações · {minutes} min",
+        "ON_PACE": "No ritmo",
+        "BELOW_PACE": "Abaixo do ritmo",
+        "REACHED": "Meta batida",
+        "ONLINE": "Telefone conectado agora",
+        "OFFLINE": "Telefone desconectado",
+        "EXTENSION": "Ramal {extension}",
+        "EMPTY": "Ninguém com ramal ligado ainda. O administrador cadastra em Configurações > Telefonia.",
+        "SET_GOALS": "Definir metas"
+      },
+      "RETURN": {
+        "TITLE": "Para retornar",
+        "DESCRIPTION": "Ligações recebidas que ninguém atendeu. Saem da lista quando alguém liga de volta e o cliente atende.",
+        "EMPTY": "Nenhuma ligação perdida para retornar.",
+        "CALL_BACK": "Retornar",
+        "TO_NUMBER": "para {number}",
+        "OPEN_DEAL": "Ver negócio"
+      },
+      "HISTORY": {
+        "TITLE": "Histórico do mês",
+        "ALL_DIRECTIONS": "Feitas e recebidas",
+        "DIRECTIONS": {
+          "inbound": "Recebidas",
+          "outbound": "Feitas"
+        },
+        "ALL_STATUS": "Todas as situações",
+        "STATUS": {
+          "ringing": "Tocando",
+          "answered": "Atendida",
+          "missed": "Perdida",
+          "unanswered": "Não atendeu",
+          "busy": "Ocupado",
+          "failed": "Falhou"
+        },
+        "ALL_SELLERS": "Todos os vendedores",
+        "WHEN": "Quando",
+        "CUSTOMER": "Cliente",
+        "SELLER": "Vendedor",
+        "SITUATION": "Situação",
+        "DURATION": "Duração",
+        "EMPTY": "Nenhuma ligação neste mês.",
+        "LOAD_MORE": "Carregar mais",
+        "RETURNED_BY": "retornada por {name}",
+        "NOBODY": "ninguém"
+      }
+    },
+    "TIMELINE": {
+      "INBOUND_ANSWERED": "{name} atendeu uma ligação de {number} ({duration})",
+      "INBOUND_MISSED": "Ligação perdida de {number}",
+      "OUTBOUND_ANSWERED": "{name} ligou para {number} ({duration})",
+      "OUTBOUND_OTHER": "{name} ligou para {number}: {status}"
+    }
+  }
+}

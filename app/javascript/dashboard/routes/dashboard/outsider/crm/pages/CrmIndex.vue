@@ -17,6 +17,7 @@ import ReportsPanel from '../components/reports/ReportsPanel.vue';
 import GoalsPanel from '../components/goals/GoalsPanel.vue';
 import ProposalsPanel from '../components/proposals/ProposalsPanel.vue';
 import CatalogPanel from '../components/catalog/CatalogPanel.vue';
+import CallsPanel from '../components/calls/CallsPanel.vue';
 import { errorMessage } from '../helpers';
 import { crmSections } from '../sections';
 import {
@@ -175,6 +176,7 @@ onMounted(async () => {
               :access="access"
             />
             <GoalsPanel v-else-if="activeTab === 'goals'" :access="access" />
+            <CallsPanel v-else-if="activeTab === 'calls'" :access="access" />
             <ReportsPanel
               v-else-if="activeTab === 'reports'"
               :access="access"

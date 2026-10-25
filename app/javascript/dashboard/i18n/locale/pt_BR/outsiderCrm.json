@@ -9,6 +9,7 @@
       "TASKS": "Tarefas",
       "REPORTS": "Relatórios",
       "GOALS": "Metas",
+      "CALLS": "Ligações",
       "PROPOSALS": "Propostas",
       "CATALOG": "Catálogo"
     },
@@ -84,7 +85,9 @@
         "GOALS": "Metas",
         "COMMISSION": "Comissão",
         "ACCESS": "Acesso",
-        "PROPOSALS": "Propostas"
+        "PROPOSALS": "Propostas",
+        "VOICE": "Telefonia",
+        "CALL_GOALS": "Metas de ligação"
       },
       "UNITS": {
         "TITLE": "Unidades comerciais",

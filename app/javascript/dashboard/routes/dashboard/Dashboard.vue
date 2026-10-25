@@ -29,6 +29,8 @@ import MobileSidebarLauncher from 'dashboard/components-next/sidebar/MobileSideb
 import { useCallsStore } from 'dashboard/stores/calls';
 // OUTSIDER: aviso de clientes esperando
 import WaitingConversationsAlert from './outsider/waitingAlert/WaitingConversationsAlert.vue';
+// OUTSIDER: telefone do CRM (ligação em andamento no alto da tela)
+import OutsiderCallCard from './outsider/voice/CallCard.vue';
 
 export default {
   components: {
@@ -44,6 +46,7 @@ export default {
     FowardMessageModal,
     EditMessageDialog,
     WaitingConversationsAlert, // OUTSIDER
+    OutsiderCallCard, // OUTSIDER
   },
   setup() {
     const upgradePageRef = ref(null);
@@ -186,4 +189,6 @@ export default {
   </div>
   <FowardMessageModal />
   <EditMessageDialog />
+  <!-- OUTSIDER: telefone do CRM -->
+  <OutsiderCallCard />
 </template>

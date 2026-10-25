@@ -9,6 +9,7 @@
       "TASKS": "Tasks",
       "REPORTS": "Reports",
       "GOALS": "Goals",
+      "CALLS": "Calls",
       "PROPOSALS": "Proposals",
       "CATALOG": "Catalog"
     },
@@ -84,7 +85,9 @@
         "GOALS": "Goals",
         "COMMISSION": "Commission",
         "ACCESS": "Access",
-        "PROPOSALS": "Proposals"
+        "PROPOSALS": "Proposals",
+        "VOICE": "Telephony",
+        "CALL_GOALS": "Call goals"
       },
       "UNITS": {
         "TITLE": "Business units",

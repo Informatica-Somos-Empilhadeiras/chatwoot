@@ -22,6 +22,7 @@ import SidebarAccountSwitcher from './SidebarAccountSwitcher.vue';
 import Logo from 'next/icon/Logo.vue';
 // OUTSIDER: item do CRM (ícone com aviso de encaminhamento e as seções como subitens; some sem acesso)
 import { crmSidebarItems } from 'dashboard/routes/dashboard/outsider/crm/sidebar';
+import OutsiderPhoneButton from 'dashboard/routes/dashboard/outsider/voice/PhoneButton.vue'; // OUTSIDER: telefonia
 import ComposeConversation from 'dashboard/components-next/NewConversation/ComposeConversation.vue';
 import {
   SIDEBAR_SORT_SECTIONS,
@@ -1059,12 +1060,16 @@ const menuItems = computed(() => {
       />
       <div
         class="px-1 py-1.5 flex-shrink-0 flex w-full z-50 gap-2 items-center border-t border-n-weak shadow-[0px_-2px_4px_0px_rgba(27,28,29,0.02)]"
-        :class="isEffectivelyCollapsed ? 'justify-center' : 'justify-between'"
+        :class="
+          isEffectivelyCollapsed ? 'justify-center flex-col' : 'justify-between'
+        "
       >
         <SidebarProfileMenu
           :is-collapsed="isEffectivelyCollapsed"
           @open-key-shortcut-modal="emit('openKeyShortcutModal')"
         />
+        <!-- OUTSIDER: telefone (some sem ramal) -->
+        <OutsiderPhoneButton />
       </div>
     </section>
     <!-- Resize Handle (desktop only) -->

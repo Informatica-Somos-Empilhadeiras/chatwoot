@@ -14,6 +14,8 @@ import AutomationsSettings from './AutomationsSettings.vue';
 import GoalsSettings from './GoalsSettings.vue';
 import CommissionSettings from './CommissionSettings.vue';
 import ProposalSettings from './proposals/ProposalSettings.vue';
+import VoiceSettings from './VoiceSettings.vue';
+import CallGoalsSettings from './CallGoalsSettings.vue';
 
 const props = defineProps({
   access: { type: Object, required: true },
@@ -37,6 +39,8 @@ const sections = computed(() =>
     { key: 'goals', icon: 'i-lucide-target', admin: true },
     { key: 'commission', icon: 'i-lucide-percent', admin: true },
     { key: 'proposals', icon: 'i-lucide-file-text', admin: true },
+    { key: 'voice', icon: 'i-lucide-phone', admin: true },
+    { key: 'call_goals', icon: 'i-lucide-phone-outgoing', admin: true },
     { key: 'general', icon: 'i-lucide-settings-2', admin: true },
   ]
     .filter(section => props.access.administrator || !section.admin)
@@ -98,6 +102,8 @@ const active = ref(
       <GoalsSettings v-else-if="active === 'goals'" :units="units" />
       <CommissionSettings v-else-if="active === 'commission'" :units="units" />
       <ProposalSettings v-else-if="active === 'proposals'" :units="units" />
+      <VoiceSettings v-else-if="active === 'voice'" />
+      <CallGoalsSettings v-else-if="active === 'call_goals'" />
       <GeneralSettings v-else :access="access" @changed="emit('changed')" />
     </div>
   </div>

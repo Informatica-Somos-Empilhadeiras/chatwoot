@@ -1,0 +1,3 @@
+en:
+  outsider_voice:
+    return_task: 'Return call from %{name}'

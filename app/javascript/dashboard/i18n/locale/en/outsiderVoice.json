@@ -1,0 +1,241 @@
+{
+  "OUTSIDER_VOICE": {
+    "PHONE": {
+      "TITLE": "Phone",
+      "EXTENSION": "Extension {extension}",
+      "STATUS": {
+        "connecting": "Connecting to the PBX…",
+        "ready": "Ready to call",
+        "offline": "No connection to the PBX",
+        "failed": "The PBX did not accept the extension",
+        "other_tab": "In use in another tab"
+      },
+      "HINTS": {
+        "offline": "The phone keeps retrying on its own. If it takes long, check the internet or talk to the administrator.",
+        "failed": "The extension may have changed in Settings. Click Reconnect.",
+        "other_tab": "The phone works in one tab at a time, and calls ring there. To answer here, bring it to this tab."
+      },
+      "USE_HERE": "Use in this tab",
+      "RECONNECT": "Reconnect",
+      "NUMBER_PLACEHOLDER": "Number or extension",
+      "CALL": "Call",
+      "CLEAR": "Delete",
+      "ECHO_TEST": "Test audio",
+      "ECHO_HINT": "You hear your own voice back: checks microphone, headset and internet.",
+      "ERRORS": {
+        "NOT_READY": "The phone is not connected to the PBX.",
+        "IN_CALL": "Finish the current call before making another one.",
+        "INVALID": "Type a number to call.",
+        "OTHER_TAB": "The phone is in another tab. Call from there or bring it to this tab with the phone button in the sidebar."
+      }
+    },
+    "CALL": {
+      "INCOMING": "Incoming call",
+      "DIALING": "Calling…",
+      "ACTIVE": "On a call",
+      "ANSWER": "Answer",
+      "REJECT": "Decline",
+      "HANGUP": "Hang up",
+      "MUTE": "Mute",
+      "UNMUTE": "Unmute",
+      "KEYPAD": "Keypad",
+      "CLOSE": "Close",
+      "OPEN_DEAL": "Open deal",
+      "OPEN_CONVERSATION": "Open conversation",
+      "UNKNOWN": "Unknown number",
+      "INTERNAL": "Extension {extension}",
+      "NOTIFICATION": "Call from {name}",
+      "DEAL": "{title} · {stage}",
+      "ENDED": {
+        "DONE": "Call ended",
+        "BUSY": "Busy",
+        "NO_ANSWER": "No answer",
+        "CANCELED": "The caller hung up",
+        "ELSEWHERE": "Answered by someone else",
+        "UNAVAILABLE": "Number not allowed or line unavailable",
+        "MICROPHONE": "The browser did not allow the microphone",
+        "FAILED": "The call dropped"
+      }
+    },
+    "CLICK_TO_CALL": "Call with the CRM phone",
+    "CALLING": "Calling {number}…",
+    "SETTINGS": {
+      "TITLE": "Telephony",
+      "DESCRIPTION": "The CRM call center: operator data, numbers per state and seller extensions. After saving, the PBX updates itself within 30 seconds.",
+      "ENABLED": "Telephony on",
+      "ENABLED_HELP": "When off, the phone disappears for everyone and the PBX has no extensions.",
+      "STATUS": {
+        "ONLINE": "PBX connected",
+        "OFFLINE": "No contact with the PBX since {time}",
+        "NEVER": "The PBX has not connected yet",
+        "REGISTRATION": {
+          "Registered": "Registered with the operator",
+          "Rejected": "The operator refused the username or password",
+          "Unregistered": "Not registered with the operator",
+          "Retrying": "Trying to register with the operator",
+          "Stopped": "Operator registration stopped",
+          "NONE": "No operator registration (operator data missing, or authentication by IP)"
+        },
+        "EXTENSIONS": "Extensions connected now: {list}",
+        "NO_EXTENSIONS": "No extension connected now",
+        "TOKEN_OK": "PBX token set on the server",
+        "TOKEN_MISSING": "OUTSIDER_VOICE_TOKEN is missing in the server .env (see the installation guide)",
+        "CENTRAL_URL": "PBX VOICE_URL (same server):"
+      },
+      "PASTE": {
+        "TITLE": "Operator data",
+        "DESCRIPTION": "Paste the e-mail or text the operator sent and click Fill: the system finds server, username, password, IPs and numbers (with the state from the area code). Then check and save.",
+        "PLACEHOLDER": "Server: sip.operator.com\nUsername: 6232345678\nPassword: ********\nNumbers: (62) 3234-5678, (11) 3234-5678",
+        "APPLY": "Fill from the text",
+        "FILLED": "Filled: {fields}. Check and save.",
+        "NOTHING": "No SIP account data found in this text. Fill the fields by hand.",
+        "FIELDS": {
+          "host": "server",
+          "port": "port",
+          "transport": "transport",
+          "username": "username",
+          "auth_username": "authentication username",
+          "password": "password",
+          "ips": "IPs",
+          "numbers": "numbers"
+        }
+      },
+      "TRUNK": {
+        "HOST": "SIP server (domain or IP)",
+        "PORT": "Port",
+        "TRANSPORT": "Transport",
+        "AUTH": "Authentication",
+        "AUTH_OPTIONS": {
+          "register": "Username and password",
+          "ip": "By the server IP"
+        },
+        "USERNAME": "Username",
+        "AUTH_USERNAME": "Authentication username (if different)",
+        "PASSWORD": "Password",
+        "PASSWORD_SET": "Password saved. Leave blank to keep it.",
+        "IPS": "Operator IPs",
+        "IPS_HELP": "One per line: where the operator sends calls from. Empty uses the server above.",
+        "DIAL_FORMAT": "How the operator wants the number dialed",
+        "DIAL_FORMATS": {
+          "ddd": "Area code + number (62 99999-8888)",
+          "zero_ddd": "0 + area code + number (062 99999-8888)",
+          "country": "55 + area code + number (55 62 99999-8888)"
+        }
+      },
+      "NUMBERS": {
+        "TITLE": "Numbers per state",
+        "DESCRIPTION": "A call to a number rings the sellers of its state, and each seller calls out with the number of their state.",
+        "NUMBER": "Number",
+        "STATE": "State",
+        "LABEL": "Nickname (optional)",
+        "ADD": "Add number",
+        "REMOVE": "Remove",
+        "EMPTY": "No numbers yet."
+      },
+      "AGENTS": {
+        "TITLE": "Extensions",
+        "DESCRIPTION": "People with an active extension use the phone in Chatwoot. Extensions 100 to 599 (600 is the audio test).",
+        "EXTENSION": "Extension",
+        "STATE": "State"
+      },
+      "RINGING": {
+        "TITLE": "Ringing and addresses",
+        "RING_SECONDS": "Ringing seconds per step",
+        "RING_HELP": "Incoming call: rings the owner of the customer's deal, then adds the sellers of the number's state and finally everyone.",
+        "OWNER_FIRST": "Ring the owner of the customer's deal first",
+        "WS_URL": "PBX address for the browser",
+        "WS_URL_HELP": "E.g. wss://voice.yourcompany.com/ws (the address created in the Cloudflare tunnel).",
+        "PUBLIC_IP": "Server public IP",
+        "PUBLIC_IP_HELP": "E.g. 69.6.250.129. Needed for the operator audio to reach the PBX."
+      },
+      "SAVED": "Telephony saved. The PBX updates within 30 seconds.",
+      "INVALID": "Check the fields marked in red."
+    },
+    "GOALS_SETTINGS": {
+      "TITLE": "Call goals",
+      "DESCRIPTION": "Monthly goal per seller: calls made and minutes on calls. In the panel, the daily goal is the monthly one divided by business days.",
+      "CALLS": "Calls made",
+      "MINUTES": "Minutes on calls",
+      "PLACEHOLDER": "No goal",
+      "NO_PEOPLE": "Nobody has an active extension. Set up extensions in Telephony.",
+      "SAVED": "Call goals for {month} saved.",
+      "EXTENSION": "Extension {extension}",
+      "HELP": "Leave empty for no goal. The change applies to the chosen month and the following ones; earlier months stay as they were."
+    },
+    "PANEL": {
+      "KPIS": {
+        "OUTBOUND": "Calls made",
+        "OUTBOUND_HINT": "{count} answered by the customer",
+        "INBOUND": "Received and answered",
+        "INBOUND_HINT": "of {count} received",
+        "MISSED": "Missed",
+        "MISSED_HINT": "{count} to call back",
+        "TALK": "Time on calls",
+        "TALK_HINT": "made and received",
+        "TODAY": "Today: {value}"
+      },
+      "SELLERS": {
+        "TITLE": "Call goals",
+        "DESCRIPTION": "Calls made and minutes on calls per seller. The mark on the bar shows where they should be today to reach the monthly goal.",
+        "DAYS_LEFT": "{left} of {total} business days left",
+        "SELLER": "Seller",
+        "TODAY": "Today",
+        "CALLS": "Calls this month",
+        "MINUTES": "Minutes this month",
+        "VALUE_OF_GOAL": "{value} of {goal}",
+        "NO_GOAL": "{value} · no goal",
+        "DAY_GOAL": "daily goal: {calls} calls, {minutes} min",
+        "TODAY_VALUE": "{calls} calls · {minutes} min",
+        "ON_PACE": "On pace",
+        "BELOW_PACE": "Below pace",
+        "REACHED": "Goal reached",
+        "ONLINE": "Phone connected now",
+        "OFFLINE": "Phone disconnected",
+        "EXTENSION": "Extension {extension}",
+        "EMPTY": "Nobody has an active extension yet. The administrator sets them up in Settings > Telephony.",
+        "SET_GOALS": "Set goals"
+      },
+      "RETURN": {
+        "TITLE": "To call back",
+        "DESCRIPTION": "Incoming calls nobody answered. They leave the list when someone calls back and the customer answers.",
+        "EMPTY": "No missed calls to return.",
+        "CALL_BACK": "Call back",
+        "TO_NUMBER": "to {number}",
+        "OPEN_DEAL": "Open deal"
+      },
+      "HISTORY": {
+        "TITLE": "This month's history",
+        "ALL_DIRECTIONS": "Made and received",
+        "DIRECTIONS": {
+          "inbound": "Received",
+          "outbound": "Made"
+        },
+        "ALL_STATUS": "All statuses",
+        "STATUS": {
+          "ringing": "Ringing",
+          "answered": "Answered",
+          "missed": "Missed",
+          "unanswered": "No answer",
+          "busy": "Busy",
+          "failed": "Failed"
+        },
+        "ALL_SELLERS": "All sellers",
+        "WHEN": "When",
+        "CUSTOMER": "Customer",
+        "SELLER": "Seller",
+        "SITUATION": "Status",
+        "DURATION": "Duration",
+        "EMPTY": "No calls this month.",
+        "LOAD_MORE": "Load more",
+        "RETURNED_BY": "called back by {name}",
+        "NOBODY": "nobody"
+      }
+    },
+    "TIMELINE": {
+      "INBOUND_ANSWERED": "{name} answered a call from {number} ({duration})",
+      "INBOUND_MISSED": "Missed call from {number}",
+      "OUTBOUND_ANSWERED": "{name} called {number} ({duration})",
+      "OUTBOUND_OTHER": "{name} called {number}: {status}"
+    }
+  }
+}

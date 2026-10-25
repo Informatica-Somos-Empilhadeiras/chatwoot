@@ -1,0 +1,3 @@
+pt_BR:
+  outsider_voice:
+    return_task: 'Retornar ligação de %{name}'

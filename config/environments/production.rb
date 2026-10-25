@@ -44,6 +44,8 @@ Rails.application.configure do
 
   # Force all access to the app over SSL, use Strict-Transport-Security, and use secure cookies.
   config.force_ssl = ActiveModel::Type::Boolean.new.cast(ENV.fetch('FORCE_SSL', false))
+  # OUTSIDER: a central de telefonia chama o Chatwoot por http://127.0.0.1:3000, de dentro do servidor (Entrega 22)
+  config.ssl_options = { redirect: { exclude: ->(request) { request.path.start_with?('/outsider/voice/central/') } } }
 
   # Use the lowest log level to ensure availability of diagnostic information
   # when problems arise.

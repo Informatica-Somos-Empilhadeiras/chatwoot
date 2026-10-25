@@ -19,6 +19,7 @@ import {
   isHandedOff,
 } from '../helpers';
 import { CRM_ROUTE } from '../sections';
+import { formatPhone, formatDuration } from '../../voice/format';
 
 const props = defineProps({
   opportunity: { type: Object, required: true },
@@ -44,6 +45,7 @@ const KIND_ICONS = {
   message_linked: 'i-lucide-message-square',
   automation: 'i-lucide-bot',
   proposal: 'i-lucide-file-text',
+  call: 'i-lucide-phone',
 };
 
 // proposta ligada ao negócio: criada, ligada depois, enviada (marcada ou mandada por WhatsApp ou
@@ -200,6 +202,28 @@ const removeNote = async item => {
 const statusLabel = status =>
   status ? t(`OUTSIDER_CRM.STATUS.${String(status).toUpperCase()}`) : '—';
 
+// ligação pelo telefone do CRM (Entrega 22): quem falou, com que número e quanto tempo
+const callText = (meta, name) => {
+  const number = formatPhone(meta.number);
+  const duration = formatDuration(meta.talk_seconds);
+  if (meta.direction === 'inbound') {
+    return meta.status === 'answered'
+      ? t('OUTSIDER_VOICE.TIMELINE.INBOUND_ANSWERED', {
+          name,
+          number,
+          duration,
+        })
+      : t('OUTSIDER_VOICE.TIMELINE.INBOUND_MISSED', { number });
+  }
+  return meta.status === 'answered'
+    ? t('OUTSIDER_VOICE.TIMELINE.OUTBOUND_ANSWERED', { name, number, duration })
+    : t('OUTSIDER_VOICE.TIMELINE.OUTBOUND_OTHER', {
+        name,
+        number,
+        status: t(`OUTSIDER_VOICE.PANEL.HISTORY.STATUS.${meta.status}`),
+      });
+};
+
 const describe = item => {
   const meta = item.metadata || {};
   // encaminhamento feito por regra de automação: no lugar da pessoa, o nome da regra
@@ -271,6 +295,8 @@ const describe = item => {
           recipient: meta.recipient,
         }
       );
+    case 'call':
+      return callText(meta, name);
     case 'automation':
       if (meta.rule === 'chain') return chainText(meta);
       return t(

@@ -17,6 +17,7 @@ import ForwardDialog from './ForwardDialog.vue';
 import JourneyHistory from './JourneyHistory.vue';
 import JourneyFlow from './JourneyFlow.vue';
 import ConfirmDelete from './ConfirmDelete.vue';
+import CallButton from '../../voice/CallButton.vue';
 import {
   claimOpportunity,
   crmState,
@@ -237,6 +238,10 @@ defineExpose({ open, refresh, close });
                 />
                 <span class="truncate">{{ opportunity.contact.name }}</span>
               </span>
+              <CallButton
+                show-number
+                :number="opportunity.contact.phone_number"
+              />
               <router-link
                 v-if="opportunity.conversation_display_id"
                 :to="

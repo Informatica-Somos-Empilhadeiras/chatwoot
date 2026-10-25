@@ -16,6 +16,7 @@ import ContactDeleteModal from 'dashboard/modules/contact/ContactDeleteModal.vue
 import ComposeConversation from 'dashboard/components-next/NewConversation/ComposeConversation.vue';
 import NextButton from 'dashboard/components-next/button/Button.vue';
 import VoiceCallButton from 'dashboard/components-next/Contacts/VoiceCallButton.vue';
+import OutsiderCallButton from 'dashboard/routes/dashboard/outsider/voice/CallButton.vue'; // OUTSIDER: telefonia
 import InlineInput from 'dashboard/components-next/inline-input/InlineInput.vue';
 
 export default {
@@ -29,6 +30,7 @@ export default {
     ContactMergeModal,
     ContactDeleteModal,
     VoiceCallButton,
+    OutsiderCallButton,
     InlineInput,
   },
   props: {
@@ -314,6 +316,8 @@ export default {
           slate
           :tooltip-label="$t('CONTACT_PANEL.CALL')"
         />
+        <!-- OUTSIDER: ligar pelo telefone do CRM -->
+        <OutsiderCallButton :number="contact.phone_number" />
         <NextButton
           v-tooltip.top-end="$t('EDIT_CONTACT.BUTTON_LABEL')"
           icon="i-ph-pencil-simple"
