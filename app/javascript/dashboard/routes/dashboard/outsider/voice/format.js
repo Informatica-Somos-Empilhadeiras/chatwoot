@@ -36,3 +36,58 @@ export const formatTalkTime = totalSeconds => {
   const hours = Math.floor(minutes / 60);
   return hours ? `${hours} h ${minutes % 60} min` : `${minutes} min`;
 };
+
+// taxa do painel (Entrega 24): "86,1%" ou "—" sem ligação para medir
+export const formatPercent = value =>
+  value === null || value === undefined
+    ? '—'
+    : `${String(value).replace('.', ',')}%`;
+
+const WEEKDAYS = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
+const MONTHS = [
+  'jan',
+  'fev',
+  'mar',
+  'abr',
+  'mai',
+  'jun',
+  'jul',
+  'ago',
+  'set',
+  'out',
+  'nov',
+  'dez',
+];
+
+// data "2026-10-06" do painel (já no fuso da telefonia): 06/10/2026, 06/10 (day), "ter 06/10" (weekday) ou
+// out/26 (month)
+export const formatDate = (value, style = 'full') => {
+  const [year, month, day] = String(value).split('-').map(Number);
+  const pad = number => String(number).padStart(2, '0');
+  if (style === 'month') return `${MONTHS[month - 1]}/${String(year).slice(2)}`;
+  if (style === 'day') return `${pad(day)}/${pad(month)}`;
+  if (style === 'weekday') {
+    const weekday = new Date(year, month - 1, day).getDay();
+    return `${WEEKDAYS[weekday]} ${pad(day)}/${pad(month)}`;
+  }
+  return `${pad(day)}/${pad(month)}/${year}`;
+};
+
+// arquivo que veio do servidor (relatório em PDF, planilhas): baixa com o nome que ele mandou
+export const downloadBlob = ({ data, headers }) => {
+  const disposition = headers?.['content-disposition'] || '';
+  const name =
+    decodeURIComponent(
+      (disposition.match(/filename\*=UTF-8''([^;]+)/) || [])[1] || ''
+    ) ||
+    (disposition.match(/filename="?([^";]+)"?/) || [])[1] ||
+    'relatorio';
+  const url = URL.createObjectURL(data);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = name;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+};

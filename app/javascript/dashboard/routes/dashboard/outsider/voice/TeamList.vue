@@ -11,8 +11,8 @@ import { phone } from './phone';
 
 const props = defineProps({
   icon: { type: String, default: 'i-lucide-phone' },
-  // ramal que não aparece (quem está do outro lado da ligação, ao transferir)
-  exclude: { type: String, default: '' },
+  // ramais que não aparecem (quem já está na ligação, ao transferir ou incluir na conferência)
+  exclude: { type: [String, Array], default: '' },
 });
 
 const emit = defineEmits(['pick']);
@@ -22,7 +22,8 @@ const team = ref([]);
 
 const colleagues = computed(() =>
   team.value.filter(
-    person => ![phone.extension, props.exclude].includes(person.extension)
+    person =>
+      ![phone.extension, ...[props.exclude].flat()].includes(person.extension)
   )
 );
 

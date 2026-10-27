@@ -5,6 +5,8 @@
 # A senha da operadora fica cifrada com a chave do Chatwoot. A senha de cada ramal não é guardada: sai da
 # mesma chave, da conta, do vendedor e do ramal (trocar o ramal troca a senha).
 class Outsider::Voice::Settings
+  include Outsider::Voice::SettingsExtras
+
   KEY = 'outsider_voice'.freeze
   STATES = %w[AC AL AP AM BA CE DF ES GO MA MT MS MG PA PB PR PE PI RJ RN RS RO RR SC SP SE TO].freeze
   ECHO_EXTENSION = '600'.freeze
@@ -28,6 +30,7 @@ class Outsider::Voice::Settings
 
   DEFAULTS = {
     'enabled' => false, 'ws_url' => '', 'public_ip' => '', 'ring_seconds' => 20, 'owner_first' => true, 'dial_format' => 'ddd',
+    'time_zone' => 'America/Sao_Paulo', 'recording' => true,
     'trunk' => { 'host' => '', 'port' => 5060, 'transport' => 'udp', 'auth' => 'register', 'username' => '', 'auth_username' => '',
                  'ips' => [] },
     'numbers' => [], 'agents' => {}
@@ -111,7 +114,7 @@ class Outsider::Voice::Settings
       'dial_format' => choice(params['dial_format'], DIAL_FORMATS, 'dial_format'),
       'trunk' => clean_trunk(params['trunk'].to_h), 'numbers' => clean_numbers(Array(params['numbers'])),
       'agents' => clean_agents(params['agents'].to_h)
-    }
+    }.merge(clean_extras(params))
   end
 
   def clean_trunk(trunk)

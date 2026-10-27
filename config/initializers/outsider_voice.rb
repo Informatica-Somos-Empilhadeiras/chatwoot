@@ -11,12 +11,17 @@ Rails.application.routes.prepend do
               get :me
               get :lookup
               get :team
+              post :recording
             end
             namespace :crm do
               resource :voice_settings, only: [:show, :update]
               resource :call_goals, only: [:show, :update]
               resources :calls, only: [:index] do
-                collection { get :wallboard }
+                collection do
+                  get :wallboard
+                  get :export
+                end
+                delete :recording, on: :member, action: :destroy_recording
               end
             end
           end

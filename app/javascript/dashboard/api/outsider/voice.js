@@ -41,9 +41,32 @@ class VoiceAPI extends ApiClient {
     return axios.get(`${this.url}/crm/calls`, { params });
   }
 
-  // painel (wallboard) da Telefonia: period = today | week | month | last_month
+  // painel (wallboard) da Telefonia: period = today | yesterday | week | last_week | month | last_month |
+  // custom (com from e to)
   getWallboard(params) {
     return axios.get(`${this.url}/crm/calls/wallboard`, { params });
+  }
+
+  // Entrega 24: kind = pdf | calls | agents | days; source = history (lista de Ligações com os filtros)
+  exportCalls(params) {
+    return axios.get(`${this.url}/crm/calls/export`, {
+      params,
+      responseType: 'blob',
+    });
+  }
+
+  // gravação feita pelo telefone, enviada no fim da ligação (Entrega 24)
+  // parties: quem estava na ligação, [{ number, started_at }], o cliente primeiro
+  uploadRecording(blob, parties) {
+    const form = new FormData();
+    const extension = blob.type.includes('ogg') ? 'ogg' : 'webm';
+    form.append('file', blob, `ligacao.${extension}`);
+    form.append('parties', JSON.stringify(parties));
+    return axios.post(`${this.url}/voice/recording`, form);
+  }
+
+  deleteRecording(callId) {
+    return axios.delete(`${this.url}/crm/calls/${callId}/recording`);
   }
 }
 

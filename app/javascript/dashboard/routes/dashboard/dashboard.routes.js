@@ -6,6 +6,7 @@ import { routes as companyRoutes } from './companies/routes';
 import { routes as outsiderWhatsappStatusRoutes } from './outsider/whatsappStatus/routes'; // OUTSIDER: página Status do WhatsApp
 import { routes as outsiderCrmRoutes } from './outsider/crm/routes'; // OUTSIDER: CRM de vendas
 import { routes as outsiderVoiceRoutes } from './outsider/voice/routes'; // OUTSIDER: Telefonia
+import { routes as outsiderPhoneWindowRoutes } from './outsider/voice/windowRoutes'; // OUTSIDER: telefone na janela própria
 import { routes as notificationRoutes } from './notifications/routes';
 import { routes as inboxRoutes } from './inbox/routes';
 import { frontendURL } from '../../helper/URLHelper';
@@ -39,6 +40,7 @@ export default {
         ...campaignsRoutes.routes,
       ],
     },
+    ...outsiderPhoneWindowRoutes, // OUTSIDER
     {
       path: frontendURL('accounts/:accountId/onboarding'),
       name: 'onboarding_account_details',

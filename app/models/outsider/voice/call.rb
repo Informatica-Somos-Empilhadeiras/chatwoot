@@ -14,6 +14,9 @@ class Outsider::Voice::Call < ApplicationRecord
   belongs_to :task, class_name: 'Outsider::Crm::Task', optional: true
   belongs_to :returned_by, class_name: 'User', optional: true
 
+  # gravação feita pelo telefone do navegador (Entrega 24), guardada pelo Active Storage (sem coluna nova)
+  has_one_attached :recording
+
   enum :direction, { inbound: 0, outbound: 1, internal: 2 }, validate: true
   enum :status, { ringing: 0, answered: 1, missed: 2, unanswered: 3, busy: 4, failed: 5 }, validate: true
 

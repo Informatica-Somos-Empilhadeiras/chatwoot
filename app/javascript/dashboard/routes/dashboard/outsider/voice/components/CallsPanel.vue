@@ -1,7 +1,8 @@
 <script setup>
 // OUTSIDER: Telefonia > Ligações (Entrega 22, separada do CRM na 23). A fila de perdidas para retornar com
 // 1 clique e o histórico do mês, com filtros. Cada pessoa vê o que Outsider::Voice::CallAccess deixa (o
-// vendedor, as dele e as perdidas para ele retornar); atualiza sozinho a cada ligação.
+// vendedor, as dele e as perdidas para ele retornar); atualiza sozinho a cada ligação. Entrega 24: exporta a
+// lista com os filtros da tela (planilha) e toca a gravação da ligação, quando houver.
 import { ref, computed, watch, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useI18n } from 'vue-i18n';
@@ -12,7 +13,7 @@ import Select from 'dashboard/components-next/select/Select.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
 import CallButton from '../CallButton.vue';
-import { formatPhone, formatDuration } from '../format';
+import { formatPhone, formatDuration, downloadBlob } from '../format';
 import {
   currentMonth,
   errorMessage,
@@ -50,6 +51,9 @@ const filters = ref({ direction: '', status: '', user_id: '' });
 const loaded = ref(false);
 const isLoading = ref(true);
 const isLoadingMore = ref(false);
+const isExporting = ref(false);
+// ligação com a gravação aberta (tocando) na lista
+const playing = ref(null);
 
 // gestor de unidade e administrador filtram por vendedor
 const manager = computed(() => canConfigure(props.access));
@@ -119,6 +123,39 @@ const loadMore = async () => {
     useAlert(errorMessage(t, error));
   } finally {
     isLoadingMore.value = false;
+  }
+};
+
+const exportList = async () => {
+  isExporting.value = true;
+  try {
+    const response = await VoiceAPI.exportCalls({
+      kind: 'calls',
+      source: 'history',
+      month: month.value,
+      ...filters.value,
+    });
+    downloadBlob(response);
+  } catch (error) {
+    useAlert(errorMessage(t, error));
+  } finally {
+    isExporting.value = false;
+  }
+};
+
+const deleteRecording = async call => {
+  // eslint-disable-next-line no-alert
+  if (
+    !window.confirm(t('OUTSIDER_VOICE.PANEL.HISTORY.DELETE_RECORDING_CONFIRM'))
+  ) {
+    return;
+  }
+  try {
+    await VoiceAPI.deleteRecording(call.id);
+    call.recording_url = null;
+    playing.value = null;
+  } catch (error) {
+    useAlert(errorMessage(t, error));
   }
 };
 
@@ -257,6 +294,16 @@ onMounted(load);
               v-model="filters.user_id"
               :options="sellerOptions"
             />
+            <Button
+              size="sm"
+              variant="faded"
+              color="slate"
+              icon="i-lucide-download"
+              :label="t('OUTSIDER_VOICE.PANEL.HISTORY.EXPORT')"
+              :is-loading="isExporting"
+              data-testid="calls-export"
+              @click="exportList"
+            />
           </span>
         </div>
         <p v-if="!calls.length" class="px-4 py-3 mb-0 text-sm text-n-slate-11">
@@ -284,78 +331,135 @@ onMounted(load);
               </tr>
             </thead>
             <tbody>
-              <tr
-                v-for="call in calls"
-                :key="call.id"
-                class="border-t border-n-weak"
-                data-testid="calls-history-row"
-              >
-                <td class="px-4 py-2.5 whitespace-nowrap text-n-slate-11">
-                  <span class="flex items-center gap-2">
-                    <Icon
-                      :icon="
-                        call.direction === 'inbound'
-                          ? 'i-lucide-phone-incoming'
-                          : 'i-lucide-phone-outgoing'
-                      "
-                      class="size-3.5"
-                      :title="
-                        t(
-                          `OUTSIDER_VOICE.PANEL.HISTORY.DIRECTIONS.${call.direction}`
-                        )
-                      "
-                    />
-                    {{ formatDateTime(call.started_at, t) }}
-                  </span>
-                </td>
-                <td class="px-4 py-2.5">
-                  <span class="flex items-center gap-2 min-w-0">
-                    <span class="truncate text-n-slate-12">
-                      {{ customerName(call) }}
+              <template v-for="call in calls" :key="call.id">
+                <tr
+                  class="border-t border-n-weak"
+                  data-testid="calls-history-row"
+                >
+                  <td class="px-4 py-2.5 whitespace-nowrap text-n-slate-11">
+                    <span class="flex items-center gap-2">
+                      <Icon
+                        :icon="
+                          call.direction === 'inbound'
+                            ? 'i-lucide-phone-incoming'
+                            : 'i-lucide-phone-outgoing'
+                        "
+                        class="size-3.5"
+                        :title="
+                          t(
+                            `OUTSIDER_VOICE.PANEL.HISTORY.DIRECTIONS.${call.direction}`
+                          )
+                        "
+                      />
+                      {{ formatDateTime(call.started_at, t) }}
                     </span>
-                    <button
-                      v-if="call.opportunity_id"
-                      type="button"
-                      class="shrink-0 text-n-slate-11 hover:text-n-slate-12"
-                      :title="t('OUTSIDER_VOICE.PANEL.RETURN.OPEN_DEAL')"
-                      @click="openDeal(call.opportunity_id)"
+                  </td>
+                  <td class="px-4 py-2.5">
+                    <span class="flex items-center gap-2 min-w-0">
+                      <span class="truncate text-n-slate-12">
+                        {{ customerName(call) }}
+                      </span>
+                      <button
+                        v-if="call.opportunity_id"
+                        type="button"
+                        class="shrink-0 text-n-slate-11 hover:text-n-slate-12"
+                        :title="t('OUTSIDER_VOICE.PANEL.RETURN.OPEN_DEAL')"
+                        @click="openDeal(call.opportunity_id)"
+                      >
+                        <Icon icon="i-lucide-kanban" class="size-3.5" />
+                      </button>
+                      <CallButton show-number :number="call.customer_number" />
+                    </span>
+                  </td>
+                  <td class="px-4 py-2.5 text-n-slate-12">
+                    {{
+                      call.user?.name ||
+                      t('OUTSIDER_VOICE.PANEL.HISTORY.NOBODY')
+                    }}
+                  </td>
+                  <td class="px-4 py-2.5">
+                    <span
+                      class="px-2 py-0.5 text-xs rounded-md whitespace-nowrap"
+                      :class="STATUS_COLORS[call.status]"
                     >
-                      <Icon icon="i-lucide-kanban" class="size-3.5" />
-                    </button>
-                    <CallButton show-number :number="call.customer_number" />
-                  </span>
-                </td>
-                <td class="px-4 py-2.5 text-n-slate-12">
-                  {{
-                    call.user?.name || t('OUTSIDER_VOICE.PANEL.HISTORY.NOBODY')
-                  }}
-                </td>
-                <td class="px-4 py-2.5">
-                  <span
-                    class="px-2 py-0.5 text-xs rounded-md whitespace-nowrap"
-                    :class="STATUS_COLORS[call.status]"
+                      {{
+                        t(`OUTSIDER_VOICE.PANEL.HISTORY.STATUS.${call.status}`)
+                      }}
+                    </span>
+                    <span
+                      v-if="call.returned_by"
+                      class="block mt-0.5 text-xs text-n-slate-11"
+                    >
+                      {{
+                        t('OUTSIDER_VOICE.PANEL.HISTORY.RETURNED_BY', {
+                          name: call.returned_by.name,
+                        })
+                      }}
+                    </span>
+                  </td>
+                  <td
+                    class="px-4 py-2.5 text-right tabular-nums text-n-slate-12"
                   >
-                    {{
-                      t(`OUTSIDER_VOICE.PANEL.HISTORY.STATUS.${call.status}`)
-                    }}
-                  </span>
-                  <span
-                    v-if="call.returned_by"
-                    class="block mt-0.5 text-xs text-n-slate-11"
-                  >
-                    {{
-                      t('OUTSIDER_VOICE.PANEL.HISTORY.RETURNED_BY', {
-                        name: call.returned_by.name,
-                      })
-                    }}
-                  </span>
-                </td>
-                <td class="px-4 py-2.5 text-right tabular-nums text-n-slate-12">
-                  {{
-                    call.talk_seconds ? formatDuration(call.talk_seconds) : '—'
-                  }}
-                </td>
-              </tr>
+                    <span class="inline-flex items-center gap-2">
+                      <button
+                        v-if="call.recording_url"
+                        type="button"
+                        class="flex items-center gap-1 px-1.5 py-0.5 text-xs rounded-md"
+                        :class="
+                          playing === call.id
+                            ? 'bg-n-ruby-3 text-n-ruby-11'
+                            : 'bg-n-alpha-2 text-n-slate-11 hover:text-n-slate-12'
+                        "
+                        :title="t('OUTSIDER_VOICE.PANEL.HISTORY.RECORDING')"
+                        data-testid="calls-recording"
+                        @click="playing = playing === call.id ? null : call.id"
+                      >
+                        <Icon icon="i-lucide-audio-lines" class="size-3.5" />
+                        {{ t('OUTSIDER_VOICE.PANEL.HISTORY.RECORDING') }}
+                      </button>
+                      {{
+                        call.talk_seconds
+                          ? formatDuration(call.talk_seconds)
+                          : '—'
+                      }}
+                    </span>
+                  </td>
+                </tr>
+                <tr v-if="playing === call.id && call.recording_url">
+                  <td colspan="5" class="px-4 pb-3">
+                    <span class="flex items-center gap-2">
+                      <audio
+                        :src="call.recording_url"
+                        controls
+                        autoplay
+                        class="flex-1 h-9"
+                        data-testid="calls-recording-player"
+                      />
+                      <a
+                        :href="call.recording_url"
+                        download
+                        class="flex items-center justify-center rounded-lg size-8 text-n-slate-11 hover:bg-n-alpha-2 hover:text-n-slate-12"
+                        :title="
+                          t('OUTSIDER_VOICE.PANEL.HISTORY.DOWNLOAD_RECORDING')
+                        "
+                      >
+                        <Icon icon="i-lucide-download" class="size-4" />
+                      </a>
+                      <Button
+                        v-if="access.administrator"
+                        size="sm"
+                        variant="ghost"
+                        color="ruby"
+                        icon="i-lucide-trash-2"
+                        :title="
+                          t('OUTSIDER_VOICE.PANEL.HISTORY.DELETE_RECORDING')
+                        "
+                        @click="deleteRecording(call)"
+                      />
+                    </span>
+                  </td>
+                </tr>
+              </template>
             </tbody>
           </table>
         </div>

@@ -2,7 +2,8 @@
 # cliente, recebidas atendidas e perdidas, minutos em ligação e a fila de retorno, com as metas de cada
 # vendedor (CallGoals). A meta do dia é a do mês dividida pelos dias úteis (segunda a sexta).
 #
-# Administrador e gestor veem todos os vendedores com ramal; vendedor vê só os próprios números.
+# Administrador e gestor veem todos os vendedores com ramal; vendedor vê só os próprios números. Mês e "hoje" no
+# fuso da telefonia (Entrega 24).
 class Outsider::Voice::Stats
   def initialize(access, month)
     @access = access
@@ -15,7 +16,7 @@ class Outsider::Voice::Stats
   def to_h
     {
       month: @month, from: range.begin.to_date, to: range.end.to_date, business_days: business_days(range),
-      business_days_left: business_days([Time.zone.today, range.begin.to_date].max..range.end.to_date), goals_from: goals['from'],
+      business_days_left: business_days([today, range.begin.to_date].max..range.end.to_date), goals_from: goals['from'],
       manager: @access.manager?,
       totals: totals(month_calls), today: totals(today_calls), sellers: sellers
     }
@@ -24,7 +25,19 @@ class Outsider::Voice::Stats
   private
 
   def range
-    @range ||= Outsider::Crm::MonthlyConfig.range(@month)
+    @range ||= Date.strptime(@month, '%Y-%m').in_time_zone(zone).all_month
+  end
+
+  def zone
+    @settings.time_zone
+  end
+
+  def today
+    Time.current.in_time_zone(zone).to_date
+  end
+
+  def local_date(call)
+    call.started_at.in_time_zone(zone).to_date
   end
 
   def goals
@@ -42,7 +55,7 @@ class Outsider::Voice::Stats
   def today_calls
     return [] unless range.cover?(Time.current)
 
-    month_calls.select { |call| call.started_at.to_date == Time.zone.today }
+    month_calls.select { |call| local_date(call) == today }
   end
 
   def visible(scope)
@@ -66,10 +79,10 @@ class Outsider::Voice::Stats
 
   def seller(user, list, online)
     agent = @settings.data['agents'][user.id.to_s] || {}
-    today = list.select { |call| call.started_at.to_date == Time.zone.today }
+    today_list = list.select { |call| local_date(call) == today }
     {
       id: user.id, name: user.name, thumbnail: user.avatar_url, extension: agent['extension'], state: agent['state'],
-      online: online.include?(agent['extension']), month: person_totals(list), today: person_totals(today),
+      online: online.include?(agent['extension']), month: person_totals(list), today: person_totals(today_list),
       goal: goals['users'][user.id.to_s] || {}
     }
   end

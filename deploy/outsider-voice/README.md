@@ -127,6 +127,12 @@ As metas de ligação ficam em **Telefonia > Configurações > Metas de ligaçã
 **Telefonia > Painel** (metas, números do dia e do mês, quem está em ligação) e **Telefonia > Ligações**
 (perdidas para retornar e histórico).
 
+Na ligação, **Conferência** inclui até mais 4 pessoas (ramal ou número de fora). Quem incluiu junta as vozes
+no próprio navegador, então a central não muda: se essa pessoa desligar, a conferência acaba para todos.
+**Gravar** grava a conversa no navegador e guarda o arquivo na ligação do cliente (Telefonia > Ligações),
+cerca de 15 MB por hora; dá para desligar em Telefonia > Configurações. O painel e os relatórios usam o fuso
+escolhido em Telefonia > Configurações (Brasília se ninguém mudar).
+
 ## Problemas comuns
 
 | O que aparece | O que fazer |

@@ -1,13 +1,13 @@
 // OUTSIDER: o que a tela mostra da ligação em andamento (Entrega 23), usado pelo painel do telefone e pelo
 // cartão minimizado: quem é (contato cadastrado, ramal ou o número), situação com o tempo de conversa e os
-// atalhos para o negócio e a conversa do cliente.
+// atalhos para o negócio e a conversa do cliente. Entrega 24: o mesmo para cada pessoa da conferência.
 import { computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { useNow } from '@vueuse/core';
 import { useAccount } from 'dashboard/composables/useAccount';
 import { frontendURL, conversationUrl } from 'dashboard/helper/URLHelper';
-import { phone } from './phone';
+import { phone, isPopoutWindow } from './phone';
 import { formatPhone, formatDuration } from './format';
 
 export const useCallInfo = () => {
@@ -20,41 +20,61 @@ export const useCallInfo = () => {
   const contact = computed(() => call.value?.lookup?.contact);
   const deal = computed(() => call.value?.lookup?.deal);
   const conversationId = computed(() => call.value?.lookup?.conversation_id);
-  const isInternal = computed(() => (call.value?.number || '').length <= 4);
 
-  const title = computed(() => {
-    if (!call.value) return '';
-    if (contact.value) return contact.value.name;
-    if (isInternal.value) {
+  // nome e segunda linha de uma pessoa da ligação (a principal ou alguém da conferência)
+  const nameOf = party => {
+    if (!party) return '';
+    const internal = (party.number || '').length <= 4;
+    if (party.lookup?.contact) return party.lookup.contact.name;
+    if (internal) {
       return (
-        call.value.name ||
-        t('OUTSIDER_VOICE.CALL.INTERNAL', { extension: call.value.number })
+        party.name ||
+        t('OUTSIDER_VOICE.CALL.INTERNAL', { extension: party.number })
       );
     }
-    return formatPhone(call.value.number);
-  });
+    return formatPhone(party.number);
+  };
 
-  const subtitle = computed(() => {
-    if (!call.value) return '';
-    if (isInternal.value) {
-      return t('OUTSIDER_VOICE.CALL.INTERNAL', {
-        extension: call.value.number,
-      });
+  const detailOf = party => {
+    if (!party) return '';
+    if ((party.number || '').length <= 4) {
+      return t('OUTSIDER_VOICE.CALL.INTERNAL', { extension: party.number });
     }
-    if (contact.value) return formatPhone(call.value.number);
+    if (party.lookup?.contact) return formatPhone(party.number);
     return t('OUTSIDER_VOICE.CALL.UNKNOWN');
-  });
+  };
+
+  const elapsed = party =>
+    formatDuration((now.value.getTime() - party.answeredAt) / 1000);
+
+  // situação de alguém da conferência: chamando, tempo na conversa ou como acabou
+  const guestState = guest => {
+    if (guest.state === 'ended') {
+      return t(`OUTSIDER_VOICE.CALL.ENDED.${guest.endReason || 'DONE'}`);
+    }
+    if (guest.state === 'active') return elapsed(guest);
+    return t('OUTSIDER_VOICE.CALL.DIALING');
+  };
+
+  const title = computed(() => nameOf(call.value));
+  const subtitle = computed(() => detailOf(call.value));
+
+  const people = computed(
+    () =>
+      (call.value?.others || []).filter(other => other.state === 'active')
+        .length + 1
+  );
 
   const stateLabel = computed(() => {
     if (!call.value) return '';
-    const { state, endReason, answeredAt, held, transferTo } = call.value;
+    const { state, endReason, held, transferTo } = call.value;
     if (state === 'ended') {
       return t(`OUTSIDER_VOICE.CALL.ENDED.${endReason}`, {
         extension: transferTo,
       });
     }
     if (state === 'active') {
-      const time = formatDuration((now.value.getTime() - answeredAt) / 1000);
+      const time = elapsed(call.value);
       return held ? t('OUTSIDER_VOICE.CALL.ON_HOLD', { time }) : time;
     }
     return t(
@@ -64,14 +84,30 @@ export const useCallInfo = () => {
     );
   });
 
+  // na janela própria do telefone, abre na janela do Chatwoot que a abriu (ver PhoneDock.vue)
+  const go = location => {
+    if (isPopoutWindow() && window.opener && !window.opener.closed) {
+      window.opener.postMessage(
+        {
+          type: 'outsider-phone-navigate',
+          href: router.resolve(location).fullPath,
+        },
+        window.location.origin
+      );
+      window.opener.focus();
+      return;
+    }
+    router.push(location);
+  };
+
   const openDeal = () =>
-    router.push({
+    go({
       path: frontendURL(`accounts/${accountId.value}/crm/opportunities`),
       query: { negocio: deal.value.id },
     });
 
   const openConversation = () =>
-    router.push(
+    go(
       frontendURL(
         conversationUrl({
           accountId: accountId.value,
@@ -88,6 +124,10 @@ export const useCallInfo = () => {
     title,
     subtitle,
     stateLabel,
+    people,
+    nameOf,
+    detailOf,
+    guestState,
     openDeal,
     openConversation,
   };

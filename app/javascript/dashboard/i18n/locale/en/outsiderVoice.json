@@ -8,7 +8,8 @@
         "ready": "Ready to call",
         "offline": "No connection to the PBX",
         "failed": "The PBX did not accept the extension",
-        "other_tab": "In use in another tab"
+        "other_tab": "In use in another tab",
+        "in_call": "On a call"
       },
       "HINTS": {
         "offline": "The phone keeps retrying on its own. If it takes long, check the internet or talk to the administrator.",
@@ -26,7 +27,10 @@
         "NOT_READY": "The phone is not connected to the PBX.",
         "IN_CALL": "Finish the current call before making another one.",
         "INVALID": "Type a number to call.",
-        "OTHER_TAB": "The phone is in another tab. Call from there or bring it to this tab with the phone button in the sidebar."
+        "OTHER_TAB": "The phone is in another tab. Call from there or bring it to this tab with the phone button in the sidebar.",
+        "POPUP_BLOCKED": "The browser blocked the phone window. Allow pop-ups for this site and try again.",
+        "CONFERENCE_FULL": "The conference is already full.",
+        "ALREADY_IN_CALL": "This person is already on the call."
       },
       "MINIMIZE": "Minimize",
       "TABS": {
@@ -35,7 +39,15 @@
       },
       "TEAM_EMPTY": "No colleague with an active extension.",
       "TEAM_ONLINE": "Phone connected",
-      "TEAM_OFFLINE": "Phone disconnected"
+      "TEAM_OFFLINE": "Phone disconnected",
+      "DRAG_HINT": "Drag here to move the phone. Double-click to send it back to the corner.",
+      "POPOUT": "Open the phone in its own window",
+      "POPOUT_IN_CALL": "End the call to open the phone in its own window",
+      "BACK_TO_TAB": "Move the phone back to the Chatwoot tab",
+      "ELSEWHERE": "The phone is open in its own window. Calls ring there, and you can also answer, dial and hang up from here.",
+      "SHOW_WINDOW": "Show the window",
+      "BRING_HERE": "Bring it to this tab",
+      "WINDOW_OFF": "The phone is not enabled for you. Check Telephony > Settings."
     },
     "CALL": {
       "INCOMING": "Incoming call",
@@ -74,7 +86,28 @@
       "TRANSFER_PLACEHOLDER": "Extension (e.g. 202)",
       "YOU": "You",
       "OTHER_SIDE": "Other side",
-      "EXPAND": "Open the phone"
+      "EXPAND": "Open the phone",
+      "CONNECTED": "Connected",
+      "CONFERENCE": "Conference",
+      "CONFERENCE_PEOPLE": "Conference · {count} people and you",
+      "CONFERENCE_HINT": "Type the number or extension, or click a teammate. They join when they answer. Up to {max} people besides you.",
+      "ADD": "Add",
+      "REMOVE": "Remove from call",
+      "HANGUP_ALL": "End for everyone",
+      "RECORD": "Record",
+      "RECORD_PAUSE": "Pause recording",
+      "RECORD_RESUME": "Resume recording",
+      "RECORD_HINT": "Records the conversation (you and everyone else). The recording is saved on the call, in Telephony > Calls, when it ends.",
+      "RECORD_OFF": "Recording is turned off in Telephony > Settings.",
+      "RECORD_CUSTOMER_ONLY": "Only calls with a customer are recorded. Calls between extensions are not.",
+      "RECORDING_ON": "Recording",
+      "RECORDING_PAUSED": "Recording paused",
+      "BACK": "Back",
+      "MODES": {
+        "KEYPAD": "Keypad",
+        "TRANSFER": "Transfer",
+        "CONFERENCE": "Add to conference"
+      }
     },
     "CLICK_TO_CALL": "Call with the CRM phone",
     "CALLING": "Calling {number}…",
@@ -165,10 +198,28 @@
         "WS_URL": "PBX address for the browser",
         "WS_URL_HELP": "E.g. wss://voice.yourcompany.com/ws (the address created in the Cloudflare tunnel).",
         "PUBLIC_IP": "Server public IP",
-        "PUBLIC_IP_HELP": "E.g. 69.6.250.129. Needed for the operator audio to reach the PBX."
+        "PUBLIC_IP_HELP": "E.g. 69.6.250.129. Needed for the operator audio to reach the PBX.",
+        "TIME_ZONE": "Time zone",
+        "TIME_ZONE_HELP": "Used by the dashboard, calls and reports: the day and time of each call follow this zone for everyone.",
+        "RECORDING": "Allow call recording",
+        "RECORDING_HELP": "Shows the Record button on the phone. The recording is saved on the call, in Telephony > Calls. Let customers know calls may be recorded."
       },
       "SAVED": "Telephony saved. The PBX updates within 30 seconds.",
-      "INVALID": "Check the fields marked in red."
+      "INVALID": "Check the fields marked in red.",
+      "ZONES": {
+        "SAO_PAULO": "Brasília (São Paulo, Rio, Goiás, South)",
+        "BAHIA": "Bahia",
+        "FORTALEZA": "Fortaleza (CE, RN, PB, PI, MA)",
+        "RECIFE": "Recife (PE)",
+        "BELEM": "Belém (PA, AP)",
+        "MANAUS": "Manaus (AM)",
+        "CUIABA": "Cuiabá (MT)",
+        "CAMPO_GRANDE": "Campo Grande (MS)",
+        "PORTO_VELHO": "Porto Velho (RO)",
+        "BOA_VISTA": "Boa Vista (RR)",
+        "RIO_BRANCO": "Rio Branco (AC)",
+        "NORONHA": "Fernando de Noronha"
+      }
     },
     "GOALS_SETTINGS": {
       "TITLE": "Call goals",
@@ -222,7 +273,12 @@
         "EMPTY": "No calls this month.",
         "LOAD_MORE": "Load more",
         "RETURNED_BY": "called back by {name}",
-        "NOBODY": "nobody"
+        "NOBODY": "nobody",
+        "EXPORT": "Export",
+        "RECORDING": "Recording",
+        "DOWNLOAD_RECORDING": "Download the recording",
+        "DELETE_RECORDING": "Delete the recording",
+        "DELETE_RECORDING_CONFIRM": "Delete this call recording? This cannot be undone."
       }
     },
     "TIMELINE": {
@@ -249,7 +305,10 @@
         "today": "Today",
         "week": "This week",
         "month": "This month",
-        "last_month": "Last month"
+        "last_month": "Last month",
+        "yesterday": "Yesterday",
+        "last_week": "Last week",
+        "custom": "Range"
       },
       "TEAM": "Sellers",
       "EVERYONE": "Whole team",
@@ -258,23 +317,6 @@
         "online": "Phone connected",
         "offline": "Phone disconnected",
         "in_call": "On a call"
-      },
-      "COUNTERS": {
-        "TOTAL": "Calls",
-        "TOTAL_HINT": "in the period",
-        "INBOUND": "Received",
-        "INBOUND_HINT": "{answered} answered · {missed} missed",
-        "OUTBOUND": "Made",
-        "OUTBOUND_HINT": "{answered} answered by the customer",
-        "INTERNAL": "Between extensions",
-        "INTERNAL_HINT": "between colleagues"
-      },
-      "TIMES": {
-        "AVERAGE_TALK": "Average talk time",
-        "LONGEST": "Longest call",
-        "TALK": "Time on calls",
-        "AVERAGE_ANSWER": "Average time to answer",
-        "TO_RETURN": "To call back"
       },
       "GOAL": {
         "TITLE": "Monthly goal",
@@ -298,7 +340,96 @@
         "4": "Thu",
         "5": "Fri",
         "6": "Sat"
+      },
+      "UNTIL": "to",
+      "COMPARED": "compared with {period}",
+      "ZONE": "Dates and times in the {zone} time zone (Telephony > Settings).",
+      "DELTA": {
+        "PERCENT": "{value}% vs previous period",
+        "POINTS": "{value} points vs previous period",
+        "NEW": "none in the previous period"
+      },
+      "KPI": {
+        "TOTAL": "Calls",
+        "TOTAL_HINT": "{internal} between extensions",
+        "INBOUND": "Received",
+        "INBOUND_HINT": "{answered} answered · {missed} missed",
+        "OUTBOUND": "Made",
+        "OUTBOUND_HINT": "{answered} answered by the customer",
+        "MISSED": "Missed",
+        "MISSED_HINT": "{returned} already returned · {waiting} waiting for a call back",
+        "CUSTOMERS": "Customers",
+        "CUSTOMERS_HINT": "different numbers called",
+        "ANSWER_RATE": "Answer rate",
+        "ANSWER_RATE_HINT": "received calls that were answered",
+        "SERVICE_LEVEL": "Service level",
+        "SERVICE_LEVEL_HINT": "received calls answered within {seconds} s",
+        "CONTACT_RATE": "Contact rate",
+        "CONTACT_RATE_HINT": "calls made that the customer answered",
+        "AVERAGE_TALK": "Average talk time",
+        "AVERAGE_TALK_HINT": "longest: {longest}",
+        "AVERAGE_ANSWER": "Average time to answer",
+        "AVERAGE_ANSWER_HINT": "longest wait: {longest}",
+        "TALK": "Time on calls",
+        "TALK_HINT": "all conversations together"
+      },
+      "SERIES": {
+        "inbound_answered": "Received answered",
+        "missed": "Missed",
+        "outbound": "Made",
+        "internal": "Between extensions",
+        "minutes": "Minutes on calls"
+      },
+      "METRICS": {
+        "calls": "Calls",
+        "minutes": "Minutes"
+      },
+      "BY_DAY": "Calls per day",
+      "BY_MONTH": "Calls per month",
+      "OUTCOMES": {
+        "TITLE": "How calls ended",
+        "INBOUND": "Received",
+        "OUTBOUND": "Made",
+        "PARTS": {
+          "inbound_answered": "Answered",
+          "missed": "Missed",
+          "outbound_answered": "Customer answered",
+          "unanswered": "No answer",
+          "busy": "Busy",
+          "failed": "Not completed"
+        }
+      },
+      "TALK_BUCKETS": "Conversation length",
+      "TALK_BUCKETS_SERIES": "Conversations",
+      "WAIT_BUCKETS": "Time to answer (received)",
+      "WAIT_BUCKETS_SERIES": "Answered calls",
+      "BUCKETS": {
+        "RANGE": "{from} to {to} {unit}",
+        "MORE": "over {value} {unit}"
+      },
+      "RANKING": {
+        "TITLE": "Team in the period",
+        "SELLER": "Seller",
+        "TOTAL": "Calls",
+        "OUTBOUND": "Made",
+        "CONTACT_RATE": "Contact",
+        "INBOUND_ANSWERED": "Received answered",
+        "TALK_SECONDS": "On calls",
+        "AVERAGE_TALK": "Average"
+      },
+      "EXPORT": {
+        "BUTTON": "Export",
+        "PDF": "PDF report (this dashboard)",
+        "CALLS": "Spreadsheet: all calls in the period",
+        "AGENTS": "Spreadsheet: numbers per seller",
+        "DAYS": "Spreadsheet: numbers per day"
       }
+    },
+    "NOTICES": {
+      "RECORDING_SAVING": "Saving the call recording…",
+      "RECORDING_SAVED": "Recording saved. Find it in Telephony > Calls.",
+      "RECORDING_FAILED": "Could not save the call recording.",
+      "RECORDING_UNSUPPORTED": "This browser cannot record audio. Use Chrome or Edge."
     }
   }
 }

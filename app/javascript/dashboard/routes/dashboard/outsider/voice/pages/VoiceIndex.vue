@@ -70,7 +70,7 @@ watch(
               {{ t('OUTSIDER_VOICE.SECTION.NO_ACCESS') }}
             </p>
           </div>
-          <Wallboard v-else-if="activeTab === 'dashboard'" :access="access" />
+          <Wallboard v-else-if="activeTab === 'dashboard'" />
           <CallsPanel v-else-if="activeTab === 'calls'" :access="access" />
           <VoiceSettingsPage v-else />
         </div>

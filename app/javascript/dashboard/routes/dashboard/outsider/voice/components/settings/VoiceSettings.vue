@@ -35,6 +35,29 @@ const isLoading = ref(true);
 const isSaving = ref(false);
 
 const stateOptions = STATES.map(state => ({ value: state, label: state }));
+// fuso dos números da Telefonia (Entrega 24); a mesma lista de Outsider::Voice::Settings::ZONES
+const ZONES = [
+  'America/Sao_Paulo',
+  'America/Bahia',
+  'America/Fortaleza',
+  'America/Recife',
+  'America/Belem',
+  'America/Manaus',
+  'America/Cuiaba',
+  'America/Campo_Grande',
+  'America/Porto_Velho',
+  'America/Boa_Vista',
+  'America/Rio_Branco',
+  'America/Noronha',
+];
+const zoneOptions = computed(() =>
+  ZONES.map(zone => ({
+    value: zone,
+    label: t(
+      `OUTSIDER_VOICE.SETTINGS.ZONES.${zone.split('/')[1].toUpperCase()}`
+    ),
+  }))
+);
 const optionsFor = (keys, prefix) =>
   keys.map(key => ({ value: key, label: t(`${prefix}.${key}`) }));
 const transportOptions = ['udp', 'tcp'].map(key => ({
@@ -577,6 +600,30 @@ onMounted(load);
             :message="t('OUTSIDER_VOICE.SETTINGS.RINGING.PUBLIC_IP_HELP')"
             :message-type="hasError('public_ip') ? 'error' : 'info'"
           />
+          <label class="flex flex-col gap-1">
+            <span class="text-sm font-medium text-n-slate-12">
+              {{ t('OUTSIDER_VOICE.SETTINGS.RINGING.TIME_ZONE') }}
+            </span>
+            <Select
+              v-model="form.time_zone"
+              :options="zoneOptions"
+              data-testid="voice-time-zone"
+            />
+            <span class="text-xs text-n-slate-11">
+              {{ t('OUTSIDER_VOICE.SETTINGS.RINGING.TIME_ZONE_HELP') }}
+            </span>
+          </label>
+          <label class="flex items-start gap-3 cursor-pointer sm:pt-6">
+            <Switch v-model="form.recording" class="mt-0.5" />
+            <span class="flex flex-col gap-0.5">
+              <span class="text-sm text-n-slate-12">
+                {{ t('OUTSIDER_VOICE.SETTINGS.RINGING.RECORDING') }}
+              </span>
+              <span class="text-xs text-n-slate-11">
+                {{ t('OUTSIDER_VOICE.SETTINGS.RINGING.RECORDING_HELP') }}
+              </span>
+            </span>
+          </label>
         </div>
       </div>
     </template>

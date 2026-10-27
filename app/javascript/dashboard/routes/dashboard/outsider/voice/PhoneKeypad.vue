@@ -1,6 +1,6 @@
 <script setup>
-// OUTSIDER: teclado do telefone (Entrega 22): digita o número antes de ligar e envia tons (URA do cliente)
-// durante a ligação.
+// OUTSIDER: teclado do telefone (Entrega 22, maior na 24): digita o número antes de ligar e envia tons (URA
+// do cliente) durante a ligação. As teclas do computador também funcionam (ver PhonePanel.vue).
 const emit = defineEmits(['press']);
 
 const KEYS = [
@@ -20,16 +20,19 @@ const KEYS = [
 </script>
 
 <template>
-  <div class="grid grid-cols-3 gap-1.5">
+  <div class="grid grid-cols-3 gap-2">
     <button
       v-for="[digit, letters] in KEYS"
       :key="digit"
       type="button"
-      class="flex flex-col items-center justify-center h-11 rounded-lg bg-n-alpha-2 hover:bg-n-alpha-3 active:bg-n-alpha-4 text-n-slate-12"
+      class="flex flex-col items-center justify-center h-14 rounded-xl bg-n-alpha-2 hover:bg-n-alpha-3 active:bg-n-alpha-4 text-n-slate-12"
+      :data-testid="`outsider-key-${digit}`"
       @click="emit('press', digit)"
     >
-      <span class="text-base font-medium leading-5">{{ digit }}</span>
-      <span class="text-[0.625rem] leading-3 text-n-slate-10 h-3">
+      <span class="text-2xl font-medium leading-7">{{ digit }}</span>
+      <span
+        class="text-[0.625rem] tracking-widest leading-3 text-n-slate-10 h-3"
+      >
         {{ letters }}
       </span>
     </button>
