@@ -26,7 +26,8 @@ export const CENTRAL_SYNC_WAIT = 35000;
 // na conferência: você e mais até 5 pessoas (a primeira ligação e 4 incluídas)
 export const MAX_GUESTS = 4;
 const MEDIA = { audio: true, video: false };
-const RECORDING_BITRATE = 32000;
+// gravação em qualidade de voz baixa, mono (Entrega 25): uns 7 MB por hora de conversa
+const RECORDING_BITRATE = 16000;
 const RECORDING_TYPES = [
   'audio/webm;codecs=opus',
   'audio/ogg;codecs=opus',
@@ -46,6 +47,7 @@ export const phone = reactive({
   extension: '',
   echoExtension: '',
   recordingAllowed: false,
+  autoRecord: false,
   call: null,
   holder: false,
   popout: false,
@@ -173,11 +175,10 @@ const closeMixer = () => {
 const ensureMixer = () => {
   if (!mixer) {
     const context = new AudioContext();
-    mixer = {
-      context,
-      record: context.createMediaStreamDestination(),
-      nodes: [],
-    };
+    const record = context.createMediaStreamDestination();
+    record.channelCount = 1;
+    record.channelCountMode = 'explicit';
+    mixer = { context, record, nodes: [] };
   }
   mixer.context.resume();
   return mixer;
@@ -449,6 +450,8 @@ const setupLeg = (id, current) => {
     leg.micTrack = audioSender(current)?.track || null;
     if (leg.micTrack && phone.call.muted) leg.micTrack.enabled = false;
     remix();
+    // eslint-disable-next-line no-use-before-define
+    autoRecord();
   });
   current.on('ended', event => endLeg(id, endReason(event)));
   current.on('failed', event => endLeg(id, endReason(event)));
@@ -710,6 +713,7 @@ export const startPhone = async (accountId, { popout = false } = {}) => {
   phone.extension = data.extension;
   phone.echoExtension = data.echo_extension;
   phone.recordingAllowed = !!data.recording;
+  phone.autoRecord = !!data.auto_record;
   openChannel(accountId);
   if (!popout) {
     requestLine(accountId, 'try');
@@ -910,37 +914,49 @@ export const removeFromConference = id => {
   return null;
 };
 
+const startRecorder = () => {
+  const type = RECORDING_TYPES.find(item =>
+    window.MediaRecorder?.isTypeSupported(item)
+  );
+  if (!type) {
+    notify('RECORDING_UNSUPPORTED');
+    return;
+  }
+  const { record } = ensureMixer();
+  const media = new MediaRecorder(record.stream, {
+    mimeType: type,
+    audioBitsPerSecond: RECORDING_BITRATE,
+  });
+  recorder = {
+    media,
+    chunks: [],
+    // todos que passaram pela ligação enquanto gravava (quem saiu da conferência também)
+    parties: new Map(callParties().map(party => [party.number, party])),
+  };
+  const { chunks } = recorder;
+  media.ondataavailable = event => {
+    if (event.data.size) chunks.push(event.data);
+  };
+  media.start(1000);
+  phone.call.recording = 'on';
+  remix();
+};
+
+// gravação automática (Telefonia > Configurações, Entrega 25): começa quando a ligação com cliente é atendida
+// (ou quando um cliente entra na conferência), só na aba que está com a linha
+function autoRecord() {
+  if (!phone.autoRecord || !phone.holder || recorder) return;
+  if (phone.call?.state !== 'active' || !canRecord()) return;
+  startRecorder();
+}
+
 // gravar: começa a gravar; depois, pausa e continua. O arquivo vai para a ligação quando ela acaba
 export const toggleRecording = () => {
   if (phone.call?.state !== 'active' || !phone.recordingAllowed) return null;
   if (!phone.holder) return remote('toggleRecording');
   if (!recorder && !canRecord()) return null;
   if (!recorder) {
-    const type = RECORDING_TYPES.find(item =>
-      window.MediaRecorder?.isTypeSupported(item)
-    );
-    if (!type) {
-      notify('RECORDING_UNSUPPORTED');
-      return null;
-    }
-    const { record } = ensureMixer();
-    const media = new MediaRecorder(record.stream, {
-      mimeType: type,
-      audioBitsPerSecond: RECORDING_BITRATE,
-    });
-    recorder = {
-      media,
-      chunks: [],
-      // todos que passaram pela ligação enquanto gravava (quem saiu da conferência também)
-      parties: new Map(callParties().map(party => [party.number, party])),
-    };
-    const { chunks } = recorder;
-    media.ondataavailable = event => {
-      if (event.data.size) chunks.push(event.data);
-    };
-    media.start(1000);
-    phone.call.recording = 'on';
-    remix();
+    startRecorder();
     return null;
   }
   if (recorder.media.state === 'recording') {
@@ -951,6 +967,14 @@ export const toggleRecording = () => {
     phone.call.recording = 'on';
   }
   return null;
+};
+
+// aviso do navegador quando toca com a aba escondida: pede a permissão num clique da pessoa (atender,
+// abrir o telefone), porque o navegador não deixa pedir sozinho
+export const askNotifications = () => {
+  if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission().catch(() => {});
+  }
 };
 
 // áudio de uma ligação (o microfone da pessoa e o som do outro lado), para as barras que mexem com a voz;

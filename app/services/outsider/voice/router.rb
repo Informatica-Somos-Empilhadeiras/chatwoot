@@ -19,7 +19,7 @@ class Outsider::Voice::Router
     number = @settings.number_for(did) || @settings.number_for(to.to_s[/sip:\+?([^@;>]+)@/, 1])
     contact = PhoneNumber.find_contact(@account, from)
     deal = open_deal(contact)
-    create_call(linkedid, direction: :inbound, from_number: PhoneNumber.e164(from) || PhoneNumber.digits(from),
+    create_call(linkedid, direction: :inbound, from_number: customer_number(from),
                           to_number: number&.dig('number'), did: number&.dig('number') || PhoneNumber.digits(did),
                           state_code: number&.dig('state'), contact: contact, opportunity: deal)
     plan(deal&.owner_id, number&.dig('state'))
@@ -44,6 +44,10 @@ class Outsider::Voice::Router
   end
 
   private
+
+  def customer_number(from)
+    PhoneNumber.e164(from) || PhoneNumber.foreign(from) || PhoneNumber.digits(from)
+  end
 
   def create_call(linkedid, **attributes)
     Outsider::Voice::Call.create_with(account: @account, started_at: Time.current, **attributes).find_or_create_by!(linkedid: linkedid)

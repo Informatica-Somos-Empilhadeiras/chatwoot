@@ -55,6 +55,7 @@
       "ACTIVE": "Em ligação",
       "ANSWER": "Atender",
       "REJECT": "Recusar",
+      "ANSWER_LATER": "Atender depois",
       "HANGUP": "Encerrar",
       "MUTE": "Mudo",
       "UNMUTE": "Tirar do mudo",
@@ -97,7 +98,7 @@
       "RECORD": "Gravar",
       "RECORD_PAUSE": "Pausar gravação",
       "RECORD_RESUME": "Continuar gravação",
-      "RECORD_HINT": "Grava a conversa (você e todos do outro lado). A gravação fica na ligação, em Telefonia > Ligações, quando ela acabar.",
+      "RECORD_HINT": "Grava a conversa (você e todos do outro lado). A gravação fica em Telefonia > Gravações quando a ligação acabar.",
       "RECORD_OFF": "A gravação está desligada em Telefonia > Configurações.",
       "RECORD_CUSTOMER_ONLY": "Grava só ligação com cliente. Entre ramais não fica gravado.",
       "RECORDING_ON": "Gravando",
@@ -202,7 +203,7 @@
         "TIME_ZONE": "Fuso horário",
         "TIME_ZONE_HELP": "Usado no painel, nas ligações e nos relatórios: o dia e a hora de cada ligação seguem este fuso, para todo mundo.",
         "RECORDING": "Permitir gravar ligações",
-        "RECORDING_HELP": "Mostra o botão Gravar no telefone. A gravação fica na ligação, em Telefonia > Ligações. Avise os clientes que a ligação pode ser gravada."
+        "RECORDING_HELP": "Mostra o botão Gravar no telefone. A gravação fica em Telefonia > Gravações. Avise os clientes que a ligação pode ser gravada."
       },
       "SAVED": "Telefonia salva. A central se atualiza em até 30 segundos.",
       "INVALID": "Confira os campos marcados em vermelho.",
@@ -219,6 +220,54 @@
         "BOA_VISTA": "Boa Vista (RR)",
         "RIO_BRANCO": "Rio Branco (AC)",
         "NORONHA": "Fernando de Noronha"
+      },
+      "RECORDING": {
+        "TITLE": "Gravações",
+        "DESCRIPTION": "Gravar as ligações com clientes e por quanto tempo guardar. As gravações ficam em Telefonia > Gravações, para ouvir, baixar ou encaminhar.",
+        "AUTO": "Gravar sozinho toda ligação com cliente",
+        "AUTO_HELP": "O telefone começa a gravar assim que a ligação é atendida, sem ninguém apertar Gravar. Ligações entre colegas não são gravadas.",
+        "NOTICE": "Pela LGPD, avise o cliente que a ligação é gravada (por exemplo, numa mensagem no começo da ligação ou no site).",
+        "DAYS": "Guardar as gravações por (dias)",
+        "DAYS_HELP": "De 30 a 1825 dias. Padrão: 365 (1 ano). As mais antigas são apagadas toda madrugada.",
+        "QUALITY": "Qualidade de voz de telefone (mono, 16 kbps): cerca de 7 MB por hora de ligação."
+      },
+      "COSTS": {
+        "TITLE": "Custos das ligações",
+        "DESCRIPTION": "Quanto a operadora cobra por minuto e por ligação atendida em cada tipo de ligação. O painel mostra o custo do período com estes valores.",
+        "BILLING": "Como a operadora conta o tempo",
+        "BILLING_HELP": "Está no contrato: o mais comum é 30 + 6 (cobra os primeiros 30 segundos e depois de 6 em 6).",
+        "BILLINGS": {
+          "30_6": "30 + 6 segundos",
+          "60_6": "60 + 6 segundos",
+          "SECOND": "Por segundo",
+          "MINUTE": "Por minuto cheio"
+        },
+        "KIND": "Tipo de ligação",
+        "MINUTE": "R$ por minuto",
+        "CALL": "R$ por ligação",
+        "HELP": {
+          "LOCAL_FIXED": "Telefone fixo com o mesmo DDD do número que liga",
+          "LOCAL_MOBILE": "Celular com o mesmo DDD do número que liga",
+          "LONG_FIXED": "Telefone fixo de outro DDD (interurbano)",
+          "LONG_MOBILE": "Celular de outro DDD",
+          "INTERNATIONAL": "Números de fora do Brasil",
+          "SPECIAL": "Números especiais, como 0300 e 4004 (0800 costuma ser grátis)",
+          "INBOUND": "Só se a operadora cobra para receber (deixe 0 se não cobra)"
+        },
+        "NOTE": "Ligação não atendida não tem custo. Mudar um preço muda também o custo das ligações antigas no painel."
+      },
+      "BRANCHES": {
+        "TITLE": "Filiais",
+        "DESCRIPTION": "Cadastre as filiais e diga em qual cada pessoa trabalha, para o painel separar ligações e custos por filial.",
+        "LIST": "Filiais da empresa",
+        "LIST_HELP": "O nome aparece no painel. Apagar uma filial deixa as pessoas dela sem filial.",
+        "EMPTY": "Nenhuma filial ainda.",
+        "NAME": "Nome da filial (ex.: Goiânia)",
+        "PEOPLE": "ninguém | 1 pessoa | {count} pessoas",
+        "ADD": "Adicionar filial",
+        "NONE": "Sem filial",
+        "PEOPLE_TITLE": "Pessoas por filial",
+        "PEOPLE_HELP": "Escolha a filial de cada pessoa. Quem fica sem filial aparece como \"Sem filial\" no painel."
       }
     },
     "GOALS_SETTINGS": {
@@ -293,11 +342,15 @@
       "TABS": {
         "DASHBOARD": "Painel",
         "CALLS": "Ligações",
-        "SETTINGS": "Configurações"
+        "SETTINGS": "Configurações",
+        "RECORDINGS": "Gravações"
       },
       "SETTINGS": {
         "CENTRAL": "Central e ramais",
-        "GOALS": "Metas de ligação"
+        "GOALS": "Metas de ligação",
+        "RECORDING": "Gravações",
+        "COSTS": "Custos",
+        "BRANCHES": "Filiais"
       }
     },
     "WALLBOARD": {
@@ -415,7 +468,8 @@
         "CONTACT_RATE": "Contato",
         "INBOUND_ANSWERED": "Recebidas atendidas",
         "TALK_SECONDS": "Em ligação",
-        "AVERAGE_TALK": "Média"
+        "AVERAGE_TALK": "Média",
+        "COST": "Custo"
       },
       "EXPORT": {
         "BUTTON": "Exportar",
@@ -423,13 +477,77 @@
         "CALLS": "Planilha: todas as ligações do período",
         "AGENTS": "Planilha: números por vendedor",
         "DAYS": "Planilha: números dia a dia"
+      },
+      "MAP": {
+        "TITLE": "Ligações por região",
+        "DESCRIPTION": "Estado do cliente pelo DDD do número. Quanto mais forte a cor, mais ligações. Passe o mouse para ver os detalhes.",
+        "INTERNATIONAL": "Internacional",
+        "CALLS": "nenhuma ligação | 1 ligação | {n} ligações",
+        "SPLIT": "{outbound} feitas · {inbound} recebidas · {answered} atendidas",
+        "NONE": "Nenhuma",
+        "EMPTY": "Nenhuma ligação com cliente no período.",
+        "UNKNOWN": "| 1 ligação sem DDD reconhecido (número curto ou serviço) | {n} ligações sem DDD reconhecido (números curtos ou serviços)",
+        "CREDIT": "Mapa: \"Map of Brazil\", de Victor Cazanave (svg-maps), CC BY 4.0, adaptado."
+      },
+      "COSTS": {
+        "TITLE": "Custos das ligações",
+        "TOTAL": "Custo total",
+        "TOTAL_HINT": "Feitas {outbound} · recebidas {inbound}",
+        "PER_CALL": "Custo médio por ligação",
+        "PER_CALL_HINT": "nenhuma ligação cobrada | em 1 ligação cobrada | em {n} ligações cobradas",
+        "PER_MINUTE": "Custo por minuto",
+        "PER_MINUTE_HINT": "Tempo cobrado: {billing}",
+        "NOT_CONFIGURED": "Os preços ainda não foram cadastrados: o administrador preenche em Telefonia > Configurações > Custos.",
+        "CALLS": "Ligações",
+        "MINUTES": "Minutos",
+        "COST": "Custo"
+      },
+      "BREAKDOWN": {
+        "BY_DDD": "Ligações por DDD do cliente",
+        "BY_BRANCH": "Ligações por filial",
+        "DDD": "DDD",
+        "DDD_ROW": "DDD {ddd}",
+        "BRANCH": "Filial",
+        "CALLS": "Ligações",
+        "OUTBOUND": "Feitas",
+        "INBOUND": "Recebidas",
+        "ANSWERED": "Atendidas",
+        "TALK_SECONDS": "Em ligação",
+        "COST": "Custo"
       }
     },
     "NOTICES": {
       "RECORDING_SAVING": "Salvando a gravação da ligação…",
-      "RECORDING_SAVED": "Gravação salva. Ela está em Telefonia > Ligações.",
+      "RECORDING_SAVED": "Gravação salva. Ela está em Telefonia > Gravações.",
       "RECORDING_FAILED": "Não deu para salvar a gravação da ligação.",
       "RECORDING_UNSUPPORTED": "Este navegador não grava áudio. Use o Chrome ou o Edge."
+    },
+    "KINDS": {
+      "LOCAL_FIXED": "Fixo do mesmo DDD",
+      "LOCAL_MOBILE": "Celular do mesmo DDD",
+      "LONG_FIXED": "Fixo de outro DDD",
+      "LONG_MOBILE": "Celular de outro DDD",
+      "INTERNATIONAL": "Internacional",
+      "SPECIAL": "0800, 0300, 4004 e serviços",
+      "INBOUND": "Recebidas"
+    },
+    "RECORDINGS": {
+      "TITLE": "Gravações do mês ({count})",
+      "META": "{size} guardados neste mês · cada gravação fica {days} dias",
+      "SEARCH": "Buscar por cliente ou número",
+      "EMPTY": "Nenhuma ligação gravada neste mês.",
+      "EXPIRES": "Guardada até {date}",
+      "EXPIRES_HELP": "Depois desta data a gravação é apagada sozinha. O prazo fica em Configurações > Gravações.",
+      "FORWARD": {
+        "OPEN": "Encaminhar",
+        "TITLE": "Encaminhar gravação",
+        "NO_CONTACTS": "Nenhum contato encontrado. Busque pelo nome, telefone ou e-mail.",
+        "MESSAGE": "Mensagem (opcional)",
+        "PLACEHOLDER": "Ex.: Segue a gravação da nossa conversa de hoje.",
+        "ATTACHMENT": "A gravação vai anexada como áudio, sem gerar outra cópia do arquivo.",
+        "SUBMIT": "Encaminhar",
+        "DONE": "Gravação encaminhada para {name}."
+      }
     }
   }
 }

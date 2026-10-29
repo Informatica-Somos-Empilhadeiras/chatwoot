@@ -55,6 +55,7 @@
       "ACTIVE": "On a call",
       "ANSWER": "Answer",
       "REJECT": "Decline",
+      "ANSWER_LATER": "Answer later",
       "HANGUP": "Hang up",
       "MUTE": "Mute",
       "UNMUTE": "Unmute",
@@ -97,7 +98,7 @@
       "RECORD": "Record",
       "RECORD_PAUSE": "Pause recording",
       "RECORD_RESUME": "Resume recording",
-      "RECORD_HINT": "Records the conversation (you and everyone else). The recording is saved on the call, in Telephony > Calls, when it ends.",
+      "RECORD_HINT": "Records the conversation (you and everyone else). The recording is saved in Telephony > Recordings when the call ends.",
       "RECORD_OFF": "Recording is turned off in Telephony > Settings.",
       "RECORD_CUSTOMER_ONLY": "Only calls with a customer are recorded. Calls between extensions are not.",
       "RECORDING_ON": "Recording",
@@ -202,7 +203,7 @@
         "TIME_ZONE": "Time zone",
         "TIME_ZONE_HELP": "Used by the dashboard, calls and reports: the day and time of each call follow this zone for everyone.",
         "RECORDING": "Allow call recording",
-        "RECORDING_HELP": "Shows the Record button on the phone. The recording is saved on the call, in Telephony > Calls. Let customers know calls may be recorded."
+        "RECORDING_HELP": "Shows the Record button on the phone. The recording is saved in Telephony > Recordings. Let customers know calls may be recorded."
       },
       "SAVED": "Telephony saved. The PBX updates within 30 seconds.",
       "INVALID": "Check the fields marked in red.",
@@ -219,6 +220,54 @@
         "BOA_VISTA": "Boa Vista (RR)",
         "RIO_BRANCO": "Rio Branco (AC)",
         "NORONHA": "Fernando de Noronha"
+      },
+      "RECORDING": {
+        "TITLE": "Recordings",
+        "DESCRIPTION": "Record calls with customers and choose how long to keep them. Recordings are in Telephony > Recordings, to listen, download or forward.",
+        "AUTO": "Record every customer call automatically",
+        "AUTO_HELP": "The phone starts recording as soon as the call is answered, with no one pressing Record. Calls between colleagues are not recorded.",
+        "NOTICE": "Under data protection law (LGPD), tell customers that calls are recorded (for example, in a message at the start of the call or on the website).",
+        "DAYS": "Keep recordings for (days)",
+        "DAYS_HELP": "From 30 to 1825 days. Default: 365 (1 year). Older ones are deleted every night.",
+        "QUALITY": "Phone voice quality (mono, 16 kbps): about 7 MB per hour of call."
+      },
+      "COSTS": {
+        "TITLE": "Call costs",
+        "DESCRIPTION": "What the carrier charges per minute and per answered call for each kind of call. The dashboard shows the cost of the period with these values.",
+        "BILLING": "How the carrier counts time",
+        "BILLING_HELP": "It is in the contract: the most common is 30 + 6 (charges the first 30 seconds, then every 6).",
+        "BILLINGS": {
+          "30_6": "30 + 6 seconds",
+          "60_6": "60 + 6 seconds",
+          "SECOND": "Per second",
+          "MINUTE": "Per full minute"
+        },
+        "KIND": "Kind of call",
+        "MINUTE": "R$ per minute",
+        "CALL": "R$ per call",
+        "HELP": {
+          "LOCAL_FIXED": "Landline with the same area code as the calling number",
+          "LOCAL_MOBILE": "Mobile with the same area code as the calling number",
+          "LONG_FIXED": "Landline in another area code (long distance)",
+          "LONG_MOBILE": "Mobile in another area code",
+          "INTERNATIONAL": "Numbers outside Brazil",
+          "SPECIAL": "Special numbers such as 0300 and 4004 (0800 is usually free)",
+          "INBOUND": "Only if the carrier charges to receive (leave 0 otherwise)"
+        },
+        "NOTE": "Unanswered calls cost nothing. Changing a price also changes the cost of past calls on the dashboard."
+      },
+      "BRANCHES": {
+        "TITLE": "Branches",
+        "DESCRIPTION": "Add the branches and say where each person works, so the dashboard splits calls and costs by branch.",
+        "LIST": "Company branches",
+        "LIST_HELP": "The name shows on the dashboard. Deleting a branch leaves its people without a branch.",
+        "EMPTY": "No branches yet.",
+        "NAME": "Branch name (e.g. Goiânia)",
+        "PEOPLE": "nobody | 1 person | {count} people",
+        "ADD": "Add branch",
+        "NONE": "No branch",
+        "PEOPLE_TITLE": "People by branch",
+        "PEOPLE_HELP": "Pick the branch of each person. People without a branch show as \"No branch\" on the dashboard."
       }
     },
     "GOALS_SETTINGS": {
@@ -293,11 +342,15 @@
       "TABS": {
         "DASHBOARD": "Dashboard",
         "CALLS": "Calls",
-        "SETTINGS": "Settings"
+        "SETTINGS": "Settings",
+        "RECORDINGS": "Recordings"
       },
       "SETTINGS": {
         "CENTRAL": "PBX and extensions",
-        "GOALS": "Call goals"
+        "GOALS": "Call goals",
+        "RECORDING": "Recordings",
+        "COSTS": "Costs",
+        "BRANCHES": "Branches"
       }
     },
     "WALLBOARD": {
@@ -415,7 +468,8 @@
         "CONTACT_RATE": "Contact",
         "INBOUND_ANSWERED": "Received answered",
         "TALK_SECONDS": "On calls",
-        "AVERAGE_TALK": "Average"
+        "AVERAGE_TALK": "Average",
+        "COST": "Cost"
       },
       "EXPORT": {
         "BUTTON": "Export",
@@ -423,13 +477,77 @@
         "CALLS": "Spreadsheet: all calls in the period",
         "AGENTS": "Spreadsheet: numbers per seller",
         "DAYS": "Spreadsheet: numbers per day"
+      },
+      "MAP": {
+        "TITLE": "Calls by region",
+        "DESCRIPTION": "Customer's state by the number's area code. The stronger the color, the more calls. Hover for details.",
+        "INTERNATIONAL": "International",
+        "CALLS": "no calls | 1 call | {n} calls",
+        "SPLIT": "{outbound} made · {inbound} received · {answered} answered",
+        "NONE": "None",
+        "EMPTY": "No customer calls in the period.",
+        "UNKNOWN": "| 1 call without a known area code (short number or service) | {n} calls without a known area code (short numbers or services)",
+        "CREDIT": "Map: \"Map of Brazil\" by Victor Cazanave (svg-maps), CC BY 4.0, adapted."
+      },
+      "COSTS": {
+        "TITLE": "Call costs",
+        "TOTAL": "Total cost",
+        "TOTAL_HINT": "Made {outbound} · received {inbound}",
+        "PER_CALL": "Average cost per call",
+        "PER_CALL_HINT": "no charged calls | over 1 charged call | over {n} charged calls",
+        "PER_MINUTE": "Cost per minute",
+        "PER_MINUTE_HINT": "Billed time: {billing}",
+        "NOT_CONFIGURED": "Prices have not been set yet: an administrator fills them in Telephony > Settings > Costs.",
+        "CALLS": "Calls",
+        "MINUTES": "Minutes",
+        "COST": "Cost"
+      },
+      "BREAKDOWN": {
+        "BY_DDD": "Calls by customer's area code",
+        "BY_BRANCH": "Calls by branch",
+        "DDD": "Area code",
+        "DDD_ROW": "Area code {ddd}",
+        "BRANCH": "Branch",
+        "CALLS": "Calls",
+        "OUTBOUND": "Made",
+        "INBOUND": "Received",
+        "ANSWERED": "Answered",
+        "TALK_SECONDS": "On call",
+        "COST": "Cost"
       }
     },
     "NOTICES": {
       "RECORDING_SAVING": "Saving the call recording…",
-      "RECORDING_SAVED": "Recording saved. Find it in Telephony > Calls.",
+      "RECORDING_SAVED": "Recording saved. Find it in Telephony > Recordings.",
       "RECORDING_FAILED": "Could not save the call recording.",
       "RECORDING_UNSUPPORTED": "This browser cannot record audio. Use Chrome or Edge."
+    },
+    "KINDS": {
+      "LOCAL_FIXED": "Landline, same area code",
+      "LOCAL_MOBILE": "Mobile, same area code",
+      "LONG_FIXED": "Landline, other area code",
+      "LONG_MOBILE": "Mobile, other area code",
+      "INTERNATIONAL": "International",
+      "SPECIAL": "0800, 0300, 4004 and services",
+      "INBOUND": "Received"
+    },
+    "RECORDINGS": {
+      "TITLE": "Recordings this month ({count})",
+      "META": "{size} stored this month · each recording is kept for {days} days",
+      "SEARCH": "Search by customer or number",
+      "EMPTY": "No recorded calls this month.",
+      "EXPIRES": "Kept until {date}",
+      "EXPIRES_HELP": "After this date the recording is deleted automatically. Change it in Settings > Recordings.",
+      "FORWARD": {
+        "OPEN": "Forward",
+        "TITLE": "Forward recording",
+        "NO_CONTACTS": "No contacts found. Search by name, phone or e-mail.",
+        "MESSAGE": "Message (optional)",
+        "PLACEHOLDER": "E.g.: Here is the recording of our call today.",
+        "ATTACHMENT": "The recording is attached as audio, without making another copy of the file.",
+        "SUBMIT": "Forward",
+        "DONE": "Recording forwarded to {name}."
+      }
     }
   }
 }

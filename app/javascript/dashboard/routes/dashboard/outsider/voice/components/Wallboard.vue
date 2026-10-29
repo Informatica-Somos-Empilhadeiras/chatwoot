@@ -5,6 +5,8 @@
 // terminaram, duração das conversas, tempo para atender, a equipe e quem está em ligação agora. Exporta o
 // relatório em PDF e as planilhas. O gestor escolhe a equipe toda ou um vendedor; o vendedor vê os próprios
 // números. Datas e horas no fuso da telefonia. Atualiza a cada ligação e a cada minuto.
+// Entrega 25: mapa do Brasil (e internacionais) com as ligações por estado, custos do período e as ligações
+// por DDD e por filial.
 import { ref, computed, watch, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useIntervalFn, useNow } from '@vueuse/core';
@@ -23,6 +25,9 @@ import KpiTile from './KpiTile.vue';
 import OutcomeBars from './OutcomeBars.vue';
 import TeamRanking from './TeamRanking.vue';
 import WeekHeatmap from './WeekHeatmap.vue';
+import RegionMap from './RegionMap.vue';
+import CostSummary from './CostSummary.vue';
+import BreakdownTable from './BreakdownTable.vue';
 import {
   downloadBlob,
   formatDate,
@@ -281,6 +286,18 @@ const waitChart = computed(() => ({
     },
   ],
 }));
+
+const dddLabel = row => ({
+  title: t('OUTSIDER_VOICE.WALLBOARD.BREAKDOWN.DDD_ROW', { ddd: row.ddd }),
+  subtitle: row.state,
+});
+const branchLabel = row => ({
+  title: row.name || t('OUTSIDER_VOICE.SETTINGS.BRANCHES.NONE'),
+  subtitle:
+    row.people === null
+      ? ''
+      : t('OUTSIDER_VOICE.SETTINGS.BRANCHES.PEOPLE', row.people),
+});
 
 const agentStatus = agent => {
   if (agent.in_call) return 'in_call';
@@ -661,6 +678,39 @@ onMounted(load);
           />
         </div>
 
+        <!-- onde: mapa do Brasil e internacionais -->
+        <div
+          class="flex flex-col gap-3 p-4 outline outline-1 -outline-offset-1 outline-n-container rounded-xl bg-n-solid-2"
+          data-testid="wallboard-regions"
+        >
+          <div class="flex flex-col gap-0.5">
+            <h3 class="mb-0 text-sm font-medium text-n-slate-12">
+              {{ t('OUTSIDER_VOICE.WALLBOARD.MAP.TITLE') }}
+            </h3>
+            <p class="mb-0 text-xs text-n-slate-11">
+              {{ t('OUTSIDER_VOICE.WALLBOARD.MAP.DESCRIPTION') }}
+            </p>
+          </div>
+          <RegionMap :regions="board.regions" />
+          <p class="mb-0 text-[0.625rem] text-n-slate-10">
+            {{ t('OUTSIDER_VOICE.WALLBOARD.MAP.CREDIT') }}
+          </p>
+        </div>
+
+        <!-- quanto custou -->
+        <div
+          class="flex flex-col gap-3 p-4 outline outline-1 -outline-offset-1 outline-n-container rounded-xl bg-n-solid-2"
+          data-testid="wallboard-costs"
+        >
+          <h3 class="mb-0 text-sm font-medium text-n-slate-12">
+            {{ t('OUTSIDER_VOICE.WALLBOARD.COSTS.TITLE') }}
+          </h3>
+          <CostSummary
+            :costs="board.costs"
+            :previous-cost="board.previous_cost"
+          />
+        </div>
+
         <div class="grid gap-4 xl:grid-cols-3">
           <div
             class="flex flex-col gap-3 p-4 xl:col-span-2 outline outline-1 -outline-offset-1 outline-n-container rounded-xl bg-n-solid-2"
@@ -778,6 +828,46 @@ onMounted(load);
             {{ t('OUTSIDER_VOICE.WALLBOARD.RANKING.TITLE') }}
           </h3>
           <TeamRanking :agents="board.agents" @pick="userId = $event" />
+        </div>
+
+        <!-- por DDD do cliente e por filial -->
+        <div
+          class="grid gap-4"
+          :class="{
+            '2xl:grid-cols-2': board.by_branch.length && !board.user_id,
+          }"
+        >
+          <div
+            class="flex flex-col gap-2 p-4 outline outline-1 -outline-offset-1 outline-n-container rounded-xl bg-n-solid-2"
+            data-testid="wallboard-by-ddd"
+          >
+            <h3 class="mb-0 text-sm font-medium text-n-slate-12">
+              {{ t('OUTSIDER_VOICE.WALLBOARD.BREAKDOWN.BY_DDD') }}
+            </h3>
+            <p v-if="!board.by_ddd.length" class="mb-0 text-sm text-n-slate-11">
+              {{ t('OUTSIDER_VOICE.WALLBOARD.EMPTY') }}
+            </p>
+            <BreakdownTable
+              v-else
+              :rows="board.by_ddd"
+              :heading="t('OUTSIDER_VOICE.WALLBOARD.BREAKDOWN.DDD')"
+              :label="dddLabel"
+            />
+          </div>
+          <div
+            v-if="board.by_branch.length && !board.user_id"
+            class="flex flex-col gap-2 p-4 outline outline-1 -outline-offset-1 outline-n-container rounded-xl bg-n-solid-2"
+            data-testid="wallboard-by-branch"
+          >
+            <h3 class="mb-0 text-sm font-medium text-n-slate-12">
+              {{ t('OUTSIDER_VOICE.WALLBOARD.BREAKDOWN.BY_BRANCH') }}
+            </h3>
+            <BreakdownTable
+              :rows="board.by_branch"
+              :heading="t('OUTSIDER_VOICE.WALLBOARD.BREAKDOWN.BRANCH')"
+              :label="branchLabel"
+            />
+          </div>
         </div>
 
         <div

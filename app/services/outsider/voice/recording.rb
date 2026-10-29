@@ -9,6 +9,16 @@ class Outsider::Voice::Recording
   BEFORE = 4.minutes
   AFTER = 1.minute
 
+  # tira a gravação da ligação (prazo vencido ou apagada pelo administrador). Se ela foi encaminhada para um
+  # contato, a mensagem da conversa usa o mesmo arquivo: aí só solta da ligação e o arquivo fica para a conversa
+  def self.discard(call)
+    attachment = call.recording_attachment
+    return unless attachment
+
+    shared = ActiveStorage::Attachment.where(blob_id: attachment.blob_id).where.not(id: attachment.id).exists?
+    shared ? attachment.destroy! : call.recording.purge
+  end
+
   def initialize(settings, user)
     @settings = settings
     @account = settings.account
@@ -16,7 +26,7 @@ class Outsider::Voice::Recording
   end
 
   def allowed?
-    @settings.recording? && @settings.agent_for(@user.id).present?
+    (@settings.recording? || @settings.auto_record?) && @settings.agent_for(@user.id).present?
   end
 
   def valid_file?(file)

@@ -43,6 +43,15 @@ export const formatPercent = value =>
     ? '—'
     : `${String(value).replace('.', ',')}%`;
 
+// custo das ligações (Entrega 25): "R$ 12,34"; digits = casas (o preço por minuto usa 3)
+export const formatMoney = (value, digits = 2) =>
+  new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+  }).format(value || 0);
+
 const WEEKDAYS = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
 const MONTHS = [
   'jan',

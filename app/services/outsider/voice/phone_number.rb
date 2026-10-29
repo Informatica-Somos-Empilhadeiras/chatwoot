@@ -30,6 +30,17 @@ module Outsider::Voice::PhoneNumber
     "+55#{number}"
   end
 
+  # Número de outro país ("+1 415...", "001415..."), guardado com o "+" para o painel saber que é internacional
+  # (Entrega 25); nil se for do Brasil ou não parecer internacional
+  def foreign(value)
+    text = value.to_s.strip
+    number = digits(text)
+    number = number.delete_prefix('00') if text.start_with?('00')
+    return unless text.start_with?('+', '00') && number.length >= 7 && !number.start_with?('55')
+
+    "+#{number}"
+  end
+
   # Mesmo número com ou sem o 9 da frente: compara DDD e os 8 últimos dígitos
   def same?(first, second)
     a = national(first)

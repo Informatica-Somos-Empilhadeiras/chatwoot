@@ -30,7 +30,7 @@ class Outsider::Voice::Settings
 
   DEFAULTS = {
     'enabled' => false, 'ws_url' => '', 'public_ip' => '', 'ring_seconds' => 20, 'owner_first' => true, 'dial_format' => 'ddd',
-    'time_zone' => 'America/Sao_Paulo', 'recording' => true,
+    'time_zone' => 'America/Sao_Paulo', 'recording' => true, 'auto_record' => false, 'recording_days' => 365, 'branches' => [],
     'trunk' => { 'host' => '', 'port' => 5060, 'transport' => 'udp', 'auth' => 'register', 'username' => '', 'auth_username' => '',
                  'ips' => [] },
     'numbers' => [], 'agents' => {}
@@ -49,9 +49,7 @@ class Outsider::Voice::Settings
     end
   end
 
-  def enabled?
-    data['enabled'] == true
-  end
+  def enabled? = data['enabled'] == true
 
   def trunk
     data['trunk'].merge('password' => decrypt(data['trunk']['password_encrypted']))
@@ -61,17 +59,13 @@ class Outsider::Voice::Settings
     trunk['host'].present? && (trunk['auth'] == 'ip' || (trunk['username'].present? && trunk['password'].present?))
   end
 
-  def numbers
-    data['numbers']
-  end
+  def numbers = data['numbers']
 
   def number_for(did)
     numbers.find { |row| Outsider::Voice::PhoneNumber.same?(row['number'], did) }
   end
 
-  def number_for_state(state)
-    numbers.find { |row| row['state'] == state } || numbers.first
-  end
+  def number_for_state(state) = numbers.find { |row| row['state'] == state } || numbers.first
 
   # { user_id (inteiro) => { 'extension', 'state', 'enabled' } } só dos ramais ligados
   def enabled_agents
@@ -92,7 +86,8 @@ class Outsider::Voice::Settings
 
   # Para a tela (só administrador): a senha da operadora nunca volta, só se ela existe
   def as_json(*)
-    data.merge('trunk' => data['trunk'].except('password_encrypted').merge('password_set' => data['trunk']['password_encrypted'].present?))
+    data.merge('trunk' => data['trunk'].except('password_encrypted').merge('password_set' => data['trunk']['password_encrypted'].present?),
+               'costs' => costs, 'recording_days' => recording_days)
   end
 
   def update(params)
@@ -107,14 +102,16 @@ class Outsider::Voice::Settings
 
   private
 
+  # extras primeiro: as filiais limpas valem para o campo filial dos ramais
   def clean(params)
+    extras = clean_extras(params)
     {
       'enabled' => boolean(params['enabled']), 'ws_url' => url(params['ws_url']), 'public_ip' => public_ip(params['public_ip']),
       'ring_seconds' => ring_seconds(params['ring_seconds']), 'owner_first' => boolean(params['owner_first']),
       'dial_format' => choice(params['dial_format'], DIAL_FORMATS, 'dial_format'),
       'trunk' => clean_trunk(params['trunk'].to_h), 'numbers' => clean_numbers(Array(params['numbers'])),
       'agents' => clean_agents(params['agents'].to_h)
-    }.merge(clean_extras(params))
+    }.merge(extras)
   end
 
   def clean_trunk(trunk)
@@ -156,7 +153,8 @@ class Outsider::Voice::Settings
     @errors << "agents.#{user_id}.extension" unless extension.empty? || (extension.match?(EXTENSION) && extensions.exclude?(extension))
     @errors << "agents.#{user_id}.state" if agent['state'].present? && STATES.exclude?(agent['state'])
     extensions << extension
-    { 'extension' => extension, 'state' => agent['state'].presence, 'enabled' => boolean(agent['enabled']) }
+    { 'extension' => extension, 'state' => agent['state'].presence, 'enabled' => boolean(agent['enabled']),
+      'branch' => clean_branch_id(agent['branch']) }
   end
 
   def host(value)

@@ -9,9 +9,8 @@ class Api::V1::Accounts::Outsider::VoiceController < Api::V1::Accounts::BaseCont
 
     render json: {
       enabled: true, ws_url: settings.data['ws_url'], extension: agent['extension'], name: Current.user.name,
-      password: settings.sip_password(Current.user.id, agent['extension']), echo_extension: ::Outsider::Voice::Settings::ECHO_EXTENSION,
-      recording: settings.recording?
-    }
+      password: settings.sip_password(Current.user.id, agent['extension']), echo_extension: ::Outsider::Voice::Settings::ECHO_EXTENSION
+    }.merge(recording_flags)
   end
 
   def lookup
@@ -45,6 +44,11 @@ class Api::V1::Accounts::Outsider::VoiceController < Api::V1::Accounts::BaseCont
   end
 
   private
+
+  # botão Gravar e gravação automática (Entregas 24 e 25)
+  def recording_flags
+    { recording: settings.recording?, auto_record: settings.auto_record? }
+  end
 
   # [{ "number", "started_at" }], vindo do navegador como JSON
   def recording_parties

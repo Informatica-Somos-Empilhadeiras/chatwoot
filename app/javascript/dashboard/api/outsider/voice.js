@@ -68,6 +68,24 @@ class VoiceAPI extends ApiClient {
   deleteRecording(callId) {
     return axios.delete(`${this.url}/crm/calls/${callId}/recording`);
   }
+
+  // Entrega 25: tela de gravações (month = AAAA-MM, user_id, q) e encaminhar uma gravação para um contato
+  getRecordings(params) {
+    return axios.get(`${this.url}/crm/call_recordings`, { params });
+  }
+
+  getRecordingForwardOptions(callId, params) {
+    return axios.get(`${this.url}/crm/call_recordings/${callId}/forward`, {
+      params,
+    });
+  }
+
+  forwardRecording(callId, payload) {
+    return axios.post(
+      `${this.url}/crm/call_recordings/${callId}/forward`,
+      payload
+    );
+  }
 }
 
 export default new VoiceAPI();

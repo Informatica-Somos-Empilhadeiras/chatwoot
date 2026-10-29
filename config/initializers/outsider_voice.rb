@@ -23,6 +23,12 @@ Rails.application.routes.prepend do
                 end
                 delete :recording, on: :member, action: :destroy_recording
               end
+              resources :call_recordings, only: [:index] do
+                member do
+                  get :forward, action: :forward_options
+                  post :forward
+                end
+              end
             end
           end
         end
@@ -42,3 +48,12 @@ Rails.application.routes.prepend do
   end
 end
 # rubocop:enable Metrics/BlockLength
+
+# OUTSIDER: gravações de ligação vencidas (Entrega 25), uma vez por dia de madrugada. Job criado um a um (create),
+# nunca com load_from_hash!, que apaga os agendamentos do schedule.yml que não estiverem no hash.
+Rails.application.reloader.to_prepare do
+  if Sidekiq.server?
+    Sidekiq::Cron::Job.create(name: 'outsider_voice_recording_cleanup_job', cron: '40 4 * * *',
+                              class: 'Outsider::Voice::RecordingCleanupJob', queue: 'scheduled_jobs')
+  end
+end

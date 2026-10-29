@@ -1,12 +1,13 @@
 <script setup>
 // OUTSIDER: a equipe no período (Entrega 24), no painel do gestor com a equipe toda: ligações de cada vendedor
 // (com a barra do tamanho em relação a quem mais ligou), feitas, taxa de contato, recebidas atendidas e
-// tempos. Clicar escolhe o vendedor no painel. Ordena por qualquer coluna.
+// tempos. Clicar escolhe o vendedor no painel. Ordena por qualquer coluna. Entrega 25: o custo das ligações
+// e a filial de cada vendedor.
 import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import Avatar from 'dashboard/components-next/avatar/Avatar.vue';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
-import { formatDuration, formatTalkTime } from '../format';
+import { formatDuration, formatMoney, formatTalkTime } from '../format';
 
 const props = defineProps({
   agents: { type: Array, required: true },
@@ -27,6 +28,7 @@ const COLUMNS = [
   { key: 'inbound_answered' },
   { key: 'talk_seconds', format: formatTalkTime },
   { key: 'average_talk', format: formatDuration },
+  { key: 'cost', format: value => formatMoney(value) },
 ];
 
 const sortBy = ref('total');
@@ -54,7 +56,7 @@ const show = (column, agent) =>
           <th
             v-for="column in COLUMNS"
             :key="column.key"
-            class="px-2 py-2 font-normal text-right whitespace-nowrap"
+            class="px-2 py-2 font-normal text-right align-bottom"
           >
             <button
               type="button"
@@ -93,7 +95,15 @@ const show = (column, agent) =>
                 rounded-full
               />
               <span class="flex flex-col flex-1 min-w-0 gap-1">
-                <span class="truncate text-n-slate-12">{{ agent.name }}</span>
+                <span class="flex items-baseline min-w-0 gap-1.5">
+                  <span class="truncate text-n-slate-12">{{ agent.name }}</span>
+                  <span
+                    v-if="agent.branch"
+                    class="text-xs truncate text-n-slate-11"
+                  >
+                    {{ agent.branch }}
+                  </span>
+                </span>
                 <span class="h-1 rounded-full bg-n-alpha-2">
                   <span
                     class="block h-full rounded-full bg-n-blue-9"

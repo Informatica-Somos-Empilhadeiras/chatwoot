@@ -28,7 +28,7 @@ class Outsider::Voice::Wallboard
       talk_buckets: metrics.talk_buckets, wait_buckets: metrics.wait_buckets, service_seconds: Outsider::Voice::CallMetrics::SERVICE_SECONDS,
       by_hour: by_hour, timeline: timeline, by_weekday_hour: by_weekday_hour, to_return: to_return,
       agents: @access.manager? ? agents : [], live: live, goal: goal
-    }
+    }.merge(money)
   end
 
   # as ligações do período (de quem está sendo visto), para as planilhas e o PDF
@@ -38,6 +38,15 @@ class Outsider::Voice::Wallboard
 
   def metrics
     @metrics ||= Outsider::Voice::CallMetrics.new(calls)
+  end
+
+  # mapa, custos, DDD e filiais (Entrega 25), com o custo do período anterior para comparar
+  def money
+    breakdown.to_h.merge(previous_cost: Outsider::Voice::CallBreakdown.new(@settings, previous_calls).cost_of(previous_calls))
+  end
+
+  def breakdown
+    @breakdown ||= Outsider::Voice::CallBreakdown.new(@settings, calls)
   end
 
   # dia a dia (ou mês a mês, em período longo): ligações de cada tipo, minutos e taxa de atendimento
@@ -71,7 +80,7 @@ class Outsider::Voice::Wallboard
   end
 
   def previous_calls
-    scope.where(started_at: @period.previous).to_a
+    @previous_calls ||= scope.where(started_at: @period.previous).to_a
   end
 
   def timeline_key(date)
@@ -122,11 +131,13 @@ class Outsider::Voice::Wallboard
   end
 
   def agent_row(user)
-    metrics = Outsider::Voice::CallMetrics.new(calls_by_user.fetch(user.id, [])).to_h
-    { id: user.id, name: user.name, thumbnail: user.avatar_url }.merge(
-      metrics.slice(:total, :outbound, :outbound_answered, :contact_rate, :inbound_answered, :internal, :talk_seconds, :average_talk,
-                    :customers)
-    )
+    list = calls_by_user.fetch(user.id, [])
+    metrics = Outsider::Voice::CallMetrics.new(list).to_h
+    { id: user.id, name: user.name, thumbnail: user.avatar_url, cost: breakdown.cost_of(list),
+      branch: @settings.branch_for(user.id)&.dig('name') }.merge(
+        metrics.slice(:total, :outbound, :outbound_answered, :contact_rate, :inbound_answered, :internal, :talk_seconds, :average_talk,
+                      :customers)
+      )
   end
 
   def live_calls

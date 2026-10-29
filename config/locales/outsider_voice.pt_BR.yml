@@ -1,3 +1,13 @@
 pt_BR:
   outsider_voice:
     return_task: 'Retornar ligação de %{name}'
+    recording_forward:
+      subject: 'Gravação da ligação de %{date}'
+      errors:
+        no_recording: 'Esta ligação não tem gravação.'
+        channel: 'Escolha WhatsApp ou e-mail.'
+        contact: 'Escolha um contato.'
+        no_phone: 'O contato não tem telefone.'
+        no_email: 'O contato não tem e-mail.'
+        inbox: 'Escolha uma caixa que você atende.'
+        too_long: 'A mensagem está longa demais.'

@@ -6,6 +6,8 @@ export const VOICE_ROUTE = 'outsider_voice';
 const SECTIONS = [
   { key: 'dashboard', icon: 'i-lucide-layout-dashboard', voice: true },
   { key: 'calls', icon: 'i-lucide-phone-call', voice: true },
+  // Entrega 25
+  { key: 'recordings', icon: 'i-lucide-audio-lines', voice: true },
   { key: 'settings', icon: 'i-lucide-settings-2', admin: true },
 ];
 

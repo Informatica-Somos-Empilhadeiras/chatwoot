@@ -2,6 +2,8 @@
 // OUTSIDER: Telefonia > Configurações (Entrega 22; ver app/services/outsider/voice/settings.rb). Os dados que a
 // operadora manda (colados no quadro de texto ou digitados), os números por estado, os ramais e as regras de
 // toque. Mostra também se a central está conectada, registrada na operadora e quais ramais estão online.
+// Entrega 25: a mesma tela mostra também as partes Gravações, Custos e Filiais (prop part), cada uma no seu
+// item do menu, e salva tudo junto como antes.
 import { ref, computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useAlert } from 'dashboard/composables';
@@ -17,10 +19,39 @@ import { errorMessage } from '../../../crm/helpers';
 import { STATES, stateForNumber } from '../../brazil';
 import { formatPhone } from '../../format';
 import { parseOperatorText } from '../../operatorText';
+import RecordingSettings from './RecordingSettings.vue';
+import CostSettings from './CostSettings.vue';
+import BranchSettings from './BranchSettings.vue';
+
+const props = defineProps({
+  // central | recording | costs | branches
+  part: { type: String, default: 'central' },
+});
 
 const FIRST_EXTENSION = 201;
 
 const { t } = useI18n();
+
+const heading = computed(() =>
+  props.part === 'central'
+    ? {
+        title: t('OUTSIDER_VOICE.SETTINGS.TITLE'),
+        description: t('OUTSIDER_VOICE.SETTINGS.DESCRIPTION'),
+      }
+    : {
+        title: t(`OUTSIDER_VOICE.SETTINGS.${props.part.toUpperCase()}.TITLE`),
+        description: t(
+          `OUTSIDER_VOICE.SETTINGS.${props.part.toUpperCase()}.DESCRIPTION`
+        ),
+      }
+);
+
+// R$ com vírgula na tela; o servidor aceita os dois
+const decimal = value => {
+  const number = Number(value || 0);
+  const places = (String(number).split('.')[1] || '').length;
+  return number.toFixed(Math.max(2, places)).replace('.', ',');
+};
 
 const form = ref(null);
 const status = ref({});
@@ -122,6 +153,11 @@ const apply = data => {
   data.people.forEach(person => {
     settings.agents[person.id] ||= { extension: '', state: '', enabled: false };
     settings.agents[person.id].state ||= '';
+    settings.agents[person.id].branch ||= '';
+  });
+  Object.values(settings.costs.rates).forEach(rate => {
+    rate.minute = decimal(rate.minute);
+    rate.call = decimal(rate.call);
   });
   form.value = settings;
   ipsText.value = settings.trunk.ips.join('\n');
@@ -206,9 +242,11 @@ const payload = () => {
     },
     agents: Object.fromEntries(
       Object.entries(form.value.agents).filter(
-        ([, agent]) => agent.extension || agent.enabled
+        ([, agent]) => agent.extension || agent.enabled || agent.branch
       )
     ),
+    // filial nova que ficou sem nome não vai
+    branches: form.value.branches.filter(branch => branch.name.trim()),
   };
 };
 
@@ -235,10 +273,7 @@ onMounted(load);
 </script>
 
 <template>
-  <SettingsSection
-    :title="t('OUTSIDER_VOICE.SETTINGS.TITLE')"
-    :description="t('OUTSIDER_VOICE.SETTINGS.DESCRIPTION')"
-  >
+  <SettingsSection :title="heading.title" :description="heading.description">
     <template #actions>
       <Button
         size="sm"
@@ -251,6 +286,22 @@ onMounted(load);
     </template>
 
     <Spinner v-if="isLoading" :size="20" class="text-n-slate-10" />
+    <RecordingSettings
+      v-else-if="part === 'recording'"
+      v-model:form="form"
+      :errors="errors"
+    />
+    <CostSettings
+      v-else-if="part === 'costs'"
+      v-model:form="form"
+      :errors="errors"
+    />
+    <BranchSettings
+      v-else-if="part === 'branches'"
+      v-model:form="form"
+      :people="people"
+      :errors="errors"
+    />
     <template v-else>
       <!-- central: ligada, conectada, registrada e ramais online -->
       <div
@@ -611,17 +662,6 @@ onMounted(load);
             />
             <span class="text-xs text-n-slate-11">
               {{ t('OUTSIDER_VOICE.SETTINGS.RINGING.TIME_ZONE_HELP') }}
-            </span>
-          </label>
-          <label class="flex items-start gap-3 cursor-pointer sm:pt-6">
-            <Switch v-model="form.recording" class="mt-0.5" />
-            <span class="flex flex-col gap-0.5">
-              <span class="text-sm text-n-slate-12">
-                {{ t('OUTSIDER_VOICE.SETTINGS.RINGING.RECORDING') }}
-              </span>
-              <span class="text-xs text-n-slate-11">
-                {{ t('OUTSIDER_VOICE.SETTINGS.RINGING.RECORDING_HELP') }}
-              </span>
             </span>
           </label>
         </div>

@@ -4,7 +4,13 @@
 // quem tem ramal ligado. Com o telefone na janela própria (Entrega 24), mostra a janela.
 import { useI18n } from 'vue-i18n';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
-import { phone, panel, setPanelOpen, showPopout } from './phone';
+import {
+  phone,
+  panel,
+  setPanelOpen,
+  showPopout,
+  askNotifications,
+} from './phone';
 
 const DOT = {
   ready: 'bg-n-teal-9',
@@ -17,6 +23,7 @@ const DOT = {
 const { t } = useI18n();
 
 const toggle = () => {
+  askNotifications();
   if (phone.popout && !phone.holder) showPopout();
   else setPanelOpen(!panel.open);
 };

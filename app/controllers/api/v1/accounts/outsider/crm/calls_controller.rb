@@ -36,7 +36,7 @@ class Api::V1::Accounts::Outsider::Crm::CallsController < Api::V1::Accounts::Out
     return render_forbidden unless crm_access.administrator?
 
     call = ::Outsider::Voice::Call.find_by!(account_id: Current.account.id, id: params[:id])
-    call.recording.purge_later
+    ::Outsider::Voice::Recording.discard(call)
     head :no_content
   end
 

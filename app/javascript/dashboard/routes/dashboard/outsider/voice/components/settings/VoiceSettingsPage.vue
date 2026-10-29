@@ -10,12 +10,20 @@ import CallGoalsSettings from './CallGoalsSettings.vue';
 const { t } = useI18n();
 const route = useRoute();
 
+// Entrega 25: gravações, custos e filiais (a mesma tela da central, outra parte)
 const SECTIONS = [
   { key: 'central', icon: 'i-lucide-phone' },
+  { key: 'recording', icon: 'i-lucide-disc-3' },
+  { key: 'costs', icon: 'i-lucide-receipt' },
+  { key: 'branches', icon: 'i-lucide-building-2' },
   { key: 'goals', icon: 'i-lucide-target' },
 ];
 
-const active = ref(route.query.secao === 'goals' ? 'goals' : 'central');
+const active = ref(
+  SECTIONS.some(section => section.key === route.query.secao)
+    ? route.query.secao
+    : 'central'
+);
 </script>
 
 <template>
@@ -38,8 +46,8 @@ const active = ref(route.query.secao === 'goals' ? 'goals' : 'central');
       </button>
     </nav>
     <div class="flex-1 min-w-0">
-      <VoiceSettings v-if="active === 'central'" />
-      <CallGoalsSettings v-else />
+      <CallGoalsSettings v-if="active === 'goals'" />
+      <VoiceSettings v-else :key="active" :part="active" />
     </div>
   </div>
 </template>

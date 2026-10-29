@@ -1,3 +1,13 @@
 en:
   outsider_voice:
     return_task: 'Return call from %{name}'
+    recording_forward:
+      subject: 'Call recording from %{date}'
+      errors:
+        no_recording: 'This call has no recording.'
+        channel: 'Choose WhatsApp or email.'
+        contact: 'Choose a contact.'
+        no_phone: 'The contact has no phone number.'
+        no_email: 'The contact has no email.'
+        inbox: 'Choose an inbox you work in.'
+        too_long: 'The message is too long.'
