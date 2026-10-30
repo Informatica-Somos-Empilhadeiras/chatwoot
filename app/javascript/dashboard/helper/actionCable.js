@@ -64,6 +64,7 @@ class ActionCableConnector extends BaseActionCableConnector {
       'voice_call.outbound_connected': this.onVoiceCallOutboundConnected,
       'voice_call.outbound_accepted': this.onVoiceCallOutboundAccepted,
       'voice_call.ended': this.onVoiceCallEnded,
+      'outsider.notice': data => emitter.emit('outsider:notice', data), // OUTSIDER: avisos do Somos (ex.: transferência)
     };
   }
 

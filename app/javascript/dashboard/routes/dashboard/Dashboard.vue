@@ -31,6 +31,8 @@ import { useCallsStore } from 'dashboard/stores/calls';
 import WaitingConversationsAlert from './outsider/waitingAlert/WaitingConversationsAlert.vue';
 // OUTSIDER: telefone (painel fixo no canto ou, minimizado, só o cartão da ligação)
 import OutsiderPhoneDock from './outsider/voice/PhoneDock.vue';
+// OUTSIDER: avisos de transferência de conversa e aparência da conta (favicon, título, logo, fundo)
+import OutsiderGlobal from './outsider/OutsiderGlobal.vue';
 
 export default {
   components: {
@@ -47,6 +49,7 @@ export default {
     EditMessageDialog,
     WaitingConversationsAlert, // OUTSIDER
     OutsiderPhoneDock, // OUTSIDER
+    OutsiderGlobal, // OUTSIDER
   },
   setup() {
     const upgradePageRef = ref(null);
@@ -191,4 +194,6 @@ export default {
   <EditMessageDialog />
   <!-- OUTSIDER: telefone -->
   <OutsiderPhoneDock />
+  <!-- OUTSIDER: transferência de conversa e aparência da conta -->
+  <OutsiderGlobal />
 </template>

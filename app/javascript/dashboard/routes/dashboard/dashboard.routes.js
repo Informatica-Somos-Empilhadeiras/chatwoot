@@ -7,6 +7,7 @@ import { routes as outsiderWhatsappStatusRoutes } from './outsider/whatsappStatu
 import { routes as outsiderCrmRoutes } from './outsider/crm/routes'; // OUTSIDER: CRM de vendas
 import { routes as outsiderVoiceRoutes } from './outsider/voice/routes'; // OUTSIDER: Telefonia
 import { routes as outsiderPhoneWindowRoutes } from './outsider/voice/windowRoutes'; // OUTSIDER: telefone na janela própria
+import { routes as outsiderSettingsRoutes } from './outsider/settings/routes'; // OUTSIDER: Aparência e Automação por bot
 import { routes as notificationRoutes } from './notifications/routes';
 import { routes as inboxRoutes } from './inbox/routes';
 import { frontendURL } from '../../helper/URLHelper';
@@ -34,6 +35,7 @@ export default {
         ...outsiderWhatsappStatusRoutes, // OUTSIDER
         ...outsiderCrmRoutes, // OUTSIDER
         ...outsiderVoiceRoutes, // OUTSIDER
+        ...outsiderSettingsRoutes, // OUTSIDER
         ...searchRoutes,
         ...notificationRoutes,
         ...helpcenterRoutes.routes,

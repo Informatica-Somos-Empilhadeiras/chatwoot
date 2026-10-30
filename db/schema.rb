@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_10_25_120000) do
+ActiveRecord::Schema[7.1].define(version: 2026_10_30_130000) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -1226,6 +1226,35 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_25_120000) do
     t.index ["user_id"], name: "index_notifications_on_user_id"
   end
 
+  create_table "outsider_bot_flows", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.string "name", null: false
+    t.boolean "active", default: false, null: false
+    t.jsonb "inbox_ids", default: [], null: false
+    t.jsonb "graph", default: {}, null: false
+    t.bigint "created_by_id"
+    t.bigint "updated_by_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id", "active"], name: "index_outsider_bot_flows_on_account_id_and_active"
+  end
+
+  create_table "outsider_bot_sessions", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.bigint "flow_id", null: false
+    t.bigint "conversation_id", null: false
+    t.string "node_id"
+    t.integer "status", default: 0, null: false
+    t.jsonb "waiting", default: {}, null: false
+    t.jsonb "variables", default: {}, null: false
+    t.datetime "expires_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id", "flow_id", "created_at"], name: "idx_obot_sessions_on_flow"
+    t.index ["conversation_id", "created_at"], name: "index_outsider_bot_sessions_on_conversation_id_and_created_at"
+    t.index ["conversation_id"], name: "idx_obot_sessions_one_active", unique: true, where: "(status = 0)"
+  end
+
   create_table "outsider_crm_activities", force: :cascade do |t|
     t.bigint "account_id", null: false
     t.bigint "opportunity_id", null: false
@@ -1517,6 +1546,22 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_25_120000) do
     t.index ["account_id", "assignee_id", "completed_at"], name: "idx_ocrm_tasks_on_account_assignee_done"
     t.index ["account_id"], name: "index_outsider_crm_tasks_on_account_id"
     t.index ["opportunity_id"], name: "index_outsider_crm_tasks_on_opportunity_id"
+  end
+
+  create_table "outsider_transfer_requests", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.bigint "conversation_id", null: false
+    t.bigint "requester_id", null: false
+    t.bigint "holder_id", null: false
+    t.integer "status", default: 0, null: false
+    t.string "note", limit: 500
+    t.datetime "decided_at"
+    t.datetime "acknowledged_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id", "holder_id", "status"], name: "idx_otransfer_requests_on_holder"
+    t.index ["account_id", "requester_id", "status"], name: "idx_otransfer_requests_on_requester"
+    t.index ["conversation_id", "requester_id"], name: "idx_otransfer_requests_one_pending", unique: true, where: "(status = 0)"
   end
 
   create_table "outsider_voice_calls", force: :cascade do |t|

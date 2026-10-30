@@ -3,7 +3,7 @@ pt_BR:
     switch:
       enabled: Ligado
       disabled: Desligado
-      hint: "Mostra o CRM nesta conta. Com ele ligado, todos os agentes têm acesso; o administrador da conta pode desligar para cada agente em CRM > Configurações > Acesso."
+      hint: "Mostra o CRM nesta conta. Com ele ligado, todos os agentes têm acesso; o administrador da conta pode desligar para cada agente em CRM > Configurações > Acesso. Não confunda com o recurso “CRM” da lista de recursos da conta: aquele mostra o menu Contatos e deve ficar marcado."
     errors:
       duplicate_open_opportunity: Este contato já tem uma oportunidade aberta nesta unidade
       group_contact: Grupos do WhatsApp não podem ter negócios
@@ -334,4 +334,4 @@ pt_BR:
   helpers:
     label:
       account:
-        outsider_crm_enabled: CRM
+        outsider_crm_enabled: CRM de vendas (Somos)

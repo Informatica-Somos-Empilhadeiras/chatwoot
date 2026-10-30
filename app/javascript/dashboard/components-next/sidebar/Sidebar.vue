@@ -24,6 +24,7 @@ import Logo from 'next/icon/Logo.vue';
 import { crmSidebarItems } from 'dashboard/routes/dashboard/outsider/crm/sidebar';
 import { voiceSidebarItems } from 'dashboard/routes/dashboard/outsider/voice/sidebar'; // OUTSIDER: Telefonia
 import OutsiderPhoneButton from 'dashboard/routes/dashboard/outsider/voice/PhoneButton.vue'; // OUTSIDER: telefonia
+import { outsiderSettingsItems } from 'dashboard/routes/dashboard/outsider/settings/sidebar'; // OUTSIDER: Aparência e bot
 import ComposeConversation from 'dashboard/components-next/NewConversation/ComposeConversation.vue';
 import {
   SIDEBAR_SORT_SECTIONS,
@@ -775,6 +776,7 @@ const menuItems = computed(() => {
           icon: 'i-lucide-briefcase',
           to: accountScopedRoute('general_settings_index'),
         },
+        ...outsiderSettingsItems(t, accountScopedRoute), // OUTSIDER
         // {
         //   name: 'Settings Captain',
         //   label: t('SIDEBAR.CAPTAIN_AI'),

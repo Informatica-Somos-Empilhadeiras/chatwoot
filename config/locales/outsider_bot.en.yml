@@ -1,0 +1,17 @@
+en:
+  # OUTSIDER: bot texts (Outsider::Bot::Runner and Outsider::Bot::Starter)
+  outsider_bot:
+    invalid_option: "Sorry, I didn't get that 🤔 Please pick one of the options below."
+    attachment_answer: "[attachment]"
+    starter:
+      welcome: "Hi, {{contato.primeiro_nome}}! 👋 Welcome."
+      menu_text: "How can we help you today?"
+      menu_footer: "Tap an option or reply with its number"
+      menu_button: "See options"
+      buy: "Buy"
+      rent: "Rental"
+      support: "Technical support"
+      invalid: "Sorry, I didn't get that 🤔 Please pick one of the options."
+      closed: "We are closed right now. Leave your message and we will reply as soon as we are back! 🕗"
+      to_sales: "Great! Someone from sales will talk to you in a moment. 😊"
+      to_support: "Sure! Passing you to our technical support. One moment."

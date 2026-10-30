@@ -1,17 +1,18 @@
 <script setup>
-import { useAttrs } from 'vue';
+import { useAttrs, computed } from 'vue';
 import { useMapGetter } from 'dashboard/composables/store';
+import { brandingState } from 'dashboard/routes/dashboard/outsider/branding/useAccountBranding'; // OUTSIDER
 
 const attrs = useAttrs();
 const globalConfig = useMapGetter('globalConfig/get');
+// OUTSIDER: logo da conta (Configurações > Aparência) no lugar do logo da instalação
+const logoSrc = computed(
+  () => brandingState.logoUrl || globalConfig.value.logoThumbnail
+);
 </script>
 
 <template>
-  <img
-    v-if="globalConfig.logoThumbnail"
-    v-bind="attrs"
-    :src="globalConfig.logoThumbnail"
-  />
+  <img v-if="logoSrc" v-bind="attrs" :src="logoSrc" />
   <svg
     v-else
     v-once

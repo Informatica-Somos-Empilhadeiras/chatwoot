@@ -2,6 +2,7 @@
 // ======================
 // OUTSIDER FUNCTION
 import ConversationSearchBar from './widgets/conversation/ConversationSearchBar.vue';
+import QuickSearchResults from './widgets/conversation/outsider/QuickSearchResults.vue';
 import { SHOW_WAITING_TAB_EVENT } from 'dashboard/routes/dashboard/outsider/waitingAlert/config';
 // ======================
 
@@ -84,8 +85,7 @@ const activeStatus = ref(wootConstants.STATUS_TYPE.OPEN);
 
 // ==================================
 // OUTSIDER CONSTANTS
-const searchResults = ref([]);
-const isSearchActive = ref(false);
+const isSearchActive = ref(false); // busca ativa: os resultados ficam no lugar da lista
 const { isPinned } = useConversationPins();
 // OUTSIDER CONSTANTS
 // ==================================
@@ -334,10 +334,6 @@ function sortByUnreadStatus(conversations) {
 }
 
 const conversationList = computed(() => {
-  if (isSearchActive.value) {
-    return searchResults.value;
-  }
-
   let localConversationList = [];
 
   if (!hasAppliedFiltersOrActiveFolders.value) {
@@ -971,13 +967,19 @@ watch(conversationFilters, (newVal, oldVal) => {
       @chat-tab-change="updateAssigneeTab"
     />
 
-    <ConversationSearchBar
-      @update:results="searchResults = $event"
-      @update:active="isSearchActive = $event"
+    <ConversationSearchBar @update:active="isSearchActive = $event" />
+    <!-- OUTSIDER: resultados da busca (conversas, contatos e mensagens) no lugar da lista -->
+    <QuickSearchResults
+      v-if="isSearchActive"
+      :label="label"
+      :team-id="teamId"
+      :folders-id="foldersId"
+      :conversation-type="conversationType"
+      :show-assignee="showAssigneeInConversationCard"
     />
 
     <p
-      v-if="!chatListLoading && !conversationList.length"
+      v-if="!chatListLoading && !conversationList.length && !isSearchActive"
       class="flex overflow-auto justify-center items-center p-4"
     >
       {{ $t('CHAT_LIST.LIST.404') }}
@@ -993,6 +995,7 @@ watch(conversationFilters, (newVal, oldVal) => {
       @select-all-conversations="toggleSelectAll"
     />
     <ConversationList
+      v-show="!isSearchActive"
       :conversation-list="conversationList"
       :is-loading="chatListLoading"
       :show-end-of-list-message="showEndOfListMessage"

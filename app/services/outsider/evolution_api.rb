@@ -99,6 +99,18 @@ class Outsider::EvolutionApi
     post("/message/sendContact/#{@instance}", { number: number, contact: contact })
   end
 
+  # Menu em lista do WhatsApp (bot): sections = [{ title:, rows: [{ title:, description:, rowId: }] }]
+  def send_list(number:, description:, button_text:, sections:, title: '', footer_text: '')
+    post("/message/sendList/#{@instance}", { number: number, title: title, description: description, buttonText: button_text,
+                                             footerText: footer_text, sections: sections, delay: 1200 }.compact)
+  end
+
+  # Botões de resposta rápida do WhatsApp (bot), até 3: buttons = [{ type: 'reply', displayText:, id: }]
+  def send_buttons(number:, title:, buttons:, description: nil, footer: nil)
+    post("/message/sendButtons/#{@instance}", { number: number, title: title, description: description, footer: footer,
+                                                buttons: buttons, delay: 1200 }.compact)
+  end
+
   # Envia uma localização (o pin de mapa do WhatsApp). Devolve a mensagem enviada, com key.id
   def send_location(number:, latitude:, longitude:, name: nil, address: nil)
     post("/message/sendLocation/#{@instance}", { number: number, latitude: latitude, longitude: longitude, name: name, address: address }.compact)

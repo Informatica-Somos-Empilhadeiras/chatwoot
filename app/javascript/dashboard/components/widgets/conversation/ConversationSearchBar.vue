@@ -1,78 +1,31 @@
 <script setup>
-import { ref } from 'vue';
+// OUTSIDER: barra de busca da lista de conversas. Busca conversas, contatos e mensagens
+// (useQuickSearch); os resultados aparecem no lugar da lista (QuickSearchResults.vue).
+import { computed, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useStore } from 'dashboard/composables/store';
-import { debounce } from '@chatwoot/utils';
-import ConversationSearchAPI from 'dashboard/api/outsider/conversationSearch';
-import SearchLockedConversation from './SearchLockedConversation.vue';
+import { useQuickSearch } from 'dashboard/composables/outsider/useQuickSearch';
 
-const emit = defineEmits(['update:results', 'update:active']);
+const emit = defineEmits(['update:active']);
 
-const store = useStore();
 const { t } = useI18n();
+const { state, isSearchActive, setQuery, clear } = useQuickSearch();
 
-const query = ref('');
-const isSearching = ref(false);
-// conversas com outros agentes: aparecem aqui, sem abrir, para saber com quem está o contato
-const lockedResults = ref([]);
-// só vale a resposta da última busca (quem digita rápido dispara várias)
-let lastRequest = 0;
+const query = computed({
+  get: () => state.query,
+  set: value => setQuery(value),
+});
 
-const reset = () => {
-  lastRequest += 1;
-  isSearching.value = false;
-  lockedResults.value = [];
-  emit('update:active', false);
-  emit('update:results', []);
-};
-
-// O servidor já devolve uma conversa por contato e caixa (a não resolvida ou a mais
-// recente), só das caixas do agente, e marca as que estão com outro agente.
-const runSearch = debounce(async () => {
-  const q = query.value.trim();
-  if (q.length < 2) {
-    reset();
-    return;
-  }
-
-  lastRequest += 1;
-  const request = lastRequest;
-  isSearching.value = true;
-  emit('update:active', true);
-
-  try {
-    const { data } = await ConversationSearchAPI.search(q);
-    if (request !== lastRequest) return;
-
-    const conversations = data.payload;
-    // o card da lista pega o nome e a foto do contato na store
-    conversations.forEach(conversation =>
-      store.dispatch('contacts/setContact', conversation.meta.sender)
-    );
-    lockedResults.value = conversations.filter(c => c.outsider_locked);
-    emit(
-      'update:results',
-      conversations.filter(c => !c.outsider_locked)
-    );
-  } catch (error) {
-    if (request !== lastRequest) return;
-    // eslint-disable-next-line no-console
-    console.error('[ConversationSearchBar] Falha na busca:', error);
-    lockedResults.value = [];
-    emit('update:results', []);
-  } finally {
-    if (request === lastRequest) isSearching.value = false;
-  }
-}, 300);
-
-const onInput = () => {
-  runSearch();
+const onKeydown = event => {
+  if (event.key === 'Escape') clear();
 };
 
 const clearSearch = () => {
-  query.value = '';
-  reset();
+  clear();
 };
+
+watch(isSearchActive, active => emit('update:active', active), {
+  immediate: true,
+});
 </script>
 
 <template>
@@ -104,7 +57,7 @@ const clearSearch = () => {
         type="text"
         :placeholder="t('CHAT_LIST.OUTSIDER_SEARCH.PLACEHOLDER')"
         class="block w-full min-w-0 h-10 !m-0 !p-0 !border-0 !outline-none !ring-0 !bg-transparent appearance-none text-sm leading-5 text-n-slate-12 placeholder:text-n-slate-10 truncate"
-        @input="onInput"
+        @keydown="onKeydown"
       />
 
       <!-- Limpar -->
@@ -127,26 +80,6 @@ const clearSearch = () => {
           <line x1="6" y1="6" x2="18" y2="18" />
         </svg>
       </button>
-    </div>
-
-    <div v-if="isSearching" class="mt-1 text-xs text-n-slate-11 text-center">
-      {{ t('CHAT_LIST.OUTSIDER_SEARCH.SEARCHING') }}
-    </div>
-    <div v-if="lockedResults.length" class="mt-2">
-      <p class="px-1 mb-1.5 text-xs font-medium text-n-slate-11">
-        {{
-          t('CHAT_LIST.OUTSIDER_SEARCH.LOCKED_HEADING', {
-            count: lockedResults.length,
-          })
-        }}
-      </p>
-      <div class="flex flex-col gap-1.5 overflow-y-auto max-h-72">
-        <SearchLockedConversation
-          v-for="conversation in lockedResults"
-          :key="conversation.id"
-          :conversation="conversation"
-        />
-      </div>
     </div>
   </div>
 </template>

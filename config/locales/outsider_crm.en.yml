@@ -3,7 +3,7 @@ en:
     switch:
       enabled: "On"
       disabled: "Off"
-      hint: "Shows the CRM in this account. When on, every agent has access; the account administrator can turn it off per agent in CRM > Settings > Access."
+      hint: "Shows the CRM in this account. When on, every agent has access; the account administrator can turn it off per agent in CRM > Settings > Access. Not the same as the “CRM” item in the account features list: that one shows the Contacts menu and must stay checked."
     errors:
       duplicate_open_opportunity: This contact already has an open opportunity in this business unit
       group_contact: WhatsApp groups cannot have opportunities
@@ -65,4 +65,4 @@ en:
   helpers:
     label:
       account:
-        outsider_crm_enabled: CRM
+        outsider_crm_enabled: Sales CRM (Somos)

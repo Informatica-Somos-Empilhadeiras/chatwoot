@@ -14,11 +14,11 @@
       "INPUT": "Search for People, Chats, Saved Replies .."
     },
     "OUTSIDER_SEARCH": {
-      "PLACEHOLDER": "Search conversations by name or phone...",
+      "PLACEHOLDER": "Search chats, contacts and messages...",
       "SEARCHING": "Searching...",
       "LOCKED_HEADING": "With other agents ({count})",
       "WITH_AGENT": "With {name}",
-      "LOCKED_HINT": "This conversation is with {name}. Ask for it to be assigned to you.",
+      "LOCKED_HINT": "This conversation is with {name}. You can ask for a transfer.",
       "STATUS": {
         "resolved": "Resolved",
         "pending": "Pending",
