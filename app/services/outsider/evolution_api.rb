@@ -99,6 +99,11 @@ class Outsider::EvolutionApi
     post("/message/sendContact/#{@instance}", { number: number, contact: contact })
   end
 
+  # Texto do bot; delay em ms mostra "digitando..." antes. Devolve a mensagem enviada, com key.id
+  def send_text(number:, text:, delay: nil)
+    post("/message/sendText/#{@instance}", { number: number, text: text, delay: delay }.compact)
+  end
+
   # Menu em lista do WhatsApp (bot): sections = [{ title:, rows: [{ title:, description:, rowId: }] }]
   def send_list(number:, description:, button_text:, sections:, title: '', footer_text: '')
     post("/message/sendList/#{@instance}", { number: number, title: title, description: description, buttonText: button_text,

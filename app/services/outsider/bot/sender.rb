@@ -1,15 +1,21 @@
 # OUTSIDER: o que o bot manda na conversa. Toda mensagem do bot sai como mensagem enviada, sem agente
 # (sender vazio), com content_attributes.outsider_bot para a bolha do painel mostrar o menu.
 #
+# Na caixa do WhatsApp pela Evolution, texto e menu saem direto pela Evolution, um depois do outro, para
+# chegar ao cliente na ordem do fluxo (o texto que passa pelo webhook do Chatwoot chegava depois da
+# lista). A Evolution grava cada um de volta na conversa (source_id WAID:<id>) e o Outsider::Bot::Echo
+# faz essa cópia entrar como mensagem do bot. Se a Evolution falhar, o texto vai pelo Chatwoot.
+#
 # Menu, conforme a caixa:
-#   - WhatsApp pela Evolution: lista (/message/sendList) ou botões (/message/sendButtons) direto na
-#     Evolution, que registra a mensagem na conversa (source_id WAID:<id>, como o cartão de contato);
-#     se a Evolution falhar, vai como texto numerado
+#   - WhatsApp pela Evolution: lista (/message/sendList) ou botões (/message/sendButtons); se a
+#     Evolution falhar, vai como texto numerado
 #   - WhatsApp oficial e chat do site: menu do próprio Chatwoot (input_select)
 #   - estilo texto e as outras caixas: texto com as opções numeradas
 class Outsider::Bot::Sender
   ECHO_WAIT = 6.seconds
   ECHO_INTERVAL = 0.4
+  # "digitando..." antes de cada texto, como a Evolution faz com o que sai do Chatwoot
+  TYPING_MS = 1200
   NUMBERS = %w[1️⃣ 2️⃣ 3️⃣ 4️⃣ 5️⃣ 6️⃣ 7️⃣ 8️⃣ 9️⃣ 🔟].freeze
 
   def initialize(conversation)
@@ -19,7 +25,10 @@ class Outsider::Bot::Sender
   def text(content, extra = {})
     return if content.blank?
 
-    create_message(content: content, content_attributes: { 'outsider_bot' => { 'kind' => 'text' }.merge(extra) })
+    attributes = { 'kind' => 'text' }.merge(extra)
+    return evolution_text(content, attributes) if evolution?
+
+    create_message(content: content, content_attributes: { 'outsider_bot' => attributes })
   end
 
   def private_note(content)
@@ -72,15 +81,34 @@ class Outsider::Bot::Sender
     @conversation.inbox.web_widget? || @conversation.inbox.whatsapp?
   end
 
-  def evolution_menu(data, options, style, attributes)
-    response = style == 'buttons' ? send_buttons(data, options) : send_list(data, options)
-    message_id = response.dig('key', 'id')
-    raise Outsider::EvolutionApi::Error, 'evolution_error' if message_id.blank?
+  def evolution_text(content, attributes)
+    send_by_evolution(content, attributes) { evolution_api.send_text(number: recipient, text: content, delay: TYPING_MS) }
+  rescue Outsider::EvolutionApi::Error => e
+    Rails.logger.warn("[Outsider::Bot::Sender] texto pela Evolution falhou (#{e.code}), indo pelo Chatwoot")
+    # a Evolution converte o markdown do Chatwoot de volta para o do WhatsApp
+    create_message(content: chatwoot_markdown(content), content_attributes: { 'outsider_bot' => attributes })
+  end
 
-    store_echo("WAID:#{message_id}", numbered_text(data, options), attributes)
+  def evolution_menu(data, options, style, attributes)
+    send_by_evolution(numbered_text(data, options), attributes) do
+      style == 'buttons' ? send_buttons(data, options) : send_list(data, options)
+    end
   rescue Outsider::EvolutionApi::Error => e
     Rails.logger.warn("[Outsider::Bot::Sender] menu pela Evolution falhou (#{e.code}), indo como texto")
     text(numbered_text(data, options), attributes.merge('style' => 'text'))
+  end
+
+  # o bloco chama a Evolution; content é o texto do WhatsApp, que fica na conversa no markdown do Chatwoot
+  def send_by_evolution(content, attributes)
+    content = chatwoot_markdown(content)
+    source_id = Outsider::Bot::Echo.sending(@conversation) do
+      response = yield
+      message_id = response.dig('key', 'id') if response.is_a?(Hash)
+      raise Outsider::EvolutionApi::Error, 'evolution_error' if message_id.blank?
+
+      "WAID:#{message_id}".tap { |id| Outsider::Bot::Echo.remember(id, content: content, attributes: attributes) }
+    end
+    store_echo(source_id, content, attributes)
   end
 
   def send_list(data, options)
@@ -111,15 +139,17 @@ class Outsider::Bot::Sender
                                          'outsider_bot' => attributes })
   end
 
-  # a Evolution registra o que saiu por ela na conversa; esperamos para completar a mensagem (texto
-  # legível e o menu para a bolha). Se ela demorar, a mensagem é criada aqui com o mesmo source_id,
-  # que a Evolution reconhece e não manda de novo ao WhatsApp.
+  # a Evolution grava na conversa o que saiu por ela (o Outsider::Bot::EchoBuilder já grava como mensagem
+  # do bot); esperamos a cópia antes de seguir, para a conversa ficar na ordem. Se ela demorar, a
+  # mensagem é criada aqui com o mesmo source_id, que a Evolution reconhece e não manda de novo ao
+  # WhatsApp. A cópia que entrou como de agente (o id chegou tarde) é corrigida aqui.
   def store_echo(source_id, content, attributes)
     echo = wait_for_echo(source_id)
     bot = { 'outsider_bot' => attributes }
-    return echo.tap { echo.update!(content: content, content_attributes: echo.content_attributes.to_h.merge(bot)) } if echo
+    return create_message(content: content, source_id: source_id, content_attributes: bot) unless echo
+    return echo if echo.sender.nil? && echo.content_attributes.to_h['outsider_bot'].present?
 
-    create_message(content: content, source_id: source_id, content_attributes: bot)
+    echo.tap { echo.update!(sender: nil, content: content, content_attributes: echo.content_attributes.to_h.merge(bot)) }
   end
 
   def wait_for_echo(source_id)
@@ -130,6 +160,13 @@ class Outsider::Bot::Sender
 
       sleep ECHO_INTERVAL
     end
+  end
+
+  # *negrito*, _itálico_ e ~riscado~ do WhatsApp no markdown do Chatwoot, como a Evolution converte
+  def chatwoot_markdown(text)
+    text.to_s.gsub(/\*((?!\s)[^\n*]+?(?<!\s))\*/, '**\\1**')
+        .gsub(/_((?!\s)[^\n_]+?(?<!\s))_/, '*\\1*')
+        .gsub(/~((?!\s)[^\n~]+?(?<!\s))~/, '~~\\1~~')
   end
 
   def create_message(attributes)

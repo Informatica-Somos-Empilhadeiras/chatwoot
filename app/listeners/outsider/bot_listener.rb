@@ -9,7 +9,7 @@ class Outsider::BotListener < BaseListener
 
     if message.incoming? && !message.private?
       Outsider::Bot::RunJob.perform_later(message.id)
-    elsif message.outgoing? && !message.private? && message.sender_type == 'User'
+    elsif agent_reply?(message)
       stop(message.conversation)
     end
   end
@@ -32,6 +32,13 @@ class Outsider::BotListener < BaseListener
 
   def any_flow?(account)
     Outsider::Bot::Flow.where(account_id: account.id).active.exists?
+  end
+
+  # a cópia que a Evolution grava do que o bot mandou não conta, mesmo quando não deu tempo de gravá-la
+  # como do bot (Outsider::Bot::Echo)
+  def agent_reply?(message)
+    message.outgoing? && !message.private? && message.sender_type == 'User' &&
+      Outsider::Bot::Echo.record(message.conversation, message.source_id).blank?
   end
 
   def stop(conversation, reopen: true)
