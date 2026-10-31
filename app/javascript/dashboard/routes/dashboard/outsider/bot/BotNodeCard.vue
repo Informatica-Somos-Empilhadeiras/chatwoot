@@ -13,6 +13,12 @@ import {
   PORT_HEIGHT,
   portsOf,
 } from './nodeTypes';
+import {
+  isIntegration,
+  integrationSummary,
+  integrationBadge,
+} from './integrations/integrationTypes';
+import { useIntegrations } from './integrations/useIntegrations';
 
 const props = defineProps({
   node: { type: Object, required: true },
@@ -31,6 +37,7 @@ const agents = useMapGetter('agents/getAgents');
 
 const meta = computed(() => NODE_TYPES[props.node.type]);
 const data = computed(() => props.node.data || {});
+const integrations = useIntegrations();
 const ports = computed(() => portsOf(props.node, t));
 
 const DAY_KEYS = ['0', '1', '2', '3', '4', '5', '6'];
@@ -39,6 +46,9 @@ const agentName = id => agents.value.find(agent => agent.id === id)?.name;
 
 const summary = computed(() => {
   const d = data.value;
+  if (isIntegration(props.node.type)) {
+    return integrationSummary(props.node, t, integrations);
+  }
   switch (props.node.type) {
     case 'start':
       if (d.trigger === 'keyword') {
@@ -85,6 +95,7 @@ const summary = computed(() => {
 
 const badge = computed(() => {
   const d = data.value;
+  if (isIntegration(props.node.type)) return integrationBadge(props.node, t);
   if (props.node.type === 'menu')
     return t(`OUTSIDER_TOOLS.BOT.STYLES.${d.style}`);
   if (props.node.type === 'message' && d.delay_seconds > 0) {

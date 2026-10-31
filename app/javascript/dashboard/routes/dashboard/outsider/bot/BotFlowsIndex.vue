@@ -1,10 +1,11 @@
 <script setup>
 // OUTSIDER: Configurações > Automação por bot (só administradores). Lista os fluxos com ligar e
 // desligar, caixas, gatilho e números dos últimos 7 dias. "Novo fluxo" já cria um começo pronto
-// (boas-vindas, horário, menu e passar para a equipe) e abre o editor.
+// (boas-vindas, horário, menu e passar para a equipe) e abre o editor. As abas Conexões, Planilhas e
+// Registro (?tab=) cuidam dos sistemas que os blocos de integração usam.
 import { ref, computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { useAlert } from 'dashboard/composables';
 import { useStore, useMapGetter } from 'dashboard/composables/store';
 import BotFlowsAPI from 'dashboard/api/outsider/botFlows';
@@ -13,15 +14,35 @@ import BaseSettingsHeader from 'dashboard/routes/dashboard/settings/components/B
 import Button from 'dashboard/components-next/button/Button.vue';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
 import Switch from 'dashboard/components-next/switch/Switch.vue';
+import TabBar from 'dashboard/components-next/tabbar/TabBar.vue';
+import BotConnections from './integrations/BotConnections.vue';
+import BotDatasets from './integrations/BotDatasets.vue';
+import BotLogs from './integrations/BotLogs.vue';
 
 const { t } = useI18n();
+const route = useRoute();
 const router = useRouter();
+
+const TABS = ['flows', 'connections', 'datasets', 'logs'];
+const tab = computed(() =>
+  TABS.includes(route.query.tab) ? route.query.tab : 'flows'
+);
+const tabItems = computed(() =>
+  TABS.map(id => ({ id, label: t(`OUTSIDER_TOOLS.BOT.TABS.${id}`) }))
+);
+const setTab = id =>
+  router.replace({
+    query: { ...route.query, tab: id === 'flows' ? undefined : id },
+  });
 const store = useStore();
 const inboxes = useMapGetter('inboxes/getInboxes');
 
 const flows = ref([]);
+// a aba aberta (Conexões, Planilhas, Registro), para o botão do cabeçalho
+const panel = ref(null);
 const isLoading = ref(true);
-const isCreating = ref(false);
+// '' parado; 'blank' ou 'document' enquanto cria (o botão que mostra o carregando)
+const isCreating = ref('');
 const busy = ref({});
 
 const load = async () => {
@@ -41,19 +62,25 @@ const openFlow = flow =>
     params: { flowId: flow.id },
   });
 
-const create = async () => {
-  isCreating.value = true;
+// template 'document': o exemplo da 2ª via de documento (confere o WhatsApp no cadastro antes de mandar)
+const create = async (template = '') => {
+  if (isCreating.value) return;
+  isCreating.value = template || 'blank';
   try {
     const { data } = await BotFlowsAPI.create({
-      name: t('OUTSIDER_TOOLS.BOT.LIST.NEW_NAME', {
-        number: flows.value.length + 1,
-      }),
+      name:
+        template === 'document'
+          ? t('OUTSIDER_TOOLS.BOT.LIST.EXAMPLE_NAME')
+          : t('OUTSIDER_TOOLS.BOT.LIST.NEW_NAME', {
+              number: flows.value.length + 1,
+            }),
+      template: template || undefined,
     });
     openFlow(data);
   } catch {
     useAlert(t('OUTSIDER_TOOLS.BOT.LIST.CREATE_ERROR'));
   } finally {
-    isCreating.value = false;
+    isCreating.value = '';
   }
 };
 
@@ -121,27 +148,72 @@ onMounted(() => {
 
 <template>
   <SettingsLayout
-    :is-loading="isLoading"
-    :no-records-found="!isLoading && !flows.length"
+    :is-loading="tab === 'flows' && isLoading"
+    :no-records-found="tab === 'flows' && !isLoading && !flows.length"
     :no-records-message="t('OUTSIDER_TOOLS.BOT.LIST.EMPTY')"
   >
     <template #header>
       <BaseSettingsHeader
         :title="t('OUTSIDER_TOOLS.BOT.LIST.TITLE')"
-        :description="t('OUTSIDER_TOOLS.BOT.LIST.DESCRIPTION')"
+        :description="
+          tab === 'flows'
+            ? t('OUTSIDER_TOOLS.BOT.LIST.DESCRIPTION')
+            : t(`OUTSIDER_TOOLS.BOT.TABS_DESCRIPTION.${tab}`)
+        "
       >
+        <template #tabs>
+          <TabBar
+            :tabs="tabItems"
+            :initial-active-tab="TABS.indexOf(tab)"
+            @tab-changed="setTab($event.id)"
+          />
+        </template>
         <template #actions>
+          <div v-if="tab === 'flows'" class="flex flex-wrap items-center gap-2">
+            <Button
+              v-tooltip.bottom="t('OUTSIDER_TOOLS.BOT.LIST.EXAMPLE_HINT')"
+              :label="t('OUTSIDER_TOOLS.BOT.LIST.EXAMPLE')"
+              icon="i-lucide-file-search"
+              faded
+              slate
+              :is-loading="isCreating === 'document'"
+              @click="create('document')"
+            />
+            <Button
+              :label="t('OUTSIDER_TOOLS.BOT.LIST.NEW')"
+              icon="i-lucide-plus"
+              :is-loading="isCreating === 'blank'"
+              @click="create()"
+            />
+          </div>
           <Button
-            :label="t('OUTSIDER_TOOLS.BOT.LIST.NEW')"
+            v-else-if="tab === 'connections'"
+            :label="t('OUTSIDER_TOOLS.BOT.CONNECTIONS.NEW')"
             icon="i-lucide-plus"
-            :is-loading="isCreating"
-            @click="create"
+            @click="panel?.openCreate()"
+          />
+          <Button
+            v-else-if="tab === 'datasets'"
+            :label="t('OUTSIDER_TOOLS.BOT.DATASETS.UPLOAD')"
+            icon="i-lucide-upload"
+            @click="panel?.pickFile()"
+          />
+          <Button
+            v-else
+            :label="t('OUTSIDER_TOOLS.BOT.LOGS.REFRESH')"
+            icon="i-lucide-refresh-cw"
+            faded
+            slate
+            @click="panel?.reload()"
           />
         </template>
       </BaseSettingsHeader>
     </template>
     <template #body>
-      <div class="flex flex-col gap-3">
+      <BotConnections v-if="tab === 'connections'" ref="panel" />
+      <BotDatasets v-else-if="tab === 'datasets'" ref="panel" />
+      <BotLogs v-else-if="tab === 'logs'" ref="panel" :flows="flows" />
+      <div v-else class="flex flex-col gap-3">
         <p
           v-if="flows.length > 1 && hasActive"
           class="flex items-start gap-2 px-3 py-2 mb-0 text-xs rounded-lg bg-n-alpha-1 text-n-slate-11"

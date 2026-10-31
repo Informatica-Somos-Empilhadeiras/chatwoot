@@ -53,6 +53,24 @@ class Outsider::Bot::Sender
     text(numbered_text(data, options), attributes.merge('style' => 'text'))
   end
 
+  # o próprio arquivo só vai pela Evolution; nas outras caixas o bot manda um link (Outsider::Bot::IntegrationSteps)
+  def sends_files?
+    evolution?
+  end
+
+  # documento do Nextcloud pelo WhatsApp: a Evolution baixa pelo url (link público temporário). Na conversa
+  # fica só o nome com o link para abrir no Nextcloud: a cópia que a Evolution grava vem sem o arquivo
+  # (Outsider::Bot::EchoBuilder), para não guardar o mesmo arquivo de novo no Chatwoot.
+  def document(doc, url:, caption:, note_url:)
+    attributes = { 'kind' => 'document', 'name' => doc['nome'].to_s }
+    note = ["📄 *#{doc['nome']}*", caption.presence,
+            note_url && "#{I18n.t('outsider_bot.documents.open_in_nextcloud')}: #{note_url}"].compact.join("\n")
+    send_by_evolution(note, attributes) do
+      evolution_api.send_media(number: recipient, mediatype: 'document', mimetype: doc['tipo'].presence || 'application/octet-stream',
+                               file_name: doc['nome'].to_s, caption: caption.presence, media: url)
+    end
+  end
+
   def numbered_text(data, options)
     lines = options.each_with_index.map do |option, index|
       "#{NUMBERS[index] || "#{index + 1}."} #{option['label']}#{" — #{option['description']}" if option['description'].present?}"
@@ -162,11 +180,16 @@ class Outsider::Bot::Sender
     end
   end
 
-  # *negrito*, _itálico_ e ~riscado~ do WhatsApp no markdown do Chatwoot, como a Evolution converte
+  # *negrito*, _itálico_ e ~riscado~ do WhatsApp no markdown do Chatwoot, como a Evolution converte; os
+  # endereços ficam como estão (um link com _ no meio não vira itálico)
   def chatwoot_markdown(text)
-    text.to_s.gsub(/\*((?!\s)[^\n*]+?(?<!\s))\*/, '**\\1**')
-        .gsub(/_((?!\s)[^\n_]+?(?<!\s))_/, '*\\1*')
-        .gsub(/~((?!\s)[^\n~]+?(?<!\s))~/, '~~\\1~~')
+    text.to_s.split(%r{(https?://\S+)}).each_with_index.map do |part, index|
+      next part if index.odd?
+
+      part.gsub(/\*((?!\s)[^\n*]+?(?<!\s))\*/, '**\\1**')
+          .gsub(/_((?!\s)[^\n_]+?(?<!\s))_/, '*\\1*')
+          .gsub(/~((?!\s)[^\n~]+?(?<!\s))~/, '~~\\1~~')
+    end.join
   end
 
   def create_message(attributes)

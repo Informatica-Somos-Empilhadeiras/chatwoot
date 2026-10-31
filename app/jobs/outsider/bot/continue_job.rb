@@ -10,7 +10,7 @@ class Outsider::Bot::ContinueJob < ApplicationJob
     key = format(Outsider::Bot::RunJob::LOCK_KEY, conversation_id: session.conversation_id)
     lock_manager = Redis::LockManager.new
     unless lock_manager.lock(key, Outsider::Bot::RunJob::LOCK_TTL)
-      self.class.set(wait: Outsider::Bot::RunJob::RETRY_IN).perform_later(session_id, node_id, attempt + 1) if attempt < 10
+      retry_later(session_id, node_id, attempt) if attempt < Outsider::Bot::RunJob::MAX_ATTEMPTS
       return
     end
 
@@ -19,5 +19,11 @@ class Outsider::Bot::ContinueJob < ApplicationJob
     ensure
       lock_manager.unlock(key)
     end
+  end
+
+  private
+
+  def retry_later(session_id, node_id, attempt)
+    self.class.set(wait: Outsider::Bot::RunJob::RETRY_IN).perform_later(session_id, node_id, attempt + 1)
   end
 end

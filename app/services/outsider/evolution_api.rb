@@ -104,6 +104,13 @@ class Outsider::EvolutionApi
     post("/message/sendText/#{@instance}", { number: number, text: text, delay: delay }.compact)
   end
 
+  # Arquivo (bot): media é um endereço que a Evolution baixa na hora ou o conteúdo em base64.
+  # Devolve a mensagem enviada, com key.id
+  def send_media(number:, mediatype:, mimetype:, media:, file_name:, caption: nil)
+    post("/message/sendMedia/#{@instance}", { number: number, mediatype: mediatype, mimetype: mimetype, media: media, fileName: file_name,
+                                              caption: caption, delay: 1200 }.compact, timeout: 60)
+  end
+
   # Menu em lista do WhatsApp (bot): sections = [{ title:, rows: [{ title:, description:, rowId: }] }]
   def send_list(number:, description:, button_text:, sections:, title: '', footer_text: '')
     post("/message/sendList/#{@instance}", { number: number, title: title, description: description, buttonText: button_text,

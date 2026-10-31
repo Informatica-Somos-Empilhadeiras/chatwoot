@@ -3,12 +3,14 @@
 // arrastar e zoom, blocos (BotNodeCard) ligados por setas, painel do bloco escolhido (BotInspector)
 // e o Testar (BotSimulator). Liga arrastando da bolinha de uma saída até outro bloco; soltar no vazio
 // abre a lista de blocos para criar um já ligado. Ctrl+Z desfaz, Delete apaga, Ctrl+S salva.
+// Os blocos de integração usam as conexões e planilhas da conta (recarregadas ao voltar para a guia).
 import {
   ref,
   reactive,
   computed,
   watch,
   nextTick,
+  provide,
   onMounted,
   onBeforeUnmount,
 } from 'vue';
@@ -27,7 +29,7 @@ import BotInspector from './BotInspector.vue';
 import BotSimulator from './BotSimulator.vue';
 import {
   NODE_TYPES,
-  PALETTE,
+  PALETTE_GROUPS,
   NODE_WIDTH,
   HEADER_HEIGHT,
   nodeHeight,
@@ -39,6 +41,11 @@ import {
   newId,
   warningsOf,
 } from './nodeTypes';
+import {
+  loadIntegrations,
+  useIntegrations,
+} from './integrations/useIntegrations';
+import { flowVariables } from './integrations/integrationTypes';
 
 const MAX_NODES = 200;
 const MIN_SCALE = 0.3;
@@ -83,6 +90,25 @@ const nodesById = computed(() =>
   Object.fromEntries(graph.nodes.map(node => [node.id, node]))
 );
 const selectedNode = computed(() => nodesById.value[selectedId.value] || null);
+
+// ---------- integrações: conexões, planilhas, variáveis e valores de teste ----------
+const integrations = useIntegrations();
+provide(
+  'botFlowVariables',
+  computed(() => flowVariables(graph.nodes, integrations))
+);
+provide('botTestValues', reactive({}));
+provide('botFlowId', flowId);
+provide(
+  'botGraph',
+  computed(() => graph)
+);
+let integrationsLoadedAt = 0;
+const refreshIntegrations = () => {
+  if (Date.now() - integrationsLoadedAt < 10000) return;
+  integrationsLoadedAt = Date.now();
+  loadIntegrations(true);
+};
 
 // ---------- desfazer / refazer ----------
 const history = { past: [], future: [], last: '' };
@@ -241,7 +267,7 @@ const incoming = computed(
 const warningsByNode = computed(() =>
   Object.fromEntries(
     graph.nodes.map(node => {
-      const list = warningsOf(node, graph.edges, t);
+      const list = warningsOf(node, graph.edges, t, integrations);
       if (node.type !== 'start' && !incoming.value.has(node.id)) {
         list.push(t('OUTSIDER_TOOLS.BOT.WARNINGS.NO_INPUT'));
       }
@@ -425,7 +451,7 @@ const onPointerUp = event => {
       x: point.x,
       y: point.y,
       left: clamp(event.clientX - box.left, 8, box.width - 216),
-      top: clamp(event.clientY - box.top, 8, box.height - 330),
+      top: clamp(event.clientY - box.top, 8, Math.max(box.height - 488, 8)),
     };
   }
 };
@@ -532,6 +558,9 @@ const duplicateNode = id => {
   });
   (copy.data.routes || []).forEach(item => {
     item.id = newId('rt');
+  });
+  (copy.data.rules || []).forEach(item => {
+    item.id = newId('rule');
   });
   graph.nodes.push(copy);
   selectNode(copy.id);
@@ -709,11 +738,19 @@ onMounted(async () => {
   window.addEventListener('pointerup', onPointerUp);
   window.addEventListener('keydown', onKeydown);
   window.addEventListener('beforeunload', onBeforeUnload);
+  window.addEventListener('focus', refreshIntegrations);
   store.dispatch('teams/get');
   store.dispatch('agents/get');
   store.dispatch('labels/get');
+  refreshIntegrations();
   await load();
   if (overlapping()) tidy({ keepSaved: true });
+  // o Registro abre o fluxo já no bloco da chamada (?node=)
+  const focus = nodesById.value[route.query.node];
+  if (focus) {
+    selectNode(focus.id);
+    centerOn(focus);
+  }
 });
 
 onBeforeUnmount(() => {
@@ -722,6 +759,7 @@ onBeforeUnmount(() => {
   window.removeEventListener('pointerup', onPointerUp);
   window.removeEventListener('keydown', onKeydown);
   window.removeEventListener('beforeunload', onBeforeUnload);
+  window.removeEventListener('focus', refreshIntegrations);
 });
 
 const canvasStyle = computed(() => ({
@@ -751,8 +789,9 @@ const gridStyle = computed(() => ({
       />
       <input
         v-model="meta.name"
+        type="text"
         maxlength="120"
-        class="!mb-0 !h-9 !w-64 max-w-full !border-transparent hover:!border-n-weak focus:!border-n-brand text-base font-semibold !bg-transparent"
+        class="!mb-0 !h-9 !w-64 max-w-full !outline-transparent hover:!outline-n-weak focus:!outline-n-brand text-base font-semibold !bg-transparent"
         :placeholder="t('OUTSIDER_TOOLS.BOT.EDITOR.NAME_PLACEHOLDER')"
       />
       <div v-on-click-outside="() => (inboxMenuOpen = false)" class="relative">
@@ -885,33 +924,37 @@ const gridStyle = computed(() => ({
       <aside
         class="flex flex-col w-52 gap-1.5 p-3 overflow-y-auto border-r shrink-0 border-n-weak bg-n-solid-1"
       >
-        <span class="px-1 text-xs font-medium uppercase text-n-slate-10">
-          {{ t('OUTSIDER_TOOLS.BOT.EDITOR.PALETTE') }}
-        </span>
-        <button
-          v-for="type in PALETTE"
-          :key="type"
-          type="button"
-          draggable="true"
-          class="flex items-center gap-2 px-2 py-2 text-left border rounded-lg cursor-grab border-n-weak hover:bg-n-alpha-1 hover:border-n-slate-6"
-          @dragstart="onPaletteDragStart(type, $event)"
-          @click="addNode(type)"
-        >
+        <template v-for="group in PALETTE_GROUPS" :key="group.id">
           <span
-            class="flex items-center justify-center rounded-md size-7 shrink-0 text-white"
-            :class="NODE_TYPES[type].color"
+            class="px-1 pt-1 text-xs font-medium uppercase first:pt-0 text-n-slate-10"
           >
-            <Icon :icon="NODE_TYPES[type].icon" class="size-4" />
+            {{ t(`OUTSIDER_TOOLS.BOT.EDITOR.PALETTE_GROUPS.${group.id}`) }}
           </span>
-          <span class="flex flex-col min-w-0">
-            <span class="text-sm text-n-slate-12">
-              {{ t(`OUTSIDER_TOOLS.BOT.TYPES.${type}`) }}
+          <button
+            v-for="type in group.types"
+            :key="type"
+            type="button"
+            draggable="true"
+            class="flex items-center gap-2 px-2 py-2 text-left border rounded-lg cursor-grab border-n-weak hover:bg-n-alpha-1 hover:border-n-slate-6"
+            @dragstart="onPaletteDragStart(type, $event)"
+            @click="addNode(type)"
+          >
+            <span
+              class="flex items-center justify-center rounded-md size-7 shrink-0 text-white"
+              :class="NODE_TYPES[type].color"
+            >
+              <Icon :icon="NODE_TYPES[type].icon" class="size-4" />
             </span>
-            <span class="text-[11px] leading-tight text-n-slate-10">
-              {{ t(`OUTSIDER_TOOLS.BOT.TYPE_HINTS.${type}`) }}
+            <span class="flex flex-col min-w-0">
+              <span class="text-sm text-n-slate-12">
+                {{ t(`OUTSIDER_TOOLS.BOT.TYPES.${type}`) }}
+              </span>
+              <span class="text-[11px] leading-tight text-n-slate-10">
+                {{ t(`OUTSIDER_TOOLS.BOT.TYPE_HINTS.${type}`) }}
+              </span>
             </span>
-          </span>
-        </button>
+          </button>
+        </template>
         <p class="px-1 mt-2 text-[11px] leading-snug text-n-slate-10">
           {{ t('OUTSIDER_TOOLS.BOT.EDITOR.PALETTE_HINT') }}
         </p>
@@ -1022,28 +1065,36 @@ const gridStyle = computed(() => ({
         <!-- soltar a seta no vazio: escolher o bloco novo -->
         <div
           v-if="quickAdd"
-          class="absolute z-40 flex flex-col w-52 gap-0.5 p-1.5 border rounded-xl bg-n-solid-2 border-n-weak shadow-lg"
+          class="absolute z-40 flex flex-col w-52 gap-0.5 p-1.5 overflow-y-auto border rounded-xl bg-n-solid-2 border-n-weak shadow-lg max-h-[30rem]"
           :style="{ left: `${quickAdd.left}px`, top: `${quickAdd.top}px` }"
           @pointerdown.stop
+          @wheel.stop
         >
           <span class="px-2 py-1 text-xs text-n-slate-11">
             {{ t('OUTSIDER_TOOLS.BOT.EDITOR.QUICK_ADD') }}
           </span>
-          <button
-            v-for="type in PALETTE"
-            :key="type"
-            type="button"
-            class="flex items-center gap-2 px-2 py-1.5 text-sm text-left rounded-lg hover:bg-n-alpha-1 text-n-slate-12"
-            @click="addFromQuickMenu(type)"
-          >
+          <template v-for="group in PALETTE_GROUPS" :key="group.id">
             <span
-              class="flex items-center justify-center rounded size-5 shrink-0 text-white"
-              :class="NODE_TYPES[type].color"
+              class="px-2 pt-1.5 text-[10px] font-medium uppercase text-n-slate-10"
             >
-              <Icon :icon="NODE_TYPES[type].icon" class="size-3" />
+              {{ t(`OUTSIDER_TOOLS.BOT.EDITOR.PALETTE_GROUPS.${group.id}`) }}
             </span>
-            {{ t(`OUTSIDER_TOOLS.BOT.TYPES.${type}`) }}
-          </button>
+            <button
+              v-for="type in group.types"
+              :key="type"
+              type="button"
+              class="flex items-center gap-2 px-2 py-1.5 text-sm text-left rounded-lg hover:bg-n-alpha-1 text-n-slate-12"
+              @click="addFromQuickMenu(type)"
+            >
+              <span
+                class="flex items-center justify-center rounded size-5 shrink-0 text-white"
+                :class="NODE_TYPES[type].color"
+              >
+                <Icon :icon="NODE_TYPES[type].icon" class="size-3" />
+              </span>
+              {{ t(`OUTSIDER_TOOLS.BOT.TYPES.${type}`) }}
+            </button>
+          </template>
         </div>
 
         <!-- zoom -->

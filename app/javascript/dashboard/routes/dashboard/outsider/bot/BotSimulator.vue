@@ -2,12 +2,28 @@
 // OUTSIDER: "Testar" do editor do bot. Roda o fluxo desenhado (ainda não salvo) na tela, com um
 // contato de exemplo, sem mandar nada a ninguém. Segue as regras do servidor (simulator.js) e mostra
 // em cinza o que o bot faria na conversa (equipe, etiquetas, passar para a equipe).
-import { ref, reactive, computed, nextTick, onBeforeUnmount } from 'vue';
+// Os blocos de integração rodam de verdade no servidor (o mesmo código da conversa): consultas leem os
+// outros sistemas; o que altera dados pergunta antes ("Chamar de verdade" ou "Pular"). Enviar documento
+// só mostra o que o cliente receberia.
+import {
+  ref,
+  reactive,
+  computed,
+  nextTick,
+  inject,
+  onBeforeUnmount,
+} from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useMapGetter } from 'dashboard/composables/store';
+import BotFlowsAPI from 'dashboard/api/outsider/botFlows';
 import Button from 'dashboard/components-next/button/Button.vue';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
 import BotMenuPreview from './BotMenuPreview.vue';
+import {
+  integrationPorts,
+  errorText,
+  isIntegration,
+} from './integrations/integrationTypes';
 import {
   matchOption,
   matchRoute,
@@ -25,9 +41,15 @@ const props = defineProps({
 const emit = defineEmits(['close', 'focus']);
 
 const MAX_STEPS = 40;
-const { t } = useI18n();
+// como Outsider::Bot::IntegrationSteps: chamadas por mensagem do cliente e saídas de falha
+const MAX_CALLS = 10;
+const FAILURE_PORTS = ['error', 'not_found', 'default'];
+// "Pular" uma chamada que altera dados segue como se tivesse dado certo
+const SKIP_PORTS = { api: 'ok', db_query: 'found' };
+const { t, te } = useI18n();
 const teams = useMapGetter('teams/getTeams');
 const agents = useMapGetter('agents/getAgents');
+const flowId = inject('botFlowId', ref(null));
 
 const messages = ref([]);
 const draft = ref('');
@@ -41,6 +63,10 @@ const run = reactive({
   waiting: null,
   attempts: 0,
   variables: {},
+  // chamadas a outros sistemas desde a última mensagem do cliente
+  calls: 0,
+  // documentos achados esperando o cliente escolher: { items, options }
+  choice: null,
   token: 0,
 });
 
@@ -245,9 +271,22 @@ const walk = async (nodeId, token) => {
           )
         );
         return;
-      default:
-        finish(t('OUTSIDER_TOOLS.BOT.TEST.END'));
-        return;
+      default: {
+        if (!isIntegration(node.type)) {
+          finish(t('OUTSIDER_TOOLS.BOT.TEST.END'));
+          return;
+        }
+        // eslint-disable-next-line no-await-in-loop, no-use-before-define
+        const port = await integrationStep(node);
+        if (token !== run.token || port === null) return;
+        const following = nextOf(node, port);
+        if (!following && FAILURE_PORTS.includes(port)) {
+          finish(t('OUTSIDER_TOOLS.BOT.TEST.FAILURE_HANDOFF'));
+          return;
+        }
+        node = following;
+        break;
+      }
     }
   }
   finish(t('OUTSIDER_TOOLS.BOT.TEST.TOO_MANY_STEPS', { count: MAX_STEPS }));
@@ -258,6 +297,267 @@ const goFrom = (node, port, fallbackHandoff = false) => {
   if (following) return walk(following.id, run.token);
   if (fallbackHandoff) return finish(t('OUTSIDER_TOOLS.BOT.TEST.HANDOFF'));
   return finish(t('OUTSIDER_TOOLS.BOT.TEST.NO_ARROW'));
+};
+
+// ---- blocos de integração ----
+
+const portLabel = (node, port) =>
+  integrationPorts(node, t).find(item => item.id === port)?.label || port;
+
+const blockName = node => t(`OUTSIDER_TOOLS.BOT.TYPES.${node.type}`);
+
+const savedNames = variables =>
+  Object.keys(variables || {})
+    .filter(key => key !== 'erro')
+    .slice(0, 4)
+    .map(key => `{{${key}}}`)
+    .join(', ');
+
+// a linha cinza de cada bloco: por onde seguiu, código e tempo, erro e o que guardou
+const callNote = (node, result) => {
+  const parts = [
+    t('OUTSIDER_TOOLS.BOT.TEST.CALL_RESULT', {
+      block: blockName(node),
+      port: portLabel(node, result.port),
+    }),
+  ];
+  const response = result.response;
+  if (response) {
+    parts.push(
+      response.cached
+        ? t('OUTSIDER_TOOLS.BOT.TEST.CALL_CACHED', { status: response.status })
+        : t('OUTSIDER_TOOLS.BOT.TEST.CALL_HTTP', {
+            status: response.status,
+            ms: response.duration_ms,
+          })
+    );
+  }
+  const error = result.variables?.erro;
+  if (error) parts.push(errorText(error, t, te));
+  const saved = savedNames(result.variables);
+  if (saved && !error) {
+    parts.push(t('OUTSIDER_TOOLS.BOT.TEST.CALL_SAVED', { names: saved }));
+  }
+  return parts.join(' · ');
+};
+
+const callServer = async (node, confirmWrite) => {
+  const { data } = await BotFlowsAPI.runBlock({
+    node: { id: node.id, type: node.type, data: node.data },
+    variables: run.variables,
+    contact: {
+      nome: SAMPLE_CONTACT.name,
+      telefone: SAMPLE_CONTACT.phone_number,
+      email: SAMPLE_CONTACT.email,
+    },
+    flow_id: flowId.value,
+    confirm_write: confirmWrite,
+  });
+  return data;
+};
+
+const sendChoice = async node => {
+  const data = node.data || {};
+  const count = run.choice.items.length;
+  typing.value = true;
+  scrollDown();
+  await sleep(600);
+  typing.value = false;
+  push({
+    from: 'bot',
+    menu: {
+      text: render(
+        data.text ||
+          t('OUTSIDER_TOOLS.BOT.TEST.CHOOSE_DOCUMENT', { count }, count)
+      ),
+      title: '',
+      footer: '',
+      menuStyle: 'list',
+      buttonLabel: data.button_label,
+      options: run.choice.options,
+    },
+    nodeId: node.id,
+    chosenId: '',
+  });
+};
+
+// na lista: o nome sem a extensão (até 24 letras); embaixo, o resto do nome, o tipo e a data
+const fileParts = item => {
+  const name = String(item.nome || '');
+  const match = /\.([A-Za-z0-9]{1,5})$/.exec(name);
+  const base = match ? name.slice(0, -match[0].length) : name;
+  return { base: base || name, extension: match ? match[1].toUpperCase() : '' };
+};
+
+const choiceDescription = item => {
+  const { base, extension } = fileParts(item);
+  const rest = base.length > 24 ? base.slice(24, 64).trim() : '';
+  const date = item.modificado
+    ? new Date(item.modificado).toLocaleDateString('pt-BR', {
+        timeZone: 'America/Sao_Paulo',
+      })
+    : '';
+  return [rest, extension, date].filter(Boolean).join(' · ').slice(0, 72);
+};
+
+const offerChoice = async (node, items) => {
+  run.choice = {
+    items,
+    options: items.map((item, index) => ({
+      id: `doc_${index + 1}`,
+      label: fileParts(item).base.slice(0, 24).trim(),
+      description: choiceDescription(item),
+    })),
+  };
+  run.waiting = 'choice';
+  run.attempts = 0;
+  await sendChoice(node);
+};
+
+// o que o cliente receberia no Enviar documento (no teste nada sai do Nextcloud)
+const previewDocument = async (node, preview) => {
+  const data = node.data || {};
+  typing.value = true;
+  scrollDown();
+  await sleep(600);
+  typing.value = false;
+  if (preview?.mode === 'link') {
+    const days = Number(data.link_days) || 7;
+    const text =
+      data.link_text ||
+      t('OUTSIDER_TOOLS.BOT.TEST.DOCUMENT_LINK', { days, link: '{{link}}' });
+    push({
+      from: 'bot',
+      text: renderText(text, {
+        ...run.variables,
+        link: t('OUTSIDER_TOOLS.BOT.TEST.SAMPLE_LINK'),
+      }),
+    });
+    return;
+  }
+  push({
+    from: 'bot',
+    document: { name: preview?.name || '', caption: render(data.caption) },
+  });
+};
+
+// roda o bloco no servidor e diz por qual saída seguir; null quando o teste espera o cliente
+// (escolher o documento) ou a confirmação de uma chamada que altera dados
+const runIntegration = async (node, confirmWrite = false) => {
+  let result;
+  typing.value = true;
+  scrollDown();
+  try {
+    result = await callServer(node, confirmWrite);
+  } catch (error) {
+    typing.value = false;
+    const code = error?.response?.data?.error;
+    system(
+      t('OUTSIDER_TOOLS.BOT.TEST.CALL_FAILED', {
+        block: blockName(node),
+        error: code ? errorText(code, t, te) : error?.message || '',
+      })
+    );
+    return 'error';
+  }
+  typing.value = false;
+  if (result.needs_confirmation) {
+    run.waiting = 'confirm';
+    push({
+      from: 'system',
+      confirm: true,
+      nodeId: node.id,
+      answered: '',
+      text: t('OUTSIDER_TOOLS.BOT.TEST.CONFIRM_WRITE', {
+        block: blockName(node),
+      }),
+    });
+    return null;
+  }
+  Object.assign(run.variables, result.variables || {});
+  if (result.choice?.length) {
+    system(
+      t('OUTSIDER_TOOLS.BOT.TEST.DOCUMENTS_FOUND', {
+        count: result.choice.length,
+      })
+    );
+    await offerChoice(node, result.choice);
+    return null;
+  }
+  system(callNote(node, result));
+  if (node.type === 'doc_send' && result.port === 'ok') {
+    await previewDocument(node, result.preview);
+  }
+  return result.port;
+};
+
+const integrationStep = async node => {
+  if (node.type !== 'decision' && node.type !== 'doc_send') {
+    run.calls += 1;
+    if (run.calls > MAX_CALLS) {
+      system(t('OUTSIDER_TOOLS.BOT.TEST.TOO_MANY_CALLS', { count: MAX_CALLS }));
+      return 'error';
+    }
+  }
+  return runIntegration(node);
+};
+
+// segue pela saída de um bloco de integração que parou (confirmação ou escolha do documento)
+const continueFrom = (node, port) => {
+  const following = nextOf(node, port);
+  if (following) return walk(following.id, run.token);
+  if (FAILURE_PORTS.includes(port)) {
+    return finish(t('OUTSIDER_TOOLS.BOT.TEST.FAILURE_HANDOFF'));
+  }
+  return finish(t('OUTSIDER_TOOLS.BOT.TEST.NO_ARROW'));
+};
+
+const confirmCall = async (message, really) => {
+  if (message.answered || run.waiting !== 'confirm') return;
+  const node = nodesById.value[message.nodeId];
+  if (!node) return;
+  message.answered = really ? 'run' : 'skip';
+  run.waiting = null;
+  const token = run.token;
+  let port = SKIP_PORTS[node.type] || 'ok';
+  if (really) port = await runIntegration(node, true);
+  else
+    system(
+      t('OUTSIDER_TOOLS.BOT.TEST.SKIPPED', { port: portLabel(node, port) })
+    );
+  if (token !== run.token || port === null) return;
+  await continueFrom(node, port);
+};
+
+const answerChoice = async (node, text, option) => {
+  const { items, options } = run.choice || { items: [], options: [] };
+  const chosen = option
+    ? options.find(item => item.id === option.id)
+    : matchOption(options, text);
+  if (chosen) {
+    const bubble = [...messages.value]
+      .reverse()
+      .find(item => item.nodeId === node.id && item.menu);
+    if (bubble) bubble.chosenId = chosen.id;
+    run.variables[`bloco_${node.id}`] = chosen.label;
+    run.variables[node.data?.variable || 'documento'] =
+      items[options.indexOf(chosen)];
+    run.waiting = null;
+    run.choice = null;
+    await continueFrom(node, 'found');
+    return;
+  }
+  run.attempts += 1;
+  const limit = Math.min(Math.max(Number(node.data?.max_attempts) || 1, 1), 5);
+  if (run.attempts >= limit) {
+    run.waiting = null;
+    run.choice = null;
+    system(t('OUTSIDER_TOOLS.BOT.TEST.CHOICE_LIMIT'));
+    await continueFrom(node, 'not_found');
+    return;
+  }
+  await botSays(t('OUTSIDER_TOOLS.BOT.TEST.INVALID_DEFAULT'));
+  await sendChoice(node);
 };
 
 const keywordMatches = text => {
@@ -318,6 +618,7 @@ const send = async (text, option = null) => {
   if (!content || typing.value) return;
   draft.value = '';
   push({ from: 'contact', text: content });
+  run.calls = 0;
   if (run.finished) {
     system(t('OUTSIDER_TOOLS.BOT.TEST.ALREADY_FINISHED'));
     return;
@@ -346,6 +647,10 @@ const send = async (text, option = null) => {
   }
   if (run.waiting === 'menu') await answerMenu(node, content, option);
   else if (run.waiting === 'question') await answerQuestion(node, content);
+  else if (run.waiting === 'choice') await answerChoice(node, content, option);
+  else if (run.waiting === 'confirm') {
+    system(t('OUTSIDER_TOOLS.BOT.TEST.CONFIRM_FIRST'));
+  }
 };
 
 const choose = option => send(option.label, option);
@@ -359,6 +664,8 @@ const restart = () => {
     waiting: null,
     attempts: 0,
     variables: {},
+    calls: 0,
+    choice: null,
   });
   typing.value = false;
   messages.value = [];
@@ -430,9 +737,47 @@ const html = text => whatsappHtml(text);
       class="flex flex-col flex-1 gap-2 px-3 py-4 overflow-y-auto bg-n-slate-2"
     >
       <template v-for="message in messages" :key="message.id">
-        <div v-if="message.from === 'system'" class="flex justify-center">
+        <div
+          v-if="message.from === 'system' && message.confirm"
+          class="flex justify-center"
+        >
+          <div
+            class="flex flex-col items-center gap-2 px-3 py-2 text-xs text-center rounded-lg bg-n-amber-3 text-n-amber-11 max-w-[90%]"
+          >
+            <span class="flex items-start gap-1.5">
+              <Icon
+                icon="i-lucide-triangle-alert"
+                class="size-3.5 mt-px shrink-0"
+              />
+              {{ message.text }}
+            </span>
+            <div v-if="!message.answered" class="flex gap-1.5">
+              <Button
+                :label="t('OUTSIDER_TOOLS.BOT.TEST.CONFIRM_RUN')"
+                xs
+                amber
+                @click="confirmCall(message, true)"
+              />
+              <Button
+                :label="t('OUTSIDER_TOOLS.BOT.TEST.CONFIRM_SKIP')"
+                xs
+                faded
+                slate
+                @click="confirmCall(message, false)"
+              />
+            </div>
+            <span v-else class="opacity-80">
+              {{
+                message.answered === 'run'
+                  ? t('OUTSIDER_TOOLS.BOT.TEST.CONFIRMED_RUN')
+                  : t('OUTSIDER_TOOLS.BOT.TEST.CONFIRMED_SKIP')
+              }}
+            </span>
+          </div>
+        </div>
+        <div v-else-if="message.from === 'system'" class="flex justify-center">
           <span
-            class="px-2.5 py-1 text-xs text-center rounded-lg bg-n-alpha-2 text-n-slate-11 max-w-[90%]"
+            class="px-2.5 py-1 text-xs text-center rounded-lg bg-n-alpha-2 text-n-slate-11 max-w-[90%] break-words"
           >
             {{ message.text }}
           </span>
@@ -454,10 +799,33 @@ const html = text => whatsappHtml(text);
             :disabled="
               !!message.chosenId ||
               run.nodeId !== message.nodeId ||
-              run.waiting !== 'menu'
+              !['menu', 'choice'].includes(run.waiting)
             "
             @choose="choose"
           />
+          <div
+            v-else-if="message.document"
+            class="flex flex-col gap-1.5 p-1.5 rounded-xl rounded-tl-sm max-w-[80%] bg-n-solid-1 shadow-sm"
+          >
+            <span
+              class="flex items-center gap-2 px-2.5 py-2 rounded-lg bg-n-alpha-1"
+            >
+              <Icon
+                icon="i-lucide-file-text"
+                class="size-6 shrink-0 text-n-ruby-10"
+              />
+              <span class="text-sm break-all text-n-slate-12">
+                {{ message.document.name }}
+              </span>
+            </span>
+            <!-- eslint-disable vue/no-v-html -->
+            <span
+              v-if="message.document.caption"
+              class="px-1.5 pb-0.5 text-sm break-words text-n-slate-12"
+              v-html="html(message.document.caption)"
+            />
+            <!-- eslint-enable vue/no-v-html -->
+          </div>
           <!-- eslint-disable vue/no-v-html -->
           <span
             v-else
@@ -488,6 +856,7 @@ const html = text => whatsappHtml(text);
     >
       <input
         v-model="draft"
+        type="text"
         class="flex-1 min-w-0 !mb-0 !h-9 text-sm"
         :placeholder="
           run.finished

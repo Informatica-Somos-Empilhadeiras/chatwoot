@@ -1,7 +1,8 @@
 <script setup>
 // OUTSIDER: painel da direita do editor do bot: as configurações do bloco escolhido. Mexe direto no
-// bloco (v-model no node.data); o editor guarda o histórico para desfazer.
-import { computed, reactive, ref, watch } from 'vue';
+// bloco (v-model no node.data); o editor guarda o histórico para desfazer. Os blocos de integração têm o
+// painel deles em integrations/.
+import { computed, inject, reactive, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useMapGetter } from 'dashboard/composables/store';
 import Input from 'dashboard/components-next/input/Input.vue';
@@ -16,6 +17,8 @@ import {
   VARIABLES,
   newId,
 } from './nodeTypes';
+import IntegrationInspector from './integrations/IntegrationInspector.vue';
+import { isIntegration } from './integrations/integrationTypes';
 
 const props = defineProps({
   node: { type: Object, required: true },
@@ -31,6 +34,11 @@ const labels = useMapGetter('labels/getLabels');
 
 const data = computed(() => props.node.data);
 const meta = computed(() => NODE_TYPES[props.node.type]);
+// variáveis do contato e as que os blocos do fluxo guardam (respostas, API, planilha...)
+const flowVariables = inject('botFlowVariables', ref([]));
+const textVariables = computed(() => [
+  ...new Set([...VARIABLES, ...(flowVariables.value || [])]),
+]);
 
 const TRIGGERS = ['unassigned_message', 'new_conversation', 'keyword'];
 const STYLES = ['list', 'buttons', 'text'];
@@ -287,7 +295,7 @@ const idOrNull = value => (value ? Number(value) : null);
         />
         <div class="flex flex-wrap gap-1">
           <button
-            v-for="variable in VARIABLES"
+            v-for="variable in textVariables"
             :key="variable"
             type="button"
             class="px-1.5 py-0.5 text-[11px] rounded-md bg-n-alpha-2 text-n-slate-11 hover:text-n-slate-12"
@@ -386,6 +394,7 @@ const idOrNull = value => (value ? Number(value) : null);
               </span>
               <input
                 v-model="option.label"
+                type="text"
                 maxlength="24"
                 class="flex-1 min-w-0 !mb-0 !h-8 text-sm"
                 :placeholder="t('OUTSIDER_TOOLS.BOT.INSPECTOR.OPTION_LABEL')"
@@ -417,8 +426,9 @@ const idOrNull = value => (value ? Number(value) : null);
             <input
               v-if="data.style === 'list'"
               v-model="option.description"
+              type="text"
               maxlength="72"
-              class="!mb-0 !h-8 text-xs ltr:ml-6 rtl:mr-6"
+              class="!mb-0 !h-8 !w-[calc(100%_-_1.5rem)] !text-xs ltr:!ml-6 rtl:!mr-6"
               :placeholder="
                 t('OUTSIDER_TOOLS.BOT.INSPECTOR.OPTION_DESCRIPTION')
               "
@@ -487,6 +497,7 @@ const idOrNull = value => (value ? Number(value) : null);
             <div class="flex items-center gap-1">
               <input
                 v-model="route.label"
+                type="text"
                 maxlength="40"
                 class="flex-1 min-w-0 !mb-0 !h-8 text-sm"
                 :placeholder="t('OUTSIDER_TOOLS.BOT.INSPECTOR.ROUTE_LABEL')"
@@ -500,8 +511,9 @@ const idOrNull = value => (value ? Number(value) : null);
               />
             </div>
             <input
+              type="text"
               :value="routeKeywordsText(route)"
-              class="!mb-0 !h-8 text-xs"
+              class="!mb-0 !h-8 !text-xs"
               :placeholder="t('OUTSIDER_TOOLS.BOT.INSPECTOR.ROUTE_KEYWORDS')"
               @input="setRouteKeywords(route, $event.target.value)"
             />
@@ -675,6 +687,9 @@ const idOrNull = value => (value ? Number(value) : null);
         </span>
         <Switch v-model="data.resolve" />
       </label>
+
+      <!-- API, Banco de dados, Planilha, Buscar e Enviar documento, Decisão -->
+      <IntegrationInspector v-if="isIntegration(node.type)" :node="node" />
     </div>
 
     <footer

@@ -10,6 +10,11 @@ class BotFlowsAPI extends ApiClient {
   duplicate(id) {
     return axios.post(`${this.url}/${id}/duplicate`);
   }
+
+  // Testar de um bloco de integração: { node, variables, contact, flow_id, confirm_write }
+  runBlock(payload) {
+    return axios.post(`${this.url}/run_block`, payload);
+  }
 }
 
 export default new BotFlowsAPI();

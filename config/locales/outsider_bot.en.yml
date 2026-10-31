@@ -15,3 +15,33 @@ en:
       closed: "We are closed right now. Leave your message and we will reply as soon as we are back! 🕗"
       to_sales: "Great! Someone from sales will talk to you in a moment. 😊"
       to_support: "Sure! Passing you to our technical support. One moment."
+    document_example:
+      keywords: "second copy,copy,invoice,bill"
+      ask: "Sure! For your security, please send the tax ID (CNPJ or CPF) on file, numbers only."
+      no_phone: "Not registered"
+      same_phone: "WhatsApp matches"
+      choose: "I found these documents on your account. Which one do you want?"
+      button: "See documents"
+      caption: "Here it is: {{documento.nome}}"
+      done: "Anything else, just send a message! 😊"
+      nothing: "I couldn't find documents on your account. I'll ask someone from the team to help."
+      not_verified: "I couldn't confirm your account from this WhatsApp number. Passing you to the team, one moment."
+      failure: "Our system didn't answer right now. I'll ask someone from the team to help."
+    documents:
+      choose:
+        one: "I found this document:"
+        other: "I found %{count} documents. Which one do you want?"
+      link_text: "Here is your document: {{link}}\n(the link is valid for %{days} days)"
+      open_in_nextcloud: "Open in Nextcloud"
+    errors:
+      invalid_base_url: "must be a full http:// or https:// address, without user, password, ? or #"
+      invalid_connection_string: "is not a PostgreSQL connection string (postgresql://user:password@host:5432/database)"
+      password_placeholder: "still has [YOUR-PASSWORD]: replace it with the database password"
+  activerecord:
+    attributes:
+      outsider/bot/connection:
+        name: Name
+        base_url: Address
+        timeout_seconds: Timeout
+      outsider/bot/dataset:
+        name: Name

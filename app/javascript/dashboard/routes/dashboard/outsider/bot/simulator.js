@@ -1,5 +1,6 @@
 // OUTSIDER: as mesmas regras do motor do bot (Outsider::Bot::ReplyMatcher, Hours e Runner#render),
 // para o "Testar" do editor rodar o fluxo na tela sem mandar nada a ninguém.
+import { renderTemplate, contactVariables } from './integrations/template';
 
 const KEYCAPS = {
   '0️⃣': '0',
@@ -115,24 +116,10 @@ export const SAMPLE_CONTACT = {
   email: 'maria@exemplo.com.br',
 };
 
-// troca {{contato.nome}} e as respostas guardadas, como o servidor
+// troca {{contato.nome}}, as respostas guardadas e os resultados dos blocos de integração (caminhos e
+// filtros como {{pedido.itens.0.nome}} e {{valor | moeda}}), como Outsider::Bot::Template no servidor
 export const renderText = (text, variables, contact = SAMPLE_CONTACT) =>
-  String(text || '').replace(/\{\{\s*([a-z0-9_.]+)\s*\}\}/gi, (_, key) => {
-    switch (key.toLowerCase()) {
-      case 'contato.nome':
-      case 'nome_contato':
-        return contact.name;
-      case 'contato.primeiro_nome':
-      case 'primeiro_nome':
-        return contact.name.split(' ')[0];
-      case 'contato.telefone':
-        return contact.phone_number;
-      case 'contato.email':
-        return contact.email;
-      default:
-        return variables[key.toLowerCase()] ?? '';
-    }
-  });
+  renderTemplate(text, { ...variables, ...contactVariables(contact) });
 
 // *negrito*, _itálico_ e ~riscado~ do WhatsApp, com o texto já escapado
 export const whatsappHtml = text =>

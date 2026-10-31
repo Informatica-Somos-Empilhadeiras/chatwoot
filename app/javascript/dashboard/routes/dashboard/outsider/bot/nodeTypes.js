@@ -1,5 +1,13 @@
 // OUTSIDER: os blocos do fluxograma do bot (mesmos tipos e saídas do Outsider::Bot::Graph no servidor).
-// O cartão tem medidas fixas para as setas saírem sempre do lugar certo, sem medir a tela.
+// O cartão tem medidas fixas para as setas saírem sempre do lugar certo, sem medir a tela. Os blocos que
+// falam com outros sistemas (API, banco, planilha, documentos, decisão) ficam em integrations/.
+import {
+  INTEGRATION_NODE_TYPES,
+  INTEGRATION_TYPES,
+  integrationPorts,
+  integrationWarnings,
+  isIntegration,
+} from './integrations/integrationTypes';
 export const NODE_WIDTH = 260;
 export const HEADER_HEIGHT = 40;
 export const BODY_HEIGHT = 66;
@@ -104,6 +112,7 @@ export const NODE_TYPES = {
     soft: 'bg-n-slate-4 text-n-slate-12',
     defaults: () => ({ text: '', resolve: false }),
   },
+  ...INTEGRATION_NODE_TYPES,
 };
 
 export const PALETTE = [
@@ -114,6 +123,11 @@ export const PALETTE = [
   'action',
   'handoff',
   'end',
+];
+
+export const PALETTE_GROUPS = [
+  { id: 'CONVERSATION', types: PALETTE },
+  { id: 'INTEGRATIONS', types: INTEGRATION_TYPES },
 ];
 
 // saídas do bloco: [{ id, label, kind }] (kind diz como escrever o rótulo)
@@ -158,7 +172,7 @@ export const portsOf = (node, t) => {
         },
       ];
     default:
-      return [];
+      return isIntegration(node.type) ? integrationPorts(node, t) : [];
   }
 };
 
@@ -198,9 +212,12 @@ export const makeNode = (type, x, y) => ({
 });
 
 // os bots não aceitam tudo: cada aviso aparece no bloco e no painel da direita
-export const warningsOf = (node, edges, t) => {
+// (ctx: conexões e planilhas da conta, para os blocos de integração)
+export const warningsOf = (node, edges, t, ctx = null) => {
   const data = node.data || {};
-  const warnings = [];
+  const warnings = isIntegration(node.type)
+    ? integrationWarnings(node, t, ctx)
+    : [];
   const connected = portId =>
     edges.some(edge => edge.from === node.id && edge.port === portId);
   if (['message', 'menu', 'question', 'handoff', 'end'].includes(node.type)) {

@@ -7,9 +7,11 @@
 # - enquanto o bot conversa, a conversa pode ficar Pendente (sai da aba Esperando); ao passar para a
 #   equipe ou acabar sem resolver, volta a Aberta
 # - no máximo MAX_STEPS blocos por mensagem, para um desenho com volta não rodar para sempre
+# - blocos de integração (API, Decisão, Planilha, documentos do Nextcloud): Outsider::Bot::IntegrationSteps
 class Outsider::Bot::Runner
+  include Outsider::Bot::IntegrationSteps
+
   MAX_STEPS = 40
-  VARIABLE = /\{\{\s*([a-z0-9_.]+)\s*\}\}/i
 
   def initialize(conversation)
     @conversation = conversation
@@ -135,6 +137,7 @@ class Outsider::Bot::Runner
     case session.waiting['type']
     when 'menu' then answer_menu(node, message)
     when 'question' then answer_question(node, message)
+    when 'choice' then answer_choice(node, message)
     end
   end
 
@@ -198,6 +201,7 @@ class Outsider::Bot::Runner
     when 'action' then apply_action(data) && (graph.next_of(node, 'next') || stop_with(:finished))
     when 'handoff' then handoff(data) && :stop
     when 'end' then finish_end(data) && :stop
+    when *Outsider::Bot::IntegrationGraph::TYPES then integration_step(node, data)
     else stop_with(:finished)
     end
   end
@@ -307,19 +311,10 @@ class Outsider::Bot::Runner
     data.merge('text' => render(data['text']), 'title' => render(data['title']), 'footer' => render(data['footer']))
   end
 
-  # {{contato.nome}}, {{contato.primeiro_nome}}, {{contato.telefone}}, {{contato.email}} e as respostas guardadas
+  # {{contato.nome}}, {{contato.primeiro_nome}}, {{contato.telefone}}, {{contato.email}}, as respostas guardadas
+  # e os resultados dos blocos de integração, com filtros (Outsider::Bot::Template)
   def render(text)
-    contact = @conversation.contact
-    text.to_s.gsub(VARIABLE) do
-      key = Regexp.last_match(1).downcase
-      case key
-      when 'contato.nome', 'nome_contato' then contact&.name.to_s
-      when 'contato.primeiro_nome', 'primeiro_nome' then contact&.name.to_s.split.first.to_s
-      when 'contato.telefone' then contact&.phone_number.to_s
-      when 'contato.email' then contact&.email.to_s
-      else session&.variables.to_h[key].to_s
-      end
-    end
+    template.render(text)
   end
 
   def sender

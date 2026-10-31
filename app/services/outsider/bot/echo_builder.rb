@@ -12,6 +12,13 @@ module Outsider::Bot::EchoBuilder
 
   private
 
+  # documento do bot: a conversa mostra o nome e o link do Nextcloud, sem guardar outra cópia do arquivo
+  def process_attachments
+    return if bot_echo && bot_echo.dig('attributes', 'kind') == 'document'
+
+    super
+  end
+
   def message_params
     params = super
     return params unless bot_echo

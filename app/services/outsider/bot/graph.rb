@@ -12,10 +12,11 @@
 #   action     equipe, agente, etiquetas, prioridade, nota        -> next
 #   handoff    passa para a equipe (a conversa fica aberta)       -> (fim)
 #   end        encerra (pode resolver a conversa)                 -> (fim)
+#   api, decision, sheet, doc_search, doc_send: blocos de integração (Outsider::Bot::IntegrationGraph)
 #
 # sanitize limpa o que veio da tela: tipos e saídas conhecidos, textos com limite, ids seguros.
 class Outsider::Bot::Graph
-  TYPES = %w[start message menu question condition action handoff end].freeze
+  TYPES = (%w[start message menu question condition action handoff end] + Outsider::Bot::IntegrationGraph::TYPES).freeze
   STYLES = %w[list buttons text].freeze
   TRIGGERS = %w[unassigned_message new_conversation keyword].freeze
   CONTACT_FIELDS = ['', 'name', 'email', 'company_name', 'city'].freeze
@@ -54,6 +55,8 @@ class Outsider::Bot::Graph
   end
 
   class << self
+    include Outsider::Bot::IntegrationGraph
+
     def ports(node)
       data = node['data'] || {}
       case node['type']
@@ -61,6 +64,7 @@ class Outsider::Bot::Graph
       when 'menu' then Array(data['options']).pluck('id') + ['invalid']
       when 'question' then Array(data['routes']).pluck('id') + ['default']
       when 'condition' then %w[inside outside]
+      when *Outsider::Bot::IntegrationGraph::TYPES then integration_ports(node['type'], data)
       else []
       end
     end

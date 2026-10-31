@@ -15,3 +15,33 @@ pt_BR:
       closed: "Estamos fora do horário de atendimento agora. Deixe sua mensagem que respondemos assim que voltarmos! 🕗"
       to_sales: "Perfeito! Já vou chamar alguém do comercial para falar com você. 😊"
       to_support: "Certo! Vou passar você para o nosso suporte técnico. Só um instante."
+    document_example:
+      keywords: "segunda via,2 via,2ª via,boleto,nota fiscal"
+      ask: "Claro! Para sua segurança, me diga o CNPJ ou CPF do cadastro (só os números)."
+      no_phone: "Sem cadastro"
+      same_phone: "WhatsApp confere"
+      choose: "Achei estes documentos no seu cadastro. Qual você quer?"
+      button: "Ver documentos"
+      caption: "Aqui está: {{documento.nome}}"
+      done: "Precisando de mais alguma coisa, é só chamar! 😊"
+      nothing: "Não encontrei documentos no seu cadastro. Vou chamar alguém da equipe para ajudar."
+      not_verified: "Não consegui confirmar o cadastro por este WhatsApp. Vou passar você para a equipe, só um instante."
+      failure: "Nosso sistema não respondeu agora. Vou chamar alguém da equipe para ajudar."
+    documents:
+      choose:
+        one: "Encontrei este documento:"
+        other: "Encontrei %{count} documentos. Qual você quer?"
+      link_text: "Aqui está o seu documento: {{link}}\n(o link vale por %{days} dias)"
+      open_in_nextcloud: "Abrir no Nextcloud"
+    errors:
+      invalid_base_url: "precisa ser um endereço http:// ou https:// completo, sem usuário, senha, ? ou #"
+      invalid_connection_string: "não é uma connection string do PostgreSQL (postgresql://usuario:senha@servidor:5432/banco)"
+      password_placeholder: "ainda está com [YOUR-PASSWORD]: troque pela senha do banco"
+  activerecord:
+    attributes:
+      outsider/bot/connection:
+        name: Nome
+        base_url: Endereço
+        timeout_seconds: Tempo limite
+      outsider/bot/dataset:
+        name: Nome
