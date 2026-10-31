@@ -1,5 +1,6 @@
 # OUTSIDER: de madrugada, apaga o registro de chamadas do bot com mais de 7 dias e as linhas de planilha de
-# envios que não terminaram (o navegador fechou no meio), para o banco não crescer à toa.
+# envios que não terminaram (o navegador fechou no meio) e os arquivos que nenhum bloco usa mais, para o
+# banco e o disco não crescerem à toa.
 class Outsider::Bot::LogCleanupJob < ApplicationJob
   queue_as :scheduled_jobs
 
@@ -15,5 +16,7 @@ class Outsider::Bot::LogCleanupJob < ApplicationJob
     Outsider::Bot::Dataset.where('updated_at < ?', 1.day.ago).find_each do |dataset|
       dataset.all_rows.where.not(generation: dataset.generation).in_batches(of: BATCH).delete_all
     end
+    # arquivos de Enviar arquivo que ficaram sem bloco (enviados e não salvos, ou bloco apagado)
+    Outsider::Bot::Flow.joins(:files_attachments).distinct.find_each { |flow| flow.release_unused_files(older_than: 1.day) }
   end
 end

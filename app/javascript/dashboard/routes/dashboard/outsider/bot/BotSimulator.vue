@@ -485,14 +485,14 @@ const runIntegration = async (node, confirmWrite = false) => {
     return null;
   }
   system(callNote(node, result));
-  if (node.type === 'doc_send' && result.port === 'ok') {
+  if (['doc_send', 'file_send'].includes(node.type) && result.port === 'ok') {
     await previewDocument(node, result.preview);
   }
   return result.port;
 };
 
 const integrationStep = async node => {
-  if (node.type !== 'decision' && node.type !== 'doc_send') {
+  if (!['decision', 'doc_send', 'file_send'].includes(node.type)) {
     run.calls += 1;
     if (run.calls > MAX_CALLS) {
       system(t('OUTSIDER_TOOLS.BOT.TEST.TOO_MANY_CALLS', { count: MAX_CALLS }));

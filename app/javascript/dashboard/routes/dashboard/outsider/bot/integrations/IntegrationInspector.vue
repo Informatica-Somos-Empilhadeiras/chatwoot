@@ -6,6 +6,7 @@ import SheetBlock from './SheetBlock.vue';
 import DocSearchBlock from './DocSearchBlock.vue';
 import DocSendBlock from './DocSendBlock.vue';
 import DecisionBlock from './DecisionBlock.vue';
+import FileSendBlock from './FileSendBlock.vue';
 
 defineProps({
   node: { type: Object, required: true },
@@ -18,6 +19,7 @@ const PANELS = {
   doc_search: DocSearchBlock,
   doc_send: DocSendBlock,
   decision: DecisionBlock,
+  file_send: FileSendBlock,
 };
 </script>
 

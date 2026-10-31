@@ -116,7 +116,8 @@
         "sheet": "Spreadsheet lookup",
         "doc_search": "Find document",
         "doc_send": "Send document",
-        "decision": "Decision"
+        "decision": "Decision",
+        "file_send": "Send file"
       },
       "TYPE_HINTS": {
         "start": "When the flow starts",
@@ -129,10 +130,11 @@
         "end": "Ends the flow",
         "api": "GET, POST, PUT, DELETE on another system",
         "db_query": "SQL on PostgreSQL, Supabase, Neon",
-        "sheet": "Finds a row in an uploaded spreadsheet",
+        "sheet": "Upload an Excel or CSV and find a row",
         "doc_search": "Searches files on Nextcloud",
         "doc_send": "Sends the file found to the customer",
-        "decision": "Branches by rules on variables"
+        "decision": "Branches by rules on variables",
+        "file_send": "Sends a file stored in the block"
       },
       "PORTS": {
         "next": "Next",
@@ -310,18 +312,32 @@
         "SAVE_ERROR": "Could not save. Try again.",
         "LOAD_ERROR": "Could not open this flow.",
         "RETRY": "Try again",
-        "PALETTE": "Blocks",
-        "PALETTE_HINT": "Click or drag onto the board. With a block selected, the new one comes already connected to it. To connect, drag from an output dot to another block.",
         "QUICK_ADD": "Create connected block:",
         "FIT": "See the whole flow",
         "CANVAS_HINT": "Drag the background to move · Ctrl + mouse wheel to zoom · Delete removes",
         "START_LOCKED": "The Start block cannot be deleted.",
         "TOO_MANY_NODES": "A flow can have up to {max} blocks.",
-        "LEAVE_CONFIRM": "This flow has unsaved changes. Leave anyway?",
-        "PALETTE_GROUPS": {
-          "CONVERSATION": "Conversation",
-          "INTEGRATIONS": "Integrations"
-        }
+        "LEAVE_CONFIRM": "This flow has unsaved changes. Leave anyway?"
+      },
+      "PALETTE": {
+        "SEARCH": "Search blocks",
+        "TABS": {
+          "conversation": "Conversation",
+          "logic": "Logic",
+          "integrations": "Integrations",
+          "files": "Files"
+        },
+        "SECTIONS": {
+          "talk": "Talk to the customer",
+          "close": "Finish",
+          "paths": "Paths",
+          "chatwoot": "In Chatwoot",
+          "systems": "Systems and databases",
+          "nextcloud": "Nextcloud"
+        },
+        "NO_RESULTS": "No block matches “{query}”.",
+        "HINT": "Click or drag onto the board. To link, drag from an output dot to another block. Drop a spreadsheet or a PDF on the board to create the block with that file.",
+        "DROP_FILE": "Drop to create the block with this file"
       },
       "TEST": {
         "TITLE": "Test the flow",
@@ -455,7 +471,8 @@
           "NO_VALUE": "Enter the value to look for.",
           "NO_LINK": "The text has no {'{{'}link{'}}'}: the customer won't get the file address.",
           "NO_SUBJECT": "Choose what to compare.",
-          "NO_RULES": "Add at least one rule."
+          "NO_RULES": "Add at least one rule.",
+          "NO_FILE": "Upload the file."
         },
         "ERRORS": {
           "http": "The system answered with HTTP error {status}.",
@@ -483,7 +500,9 @@
           "share_failed": "Nextcloud didn't create the file link.",
           "no_document": "No document found before this block (add a Find document block before it).",
           "evolution_error": "WhatsApp (Evolution) didn't accept the file.",
-          "invalid_block": "The block is incomplete."
+          "invalid_block": "The block is incomplete.",
+          "no_file": "The block’s file is not stored in this flow.",
+          "file_missing": "The block’s file was not found on disk. Upload it again in the block."
         },
         "FIELD": {
           "ADD_ROW": "Add",
@@ -594,7 +613,17 @@
           },
           "VALUE": "Value to look for",
           "VALUE_HINT": "Accents and letter case are ignored.",
-          "VARIABLE": "Save the row found as"
+          "VARIABLE": "Save the row found as",
+          "SIZE": "{rows} rows · {columns} columns",
+          "UPDATED": "{file} · updated on {date}",
+          "REFRESH": "Update file",
+          "SWITCH": "Change spreadsheet",
+          "CHOOSE": "Choose…",
+          "UPLOAD_OTHER": "Upload another spreadsheet…",
+          "GONE": "This block’s spreadsheet was deleted. Upload it again or choose another one.",
+          "DROP": "Drag the Excel or CSV here",
+          "DROP_HINT": "or click to choose. The first row holds the column names; up to {max} rows.",
+          "USE_EXISTING": "Or use a spreadsheet already uploaded"
         },
         "DECISION": {
           "SUBJECT": "What to compare",
@@ -648,6 +677,25 @@
           "LINK_HINT": "Put {link} where the address should go.",
           "LINK_DAYS": "Link valid for (days)",
           "PRIVACY_HINT": "The file isn't copied into Chatwoot: the conversation keeps only the name and the Nextcloud link."
+        },
+        "FILE": {
+          "DROP": "Drag the file here",
+          "DROP_HINT": "or click to choose: PDF, image, video, Word, Excel… up to 16 MB.",
+          "UPLOADING": "Uploading… {progress}%",
+          "OPEN": "Open",
+          "REPLACE": "Replace file",
+          "REMOVE": "Remove the file",
+          "GONE": "This file is not stored in this flow. Upload it again.",
+          "CAPTION": "Caption",
+          "CAPTION_PLACEHOLDER": "Here is our catalog, {name}!",
+          "CAPTION_HINT": "Goes with the file. Can use variables.",
+          "STORED_HINT": "The file is stored once: every send to a customer uses the same file, no copies.",
+          "ERRORS": {
+            "file_type": "File type not accepted. Use: {types}.",
+            "file_too_big": "The file is larger than 16 MB.",
+            "no_file": "Choose a file.",
+            "upload_failed": "Could not upload the file. Try again."
+          }
         }
       },
       "CONNECTIONS": {
@@ -852,7 +900,8 @@
           "sheet": "Spreadsheet lookup",
           "doc_search": "Find document",
           "doc_send": "Send document",
-          "test": "Connection test"
+          "test": "Connection test",
+          "file_send": "Send file"
         },
         "HEADLINES": {
           "sheet": "{dataset}: {column} = {value}",

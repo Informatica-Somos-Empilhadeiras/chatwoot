@@ -24,6 +24,7 @@ const KIND_ICONS = {
   sheet: 'i-lucide-sheet',
   doc_search: 'i-lucide-file-search',
   doc_send: 'i-lucide-file-up',
+  file_send: 'i-lucide-paperclip',
   test: 'i-lucide-activity',
 };
 const KINDS = Object.keys(KIND_ICONS);
@@ -182,6 +183,7 @@ const headline = log => {
           })
         : t(`${key}.doc_search_latest`, { folder: detail.folder || '/' });
     case 'doc_send':
+    case 'file_send':
       return detail.file
         ? t(`${key}.doc_send`, { file: detail.file })
         : t(`${key}.doc_send_empty`);

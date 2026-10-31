@@ -6,8 +6,9 @@
 #   doc_search procura documentos no Nextcloud           -> found / not_found / error
 #   doc_send   manda o documento achado ao cliente       -> ok / error
 #   db_query   consulta SQL num PostgreSQL               -> found / not_found / error
+#   file_send  manda o arquivo guardado no próprio bloco -> ok / error
 module Outsider::Bot::IntegrationGraph
-  TYPES = %w[api decision sheet doc_search doc_send db_query].freeze
+  TYPES = %w[api decision sheet doc_search doc_send db_query file_send].freeze
   METHODS = %w[GET POST PUT PATCH DELETE].freeze
   BODY_TYPES = %w[none json form xml text graphql].freeze
   DECISION_OPERATORS = %w[equals not_equals contains not_contains starts_with ends_with greater less empty not_empty].freeze
@@ -18,7 +19,7 @@ module Outsider::Bot::IntegrationGraph
 
   def integration_ports(type, data)
     case type
-    when 'api', 'doc_send' then %w[ok error]
+    when 'api', 'doc_send', 'file_send' then %w[ok error]
     when 'decision' then Array(data['rules']).pluck('id') + ['default']
     when 'sheet' then %w[found not_found]
     when 'doc_search', 'db_query' then %w[found not_found error]
@@ -70,6 +71,19 @@ module Outsider::Bot::IntegrationGraph
     {
       'source' => variable_name(data['source'], 'documento'), 'mode' => data['mode'] == 'link' ? 'link' : 'file',
       'caption' => text(data['caption'], 1000), 'link_text' => text(data['link_text'], 1000), 'link_days' => int(data['link_days'], 7, 1, 30)
+    }
+  end
+
+  # file: { blob_id, name, size, content_type } do arquivo guardado no fluxo (Outsider::Bot::Flow#files)
+  def clean_file_send(data)
+    file = data['file'].is_a?(Hash) ? data['file'] : {}
+    blob_id = file['blob_id'].to_i
+    {
+      'file' => (if blob_id.positive?
+                   { 'blob_id' => blob_id, 'name' => file['name'].to_s.squish.first(200), 'size' => file['size'].to_i,
+                     'content_type' => file['content_type'].to_s.first(100) }
+                 end),
+      'caption' => text(data['caption'], 1000)
     }
   end
 

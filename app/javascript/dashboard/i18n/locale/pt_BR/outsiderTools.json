@@ -116,7 +116,8 @@
         "sheet": "Buscar na planilha",
         "doc_search": "Buscar documento",
         "doc_send": "Enviar documento",
-        "decision": "Decisão"
+        "decision": "Decisão",
+        "file_send": "Enviar arquivo"
       },
       "TYPE_HINTS": {
         "start": "Quando o fluxo começa",
@@ -129,10 +130,11 @@
         "end": "Termina o fluxo",
         "api": "GET, POST, PUT, DELETE em outro sistema",
         "db_query": "SQL no PostgreSQL, Supabase, Neon",
-        "sheet": "Acha uma linha numa planilha enviada",
+        "sheet": "Envie um Excel ou CSV e ache uma linha",
         "doc_search": "Procura arquivos no Nextcloud",
         "doc_send": "Manda o arquivo achado ao cliente",
-        "decision": "Segue por regras com as variáveis"
+        "decision": "Segue por regras com as variáveis",
+        "file_send": "Manda um arquivo guardado no bloco"
       },
       "PORTS": {
         "next": "Depois",
@@ -310,18 +312,32 @@
         "SAVE_ERROR": "Não foi possível salvar. Tente de novo.",
         "LOAD_ERROR": "Não foi possível abrir este fluxo.",
         "RETRY": "Tentar de novo",
-        "PALETTE": "Blocos",
-        "PALETTE_HINT": "Clique ou arraste para o quadro. Com um bloco selecionado, o novo já sai ligado a ele. Para ligar, arraste da bolinha de uma saída até outro bloco.",
         "QUICK_ADD": "Criar bloco ligado:",
         "FIT": "Ver o fluxo inteiro",
         "CANVAS_HINT": "Arraste o fundo para mover · Ctrl + roda do mouse para zoom · Delete apaga",
         "START_LOCKED": "O bloco Início não pode ser apagado.",
         "TOO_MANY_NODES": "O fluxo pode ter até {max} blocos.",
-        "LEAVE_CONFIRM": "Há mudanças não salvas neste fluxo. Sair mesmo assim?",
-        "PALETTE_GROUPS": {
-          "CONVERSATION": "Conversa",
-          "INTEGRATIONS": "Integrações"
-        }
+        "LEAVE_CONFIRM": "Há mudanças não salvas neste fluxo. Sair mesmo assim?"
+      },
+      "PALETTE": {
+        "SEARCH": "Buscar bloco",
+        "TABS": {
+          "conversation": "Conversa",
+          "logic": "Lógica",
+          "integrations": "Integrações",
+          "files": "Arquivos"
+        },
+        "SECTIONS": {
+          "talk": "Falar com o cliente",
+          "close": "Terminar",
+          "paths": "Caminhos",
+          "chatwoot": "No Chatwoot",
+          "systems": "Sistemas e bancos",
+          "nextcloud": "Nextcloud"
+        },
+        "NO_RESULTS": "Nenhum bloco com “{query}”.",
+        "HINT": "Clique ou arraste para o quadro. Para ligar, arraste da bolinha de uma saída até outro bloco. Solte uma planilha ou um PDF no quadro para criar o bloco com o arquivo.",
+        "DROP_FILE": "Solte para criar o bloco com este arquivo"
       },
       "TEST": {
         "TITLE": "Testar o fluxo",
@@ -455,7 +471,8 @@
           "NO_VALUE": "Diga o valor a procurar.",
           "NO_LINK": "O texto não tem {'{{'}link{'}}'}: o cliente não vai receber o endereço do arquivo.",
           "NO_SUBJECT": "Escolha o que comparar.",
-          "NO_RULES": "Adicione pelo menos uma regra."
+          "NO_RULES": "Adicione pelo menos uma regra.",
+          "NO_FILE": "Envie o arquivo."
         },
         "ERRORS": {
           "http": "O sistema respondeu com erro HTTP {status}.",
@@ -483,7 +500,9 @@
           "share_failed": "O Nextcloud não criou o link do arquivo.",
           "no_document": "Nenhum documento achado antes deste bloco (ponha um Buscar documento antes).",
           "evolution_error": "O WhatsApp (Evolution) não aceitou o arquivo.",
-          "invalid_block": "O bloco está incompleto."
+          "invalid_block": "O bloco está incompleto.",
+          "no_file": "O arquivo do bloco não está guardado neste fluxo.",
+          "file_missing": "O arquivo do bloco não foi achado no disco. Envie de novo no bloco."
         },
         "FIELD": {
           "ADD_ROW": "Adicionar",
@@ -594,7 +613,17 @@
           },
           "VALUE": "Valor a procurar",
           "VALUE_HINT": "Sem diferença de acento ou maiúscula.",
-          "VARIABLE": "Guardar a linha achada como"
+          "VARIABLE": "Guardar a linha achada como",
+          "SIZE": "{rows} linhas · {columns} colunas",
+          "UPDATED": "{file} · atualizada em {date}",
+          "REFRESH": "Atualizar arquivo",
+          "SWITCH": "Trocar planilha",
+          "CHOOSE": "Escolha…",
+          "UPLOAD_OTHER": "Enviar outra planilha…",
+          "GONE": "A planilha deste bloco foi apagada. Envie de novo ou escolha outra.",
+          "DROP": "Arraste o Excel ou CSV aqui",
+          "DROP_HINT": "ou clique para escolher. A primeira linha tem os nomes das colunas; até {max} linhas.",
+          "USE_EXISTING": "Ou use uma planilha já enviada"
         },
         "DECISION": {
           "SUBJECT": "O que comparar",
@@ -648,6 +677,25 @@
           "LINK_HINT": "Ponha {link} onde o endereço deve entrar.",
           "LINK_DAYS": "O link vale por (dias)",
           "PRIVACY_HINT": "O arquivo não é copiado para o Chatwoot: a conversa guarda só o nome e o link do Nextcloud."
+        },
+        "FILE": {
+          "DROP": "Arraste o arquivo aqui",
+          "DROP_HINT": "ou clique para escolher: PDF, imagem, vídeo, Word, Excel… até 16 MB.",
+          "UPLOADING": "Enviando… {progress}%",
+          "OPEN": "Abrir",
+          "REPLACE": "Trocar arquivo",
+          "REMOVE": "Tirar o arquivo",
+          "GONE": "Este arquivo não está guardado neste fluxo. Envie de novo.",
+          "CAPTION": "Legenda",
+          "CAPTION_PLACEHOLDER": "Segue o nosso catálogo, {name}!",
+          "CAPTION_HINT": "Vai junto com o arquivo. Pode ter variáveis.",
+          "STORED_HINT": "O arquivo fica guardado uma vez: cada envio ao cliente usa o mesmo arquivo, sem cópias.",
+          "ERRORS": {
+            "file_type": "Tipo de arquivo não aceito. Use: {types}.",
+            "file_too_big": "O arquivo passa de 16 MB.",
+            "no_file": "Escolha um arquivo.",
+            "upload_failed": "Não foi possível enviar o arquivo. Tente de novo."
+          }
         }
       },
       "CONNECTIONS": {
@@ -852,7 +900,8 @@
           "sheet": "Buscar na planilha",
           "doc_search": "Buscar documento",
           "doc_send": "Enviar documento",
-          "test": "Testar conexão"
+          "test": "Testar conexão",
+          "file_send": "Enviar arquivo"
         },
         "HEADLINES": {
           "sheet": "{dataset}: {column} = {value}",

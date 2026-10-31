@@ -4,6 +4,7 @@
 // e o Testar (BotSimulator). Liga arrastando da bolinha de uma saída até outro bloco; soltar no vazio
 // abre a lista de blocos para criar um já ligado. Ctrl+Z desfaz, Delete apaga, Ctrl+S salva.
 // Os blocos de integração usam as conexões e planilhas da conta (recarregadas ao voltar para a guia).
+// Soltar um Excel/CSV no quadro cria o bloco Buscar na planilha; outro arquivo, o Enviar arquivo.
 import {
   ref,
   reactive,
@@ -27,9 +28,10 @@ import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 import BotNodeCard from './BotNodeCard.vue';
 import BotInspector from './BotInspector.vue';
 import BotSimulator from './BotSimulator.vue';
+import BotPalette from './BotPalette.vue';
 import {
   NODE_TYPES,
-  PALETTE_GROUPS,
+  PALETTE_CATEGORIES,
   NODE_WIDTH,
   HEADER_HEIGHT,
   nodeHeight,
@@ -45,7 +47,10 @@ import {
   loadIntegrations,
   useIntegrations,
 } from './integrations/useIntegrations';
-import { flowVariables } from './integrations/integrationTypes';
+import {
+  flowVariables,
+  isSpreadsheetName,
+} from './integrations/integrationTypes';
 
 const MAX_NODES = 200;
 const MIN_SCALE = 0.3;
@@ -99,6 +104,11 @@ provide(
 );
 provide('botTestValues', reactive({}));
 provide('botFlowId', flowId);
+// arquivos guardados no fluxo (Enviar arquivo) e o arquivo solto no quadro, que o bloco novo envia ao abrir
+const flowFiles = ref([]);
+const pendingFiles = reactive({});
+provide('botFiles', flowFiles);
+provide('botPendingFiles', pendingFiles);
 provide(
   'botGraph',
   computed(() => graph)
@@ -177,6 +187,7 @@ const applyFlow = flow => {
     .filter(node => NODE_TYPES[node.type])
     .map(withDefaults);
   graph.edges = flow.graph?.edges || [];
+  flowFiles.value = flow.files || [];
   clearTimeout(historyTimer);
   history.last = graphJson();
   savedSnapshot.value = snapshot();
@@ -527,11 +538,34 @@ const onPaletteDragStart = (type, event) => {
   event.dataTransfer.effectAllowed = 'copy';
 };
 
+// arquivo arrastado do computador: mostra o aviso enquanto passa sobre o quadro
+const fileOver = ref(false);
+let fileOverTimer = null;
+const onCanvasDragOver = event => {
+  if (!Array.from(event.dataTransfer?.types || []).includes('Files')) return;
+  fileOver.value = true;
+  clearTimeout(fileOverTimer);
+  fileOverTimer = setTimeout(() => {
+    fileOver.value = false;
+  }, 200);
+};
+
 const onDrop = event => {
+  fileOver.value = false;
+  const point = toCanvas(event.clientX, event.clientY);
+  const at = { x: point.x - NODE_WIDTH / 2, y: point.y };
+  const [file] = event.dataTransfer.files || [];
+  if (file) {
+    const node = addNode(
+      isSpreadsheetName(file.name) ? 'sheet' : 'file_send',
+      at
+    );
+    if (node) pendingFiles[node.id] = file;
+    return;
+  }
   const type = event.dataTransfer.getData('text/x-outsider-bot');
   if (!NODE_TYPES[type]) return;
-  const point = toCanvas(event.clientX, event.clientY);
-  addNode(type, { x: point.x - NODE_WIDTH / 2, y: point.y });
+  addNode(type, at);
 };
 
 const deleteNode = id => {
@@ -921,44 +955,10 @@ const gridStyle = computed(() => ({
 
     <div v-else class="flex flex-1 min-h-0">
       <!-- blocos para adicionar -->
-      <aside
-        class="flex flex-col w-52 gap-1.5 p-3 overflow-y-auto border-r shrink-0 border-n-weak bg-n-solid-1"
-      >
-        <template v-for="group in PALETTE_GROUPS" :key="group.id">
-          <span
-            class="px-1 pt-1 text-xs font-medium uppercase first:pt-0 text-n-slate-10"
-          >
-            {{ t(`OUTSIDER_TOOLS.BOT.EDITOR.PALETTE_GROUPS.${group.id}`) }}
-          </span>
-          <button
-            v-for="type in group.types"
-            :key="type"
-            type="button"
-            draggable="true"
-            class="flex items-center gap-2 px-2 py-2 text-left border rounded-lg cursor-grab border-n-weak hover:bg-n-alpha-1 hover:border-n-slate-6"
-            @dragstart="onPaletteDragStart(type, $event)"
-            @click="addNode(type)"
-          >
-            <span
-              class="flex items-center justify-center rounded-md size-7 shrink-0 text-white"
-              :class="NODE_TYPES[type].color"
-            >
-              <Icon :icon="NODE_TYPES[type].icon" class="size-4" />
-            </span>
-            <span class="flex flex-col min-w-0">
-              <span class="text-sm text-n-slate-12">
-                {{ t(`OUTSIDER_TOOLS.BOT.TYPES.${type}`) }}
-              </span>
-              <span class="text-[11px] leading-tight text-n-slate-10">
-                {{ t(`OUTSIDER_TOOLS.BOT.TYPE_HINTS.${type}`) }}
-              </span>
-            </span>
-          </button>
-        </template>
-        <p class="px-1 mt-2 text-[11px] leading-snug text-n-slate-10">
-          {{ t('OUTSIDER_TOOLS.BOT.EDITOR.PALETTE_HINT') }}
-        </p>
-      </aside>
+      <BotPalette
+        @add="type => addNode(type)"
+        @dragstart="onPaletteDragStart"
+      />
 
       <!-- quadro -->
       <div
@@ -969,7 +969,7 @@ const gridStyle = computed(() => ({
         :style="gridStyle"
         @pointerdown="onCanvasDown"
         @wheel.prevent="onWheel"
-        @dragover.prevent
+        @dragover.prevent="onCanvasDragOver"
         @drop.prevent="onDrop"
       >
         <div class="absolute top-0 left-0 origin-top-left" :style="canvasStyle">
@@ -1073,14 +1073,14 @@ const gridStyle = computed(() => ({
           <span class="px-2 py-1 text-xs text-n-slate-11">
             {{ t('OUTSIDER_TOOLS.BOT.EDITOR.QUICK_ADD') }}
           </span>
-          <template v-for="group in PALETTE_GROUPS" :key="group.id">
+          <template v-for="group in PALETTE_CATEGORIES" :key="group.id">
             <span
               class="px-2 pt-1.5 text-[10px] font-medium uppercase text-n-slate-10"
             >
-              {{ t(`OUTSIDER_TOOLS.BOT.EDITOR.PALETTE_GROUPS.${group.id}`) }}
+              {{ t(`OUTSIDER_TOOLS.BOT.PALETTE.TABS.${group.id}`) }}
             </span>
             <button
-              v-for="type in group.types"
+              v-for="type in group.sections.flatMap(section => section.types)"
               :key="type"
               type="button"
               class="flex items-center gap-2 px-2 py-1.5 text-sm text-left rounded-lg hover:bg-n-alpha-1 text-n-slate-12"
@@ -1095,6 +1095,19 @@ const gridStyle = computed(() => ({
               {{ t(`OUTSIDER_TOOLS.BOT.TYPES.${type}`) }}
             </button>
           </template>
+        </div>
+
+        <!-- arquivo do computador sobre o quadro -->
+        <div
+          v-if="fileOver"
+          class="absolute z-40 flex items-center justify-center border-2 border-dashed pointer-events-none inset-3 rounded-2xl border-n-brand bg-n-brand/5"
+        >
+          <span
+            class="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-xl shadow-sm bg-n-solid-1 text-n-slate-12"
+          >
+            <Icon icon="i-lucide-file-plus-2" class="size-4 text-n-brand" />
+            {{ t('OUTSIDER_TOOLS.BOT.PALETTE.DROP_FILE') }}
+          </span>
         </div>
 
         <!-- zoom -->

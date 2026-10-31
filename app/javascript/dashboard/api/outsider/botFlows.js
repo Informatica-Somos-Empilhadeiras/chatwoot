@@ -11,6 +11,13 @@ class BotFlowsAPI extends ApiClient {
     return axios.post(`${this.url}/${id}/duplicate`);
   }
 
+  // Enviar arquivo: guarda o arquivo no fluxo e devolve { blob_id, name, size, content_type, url }
+  uploadFile(id, file, onUploadProgress) {
+    const form = new FormData();
+    form.append('file', file);
+    return axios.post(`${this.url}/${id}/files`, form, { onUploadProgress });
+  }
+
   // Testar de um bloco de integração: { node, variables, contact, flow_id, confirm_write }
   runBlock(payload) {
     return axios.post(`${this.url}/run_block`, payload);

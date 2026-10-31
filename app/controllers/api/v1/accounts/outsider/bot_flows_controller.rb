@@ -1,6 +1,9 @@
 # OUTSIDER: fluxos do bot (Configurações > Automação por bot), só para administradores.
 # O desenho é limpo pelo Outsider::Bot::Graph ao salvar.
 class Api::V1::Accounts::Outsider::BotFlowsController < Api::V1::Accounts::BaseController
+  FILE_LIMIT = 16.megabytes
+  FILE_EXTENSIONS = %w[pdf jpg jpeg png webp gif mp4 mp3 ogg m4a doc docx odt xls xlsx ods csv ppt pptx txt xml zip rar].freeze
+
   before_action :check_administrator
   before_action :find_flow, except: [:index, :create, :run_block]
 
@@ -30,7 +33,20 @@ class Api::V1::Accounts::Outsider::BotFlowsController < Api::V1::Accounts::BaseC
   def duplicate
     copy = flows_scope.create!(name: "#{@flow.name} (cópia)".first(120), active: false, inbox_ids: @flow.inbox_ids,
                                graph: @flow.graph, created_by_id: Current.user.id, updated_by_id: Current.user.id)
+    copy.files.attach(@flow.files_blobs.to_a) if @flow.files_blobs.any?
     render json: detail(copy)
+  end
+
+  # Enviar arquivo: o arquivo fica guardado no fluxo, uma vez; o bloco guarda só o blob_id
+  def files
+    file = params[:file]
+    return render(json: { error: 'no_file' }, status: :unprocessable_entity) unless file.respond_to?(:original_filename)
+    return render(json: { error: 'file_too_big' }, status: :unprocessable_entity) if file.size > FILE_LIMIT
+    return render(json: { error: 'file_type' }, status: :unprocessable_entity) unless FILE_EXTENSIONS.include?(file_extension(file))
+
+    blob = ActiveStorage::Blob.create_and_upload!(io: file, filename: file.original_filename, content_type: file.content_type)
+    @flow.files.attach(blob)
+    render json: file_json(blob)
   end
 
   def destroy
@@ -48,6 +64,7 @@ class Api::V1::Accounts::Outsider::BotFlowsController < Api::V1::Accounts::BaseC
 
     template = ::Outsider::Bot::Template.new(test_variables, contact: test_contact, conversation: { 'id' => 0, 'numero' => 0 })
     return render(json: doc_send_preview(node)) if node['type'] == 'doc_send'
+    return render(json: file_send_preview(node)) if node['type'] == 'file_send'
 
     runner = ::Outsider::Bot::Integrations::BlockRunner.new(
       account: Current.account, template: template, context: { test: true, flow_id: params[:flow_id].presence&.to_i, read_only: !confirm_write? }
@@ -137,6 +154,22 @@ class Api::V1::Accounts::Outsider::BotFlowsController < Api::V1::Accounts::BaseC
     { port: 'ok', variables: {}, preview: { name: doc['nome'], mode: node.dig('data', 'mode') } }
   end
 
+  def file_send_preview(node)
+    blob = flows_scope.find_by(id: params[:flow_id])&.file_blob(node.dig('data', 'file', 'blob_id'))
+    return { port: 'error', variables: { 'erro' => 'no_file' } } unless blob
+
+    { port: 'ok', variables: {}, preview: { name: blob.filename.to_s, mode: 'file' } }
+  end
+
+  def file_extension(file)
+    File.extname(file.original_filename.to_s).delete('.').downcase
+  end
+
+  def file_json(blob)
+    { blob_id: blob.id, name: blob.filename.to_s, size: blob.byte_size, content_type: blob.content_type,
+      url: Rails.application.routes.url_helpers.rails_blob_path(blob, only_path: true) }
+  end
+
   def response_json(response, runner)
     return unless response
 
@@ -162,7 +195,8 @@ class Api::V1::Accounts::Outsider::BotFlowsController < Api::V1::Accounts::BaseC
   end
 
   def detail(flow)
-    { id: flow.id, name: flow.name, active: flow.active, inbox_ids: flow.inbox_ids, graph: flow.graph, updated_at: flow.updated_at.to_i }
+    { id: flow.id, name: flow.name, active: flow.active, inbox_ids: flow.inbox_ids, graph: flow.graph, updated_at: flow.updated_at.to_i,
+      files: flow.files_blobs.map { |blob| file_json(blob) } }
   end
 
   # fluxo novo já vem com um começo: boas-vindas, menu de 3 opções e passar para a equipe

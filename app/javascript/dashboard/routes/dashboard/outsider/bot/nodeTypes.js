@@ -3,7 +3,6 @@
 // falam com outros sistemas (API, banco, planilha, documentos, decisão) ficam em integrations/.
 import {
   INTEGRATION_NODE_TYPES,
-  INTEGRATION_TYPES,
   integrationPorts,
   integrationWarnings,
   isIntegration,
@@ -115,20 +114,60 @@ export const NODE_TYPES = {
   ...INTEGRATION_NODE_TYPES,
 };
 
-export const PALETTE = [
-  'message',
-  'menu',
-  'question',
-  'condition',
-  'action',
-  'handoff',
-  'end',
+// lista de blocos do editor: uma aba por tipo, cada uma com seções (id vazio = sem título)
+export const PALETTE_CATEGORIES = [
+  {
+    id: 'conversation',
+    icon: 'i-lucide-messages-square',
+    sections: [
+      { id: 'talk', types: ['message', 'menu', 'question'] },
+      { id: 'close', types: ['handoff', 'end'] },
+    ],
+  },
+  {
+    id: 'logic',
+    icon: 'i-lucide-git-branch',
+    sections: [
+      { id: 'paths', types: ['condition', 'decision'] },
+      { id: 'chatwoot', types: ['action'] },
+    ],
+  },
+  {
+    id: 'integrations',
+    icon: 'i-lucide-plug-zap',
+    sections: [
+      { id: 'systems', types: ['api', 'db_query'] },
+      { id: 'nextcloud', types: ['doc_search', 'doc_send'] },
+    ],
+  },
+  {
+    id: 'files',
+    icon: 'i-lucide-folder-open',
+    sections: [{ id: '', types: ['sheet', 'file_send'] }],
+  },
 ];
 
-export const PALETTE_GROUPS = [
-  { id: 'CONVERSATION', types: PALETTE },
-  { id: 'INTEGRATIONS', types: INTEGRATION_TYPES },
-];
+export const PALETTE_TYPES = PALETTE_CATEGORIES.flatMap(category =>
+  category.sections.flatMap(section => section.types)
+);
+
+// palavras que também acham o bloco na busca (além do nome e da descrição)
+export const PALETTE_WORDS = {
+  message: 'texto aviso boas-vindas text',
+  menu: 'lista botões opções whatsapp list buttons',
+  question: 'perguntar resposta chatbot cpf cnpj email',
+  condition: 'horário expediente fora do horário hours',
+  decision: 'se então regra condição comparar if rule',
+  action: 'equipe etiqueta nota prioridade agente team label',
+  handoff: 'humano atendente equipe transferir human',
+  end: 'fim fechar resolver finish',
+  api: 'http rest webhook get post put delete graphql json erp sistema',
+  db_query: 'sql banco supabase railway neon postgres database',
+  doc_search: 'nextcloud nuvem pasta nota fiscal boleto pdf',
+  doc_send: 'nextcloud nuvem pdf link',
+  sheet: 'excel xlsx csv tabela planilha preço modelo spreadsheet',
+  file_send: 'pdf arquivo documento catálogo imagem foto anexo vídeo file',
+};
 
 // saídas do bloco: [{ id, label, kind }] (kind diz como escrever o rótulo)
 export const portsOf = (node, t) => {

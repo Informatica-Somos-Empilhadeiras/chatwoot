@@ -7,6 +7,8 @@
 #   - Enviar documento manda o próprio arquivo pelo WhatsApp da Evolution (link público que vence amanhã e
 #     é apagado logo depois do envio) ou, nas outras caixas e quando o arquivo não vai, um link com validade.
 #     Na conversa fica o nome do arquivo com o link do Nextcloud, sem cópia do arquivo no Chatwoot.
+#   - Enviar arquivo manda o arquivo guardado no próprio bloco (Outsider::Bot::Flow#files); a mensagem da
+#     conversa aponta para esse mesmo arquivo
 module Outsider::Bot::IntegrationSteps
   FAILURE_PORTS = %w[error not_found default].freeze
   MAX_CALLS = 10
@@ -16,6 +18,7 @@ module Outsider::Bot::IntegrationSteps
 
   def integration_step(node, data)
     return doc_send_step(node, data) if node['type'] == 'doc_send'
+    return file_send_step(node, data) if node['type'] == 'file_send'
     return follow(node, 'error') if too_many_calls?(node)
 
     result = block_runner.run(node)
@@ -26,7 +29,7 @@ module Outsider::Bot::IntegrationSteps
   end
 
   def too_many_calls?(node)
-    return false if node['type'] == 'decision'
+    return false if %w[decision file_send].include?(node['type'])
 
     @integration_calls = @integration_calls.to_i + 1
     @integration_calls > MAX_CALLS
@@ -141,16 +144,37 @@ module Outsider::Bot::IntegrationSteps
     nextcloud.delete_share(share['id']) if share
   end
 
+  def file_send_step(node, data)
+    blob = session.flow.file_blob(data.dig('file', 'blob_id'))
+    return file_send_failed(node, 'no_file') unless blob
+
+    started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+    sender.file(blob, caption: render(data['caption']))
+    log_doc_send(node, nil, 'ok', started, 'file' => blob.filename.to_s, 'mode' => 'stored')
+    follow(node, 'ok')
+  rescue Outsider::EvolutionApi::Error => e
+    file_send_failed(node, 'evolution_error', e.code)
+  rescue ActiveStorage::FileNotFoundError
+    file_send_failed(node, 'file_missing')
+  end
+
+  def file_send_failed(node, code, message = nil)
+    log_doc_send(node, nil, 'error', nil, 'error' => code, 'message' => message&.to_s&.first(300))
+    store_variables('erro' => code)
+    follow(node, 'error')
+  end
+
   def doc_send_failed(node, connection, code, message = nil)
     log_doc_send(node, connection, 'error', nil, 'error' => code, 'message' => message&.first(300))
     store_variables('erro' => code)
     follow(node, 'error')
   end
 
+  # o registro leva o tipo do bloco: doc_send (documento do Nextcloud) ou file_send (arquivo do próprio bloco)
   def log_doc_send(node, connection, status, started, detail)
     duration = started && ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - started) * 1000).round
     Outsider::Bot::Log.record(account_id: @account.id, flow_id: session.flow_id, session_id: session.id, conversation_id: @conversation.id,
-                              connection_id: connection&.id, node_id: node['id'], kind: 'doc_send', status: status, duration_ms: duration,
+                              connection_id: connection&.id, node_id: node['id'], kind: node['type'], status: status, duration_ms: duration,
                               detail: detail.compact)
   end
 end

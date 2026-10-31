@@ -2,7 +2,7 @@
 # só para administradores. Os mais novos primeiro, de 50 em 50 (before_id pega os anteriores).
 class Api::V1::Accounts::Outsider::BotLogsController < Api::V1::Accounts::BaseController
   PER_PAGE = 50
-  FILTERS = { status: %w[ok error not_found], kind: %w[api sheet doc_search doc_send db_query test] }.freeze
+  FILTERS = { status: %w[ok error not_found], kind: %w[api sheet doc_search doc_send file_send db_query test] }.freeze
 
   before_action :check_administrator
 

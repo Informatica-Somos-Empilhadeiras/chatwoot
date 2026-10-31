@@ -10,6 +10,7 @@ export const INTEGRATION_TYPES = [
   'doc_search',
   'doc_send',
   'decision',
+  'file_send',
 ];
 
 export const WRITE_METHODS = ['POST', 'PUT', 'PATCH', 'DELETE'];
@@ -116,6 +117,12 @@ export const INTEGRATION_NODE_TYPES = {
       link_days: 7,
     }),
   },
+  file_send: {
+    icon: 'i-lucide-paperclip',
+    color: 'bg-n-iris-10',
+    soft: 'bg-n-iris-3 text-n-iris-11',
+    defaults: () => ({ file: null, caption: '' }),
+  },
   decision: {
     icon: 'i-lucide-split',
     color: 'bg-n-amber-10',
@@ -128,6 +135,57 @@ export const INTEGRATION_NODE_TYPES = {
 };
 
 export const isIntegration = type => INTEGRATION_TYPES.includes(type);
+
+// arquivos: o que entra como planilha (bloco Buscar na planilha) e o que vai pelo Enviar arquivo
+export const SPREADSHEET_EXTENSIONS = ['xlsx', 'xlsm', 'csv', 'tsv'];
+export const FILE_EXTENSIONS = [
+  'pdf',
+  'jpg',
+  'jpeg',
+  'png',
+  'webp',
+  'gif',
+  'mp4',
+  'mp3',
+  'ogg',
+  'm4a',
+  'doc',
+  'docx',
+  'odt',
+  'xls',
+  'xlsx',
+  'ods',
+  'csv',
+  'ppt',
+  'pptx',
+  'txt',
+  'xml',
+  'zip',
+  'rar',
+];
+export const MAX_FILE_BYTES = 16 * 1024 * 1024;
+export const fileExtension = name =>
+  (String(name || '').match(/\.([A-Za-z0-9]{1,5})$/)?.[1] || '').toLowerCase();
+export const isSpreadsheetName = name =>
+  SPREADSHEET_EXTENSIONS.includes(fileExtension(name));
+export const formatBytes = bytes => {
+  const size = Number(bytes) || 0;
+  if (size < 1024) return `${size} B`;
+  if (size < 1024 * 1024) return `${Math.round(size / 1024)} KB`;
+  return `${(size / 1024 / 1024).toFixed(1).replace('.', ',')} MB`;
+};
+export const fileIcon = (contentType, name) => {
+  const type = String(contentType || '');
+  const extension = fileExtension(name);
+  if (type.startsWith('image/')) return 'i-lucide-file-image';
+  if (type.startsWith('video/')) return 'i-lucide-file-video';
+  if (type.startsWith('audio/')) return 'i-lucide-file-audio';
+  if (['xls', 'xlsx', 'ods', 'csv'].includes(extension)) {
+    return 'i-lucide-file-spreadsheet';
+  }
+  if (['zip', 'rar'].includes(extension)) return 'i-lucide-file-archive';
+  return 'i-lucide-file-text';
+};
 export const isGraphql = data => data?.body_type === 'graphql';
 export const graphqlWrites = query =>
   /(^|\})\s*(mutation|subscription)\b/.test(
@@ -159,6 +217,7 @@ export const integrationPorts = (node, t) => {
   switch (node.type) {
     case 'api':
     case 'doc_send':
+    case 'file_send':
       return [port('ok'), port('error', true)];
     case 'sheet':
       return [port('found'), port('not_found', true)];
@@ -231,6 +290,10 @@ export const integrationSummary = (node, t, ctx) => {
       return (
         d.subject || t('OUTSIDER_TOOLS.BOT.INTEGRATIONS.SUMMARY.NO_SUBJECT')
       );
+    case 'file_send':
+      return d.file?.name
+        ? `${d.file.name}\n${[formatBytes(d.file.size), d.caption].filter(Boolean).join(' · ')}`
+        : empty;
     default:
       return empty;
   }
@@ -248,6 +311,8 @@ export const integrationBadge = (node, t) => {
       return t(
         `OUTSIDER_TOOLS.BOT.INTEGRATIONS.SEND_MODES.${d.mode || 'file'}`
       );
+    case 'file_send':
+      return fileExtension(d.file?.name).toUpperCase();
     case 'decision':
       return t(
         'OUTSIDER_TOOLS.BOT.INTEGRATIONS.SUMMARY.RULES',
@@ -310,6 +375,9 @@ export const integrationWarnings = (node, t, ctx) => {
       ) {
         list.push(w('NO_LINK'));
       }
+      break;
+    case 'file_send':
+      if (!d.file?.blob_id) list.push(w('NO_FILE'));
       break;
     case 'decision':
       if (!String(d.subject || '').trim()) list.push(w('NO_SUBJECT'));

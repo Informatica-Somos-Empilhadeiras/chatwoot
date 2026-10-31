@@ -12,9 +12,10 @@ module Outsider::Bot::EchoBuilder
 
   private
 
-  # documento do bot: a conversa mostra o nome e o link do Nextcloud, sem guardar outra cópia do arquivo
+  # documento do bot: a conversa mostra o nome e o link do Nextcloud, sem guardar outra cópia do arquivo;
+  # arquivo do bloco Enviar arquivo: o bot liga a mensagem ao arquivo que já está guardado no fluxo
   def process_attachments
-    return if bot_echo && bot_echo.dig('attributes', 'kind') == 'document'
+    return if bot_echo && %w[document file].include?(bot_echo.dig('attributes', 'kind'))
 
     super
   end

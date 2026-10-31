@@ -12,6 +12,8 @@
 #   - WhatsApp oficial e chat do site: menu do próprio Chatwoot (input_select)
 #   - estilo texto e as outras caixas: texto com as opções numeradas
 class Outsider::Bot::Sender
+  include FileTypeHelper
+
   ECHO_WAIT = 6.seconds
   ECHO_INTERVAL = 0.4
   # "digitando..." antes de cada texto, como a Evolution faz com o que sai do Chatwoot
@@ -69,6 +71,20 @@ class Outsider::Bot::Sender
       evolution_api.send_media(number: recipient, mediatype: 'document', mimetype: doc['tipo'].presence || 'application/octet-stream',
                                file_name: doc['nome'].to_s, caption: caption.presence, media: url)
     end
+  end
+
+  # arquivo guardado no bloco Enviar arquivo: sai pela Evolution (ou pela própria caixa) e a mensagem da
+  # conversa aponta para o mesmo arquivo do fluxo; a cópia que a Evolution grava vem sem o arquivo.
+  def file(blob, caption:)
+    attributes = { 'kind' => 'file', 'name' => blob.filename.to_s }
+    return create_file_message(blob, caption, attributes) unless evolution?
+
+    message = send_by_evolution(caption.to_s, attributes) do
+      evolution_api.send_media(number: recipient, mediatype: evolution_media_type(blob.content_type),
+                               mimetype: blob.content_type.presence || 'application/octet-stream', file_name: blob.filename.to_s,
+                               caption: caption.presence, media: Base64.strict_encode64(blob.download))
+    end
+    attach_blob(message, blob)
   end
 
   def numbered_text(data, options)
@@ -190,6 +206,31 @@ class Outsider::Bot::Sender
           .gsub(/_((?!\s)[^\n_]+?(?<!\s))_/, '*\\1*')
           .gsub(/~((?!\s)[^\n~]+?(?<!\s))~/, '~~\\1~~')
     end.join
+  end
+
+  def evolution_media_type(content_type)
+    case content_type
+    when 'image/jpeg', 'image/png' then 'image'
+    when 'video/mp4' then 'video'
+    else 'document'
+    end
+  end
+
+  def create_file_message(blob, caption, attributes)
+    message = @conversation.messages.new(account_id: @conversation.account_id, inbox_id: @conversation.inbox_id, message_type: :outgoing,
+                                         sender: nil, content: caption.presence, content_attributes: { 'outsider_bot' => attributes })
+    message.attachments.new(account_id: @conversation.account_id, file_type: file_type(blob.content_type), file: blob)
+    message.save!
+    message
+  end
+
+  # a mensagem já foi mostrada sem o arquivo: o updated_at avisa a tela de novo
+  def attach_blob(message, blob)
+    return message if ActiveStorage::Attachment.exists?(record_type: 'Attachment', record_id: message.attachments.select(:id), blob_id: blob.id)
+
+    message.attachments.create!(account_id: message.account_id, file_type: file_type(blob.content_type), file: blob)
+    message.update!(updated_at: Time.current)
+    message
   end
 
   def create_message(attributes)

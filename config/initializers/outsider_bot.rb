@@ -17,6 +17,7 @@ Rails.application.routes.prepend do
           namespace :outsider do
             resources :bot_flows, only: [:index, :show, :create, :update, :destroy] do
               post :duplicate, on: :member
+              post :files, on: :member
               post :run_block, on: :collection
             end
             resources :bot_connections, only: [:index, :create, :update, :destroy] do
