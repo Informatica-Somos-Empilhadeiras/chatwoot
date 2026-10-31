@@ -70,11 +70,41 @@ export const outsiderFaviconHref = (withBadge = false) => {
   return (withBadge && badgeCache.url === url && badgeCache.data) || url;
 };
 
+// os links .favicon só existem com "Chatwoot Metadata" (DISPLAY_MANIFEST) ligado no Super Admin; sem
+// eles, criamos um. Os outros ícones da página (192x192 e o LOGO_THUMBNAIL) também levam o favicon da
+// conta, senão o navegador pode escolher um deles para a aba.
+const CREATED_CLASS = 'outsider-favicon';
+const otherIconHrefs = new Map();
+
+const ensureFaviconLinks = () => {
+  if (document.querySelector('.favicon')) return;
+  const link = document.createElement('link');
+  link.className = `favicon ${CREATED_CLASS}`;
+  link.rel = 'icon';
+  link.type = 'image/png';
+  link.setAttribute('sizes', '32x32');
+  document.head.appendChild(link);
+};
+
 const applyFavicon = () => {
+  const url = outsiderFaviconHref();
+  if (url) ensureFaviconLinks();
+  else
+    document
+      .querySelectorAll(`.${CREATED_CLASS}`)
+      .forEach(link => link.remove());
+
   document.querySelectorAll('.favicon').forEach(link => {
-    link.href = outsiderFaviconHref() || `/favicon-${link.sizes[[0]]}.png`;
+    link.href = url || `/favicon-${link.sizes[[0]]}.png`;
   });
-  if (brandingState.faviconUrl) buildBadge(brandingState.faviconUrl);
+  document.querySelectorAll('link[rel~="icon"]:not(.favicon)').forEach(link => {
+    if (!otherIconHrefs.has(link))
+      otherIconHrefs.set(link, link.getAttribute('href'));
+    const original = otherIconHrefs.get(link);
+    if (url) link.href = url;
+    else if (original) link.setAttribute('href', original);
+  });
+  if (url) buildBadge(url);
 };
 
 const applyTitle = () => {
@@ -140,6 +170,12 @@ export const useAccountBranding = () => {
   const onNotice = data => {
     if (data?.kind === 'branding') loadBranding();
   };
+  // ao voltar para a aba, tira a bolinha também do link que criamos (o faviconHelper.js só conhece os
+  // links .favicon que já existiam quando começou)
+  const onVisible = () => {
+    if (document.visibilityState === 'visible' && brandingState.faviconUrl)
+      applyFavicon();
+  };
 
   watch(accountId, id => {
     if (id) loadBranding();
@@ -148,7 +184,11 @@ export const useAccountBranding = () => {
   onMounted(() => {
     if (accountId.value) loadBranding();
     emitter.on(NOTICE_EVENT, onNotice);
+    document.addEventListener('visibilitychange', onVisible);
   });
 
-  onBeforeUnmount(() => emitter.off(NOTICE_EVENT, onNotice));
+  onBeforeUnmount(() => {
+    emitter.off(NOTICE_EVENT, onNotice);
+    document.removeEventListener('visibilitychange', onVisible);
+  });
 };
