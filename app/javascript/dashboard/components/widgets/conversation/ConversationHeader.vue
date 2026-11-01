@@ -12,6 +12,7 @@ import ConversationCallButton from './ConversationCallButton.vue';
 import ConversationSearchButton from './outsider/ConversationSearchButton.vue'; // OUTSIDER: busca na conversa
 import ChannelAvatar from 'dashboard/components-next/outsider/whatsappLook/ChannelAvatar.vue'; // OUTSIDER: selo do canal
 import HeaderOwnerPill from 'dashboard/components-next/outsider/whatsappLook/HeaderOwnerPill.vue'; // OUTSIDER: quem está com a conversa
+import { useContactPanelToggle } from 'dashboard/composables/outsider/useContactPanelToggle'; // OUTSIDER
 import wootConstants from 'dashboard/constants/globals';
 import { conversationListPageURL } from 'dashboard/helper/URLHelper';
 import { snoozedReopenTime } from 'dashboard/helper/snoozeHelpers';
@@ -30,6 +31,8 @@ const props = defineProps({
     default: false,
   },
 });
+
+const { toggleContactPanel } = useContactPanelToggle(); // OUTSIDER: foto/nome abrem o painel do contato
 
 const { t } = useI18n();
 const store = useStore();
@@ -115,8 +118,11 @@ const copyConversationId = async () => {
     ref="conversationHeader"
     class="flex flex-col gap-3 items-center justify-between flex-1 w-full min-w-0 xl:flex-row px-3 pt-3 pb-2 h-24 xl:h-12"
   >
+    <!-- OUTSIDER: clicar na foto ou no nome abre os dados do contato (como no WhatsApp) -->
     <div
-      class="flex items-center justify-start w-full xl:w-auto max-w-full min-w-0 xl:flex-1"
+      class="flex items-center justify-start w-full xl:w-auto max-w-full min-w-0 xl:flex-1 cursor-pointer"
+      data-header-contact
+      @click="toggleContactPanel"
     >
       <BackButton
         v-if="showBackButton"

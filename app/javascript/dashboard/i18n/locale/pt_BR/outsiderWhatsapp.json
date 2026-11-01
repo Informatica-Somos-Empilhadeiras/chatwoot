@@ -280,6 +280,43 @@
         "SELECTED": "Para:",
         "MAX": "Escolha até {max} contatos."
       }
+    },
+    "VIEWER": {
+      "WHEN": "{date} às {time}",
+      "POSITION": "{current} de {total}",
+      "ZOOM_IN": "Aproximar",
+      "ZOOM_OUT": "Afastar",
+      "ROTATE": "Girar",
+      "GO_TO_MESSAGE": "Ir para a mensagem",
+      "DOWNLOAD": "Baixar",
+      "CLOSE": "Fechar (Esc)"
+    },
+    "PROFILE": {
+      "TITLE": "Dados do contato",
+      "GROUP": "Grupo do WhatsApp",
+      "COPIED": "Copiado.",
+      "MEDIA_TITLE": "Mídia, links e docs",
+      "THIS_MONTH": "Neste mês",
+      "TABS": {
+        "MEDIA": "Mídia",
+        "DOCS": "Documentos",
+        "LINKS": "Links"
+      },
+      "EMPTY": {
+        "MEDIA": "Nenhuma foto, vídeo ou áudio ainda.",
+        "DOCS": "Nenhum documento ainda.",
+        "LINKS": "Nenhum link nas mensagens carregadas."
+      },
+      "ALL_CONVERSATIONS": "Ver mídias de todas as conversas",
+      "ONLY_THIS": "Ver só desta conversa",
+      "ACTIONS": {
+        "SEARCH": "Buscar",
+        "PIN": "Fixar",
+        "UNPIN": "Desafixar",
+        "COPY_PHONE": "Copiar número",
+        "COPY_EMAIL": "Copiar e-mail",
+        "PROFILE": "Perfil"
+      }
     }
   }
 }

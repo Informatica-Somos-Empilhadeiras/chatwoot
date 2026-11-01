@@ -21,7 +21,7 @@ import SharedFiles from './SharedFiles.vue';
 import Draggable from 'vuedraggable';
 import MacrosList from './Macros/List.vue';
 import ShopifyOrdersList from 'dashboard/components/widgets/conversation/ShopifyOrdersList.vue';
-import SidebarActionsHeader from 'dashboard/components-next/SidebarActionsHeader.vue';
+import ContactHero from 'dashboard/components-next/outsider/contactProfile/ContactHero.vue'; // OUTSIDER: topo no estilo WhatsApp (no lugar do SidebarActionsHeader)
 import LinearIssuesList from 'dashboard/components/widgets/conversation/linear/IssuesList.vue';
 import LinearSetupCTA from 'dashboard/components/widgets/conversation/linear/LinearSetupCTA.vue';
 import CrmContactPanelSection from 'dashboard/routes/dashboard/outsider/crm/conversation/CrmContactPanelSection.vue'; // OUTSIDER: bloco do CRM
@@ -133,12 +133,18 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="w-full">
-    <SidebarActionsHeader
-      :title="$t('CONVERSATION.SIDEBAR.CONTACT')"
+  <!-- OUTSIDER: "Dados do contato" no estilo WhatsApp; foto e nome ficam no topo novo -->
+  <div class="w-full outsider-contact-panel">
+    <ContactHero
+      :contact="contact"
+      :chat="currentChat"
       @close="closeContactPanel"
     />
-    <ContactInfo :contact="contact" :channel-type="channelType" />
+    <ContactInfo
+      :contact="contact"
+      :channel-type="channelType"
+      :show-avatar="false"
+    />
     <div class="px-2 pb-8 list-group">
       <Draggable
         :list="conversationSidebarItems"

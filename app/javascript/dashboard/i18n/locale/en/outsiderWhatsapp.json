@@ -280,6 +280,43 @@
         "SELECTED": "To:",
         "MAX": "Pick up to {max} contacts."
       }
+    },
+    "VIEWER": {
+      "WHEN": "{date} at {time}",
+      "POSITION": "{current} of {total}",
+      "ZOOM_IN": "Zoom in",
+      "ZOOM_OUT": "Zoom out",
+      "ROTATE": "Rotate",
+      "GO_TO_MESSAGE": "Go to message",
+      "DOWNLOAD": "Download",
+      "CLOSE": "Close (Esc)"
+    },
+    "PROFILE": {
+      "TITLE": "Contact info",
+      "GROUP": "WhatsApp group",
+      "COPIED": "Copied.",
+      "MEDIA_TITLE": "Media, links and docs",
+      "THIS_MONTH": "This month",
+      "TABS": {
+        "MEDIA": "Media",
+        "DOCS": "Docs",
+        "LINKS": "Links"
+      },
+      "EMPTY": {
+        "MEDIA": "No photos, videos or audio yet.",
+        "DOCS": "No documents yet.",
+        "LINKS": "No links in the loaded messages."
+      },
+      "ALL_CONVERSATIONS": "See media from all conversations",
+      "ONLY_THIS": "See this conversation only",
+      "ACTIONS": {
+        "SEARCH": "Search",
+        "PIN": "Pin",
+        "UNPIN": "Unpin",
+        "COPY_PHONE": "Copy number",
+        "COPY_EMAIL": "Copy e-mail",
+        "PROFILE": "Profile"
+      }
     }
   }
 }

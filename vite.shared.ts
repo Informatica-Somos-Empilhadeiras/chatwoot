@@ -1,6 +1,12 @@
 import path from 'path';
 
 export const aliases = {
+  // OUTSIDER: visualizador de mídia no estilo WhatsApp no lugar da galeria do Chatwoot
+  // (precisa vir antes de "dashboard"; o original continua no mesmo caminho)
+  'dashboard/components/widgets/conversation/components/GalleryView.vue':
+    path.resolve(
+      './app/javascript/dashboard/components-next/outsider/mediaViewer/MediaViewer.vue'
+    ),
   vue: 'vue/dist/vue.esm-bundler.js',
   components: path.resolve('./app/javascript/dashboard/components'),
   next: path.resolve('./app/javascript/dashboard/components-next'),
