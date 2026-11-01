@@ -3,7 +3,8 @@ import { computed, ref, watch, inject } from 'vue';
 import { useRouter } from 'vue-router';
 import { useStore, useMapGetter } from 'dashboard/composables/store';
 import { frontendURL, conversationUrl } from 'dashboard/helper/URLHelper';
-import ConversationCard from './widgets/conversation/ConversationCard.vue';
+// OUTSIDER: card no estilo WhatsApp/Telegram (o original continua em widgets/conversation/ConversationCard.vue)
+import ConversationCard from 'dashboard/components-next/outsider/whatsappLook/WaConversationCard.vue';
 import ConversationCardExpanded from 'dashboard/components-next/Conversation/ConversationCard/ConversationCardExpanded.vue';
 import ContextMenu from 'dashboard/components/ui/ContextMenu.vue';
 import ConversationContextMenu from './widgets/conversation/contextMenu/Index.vue';

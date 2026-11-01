@@ -14,6 +14,7 @@ import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 import ResizableEditorWrapper from './ResizableEditorWrapper.vue';
 import MessageListNavigator from './outsider/MessageListNavigator.vue'; // OUTSIDER: histórico
 import CrmReplyArea from 'dashboard/routes/dashboard/outsider/crm/conversation/CrmReplyArea.vue'; // OUTSIDER: Nota interna CRM
+import MessageSelectionBar from 'dashboard/components-next/message/outsider/MessageSelectionBar.vue'; // OUTSIDER: selecionar várias
 
 // stores and apis
 import { mapGetters } from 'vuex';
@@ -57,6 +58,7 @@ export default {
     ResizableEditorWrapper,
     MessageListNavigator, // OUTSIDER
     CrmReplyArea, // OUTSIDER
+    MessageSelectionBar, // OUTSIDER
   },
   mixins: [inboxMixin],
   setup() {
@@ -549,6 +551,8 @@ export default {
         :panel="conversationPanel"
         :conversation-id="currentChat.id"
       />
+      <!-- OUTSIDER: barra do modo seleção, por cima da caixa de resposta -->
+      <MessageSelectionBar :conversation-id="currentChat.id" />
       <div
         v-if="isAnyoneTyping"
         class="absolute flex items-center w-full h-0 -top-7"

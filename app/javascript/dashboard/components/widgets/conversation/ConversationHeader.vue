@@ -6,10 +6,12 @@ import { useElementSize } from '@vueuse/core';
 import BackButton from '../BackButton.vue';
 import InboxName from '../InboxName.vue';
 import MoreActions from './MoreActions.vue';
-import Avatar from 'next/avatar/Avatar.vue';
+// OUTSIDER: Avatar trocado pelo ChannelAvatar (selo do canal)
 import SLACardLabel from './components/SLACardLabel.vue';
 import ConversationCallButton from './ConversationCallButton.vue';
 import ConversationSearchButton from './outsider/ConversationSearchButton.vue'; // OUTSIDER: busca na conversa
+import ChannelAvatar from 'dashboard/components-next/outsider/whatsappLook/ChannelAvatar.vue'; // OUTSIDER: selo do canal
+import HeaderOwnerPill from 'dashboard/components-next/outsider/whatsappLook/HeaderOwnerPill.vue'; // OUTSIDER: quem está com a conversa
 import wootConstants from 'dashboard/constants/globals';
 import { conversationListPageURL } from 'dashboard/helper/URLHelper';
 import { snoozedReopenTime } from 'dashboard/helper/snoozeHelpers';
@@ -121,12 +123,12 @@ const copyConversationId = async () => {
         :back-url="backButtonUrl"
         class="ltr:mr-2 rtl:ml-2"
       />
-      <Avatar
+      <!-- OUTSIDER: foto com o selo do canal -->
+      <ChannelAvatar
         :name="currentContact.name"
         :src="currentContact.thumbnail"
-        :size="32"
-        :status="currentContact.availability_status"
-        hide-offline-status
+        :inbox="inbox"
+        :size="40"
       />
       <div
         class="flex flex-col items-start min-w-0 ml-2 overflow-hidden rtl:ml-0 rtl:mr-2"
@@ -175,6 +177,8 @@ const copyConversationId = async () => {
         :parent-width="width"
         class="hidden md:flex"
       />
+      <!-- OUTSIDER: quem está com a conversa, assumir e pedir transferência -->
+      <HeaderOwnerPill :chat="currentChat" />
       <!-- OUTSIDER: busca dentro da conversa -->
       <ConversationSearchButton :conversation-id="currentChat.id" />
       <ConversationCallButton :inbox="inbox" :chat="currentChat" />

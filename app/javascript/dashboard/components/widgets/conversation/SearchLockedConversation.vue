@@ -9,6 +9,7 @@ import { useMapGetter } from 'dashboard/composables/store';
 import { useAlert } from 'dashboard/composables';
 import { timeAgo } from 'dashboard/helper/outsider/timeAgo';
 import Avatar from 'dashboard/components-next/avatar/Avatar.vue';
+import ChannelAvatar from 'dashboard/components-next/outsider/whatsappLook/ChannelAvatar.vue';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
 import Button from 'dashboard/components-next/button/Button.vue';
 import {
@@ -27,9 +28,8 @@ const getInbox = useMapGetter('inboxes/getInbox');
 
 const contact = computed(() => props.conversation.meta.sender);
 const assignee = computed(() => props.conversation.meta.assignee);
-const inboxName = computed(
-  () => getInbox.value(props.conversation.inbox_id)?.name
-);
+const inbox = computed(() => getInbox.value(props.conversation.inbox_id));
+const inboxName = computed(() => inbox.value?.name);
 const details = computed(() =>
   [
     contact.value.phone_number &&
@@ -87,14 +87,14 @@ const cancelRequest = async () => {
 
 <template>
   <div
-    class="flex items-start gap-3 p-2.5 border rounded-lg select-none border-n-weak bg-n-alpha-1"
+    class="flex items-start gap-3 p-2.5 border rounded-xl select-none border-n-weak bg-n-alpha-1"
     :title="t('CHAT_LIST.OUTSIDER_SEARCH.LOCKED_HINT', { name: assignee.name })"
   >
-    <Avatar
+    <ChannelAvatar
       :name="contact.name || ''"
       :src="contact.thumbnail"
-      :size="36"
-      rounded-full
+      :inbox="inbox"
+      :size="44"
     />
     <div class="flex flex-col flex-1 min-w-0 gap-1">
       <div class="flex items-center justify-between gap-2">

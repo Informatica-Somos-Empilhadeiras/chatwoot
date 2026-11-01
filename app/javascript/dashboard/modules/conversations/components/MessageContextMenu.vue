@@ -17,6 +17,7 @@ import { useTrack } from 'dashboard/composables';
 import NextButton from 'dashboard/components-next/button/Button.vue';
 import ReportCaptainMessageDialog from './ReportCaptainMessageDialog.vue';
 import { emitter } from 'shared/helpers/mitt';
+import { startSelection } from 'dashboard/composables/outsider/useMessageSelection'; // OUTSIDER
 
 export default {
   components: {
@@ -154,6 +155,11 @@ export default {
       emitter.emit('CMD_OPEN_CUSTOM_FORWARD', payload);
       this.handleClose();
     },
+    // OUTSIDER: selecionar várias mensagens para encaminhar ou copiar
+    handleSelect() {
+      startSelection(this.message.conversation_id, this.messageId);
+      this.handleClose();
+    },
     // OUTSIDER: editar no WhatsApp (EditMessageDialog.vue)
     handleEdit() {
       emitter.emit('OUTSIDER_EDIT_MESSAGE', {
@@ -248,6 +254,15 @@ export default {
           }"
           variant="icon"
           @click.stop="handleForward"
+        />
+        <!-- OUTSIDER: selecionar várias mensagens -->
+        <MenuItem
+          :option="{
+            lucideIcon: 'i-lucide-list-checks',
+            label: $t('OUTSIDER_WHATSAPP.LOOK.SELECT.START'),
+          }"
+          variant="icon"
+          @click.stop="handleSelect"
         />
         <!-- OUTSIDER: editar no WhatsApp -->
         <MenuItem

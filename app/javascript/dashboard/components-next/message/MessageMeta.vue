@@ -35,8 +35,10 @@ const {
 
 const { t } = useI18n(); // OUTSIDER
 
-const readableTime = computed(() =>
-  messageTimestamp(createdAt.value, 'LLL d, h:mm a')
+// OUTSIDER: só a hora no balão, como no WhatsApp (o dia está no separador); a data completa no title
+const readableTime = computed(() => messageTimestamp(createdAt.value, 'HH:mm'));
+const fullTime = computed(() =>
+  messageTimestamp(createdAt.value, 'dd/MM/yyyy HH:mm')
 );
 
 const showStatusIndicator = computed(() => {
@@ -141,7 +143,7 @@ const statusToShow = computed(() => {
       {{ t('OUTSIDER_WHATSAPP.EDIT.EDITED') }}
     </span>
     <div class="inline">
-      <time class="inline">{{ readableTime }}</time>
+      <time class="inline" :title="fullTime">{{ readableTime }}</time>
     </div>
     <Icon v-if="isPrivate" icon="i-lucide-lock-keyhole" class="size-3" />
     <MessageStatus v-if="showStatusIndicator" :status="statusToShow" />

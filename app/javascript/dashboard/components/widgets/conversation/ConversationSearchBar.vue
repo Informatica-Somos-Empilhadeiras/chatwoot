@@ -29,13 +29,14 @@ watch(isSearchActive, active => emit('update:active', active), {
 </script>
 
 <template>
-  <div class="w-full px-3 py-2">
+  <!-- OUTSIDER: campo arredondado no estilo WhatsApp/Telegram -->
+  <div class="w-full px-3 pt-1 pb-2">
     <div
-      class="grid grid-cols-[32px_minmax(0,1fr)_32px] items-center w-full h-10 min-w-0 box-sizing-border-box border border-n-weak rounded-lg bg-n-alpha-1 overflow-hidden focus-within:ring-1 focus-within:ring-n-brand"
+      class="grid grid-cols-[40px_minmax(0,1fr)_36px] items-center w-full h-10 min-w-0 box-sizing-border-box rounded-full bg-n-alpha-1 dark:bg-n-alpha-2 overflow-hidden ring-1 ring-transparent focus-within:ring-n-brand focus-within:bg-n-background transition-colors"
     >
       <!-- Lupa -->
       <div
-        class="flex items-center justify-center w-8 h-10 shrink-0 text-n-slate-10"
+        class="flex items-center justify-center w-10 h-10 shrink-0 text-n-slate-10"
       >
         <svg
           class="block size-4 shrink-0"

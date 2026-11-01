@@ -19,7 +19,8 @@ import ConversationList from './ConversationList.vue';
 import Dialog from 'dashboard/components-next/dialog/Dialog.vue';
 import ConversationFilter from 'next/filter/ConversationFilter.vue';
 import SaveCustomView from 'next/filter/SaveCustomView.vue';
-import ChatTypeTabs from './widgets/ChatTypeTabs.vue';
+// OUTSIDER: abas em pílulas, como as pastas do Telegram (o original fica em ./widgets/ChatTypeTabs.vue)
+import ChatTypeTabs from 'dashboard/components-next/outsider/whatsappLook/ChatFolderTabs.vue';
 import DeleteCustomViews from 'dashboard/routes/dashboard/customviews/DeleteCustomViews.vue';
 import ConversationBulkActions from './widgets/conversation/conversationBulkActions/Index.vue';
 import TeleportWithDirection from 'dashboard/components-next/TeleportWithDirection.vue';
@@ -959,6 +960,8 @@ watch(conversationFilters, (newVal, oldVal) => {
       @close="onCloseDeleteFoldersModal"
     />
 
+    <!-- OUTSIDER: busca acima das abas, como no WhatsApp e no Telegram -->
+    <ConversationSearchBar @update:active="isSearchActive = $event" />
     <ChatTypeTabs
       v-if="!hasAppliedFiltersOrActiveFolders"
       :items="assigneeTabItems"
@@ -967,7 +970,6 @@ watch(conversationFilters, (newVal, oldVal) => {
       @chat-tab-change="updateAssigneeTab"
     />
 
-    <ConversationSearchBar @update:active="isSearchActive = $event" />
     <!-- OUTSIDER: resultados da busca (conversas, contatos e mensagens) no lugar da lista -->
     <QuickSearchResults
       v-if="isSearchActive"

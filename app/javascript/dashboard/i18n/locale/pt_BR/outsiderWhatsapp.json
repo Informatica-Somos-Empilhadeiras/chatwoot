@@ -242,6 +242,44 @@
       "STOP_PLAY": "Parar",
       "SEND": "Enviar áudio",
       "MIC_ERROR": "Não foi possível usar o microfone. Verifique a permissão do navegador."
+    },
+    "LOOK": {
+      "YESTERDAY": "Ontem",
+      "YOU": "Você",
+      "WITH_YOU": "Com você",
+      "NO_OWNER": "Sem responsável",
+      "NOTE": "Nota:",
+      "PINNED": "Fixada",
+      "TYPING": "digitando...",
+      "TYPING_NAME": "{name} está digitando...",
+      "MEDIA_COUNT": {
+        "image": "{count} fotos",
+        "video": "{count} vídeos"
+      },
+      "OWNER_HINT": "Quem está com a conversa",
+      "TAKE": "Assumir",
+      "TAKEN": "A conversa agora está com você.",
+      "WAITING_SHORT": "Aguardando resposta",
+      "SELECT": {
+        "START": "Selecionar mensagens",
+        "COUNT": "Nenhuma selecionada | {count} selecionada | {count} selecionadas",
+        "CANCEL": "Cancelar seleção",
+        "FORWARD": "Encaminhar",
+        "COPY": "Copiar",
+        "COPIED": "Mensagens copiadas.",
+        "NOT_FORWARDABLE": "Notas privadas e mensagens apagadas não são encaminhadas.",
+        "HINT": "Clique nas mensagens para selecionar"
+      },
+      "FORWARD_MANY": {
+        "TITLE": "Encaminhar {count} mensagens",
+        "TO_MANY": "Encaminhar ({count})",
+        "PROGRESS": "Enviando {done} de {total}",
+        "SENT": "{count} mensagens encaminhadas para {name}. | {count} mensagem encaminhada para {name}. | {count} mensagens encaminhadas para {name}.",
+        "SENT_MANY": "Mensagens encaminhadas para {count} contatos.",
+        "PARTIAL": "{failed} de {total} envios falharam. Confira as conversas.",
+        "SELECTED": "Para:",
+        "MAX": "Escolha até {max} contatos."
+      }
     }
   }
 }

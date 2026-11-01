@@ -1,0 +1,64 @@
+/* OUTSIDER: acabamento das conversas no estilo WhatsApp/Telegram. Só CSS, carregado pelo
+   OutsiderGlobal.vue, para não mexer nos componentes de mensagem do Chatwoot.
+   - sombra leve nos balões
+   - "rabinho" no último balão de cada sequência (o canto de baixo fica reto e o rabinho sai dele)
+   - no modo seleção as mensagens andam para a direita para dar lugar às caixinhas */
+
+.message-bubble-container .left-bubble,
+.message-bubble-container .right-bubble {
+  position: relative;
+  box-shadow: 0 1px 0.5px rgb(11 20 26 / 0.13);
+}
+
+.dark .message-bubble-container .left-bubble,
+.dark .message-bubble-container .right-bubble {
+  box-shadow: 0 1px 0.5px rgb(0 0 0 / 0.35);
+}
+
+.message-bubble-container:not(.group-with-next) .left-bubble::before,
+.message-bubble-container:not(.group-with-next) .right-bubble::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  width: 8px;
+  height: 13px;
+  background: inherit;
+  pointer-events: none;
+}
+
+.message-bubble-container:not(.group-with-next) .left-bubble {
+  border-bottom-left-radius: 0;
+}
+
+.message-bubble-container:not(.group-with-next) .left-bubble::before {
+  left: -7px;
+  clip-path: path('M8 0 V13 H0.5 C0 13 -0.2 12.4 0.3 12 C4 9 7 5.5 8 0 Z');
+}
+
+.message-bubble-container:not(.group-with-next) .right-bubble {
+  border-bottom-right-radius: 0;
+}
+
+.message-bubble-container:not(.group-with-next) .right-bubble::before {
+  right: -7px;
+  clip-path: path('M0 0 V13 H7.5 C8 13 8.2 12.4 7.7 12 C4 9 1 5.5 0 0 Z');
+}
+
+[dir='rtl'] .message-bubble-container:not(.group-with-next) .left-bubble {
+  border-bottom-left-radius: 0.75rem;
+  border-bottom-right-radius: 0;
+}
+
+[dir='rtl'] .message-bubble-container:not(.group-with-next) .left-bubble::before,
+[dir='rtl'] .message-bubble-container:not(.group-with-next) .right-bubble::before {
+  display: none;
+}
+
+/* modo seleção (useMessageSelection.js põe a classe no body) */
+.message-bubble-container {
+  transition: padding 0.15s ease;
+}
+
+body.outsider-selecting .message-bubble-container {
+  padding-inline-start: 2.25rem;
+}

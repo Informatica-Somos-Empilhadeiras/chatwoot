@@ -242,6 +242,44 @@
       "STOP_PLAY": "Stop",
       "SEND": "Send audio",
       "MIC_ERROR": "Could not use the microphone. Check the browser permission."
+    },
+    "LOOK": {
+      "YESTERDAY": "Yesterday",
+      "YOU": "You",
+      "WITH_YOU": "With you",
+      "NO_OWNER": "Unassigned",
+      "NOTE": "Note:",
+      "PINNED": "Pinned",
+      "TYPING": "typing...",
+      "TYPING_NAME": "{name} is typing...",
+      "MEDIA_COUNT": {
+        "image": "{count} photos",
+        "video": "{count} videos"
+      },
+      "OWNER_HINT": "Who has this conversation",
+      "TAKE": "Take it",
+      "TAKEN": "This conversation is now yours.",
+      "WAITING_SHORT": "Waiting for reply",
+      "SELECT": {
+        "START": "Select messages",
+        "COUNT": "None selected | {count} selected | {count} selected",
+        "CANCEL": "Cancel selection",
+        "FORWARD": "Forward",
+        "COPY": "Copy",
+        "COPIED": "Messages copied.",
+        "NOT_FORWARDABLE": "Private notes and deleted messages are not forwarded.",
+        "HINT": "Click messages to select them"
+      },
+      "FORWARD_MANY": {
+        "TITLE": "Forward {count} messages",
+        "TO_MANY": "Forward ({count})",
+        "PROGRESS": "Sending {done} of {total}",
+        "SENT": "{count} messages forwarded to {name}. | {count} message forwarded to {name}. | {count} messages forwarded to {name}.",
+        "SENT_MANY": "Messages forwarded to {count} contacts.",
+        "PARTIAL": "{failed} of {total} sends failed. Check the conversations.",
+        "SELECTED": "To:",
+        "MAX": "Pick up to {max} contacts."
+      }
     }
   }
 }

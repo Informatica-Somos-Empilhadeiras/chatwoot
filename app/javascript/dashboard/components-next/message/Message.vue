@@ -45,6 +45,7 @@ import { outsiderBubbleFor } from './outsider/bubbleFor'; // OUTSIDER: bolhas es
 import BubbleMenuFrame from './outsider/BubbleMenuFrame.vue'; // OUTSIDER
 import BubbleSideActions from './outsider/BubbleSideActions.vue'; // OUTSIDER: reagir e encaminhar
 import ReactionBar from './outsider/ReactionBar.vue'; // OUTSIDER: reações
+import MessageSelectLayer from './outsider/MessageSelectLayer.vue'; // OUTSIDER: selecionar várias
 import WhatsappMessagesAPI from 'dashboard/api/outsider/whatsappMessages'; // OUTSIDER
 import {
   EDIT_WINDOW_SECONDS,
@@ -608,7 +609,7 @@ provideMessageContext({
   <div
     v-if="shouldRenderMessage"
     :id="`message${props.id}`"
-    class="flex w-full mb-2 message-bubble-container"
+    class="relative flex w-full mb-2 message-bubble-container"
     :data-message-id="props.id"
     :class="[
       flexOrientationClass,
@@ -618,6 +619,8 @@ provideMessageContext({
       },
     ]"
   >
+    <!-- OUTSIDER: modo seleção (encaminhar ou copiar várias) -->
+    <MessageSelectLayer :message="props" :can-forward="canForward" />
     <div v-if="variant === MESSAGE_VARIANTS.ACTIVITY">
       <ActivityBubble :content="content" />
     </div>
