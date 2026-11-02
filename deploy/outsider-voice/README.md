@@ -133,6 +133,33 @@ no próprio navegador, então a central não muda: se essa pessoa desligar, a co
 cerca de 15 MB por hora; dá para desligar em Telefonia > Configurações. O painel e os relatórios usam o fuso
 escolhido em Telefonia > Configurações (Brasília se ninguém mudar).
 
+## 7. URA, escuta do supervisor e sussurro (Entrega 26)
+
+Esta entrega muda a central: **recrie o contêiner** para ela ganhar o `ffmpeg` (áudios da URA) e o `espeak-ng`
+(voz sintética):
+
+```bash
+docker compose up -d --build central
+```
+
+- **URA** (Telefonia > URA): o administrador monta em blocos o que o cliente ouve ao ligar (boas-vindas, menu
+  "digite 1 para...", horário de atendimento, pedir CPF ou pedido, quem está ligando, transferir, recado e encerrar)
+  e escolhe os números em que ela atende. A cada passo a central pergunta ao Chatwoot o que fazer; se o Chatwoot não
+  responder, a ligação toca para todos, como sem URA. Quem atende vê por onde o cliente passou e o que digitou.
+- **Voz da URA**: com a integração OpenAI ligada na conta (ou a chave do Captain nas configurações da instalação), os
+  textos são lidos com voz natural; sem ela, a central lê com voz sintética. Também dá para enviar ou gravar um áudio
+  em cada bloco. Os áudios ficam em `/var/lib/outsider-voice/sounds` (gerados de novo se o contêiner for recriado).
+- **Recado**: gravado na central e enviado ao Chatwoot em poucos segundos; fica na ligação (Telefonia > Ligações e
+  aba Ligações do negócio).
+- **Ouvir em silêncio** (`*80` + ramal) e **sussurrar** (`*81` + ramal): pelos botões de Telefonia > Painel, em "Em
+  ligação agora". Só o administrador e o gestor da unidade do atendente podem; toda monitoria fica registrada. Ouvindo,
+  ninguém percebe (sem bipe). Sussurrando, só os atendentes ouvem; o supervisor abre a conversa para o cliente quando
+  quiser. O atendente também pode convidar um colega para sussurrar (na tela de incluir na conferência); para o cliente
+  ouvir o colega, o atendente precisa permitir.
+- **Negócio da ligação**: ligar pelo negócio (painel ou cartão do Kanban) já vincula a ligação a ele; durante ou
+  depois da ligação dá para trocar o negócio pelo telefone ou em Telefonia > Ligações. As gravações ficam na aba
+  Ligações do negócio.
+
 ## Problemas comuns
 
 | O que aparece | O que fazer |
@@ -143,6 +170,8 @@ escolhido em Telefonia > Configurações (Brasília se ninguém mudar).
 | Liga, mas sem áudio | Confira as portas 10000-10099/udp e o IP público em Telefonia > Configurações. |
 | "A operadora recusou o usuário ou a senha" | Confira usuário, usuário de autenticação e senha com a operadora. |
 | Ligação da operadora não chega | Libere o IP da operadora na porta 5060 e confira os IPs em Telefonia > Configurações. |
+| URA muda (sem fala) | Confira no log "áudio da URA ... pronto". Sem `ffmpeg`/`espeak-ng`, recrie o contêiner (passo 7). |
+| Ouvir/sussurrar não conecta | Só funciona com o atendente em ligação atendida e para o gestor da unidade dele ou o administrador. |
 
 Comandos úteis dentro da central:
 

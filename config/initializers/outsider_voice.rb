@@ -12,6 +12,9 @@ Rails.application.routes.prepend do
               get :lookup
               get :team
               post :recording
+              # Entrega 26: ligação em andamento (contato e negócio) e avisos do sussurro
+              patch :call, action: :update_call
+              post :signal
             end
             namespace :crm do
               resource :voice_settings, only: [:show, :update]
@@ -22,6 +25,15 @@ Rails.application.routes.prepend do
                   get :export
                 end
                 delete :recording, on: :member, action: :destroy_recording
+                patch :link, on: :member
+              end
+              # Entrega 26: URA (Telefonia > URA)
+              resources :ivr_flows, only: [:index, :show, :create, :update, :destroy] do
+                post :audios, on: :member
+              end
+              # Entrega 26: aba Ligações do negócio
+              resources :opportunities, only: [] do
+                resources :calls, controller: 'opportunity_calls', only: [:index]
               end
               resources :call_recordings, only: [:index] do
                 member do
@@ -45,6 +57,12 @@ Rails.application.routes.prepend do
     post :answered
     post :hangup
     post :status
+    # Entrega 26: URA e monitoria
+    post :ivr
+    get :prompts
+    get :prompt
+    post :voicemail
+    post :monitor
   end
 end
 # rubocop:enable Metrics/BlockLength

@@ -1,0 +1,6 @@
+en:
+  outsider_teams:
+    group_contact: 'Teams group'
+    manifest:
+      short: 'Talk to the %{name} team'
+      full: 'Chat with the %{name} team through Microsoft Teams. Messages reach the company support inbox.'

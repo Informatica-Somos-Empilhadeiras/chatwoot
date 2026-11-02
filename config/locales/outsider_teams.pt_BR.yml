@@ -1,0 +1,6 @@
+pt_BR:
+  outsider_teams:
+    group_contact: 'Grupo do Teams'
+    manifest:
+      short: 'Fale com a equipe de %{name}'
+      full: 'Converse com a equipe de %{name} pelo Microsoft Teams. As mensagens chegam no atendimento da empresa.'

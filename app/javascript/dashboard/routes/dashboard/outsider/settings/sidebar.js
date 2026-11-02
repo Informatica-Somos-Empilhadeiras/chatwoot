@@ -14,4 +14,11 @@ export const outsiderSettingsItems = (t, accountScopedRoute) => [
     activeOn: ['outsider_bot_flows', 'outsider_bot_flow_editor'],
     to: accountScopedRoute('outsider_bot_flows'),
   },
+  // Entrega 26
+  {
+    name: 'Settings Outsider Teams',
+    label: t('OUTSIDER_TEAMS.SIDEBAR'),
+    icon: 'i-lucide-messages-square',
+    to: accountScopedRoute('outsider_teams_settings'),
+  },
 ];

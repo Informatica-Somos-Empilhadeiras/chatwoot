@@ -2,7 +2,7 @@
 # RoomChannel do Chatwoot (pubsub_token + user_id). Entra qualquer pessoa da conta, mas só quem tem
 # acesso ao CRM recebe os avisos de negócio, tarefa e configuração. O aviso 'access' (CRM ligado ou
 # desligado na conta ou para alguém) vai para todos e faz conferir o acesso de novo: assim o CRM some
-# e volta na hora, sem recarregar a página.
+# e volta na hora, sem recarregar a página. Entrega 26: aviso com to_user_id vai só para essa pessoa.
 class Outsider::Crm::UpdatesChannel < ApplicationCable::Channel
   def subscribed
     @account_user = find_account_user
@@ -16,7 +16,10 @@ class Outsider::Crm::UpdatesChannel < ApplicationCable::Channel
 
   private
 
+  # aviso para uma pessoa só (sinais do telefone, Outsider::Voice::Signals): só ela recebe, com ou sem o CRM
   def relay(message)
+    return (transmit(message) if message['to_user_id'].to_i == @account_user.user_id) if message.key?('to_user_id')
+
     access_changed = message['kind'] == 'access'
     @enabled = crm_enabled? if access_changed
     transmit(message) if @enabled || access_changed

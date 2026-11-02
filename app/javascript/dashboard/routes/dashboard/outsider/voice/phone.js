@@ -9,6 +9,13 @@
 // ligação própria na central; a mistura do áudio é feita aqui, no navegador (Web Audio): cada um ouve você e
 // todos os outros. Gravar junta o seu microfone e o som de todos num arquivo, enviado no fim da ligação.
 //
+// Entrega 26: ligação pelo negócio (vai junto para a central, que vincula a ligação a ele), monitoria do
+// supervisor (*80 ouve sem ninguém perceber; *81 entra sussurrando) e sussurro de colega convidado. Quem
+// sussurra entra como uma ligação a mais no telefone do atendente (call.whispers): a mistura daqui manda a voz
+// dele só para o atendente e os ramais da conferência; o cliente só ouve quando o sussurro fica aberto
+// (supervisor abre quando quer; convidado precisa da permissão do atendente). Os avisos entre os telefones
+// passam pelo Chatwoot (VoiceAPI.signal), que confere quem pode o quê.
+//
 // O estado fica em `phone` (reativo): as telas leem; para agir, chamam as funções exportadas.
 import { reactive, watch } from 'vue';
 import VoiceAPI from 'dashboard/api/outsider/voice';
@@ -37,21 +44,30 @@ const POPOUT_NAME = 'outsider-phone';
 const POPOUT_FEATURES = 'popup,width=400,height=760';
 // a janela própria espera um pouco a resposta das abas antes de tomar a linha (para não derrubar ligação)
 const POPOUT_HANDSHAKE = 400;
+// convite para sussurrar vale 2 minutos (o mesmo prazo do servidor)
+const INVITE_VISIBLE = 120000;
+const WHISPER_HEADER = /^(supervisor|guest):(\d+)$/;
+export const MONITOR_PREFIX = { listen: '*80', whisper: '*81' };
 
 // status: off (sem telefone: telefonia ou ramal desligados), connecting, ready, offline (sem conexão com a
 // central), failed (a central recusou o ramal) ou other_tab (outra aba está com a linha e não respondeu)
 // holder: esta aba está com a linha; popout: a linha está na janela própria do telefone
 // call.others: as pessoas incluídas na conferência; notice: aviso para as telas (gravação salva...)
+// call.whispers: quem está sussurrando nesta ligação; call.monitor: esta ligação é uma monitoria (ouvir ou
+// sussurrar na ligação de outra pessoa); invite: convite de um colega para sussurrar na ligação dele
 export const phone = reactive({
   status: 'off',
   extension: '',
   echoExtension: '',
   recordingAllowed: false,
   autoRecord: false,
+  supervisor: false,
+  userId: null,
   call: null,
   holder: false,
   popout: false,
   notice: null,
+  invite: null,
 });
 
 // painel do telefone aberto (fixo na tela) ou minimizado e onde ele está (arrastado); guardado no navegador
@@ -113,18 +129,27 @@ let outgoing = null;
 const legs = new Map();
 let mixer = null;
 let recorder = null;
+let inviteTimer = null;
+// supervisor que estava ouvindo e passou a sussurrar: a ligação nova sai assim que a de ouvir acaba
+let relaunch = null;
 
 const digitsOf = value => String(value || '').replace(/\D/g, '');
 
-const notify = code => {
-  phone.notice = { code, at: Date.now() };
+const notify = (code, params = {}) => {
+  phone.notice = { code, params, at: Date.now() };
 };
 
 const legState = id => {
   if (!phone.call) return null;
   if (phone.call.id === id) return phone.call;
-  return phone.call.others.find(other => other.id === id) || null;
+  return (
+    phone.call.others.find(other => other.id === id) ||
+    phone.call.whispers.find(whisper => whisper.id === id) ||
+    null
+  );
 };
+
+const isWhisper = id => !!phone.call?.whispers.some(item => item.id === id);
 
 const mainLeg = () => phone.call && legs.get(phone.call.id);
 
@@ -157,15 +182,19 @@ const endReason = ({ originator, cause, message }) => {
   return 'FAILED';
 };
 
-// --- mistura do áudio (conferência e gravação) ---
+// --- mistura do áudio (conferência, sussurro e gravação) ---
 
-const activeLegs = () =>
-  phone.call
-    ? [phone.call, ...phone.call.others]
-        .filter(state => state.state === 'active')
-        .map(state => legs.get(state.id))
-        .filter(Boolean)
-    : [];
+// [{ leg, state }] das ligações em conversa: as pessoas (a principal e a conferência) ou quem sussurra
+const activePairs = list =>
+  list
+    .filter(state => state.state === 'active' && legs.has(state.id))
+    .map(state => ({ leg: legs.get(state.id), state }));
+
+const activeParties = () =>
+  phone.call ? activePairs([phone.call, ...phone.call.others]) : [];
+
+const activeWhispers = () =>
+  phone.call ? activePairs(phone.call.whispers) : [];
 
 const closeMixer = () => {
   mixer?.context.close().catch(() => {});
@@ -203,51 +232,76 @@ const callParties = () =>
 
 const isExternal = number => (number || '').length > 4;
 
-// refeita a cada pessoa que entra ou sai: cada ligação recebe o seu microfone e o som das outras
+const sendMix = leg => {
+  const sender = audioSender(leg.session);
+  const [track] = leg.dest.stream.getAudioTracks();
+  if (sender && sender.track !== track) sender.replaceTrack(track);
+};
+
+// refeita a cada pessoa que entra ou sai: cada ligação recebe o seu microfone e o som das outras. Quem sussurra
+// ouve todo mundo; a voz dele vai para os ramais (atendentes) e, só com o sussurro aberto, para o cliente e a
+// gravação (a gravação pode ser encaminhada ao cliente)
 const remix = () => {
-  const active = activeLegs();
-  const conference = active.length > 1;
-  if (!conference && !recorder) {
-    useOwnMicrophone(active);
+  const parties = activeParties();
+  const whispers = activeWhispers();
+  const mixing = parties.length > 1 || whispers.length > 0;
+  if (!mixing && !recorder) {
+    useOwnMicrophone(parties.map(({ leg }) => leg));
     return;
   }
   const { context, record } = ensureMixer();
   mixer.nodes.forEach(node => node.disconnect());
-  const micTrack = active.find(leg => leg.micTrack)?.micTrack;
+  const micTrack = [...parties, ...whispers].find(({ leg }) => leg.micTrack)
+    ?.leg.micTrack;
   const mic = micTrack
     ? context.createMediaStreamSource(new MediaStream([micTrack]))
     : null;
-  const remotes = active.map(leg =>
+  const sourceOf = ({ leg }) =>
     leg.remote?.getAudioTracks().length
       ? context.createMediaStreamSource(leg.remote)
-      : null
-  );
-  mixer.nodes = [mic, ...remotes].filter(Boolean);
+      : null;
+  const partyRemotes = parties.map(sourceOf);
+  const whisperRemotes = whispers.map(sourceOf);
+  const open = index => whispers[index].state.mode === 'open';
+  mixer.nodes = [mic, ...partyRemotes, ...whisperRemotes].filter(Boolean);
   if (recorder) {
-    mixer.nodes.forEach(node => node.connect(record));
+    [mic, ...partyRemotes, ...whisperRemotes.filter((_, index) => open(index))]
+      .filter(Boolean)
+      .forEach(node => node.connect(record));
     callParties().forEach(party => recorder.parties.set(party.number, party));
   }
-  if (!conference) {
-    useOwnMicrophone(active);
+  if (!mixing) {
+    useOwnMicrophone(parties.map(({ leg }) => leg));
     return;
   }
-  active.forEach((leg, index) => {
+  parties.forEach(({ leg, state }, index) => {
     leg.dest = leg.dest || context.createMediaStreamDestination();
     mic?.connect(leg.dest);
-    remotes.forEach((remote, other) => {
+    partyRemotes.forEach((remote, other) => {
       if (other !== index) remote?.connect(leg.dest);
     });
-    const sender = audioSender(leg.session);
-    const [track] = leg.dest.stream.getAudioTracks();
-    if (sender && sender.track !== track) sender.replaceTrack(track);
+    whisperRemotes.forEach((remote, other) => {
+      if (open(other) || !isExternal(state.number)) remote?.connect(leg.dest);
+    });
+    sendMix(leg);
+  });
+  whispers.forEach(({ leg }, index) => {
+    leg.dest = leg.dest || context.createMediaStreamDestination();
+    mic?.connect(leg.dest);
+    partyRemotes.forEach(remote => remote?.connect(leg.dest));
+    whisperRemotes.forEach((remote, other) => {
+      if (other !== index) remote?.connect(leg.dest);
+    });
+    sendMix(leg);
   });
 };
 
 // --- gravação ---
 
-// grava só com cliente na ligação: a gravação fica na ligação dele, em Telefonia > Ligações
+// grava só com cliente na ligação: a gravação fica na ligação dele, em Telefonia > Ligações. Monitoria não grava
 export const canRecord = () =>
   !!phone.call &&
+  !phone.call.monitor &&
   [phone.call, ...phone.call.others].some(
     party => party.state === 'active' && isExternal(party.number)
   );
@@ -304,7 +358,12 @@ const lookup = async (id, number) => {
     if (number.length < 8) return;
     const { data } = await VoiceAPI.lookup(number);
     const state = legState(id);
-    if (state?.number === number) state.lookup = data;
+    if (state?.number !== number) return;
+    state.lookup = data;
+    // o negócio que a central ligou à ligação (o aberto do cliente), se ela não saiu de um negócio escolhido
+    if (state.id === phone.call?.id && !state.deal && data.deal) {
+      state.deal = { id: data.deal.id, title: data.deal.title };
+    }
   } catch {
     // sem nome a ligação continua normal
   }
@@ -322,6 +381,10 @@ const newCall = info => ({
   startedAt: new Date().toISOString(),
   recording: '',
   others: [],
+  // Entrega 26: o negócio vinculado, quem sussurra e se é uma monitoria
+  deal: null,
+  whispers: [],
+  monitor: null,
 });
 
 const finishCall = reason => {
@@ -336,7 +399,7 @@ const finishCall = reason => {
   });
   if (!stopRecording()) closeMixer();
   const call = phone.call;
-  call.others.forEach(other => {
+  [...call.others, ...call.whispers].forEach(other => {
     if (other.state !== 'ended') {
       other.state = 'ended';
       other.endReason = 'DONE';
@@ -353,11 +416,17 @@ const finishCall = reason => {
   endedTimer = setTimeout(() => {
     if (phone.call?.state === 'ended') phone.call = null;
   }, ENDED_VISIBLE);
+  if (relaunch) {
+    const next = relaunch;
+    relaunch = null;
+    // eslint-disable-next-line no-use-before-define
+    setTimeout(() => monitorCall(next, 'whisper'), 300);
+  }
 };
 
 // a primeira ligação acabou e ainda tem gente na conferência: a próxima pessoa vira a principal
 const promote = guest => {
-  const { others, muted, recording, startedAt } = phone.call;
+  const { others, muted, recording, startedAt, whispers } = phone.call;
   phone.call = {
     ...newCall({
       id: guest.id,
@@ -372,6 +441,7 @@ const promote = guest => {
     recording,
     startedAt: guest.startedAt || startedAt,
     others: others.filter(other => other.id !== guest.id),
+    whispers,
   };
 };
 
@@ -380,6 +450,20 @@ const endLeg = (id, reason) => {
   if (!leg || !phone.call) return;
   legs.delete(id);
   leg.audio.srcObject = null;
+  if (isWhisper(id)) {
+    const whisper = legState(id);
+    whisper.state = 'ended';
+    whisper.request = false;
+    setTimeout(() => {
+      if (phone.call) {
+        phone.call.whispers = phone.call.whispers.filter(
+          item => item.id !== id
+        );
+      }
+    }, GUEST_ENDED_VISIBLE);
+    remix();
+    return;
+  }
   if (id !== phone.call.id) {
     const guest = legState(id);
     if (guest?.state === 'dialing') stopTone();
@@ -448,6 +532,8 @@ const setupLeg = (id, current) => {
     state.state = 'active';
     state.answeredAt = Date.now();
     leg.micTrack = audioSender(current)?.track || null;
+    // ouvir em silêncio: o microfone do supervisor fica desligado (a central também não passa a voz dele)
+    if (phone.call.monitor?.mode === 'listen') phone.call.muted = true;
     if (leg.micTrack && phone.call.muted) leg.micTrack.enabled = false;
     remix();
     // eslint-disable-next-line no-use-before-define
@@ -455,6 +541,33 @@ const setupLeg = (id, current) => {
   });
   current.on('ended', event => endLeg(id, endReason(event)));
   current.on('failed', event => endLeg(id, endReason(event)));
+};
+
+// alguém entrando para sussurrar na ligação em andamento: o telefone atende sozinho (a central só manda depois de
+// conferir que é o supervisor do atendente ou um colega convidado por ele)
+const acceptWhisper = (current, request, header) => {
+  const [, kind, userId] = header.match(WHISPER_HEADER);
+  const id = nextId;
+  nextId += 1;
+  phone.call.whispers.push({
+    id,
+    kind,
+    userId: Number(userId),
+    name: request.from.display_name || request.from.uri.user || '',
+    state: 'ringing',
+    mode: 'whisper',
+    request: false,
+    answeredAt: null,
+    endReason: '',
+  });
+  setupLeg(id, current);
+  current.answer({
+    mediaConstraints: MEDIA,
+    pcConfig: { iceServers: ICE_SERVERS },
+  });
+  notify(kind === 'supervisor' ? 'SUPERVISOR_JOINED' : 'GUEST_JOINED', {
+    name: request.from.display_name || '',
+  });
 };
 
 const onSession = ({ session: current, originator, request }) => {
@@ -474,16 +587,29 @@ const onSession = ({ session: current, originator, request }) => {
       });
     } else {
       clearTimeout(endedTimer);
-      phone.call = newCall({
-        id: target.id,
-        direction: 'outbound',
-        number: target.number,
-        name: '',
-        state: 'dialing',
-      });
+      phone.call = {
+        ...newCall({
+          id: target.id,
+          direction: 'outbound',
+          number: target.number,
+          name: target.monitor?.name || '',
+          state: 'dialing',
+        }),
+        deal: target.deal || null,
+        monitor: target.monitor || null,
+      };
     }
     setupLeg(target.id, current);
-    lookup(target.id, target.number);
+    if (!target.monitor) lookup(target.id, target.number);
+    return;
+  }
+  const whisper = request.getHeader('X-Outsider-Whisper') || '';
+  if (
+    WHISPER_HEADER.test(whisper) &&
+    phone.call?.state === 'active' &&
+    !phone.call.monitor
+  ) {
+    acceptWhisper(current, request, whisper);
     return;
   }
   // já em ligação: a central toca para os outros
@@ -511,6 +637,7 @@ const onSession = ({ session: current, originator, request }) => {
 
 const disconnect = () => {
   generation += 1;
+  relaunch = null;
   stopTone();
   const sessions = [...legs.values()].map(leg => leg.session);
   legs.clear();
@@ -712,6 +839,8 @@ export const startPhone = async (accountId, { popout = false } = {}) => {
   config = { ...data, domain: new URL(data.ws_url).hostname };
   phone.extension = data.extension;
   phone.echoExtension = data.echo_extension;
+  phone.supervisor = !!data.supervisor;
+  phone.userId = data.user_id;
   phone.recordingAllowed = !!data.recording;
   phone.autoRecord = !!data.auto_record;
   openChannel(accountId);
@@ -771,20 +900,234 @@ export const showPopout = () => {
 
 // --- o que as telas chamam ---
 
-// número de cliente (com ou sem +55, máscara, espaços) ou ramal; devolve o motivo quando não dá
-export const dial = number => {
-  const target = digitsOf(number);
+const canDial = () => {
   if (phone.status === 'other_tab') return 'OTHER_TAB';
   if (phone.status !== 'ready') return 'NOT_READY';
   if (phone.call && phone.call.state !== 'ended') return 'IN_CALL';
+  return null;
+};
+
+// número de cliente (com ou sem +55, máscara, espaços) ou ramal; devolve o motivo quando não dá.
+// deal ({ id, title }): ligação feita pelo negócio, que vai junto para a central vincular (Entrega 26)
+export const dial = (number, { deal = null } = {}) => {
+  const target = digitsOf(number);
+  const blocked = canDial();
+  if (blocked) return blocked;
   if (!target) return 'INVALID';
-  if (!phone.holder) return remote('dial', target);
-  outgoing = { id: nextId, number: target };
+  if (!phone.holder) return remote('dial', target, { deal });
+  const dealId = Number(deal?.id) || null;
+  outgoing = {
+    id: nextId,
+    number: target,
+    deal: dealId ? { id: dealId, title: deal.title || '' } : null,
+  };
   nextId += 1;
   ua.call(`sip:${target}@${config.domain}`, {
     mediaConstraints: MEDIA,
     pcConfig: { iceServers: ICE_SERVERS },
+    extraHeaders: dealId ? [`X-Outsider-Deal: ${dealId}`] : [],
   });
+  return null;
+};
+
+// monitoria (Entrega 26): mode listen (ouvir sem ninguém perceber) ou whisper (sussurrar). target: { extension,
+// userId, name, customer, kind } do atendente (kind guest quando é um colega que convidou)
+export const monitorCall = (target, mode) => {
+  const blocked = canDial();
+  if (blocked) return blocked;
+  if (!/^[1-5]\d{2}$/.test(target?.extension || '') || !MONITOR_PREFIX[mode]) {
+    return 'INVALID';
+  }
+  if (!phone.holder) return remote('monitorCall', target, mode);
+  const number = `${MONITOR_PREFIX[mode]}${target.extension}`;
+  outgoing = {
+    id: nextId,
+    number,
+    monitor: {
+      mode,
+      kind: target.kind || 'supervisor',
+      extension: target.extension,
+      userId: target.userId,
+      name: target.name || '',
+      customer: target.customer || '',
+      open: false,
+      pending: false,
+    },
+  };
+  nextId += 1;
+  ua.call(`sip:${number}@${config.domain}`, {
+    mediaConstraints: MEDIA,
+    pcConfig: { iceServers: ICE_SERVERS },
+  });
+  return null;
+};
+
+// supervisor ouvindo passa a sussurrar: sai da escuta e entra de novo, agora como sussurro (o atendente percebe)
+export const switchToWhisper = () => {
+  const monitor = phone.call?.monitor;
+  if (monitor?.mode !== 'listen' || phone.call.state !== 'active') return null;
+  if (!phone.holder) return remote('switchToWhisper');
+  relaunch = { ...monitor };
+  mainLeg()?.session.terminate();
+  return null;
+};
+
+const signal = async (type, toUserId, data = {}) => {
+  try {
+    await VoiceAPI.signal(type, toUserId, data);
+    return true;
+  } catch {
+    notify('SIGNAL_FAILED');
+    return false;
+  }
+};
+
+// quem sussurra pede para o cliente ouvir (open) ou volta a falar só com os atendentes (whisper). Supervisor
+// abre na hora; o convidado espera o atendente permitir
+export const requestWhisperMode = async mode => {
+  const monitor = phone.call?.monitor;
+  if (monitor?.mode !== 'whisper' || phone.call.state !== 'active') return;
+  if (!phone.holder) {
+    remote('requestWhisperMode', mode);
+    return;
+  }
+  monitor.pending = mode === 'open' && monitor.kind === 'guest';
+  const sent = await signal('request_mode', monitor.userId, { mode });
+  if (!sent && phone.call?.monitor) phone.call.monitor.pending = false;
+};
+
+// atendente: o cliente passa a ouvir (open) ou deixa de ouvir (whisper) quem sussurra; approved false recusa o
+// pedido do convidado. Sussurro do supervisor só ele mesmo abre ou fecha
+export const setWhisperMode = (id, mode, approved = true) => {
+  const whisper = phone.call?.whispers.find(item => item.id === id);
+  if (!whisper || whisper.state === 'ended') return null;
+  if (whisper.kind === 'supervisor') return null;
+  if (!phone.holder) return remote('setWhisperMode', id, mode, approved);
+  whisper.mode = approved ? mode : 'whisper';
+  whisper.request = false;
+  remix();
+  signal('mode', whisper.userId, { mode: whisper.mode, approved });
+  return null;
+};
+
+// atendente convida um colega (com ramal) para sussurrar nesta ligação
+export const inviteToWhisper = async person => {
+  if (phone.call?.state !== 'active' || phone.call.monitor) return;
+  const customer = phone.call.lookup?.contact?.name || phone.call.number;
+  if (await signal('invite', person.id, { customer })) {
+    notify('INVITE_SENT', { name: person.name });
+  }
+};
+
+export const acceptInvite = () => {
+  const invite = phone.invite;
+  if (!invite) return null;
+  if (!phone.holder) return remote('acceptInvite');
+  phone.invite = null;
+  clearTimeout(inviteTimer);
+  return monitorCall(
+    {
+      extension: invite.extension,
+      userId: invite.userId,
+      name: invite.name,
+      customer: invite.customer,
+      kind: 'guest',
+    },
+    'whisper'
+  );
+};
+
+export const declineInvite = () => {
+  const invite = phone.invite;
+  if (!invite) return null;
+  if (!phone.holder) return remote('declineInvite');
+  phone.invite = null;
+  clearTimeout(inviteTimer);
+  signal('invite_declined', invite.userId);
+  return null;
+};
+
+// avisos de outros telefones (Outsider::Voice::Signals), entregues pelo canal ao vivo; só quem está com a linha age
+export const handleSignal = data => {
+  if (!phone.holder || !data?.type) return;
+  const from = data.from || {};
+  const whisper = phone.call?.whispers.find(
+    item => item.userId === from.id && item.state !== 'ended'
+  );
+  if (data.type === 'invite') {
+    phone.invite = {
+      userId: from.id,
+      name: from.name,
+      extension: data.extension,
+      customer: data.customer,
+      at: Date.now(),
+    };
+    clearTimeout(inviteTimer);
+    inviteTimer = setTimeout(() => {
+      phone.invite = null;
+    }, INVITE_VISIBLE);
+  } else if (data.type === 'invite_declined') {
+    notify('INVITE_DECLINED', { name: from.name });
+  } else if (data.type === 'apply_mode' && whisper) {
+    whisper.mode = data.mode === 'open' ? 'open' : 'whisper';
+    whisper.request = false;
+    remix();
+    signal('mode', whisper.userId, { mode: whisper.mode, approved: true });
+  } else if (data.type === 'mode_request' && whisper) {
+    whisper.request = true;
+    notify('WHISPER_REQUEST', { name: whisper.name });
+  } else if (data.type === 'mode') {
+    const monitor = phone.call?.monitor;
+    if (!monitor || monitor.userId !== from.id) return;
+    monitor.open = data.mode === 'open';
+    monitor.pending = false;
+    if (data.approved === false) notify('WHISPER_REFUSED');
+  }
+};
+
+// negócio vinculado à ligação em andamento (ou que acabou de acabar); deal null desvincula
+export const linkCallDeal = async deal => {
+  const call = phone.call;
+  if (!call || call.monitor) return 'NOT_READY';
+  try {
+    await VoiceAPI.updateCall(call.number, call.startedAt, {
+      opportunity_id: deal?.id || '',
+    });
+  } catch {
+    return 'LINK_FAILED';
+  }
+  // eslint-disable-next-line no-use-before-define
+  setCallDeal(deal ? { id: deal.id, title: deal.title } : null);
+  return null;
+};
+
+export const setCallDeal = deal => {
+  if (!phone.call) return null;
+  if (!phone.holder) return remote('setCallDeal', deal);
+  phone.call.deal = deal;
+  return null;
+};
+
+// cadastro do cliente criado durante a ligação: liga à ligação e busca de novo quem é
+export const linkCallContact = async contactId => {
+  const call = phone.call;
+  if (!call) return 'NOT_READY';
+  try {
+    await VoiceAPI.updateCall(call.number, call.startedAt, {
+      contact_id: contactId,
+    });
+  } catch {
+    return 'LINK_FAILED';
+  }
+  // eslint-disable-next-line no-use-before-define
+  refreshLookup();
+  return null;
+};
+
+export const refreshLookup = () => {
+  if (!phone.call) return null;
+  if (!phone.holder) return remote('refreshLookup');
+  lookup(phone.call.id, phone.call.number);
   return null;
 };
 
@@ -808,7 +1151,11 @@ export const hangup = () => {
     if (!main.session.isEnded()) main.session.terminate({ status_code: 486 });
     return null;
   }
-  [...phone.call.others.map(other => other.id), phone.call.id].forEach(id => {
+  [
+    ...phone.call.whispers.map(whisper => whisper.id),
+    ...phone.call.others.map(other => other.id),
+    phone.call.id,
+  ].forEach(id => {
     const session = legs.get(id)?.session;
     if (session && !session.isEnded()) session.terminate();
   });
@@ -817,7 +1164,9 @@ export const hangup = () => {
 
 // mudo desliga o microfone em todas as ligações (na conferência ninguém ouve você; os outros se ouvem)
 export const toggleMute = () => {
-  if (phone.call?.state !== 'active') return null;
+  if (phone.call?.state !== 'active' || phone.call.monitor?.mode === 'listen') {
+    return null;
+  }
   if (!phone.holder) return remote('toggleMute');
   const muted = !phone.call.muted;
   phone.call.muted = muted;
@@ -828,7 +1177,7 @@ export const toggleMute = () => {
 };
 
 export const sendDigit = digit => {
-  if (phone.call?.state !== 'active') return null;
+  if (phone.call?.state !== 'active' || phone.call.monitor) return null;
   if (!phone.holder) return remote('sendDigit', digit);
   mainLeg()?.session.sendDTMF(digit, { transportType: 'RFC2833' });
   return null;
@@ -846,7 +1195,9 @@ export const inConference = () =>
 
 // espera: o outro lado fica em silêncio até voltar (Entrega 23); não vale na conferência
 export const toggleHold = () => {
-  if (phone.call?.state !== 'active' || inConference()) return null;
+  if (phone.call?.state !== 'active' || inConference() || phone.call.monitor) {
+    return null;
+  }
   if (!phone.holder) return remote('toggleHold');
   const { session } = mainLeg();
   if (phone.call.held) session.unhold();
@@ -860,6 +1211,7 @@ export const transfer = extension => {
   if (
     phone.call?.state !== 'active' ||
     inConference() ||
+    phone.call.monitor ||
     !/^\d{3}$/.test(extension)
   ) {
     return null;
@@ -888,7 +1240,7 @@ export const transfer = extension => {
 export const addToConference = number => {
   const target = digitsOf(number);
   const call = phone.call;
-  if (call?.state !== 'active') return 'NOT_READY';
+  if (call?.state !== 'active' || call.monitor) return 'NOT_READY';
   if (!target || target === phone.extension) return 'INVALID';
   const others = call.others.filter(other => other.state !== 'ended');
   if (others.length >= MAX_GUESTS) return 'CONFERENCE_FULL';
@@ -989,6 +1341,14 @@ export const callStreams = (id = phone.call?.id) => {
 
 const COMMANDS = {
   dial,
+  monitorCall,
+  switchToWhisper,
+  requestWhisperMode,
+  setWhisperMode,
+  acceptInvite,
+  declineInvite,
+  setCallDeal,
+  refreshLookup,
   answer,
   hangup,
   toggleMute,

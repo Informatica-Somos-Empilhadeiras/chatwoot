@@ -241,6 +241,7 @@ defineExpose({ open, refresh, close });
               <CallButton
                 show-number
                 :number="opportunity.contact.phone_number"
+                :deal="{ id: opportunity.id, title: opportunity.title }"
               />
               <router-link
                 v-if="opportunity.conversation_display_id"

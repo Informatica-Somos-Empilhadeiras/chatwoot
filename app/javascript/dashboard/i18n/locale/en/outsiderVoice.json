@@ -108,7 +108,13 @@
         "KEYPAD": "Keypad",
         "TRANSFER": "Transfer",
         "CONFERENCE": "Add to conference"
-      }
+      },
+      "OPEN_CONTACT": "Open contact",
+      "CREATE_CONTACT": "Add contact",
+      "CONTACT_NAME": "Customer name",
+      "SAVE_CONTACT": "Save",
+      "CONTACT_CREATED": "Contact created and linked to this call.",
+      "CONTACT_FAILED": "Could not create the contact. Check the name and number."
     },
     "CLICK_TO_CALL": "Call with the CRM phone",
     "CALLING": "Calling {number}…",
@@ -343,7 +349,8 @@
         "DASHBOARD": "Dashboard",
         "CALLS": "Calls",
         "SETTINGS": "Settings",
-        "RECORDINGS": "Recordings"
+        "RECORDINGS": "Recordings",
+        "IVR": "IVR"
       },
       "SETTINGS": {
         "CENTRAL": "PBX and extensions",
@@ -520,7 +527,14 @@
       "RECORDING_SAVING": "Saving the call recording…",
       "RECORDING_SAVED": "Recording saved. Find it in Telephony > Recordings.",
       "RECORDING_FAILED": "Could not save the call recording.",
-      "RECORDING_UNSUPPORTED": "This browser cannot record audio. Use Chrome or Edge."
+      "RECORDING_UNSUPPORTED": "This browser cannot record audio. Use Chrome or Edge.",
+      "SUPERVISOR_JOINED": "{name} joined whispering: only you hear.",
+      "GUEST_JOINED": "{name} joined to whisper: only you hear.",
+      "INVITE_SENT": "Invite sent to {name}.",
+      "INVITE_DECLINED": "{name} declined the whisper invite.",
+      "WHISPER_REQUEST": "{name} wants to talk to the customer. Allow it on the phone.",
+      "WHISPER_REFUSED": "The agent did not allow talking to the customer.",
+      "SIGNAL_FAILED": "Could not reach the other phone. Try again."
     },
     "KINDS": {
       "LOCAL_FIXED": "Landline, same area code",
@@ -547,6 +561,212 @@
         "ATTACHMENT": "The recording is attached as audio, without making another copy of the file.",
         "SUBMIT": "Forward",
         "DONE": "Recording forwarded to {name}."
+      }
+    },
+    "DEAL_LINK": {
+      "SEARCH": "Search deals by title, customer or phone",
+      "SUGGESTED": "Customer's open deals",
+      "EMPTY": "No deals found.",
+      "LINK": "Link to a deal",
+      "CHANGE": "Change deal",
+      "UNLINK": "Unlink",
+      "LINKED": "Call linked to {title}.",
+      "UNLINKED": "Call unlinked from the deal.",
+      "FAILED": "Could not link the call. Try again."
+    },
+    "IVR_TRAIL": {
+      "TITLE": "Went through IVR {flow}"
+    },
+    "WHISPER": {
+      "SUPERVISOR": "Supervisor",
+      "GUEST": "Invited colleague",
+      "ONLY_AGENTS": "only you hear",
+      "CUSTOMER_HEARS": "the customer hears too",
+      "LET_CUSTOMER_HEAR": "Let the customer hear",
+      "STOP_CUSTOMER_HEAR": "Stop the customer hearing",
+      "REMOVE": "Remove from call",
+      "REQUEST": "{name} wants to talk to the customer.",
+      "ALLOW": "Allow",
+      "DENY": "Deny",
+      "INVITE": "Invite to whisper",
+      "INVITE_HINT": "Your colleague hears the call and talks only to you; the customer does not hear. You must allow it for the customer to hear."
+    },
+    "MONITOR": {
+      "LISTENING": "Listening silently",
+      "WHISPERING": "Whispering",
+      "OPEN": "Talking to everyone",
+      "LISTEN_HINT": "Nobody notices you are listening. Your microphone stays off.",
+      "WHISPER_HINT": "Only {name} hears you; the customer does not.",
+      "OPEN_HINT": "The customer can hear you too.",
+      "WAITING": "Waiting for {name} to let the customer hear you…",
+      "WHISPER_BTN": "Whisper",
+      "TALK_TO_CUSTOMER": "Talk to the customer",
+      "ASK_TO_TALK": "Ask to talk to the customer",
+      "BACK_TO_WHISPER": "Back to whisper",
+      "WITH": "on a call with {customer}",
+      "LISTEN_TITLE": "Listen silently (nobody notices)",
+      "WHISPER_TITLE": "Join whispering (only the agent hears)"
+    },
+    "INVITE": {
+      "TITLE": "Whisper invite",
+      "BODY": "{name} invited you to listen and whisper on the call with {customer}.",
+      "JOIN": "Join",
+      "DECLINE": "Decline"
+    },
+    "DEAL_CALLS": {
+      "TAB": "Calls",
+      "SUMMARY": "{total} calls · {recorded} recorded",
+      "CALL": "Call",
+      "EMPTY": "No calls linked to this deal yet.",
+      "VOICEMAIL": "Voicemail"
+    },
+    "IVR": {
+      "TYPES": {
+        "start": "Call arrives",
+        "say": "Say",
+        "menu": "Options menu",
+        "collect": "Ask for digits",
+        "hours": "Business hours",
+        "caller": "Who is calling",
+        "transfer": "Transfer",
+        "voicemail": "Voicemail",
+        "hangup": "Hang up"
+      },
+      "HINTS": {
+        "start": "Start of the IVR, when the call reaches the number.",
+        "say": "Plays a message and continues.",
+        "menu": "Press 1 for…, 2 for…: one exit per key.",
+        "collect": "Asks for an ID, order or ticket number and keeps it for the agent.",
+        "hours": "One path during business hours and another outside them.",
+        "caller": "Customer with an open deal, saved contact or new number.",
+        "transfer": "Rings the sales team or an outside number.",
+        "voicemail": "Records a message from the customer on the call.",
+        "hangup": "Says goodbye and hangs up."
+      },
+      "PORTS": {
+        "next": "Continue",
+        "invalid": "Invalid option or no input",
+        "empty": "No valid input",
+        "inside": "During hours",
+        "outside": "Outside hours",
+        "deal": "Has an open deal",
+        "contact": "Saved contact",
+        "unknown": "New number",
+        "no_answer": "Nobody answered"
+      },
+      "PALETTE": {
+        "talk": "Talk to the customer",
+        "logic": "Choose the path",
+        "route": "Answer and finish",
+        "HINT": "Click a block to add it. With a block selected, the new one is linked to it. Link blocks by dragging from an exit dot to another block."
+      },
+      "SUMMARY": {
+        "AUDIO": "Uploaded audio",
+        "START": "The call reaches the IVR number",
+        "ALWAYS_CLOSED": "Always outside hours",
+        "CALLER": "Open deal, contact or new number",
+        "COLLECT": "Saves to {variable}",
+        "EMPTY": "Nothing to say"
+      },
+      "TARGETS": {
+        "default": "Default phone rule",
+        "owner": "Open deal owner",
+        "users": "Chosen people",
+        "branch": "A branch",
+        "number": "Outside number"
+      },
+      "TARGET_HELP": {
+        "default": "As without IVR: the deal owner, then the state's sales team and finally everyone.",
+        "owner": "Only the owner of the customer's open deal. Without a deal, goes to Nobody answered.",
+        "users": "Rings the selected people (with an active extension) at the same time.",
+        "branch": "Rings all the branch's sales team.",
+        "number": "Calls a mobile or landline through the carrier, with the company number."
+      },
+      "WARNINGS": {
+        "EMPTY_PROMPT": "Write what the IVR says or upload an audio.",
+        "NO_OPTIONS": "Add at least one option.",
+        "NO_USERS": "Select at least one person.",
+        "NO_BRANCH": "Choose the branch.",
+        "NO_NUMBER": "Type the number with area code.",
+        "NOT_CONNECTED": "No exit is linked to another block.",
+        "NO_INPUT": "No block leads here."
+      },
+      "PROMPT": {
+        "PLACEHOLDER": "What the IVR says. E.g.: Hello! Thanks for calling.",
+        "UPLOAD": "Upload audio",
+        "RECORD": "Record",
+        "STOP": "Stop and use",
+        "RECORDING": "Recording…",
+        "REMOVE_AUDIO": "Remove audio (reads the text again)",
+        "TOO_BIG": "The audio is larger than 10 MB.",
+        "UPLOAD_FAILED": "Could not upload the audio. Use MP3, WAV, OGG or M4A.",
+        "MICROPHONE": "Allow the microphone in the browser to record."
+      },
+      "INSPECTOR": {
+        "START_HELP": "The numbers this IVR answers are at the top of the screen. Link the Continue exit to the first block.",
+        "VOICE": "IVR voice",
+        "VOICE_NATURAL": "Natural voice (OpenAI configured in Chatwoot). Changing the voice regenerates the audios.",
+        "VOICE_CENTRAL": "Without OpenAI in Chatwoot, the phone server reads the texts with a synthetic voice. For a natural voice, set up the OpenAI integration or upload recorded audios.",
+        "LABEL": "Name",
+        "LABEL_PLACEHOLDER": "E.g.: Main menu, ID",
+        "LABEL_HELP": "Shown to the agent, along with what the customer chose.",
+        "PROMPT": "What the IVR says",
+        "PROMPT_BEFORE_TRANSFER": "What the IVR says before ringing (optional)",
+        "PROMPT_BEFORE_HANGUP": "Goodbye (optional)",
+        "OPTIONS": "Options (key and name)",
+        "OPTION_LABEL": "E.g.: Sales",
+        "ADD_OPTION": "Add option",
+        "VARIABLE": "Save as",
+        "MIN_DIGITS": "Minimum digits",
+        "MAX_DIGITS": "Maximum digits",
+        "COLLECT_HELP": "The customer types and presses # to finish. The agent sees what was typed.",
+        "TIMEOUT": "Wait (seconds)",
+        "ATTEMPTS": "Attempts",
+        "INVALID_PROMPT": "Invalid option message",
+        "INVALID_PLACEHOLDER": "E.g.: Invalid option.",
+        "CALLER_HELP": "Uses the Chatwoot contacts and the CRM: the customer's open deal, a contact with this number or a number not saved yet.",
+        "TARGET": "Who rings",
+        "NO_PEOPLE": "Nobody has an active extension in Phone > Settings.",
+        "PICK_BRANCH": "Choose the branch",
+        "NUMBER_PLACEHOLDER": "Area code + number",
+        "RING_SECONDS": "Ring for (seconds)",
+        "MAX_SECONDS": "Maximum voicemail length (seconds)",
+        "VOICEMAIL_HELP": "The voicemail is saved on the call, in Phone > Calls (callback queue) and in the deal's Calls tab."
+      },
+      "EDITOR": {
+        "BACK": "IVRs",
+        "NAME": "IVR name",
+        "NAME_REQUIRED": "Give the IVR a name.",
+        "ALL_NUMBERS": "All numbers",
+        "SOME_NUMBERS": "{count} numbers",
+        "NUMBERS_HINT": "Numbers this IVR answers. With none selected, it answers every number that has no IVR of its own.",
+        "NO_NUMBERS": "No numbers in Phone > Settings.",
+        "ACTIVE": "On",
+        "INACTIVE": "Off",
+        "WARNINGS": "{count} blocks with warnings",
+        "UNSAVED": "Unsaved changes",
+        "SAVE": "Save",
+        "SAVED": "IVR saved. The phone server uses it within 30 seconds.",
+        "SAVE_ERROR": "Could not save the IVR.",
+        "LOAD_ERROR": "Could not open the IVR.",
+        "RETRY": "Try again",
+        "FIT": "Show all",
+        "DUPLICATE": "Duplicate block",
+        "DELETE_BLOCK": "Delete block",
+        "TOO_MANY_NODES": "An IVR can have up to {max} blocks.",
+        "LEAVE": "Leave without saving the IVR changes?"
+      },
+      "LIST": {
+        "TITLE": "IVR: automatic voice answering",
+        "DESCRIPTION": "Build, with blocks, what customers hear when they call: welcome, options menu, business hours, digits (ID, order) and where the call goes. Agents see the path the customer took.",
+        "NATURAL_VOICE": "Texts are read with a natural voice (OpenAI).",
+        "CENTRAL_VOICE": "Texts are read by the phone server's synthetic voice. Upload recorded audios or set up OpenAI for a natural voice.",
+        "NEW": "New IVR",
+        "EMPTY": "No IVR yet. Without an IVR, calls ring the sales team directly.",
+        "BLOCKS": "{count} blocks",
+        "EDIT": "Edit",
+        "DELETE": "Delete IVR",
+        "DELETE_CONFIRM": "Delete the IVR {name}? Calls will ring the sales team directly again."
       }
     }
   }

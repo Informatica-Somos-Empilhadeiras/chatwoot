@@ -34,6 +34,17 @@ class Outsider::Voice::CallEvents
     broadcast(call)
   end
 
+  # também usado ao vincular depois (Outsider::Voice::DealLink)
+  def log_on_deal(call)
+    return unless call.opportunity
+
+    call.opportunity.activities.create!(
+      account_id: @account.id, user_id: call.user_id, kind: :call,
+      metadata: { call_id: call.id, direction: call.direction, status: call.status, talk_seconds: call.talk_seconds,
+                  number: call.customer_number }
+    )
+  end
+
   private
 
   def find(linkedid)
@@ -71,16 +82,6 @@ class Outsider::Voice::CallEvents
       missed.update!(returned_at: call.answered_at, returned_by_id: call.user_id)
       missed.task&.complete!(call.user) unless missed.task&.completed?
     end
-  end
-
-  def log_on_deal(call)
-    return unless call.opportunity
-
-    call.opportunity.activities.create!(
-      account_id: @account.id, user_id: call.user_id, kind: :call,
-      metadata: { call_id: call.id, direction: call.direction, status: call.status, talk_seconds: call.talk_seconds,
-                  number: call.customer_number }
-    )
   end
 
   def broadcast(call)

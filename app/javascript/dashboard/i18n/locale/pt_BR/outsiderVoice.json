@@ -108,7 +108,13 @@
         "KEYPAD": "Teclado",
         "TRANSFER": "Transferir",
         "CONFERENCE": "Incluir na conferência"
-      }
+      },
+      "OPEN_CONTACT": "Abrir cadastro",
+      "CREATE_CONTACT": "Cadastrar cliente",
+      "CONTACT_NAME": "Nome do cliente",
+      "SAVE_CONTACT": "Salvar",
+      "CONTACT_CREATED": "Cliente cadastrado e ligado a esta ligação.",
+      "CONTACT_FAILED": "Não deu para cadastrar o cliente. Confira o nome e o número."
     },
     "CLICK_TO_CALL": "Ligar pelo telefone do CRM",
     "CALLING": "Ligando para {number}…",
@@ -343,7 +349,8 @@
         "DASHBOARD": "Painel",
         "CALLS": "Ligações",
         "SETTINGS": "Configurações",
-        "RECORDINGS": "Gravações"
+        "RECORDINGS": "Gravações",
+        "IVR": "URA"
       },
       "SETTINGS": {
         "CENTRAL": "Central e ramais",
@@ -520,7 +527,14 @@
       "RECORDING_SAVING": "Salvando a gravação da ligação…",
       "RECORDING_SAVED": "Gravação salva. Ela está em Telefonia > Gravações.",
       "RECORDING_FAILED": "Não deu para salvar a gravação da ligação.",
-      "RECORDING_UNSUPPORTED": "Este navegador não grava áudio. Use o Chrome ou o Edge."
+      "RECORDING_UNSUPPORTED": "Este navegador não grava áudio. Use o Chrome ou o Edge.",
+      "SUPERVISOR_JOINED": "{name} entrou sussurrando: só você ouve.",
+      "GUEST_JOINED": "{name} entrou para sussurrar: só você ouve.",
+      "INVITE_SENT": "Convite enviado para {name}.",
+      "INVITE_DECLINED": "{name} recusou o convite para sussurrar.",
+      "WHISPER_REQUEST": "{name} quer falar com o cliente. Permita no telefone.",
+      "WHISPER_REFUSED": "O atendente não permitiu falar com o cliente.",
+      "SIGNAL_FAILED": "Não deu para avisar o outro telefone. Tente de novo."
     },
     "KINDS": {
       "LOCAL_FIXED": "Fixo do mesmo DDD",
@@ -547,6 +561,212 @@
         "ATTACHMENT": "A gravação vai anexada como áudio, sem gerar outra cópia do arquivo.",
         "SUBMIT": "Encaminhar",
         "DONE": "Gravação encaminhada para {name}."
+      }
+    },
+    "DEAL_LINK": {
+      "SEARCH": "Buscar negócio por título, cliente ou telefone",
+      "SUGGESTED": "Negócios abertos do cliente",
+      "EMPTY": "Nenhum negócio encontrado.",
+      "LINK": "Vincular a um negócio",
+      "CHANGE": "Trocar negócio",
+      "UNLINK": "Desvincular",
+      "LINKED": "Ligação vinculada a {title}.",
+      "UNLINKED": "Ligação desvinculada do negócio.",
+      "FAILED": "Não deu para vincular a ligação. Tente de novo."
+    },
+    "IVR_TRAIL": {
+      "TITLE": "Passou pela URA {flow}"
+    },
+    "WHISPER": {
+      "SUPERVISOR": "Supervisor",
+      "GUEST": "Colega convidado",
+      "ONLY_AGENTS": "só você ouve",
+      "CUSTOMER_HEARS": "o cliente também ouve",
+      "LET_CUSTOMER_HEAR": "Deixar o cliente ouvir",
+      "STOP_CUSTOMER_HEAR": "O cliente para de ouvir",
+      "REMOVE": "Tirar da ligação",
+      "REQUEST": "{name} quer falar com o cliente.",
+      "ALLOW": "Permitir",
+      "DENY": "Recusar",
+      "INVITE": "Convidar para sussurrar",
+      "INVITE_HINT": "O colega ouve a ligação e fala só com você; o cliente não ouve. Para o cliente ouvir, você precisa permitir."
+    },
+    "MONITOR": {
+      "LISTENING": "Ouvindo em silêncio",
+      "WHISPERING": "Sussurrando",
+      "OPEN": "Falando com todos",
+      "LISTEN_HINT": "Ninguém percebe que você está ouvindo. Seu microfone fica desligado.",
+      "WHISPER_HINT": "Só {name} ouve você; o cliente não.",
+      "OPEN_HINT": "O cliente também está ouvindo você.",
+      "WAITING": "Aguardando {name} permitir que o cliente ouça você…",
+      "WHISPER_BTN": "Sussurrar",
+      "TALK_TO_CUSTOMER": "Falar com o cliente",
+      "ASK_TO_TALK": "Pedir para falar com o cliente",
+      "BACK_TO_WHISPER": "Voltar a sussurrar",
+      "WITH": "em ligação com {customer}",
+      "LISTEN_TITLE": "Ouvir em silêncio (ninguém percebe)",
+      "WHISPER_TITLE": "Entrar sussurrando (só o atendente ouve)"
+    },
+    "INVITE": {
+      "TITLE": "Convite para sussurrar",
+      "BODY": "{name} chamou você para ouvir e sussurrar na ligação com {customer}.",
+      "JOIN": "Entrar",
+      "DECLINE": "Recusar"
+    },
+    "DEAL_CALLS": {
+      "TAB": "Ligações",
+      "SUMMARY": "{total} ligações · {recorded} gravadas",
+      "CALL": "Ligar",
+      "EMPTY": "Nenhuma ligação vinculada a este negócio ainda.",
+      "VOICEMAIL": "Recado"
+    },
+    "IVR": {
+      "TYPES": {
+        "start": "Ligação chega",
+        "say": "Falar",
+        "menu": "Menu de opções",
+        "collect": "Pedir dígitos",
+        "hours": "Horário de atendimento",
+        "caller": "Quem está ligando",
+        "transfer": "Transferir",
+        "voicemail": "Recado",
+        "hangup": "Encerrar"
+      },
+      "HINTS": {
+        "start": "Começo da URA, quando a ligação chega no número.",
+        "say": "Fala uma mensagem e segue.",
+        "menu": "Digite 1 para…, 2 para…: uma saída por tecla.",
+        "collect": "Pede CPF, pedido ou protocolo e guarda para quem atender.",
+        "hours": "Segue por um caminho dentro do horário e por outro fora dele.",
+        "caller": "Cliente com negócio aberto, contato cadastrado ou número novo.",
+        "transfer": "Toca para os vendedores ou para um número de fora.",
+        "voicemail": "Grava um recado do cliente na ligação.",
+        "hangup": "Fala uma despedida e desliga."
+      },
+      "PORTS": {
+        "next": "Seguir",
+        "invalid": "Opção inválida ou nada digitado",
+        "empty": "Nada válido digitado",
+        "inside": "Dentro do horário",
+        "outside": "Fora do horário",
+        "deal": "Tem negócio aberto",
+        "contact": "Contato cadastrado",
+        "unknown": "Número novo",
+        "no_answer": "Ninguém atendeu"
+      },
+      "PALETTE": {
+        "talk": "Falar com o cliente",
+        "logic": "Decidir o caminho",
+        "route": "Atender e encerrar",
+        "HINT": "Clique num bloco para criar. Com um bloco escolhido, o novo já sai ligado a ele. Ligue os blocos arrastando da bolinha de uma saída até outro bloco."
+      },
+      "SUMMARY": {
+        "AUDIO": "Áudio enviado",
+        "START": "A ligação chega no número da URA",
+        "ALWAYS_CLOSED": "Sempre fora do horário",
+        "CALLER": "Negócio aberto, contato ou número novo",
+        "COLLECT": "Guarda em {variable}",
+        "EMPTY": "Sem fala"
+      },
+      "TARGETS": {
+        "default": "Regra padrão da telefonia",
+        "owner": "Dono do negócio aberto",
+        "users": "Pessoas escolhidas",
+        "branch": "Uma filial",
+        "number": "Número de fora"
+      },
+      "TARGET_HELP": {
+        "default": "Como sem URA: o dono do negócio, depois os vendedores do estado e por fim todos.",
+        "owner": "Só o dono do negócio aberto do cliente. Sem negócio, segue por Ninguém atendeu.",
+        "users": "Toca ao mesmo tempo para as pessoas marcadas (com ramal ligado).",
+        "branch": "Toca para todos os vendedores da filial.",
+        "number": "Liga para um celular ou fixo pela operadora, com o número da empresa."
+      },
+      "WARNINGS": {
+        "EMPTY_PROMPT": "Escreva o que a URA fala ou envie um áudio.",
+        "NO_OPTIONS": "Acrescente ao menos uma opção.",
+        "NO_USERS": "Marque ao menos uma pessoa.",
+        "NO_BRANCH": "Escolha a filial.",
+        "NO_NUMBER": "Digite o número com DDD.",
+        "NOT_CONNECTED": "Nenhuma saída está ligada a outro bloco.",
+        "NO_INPUT": "Nenhum bloco leva até aqui."
+      },
+      "PROMPT": {
+        "PLACEHOLDER": "O que a URA fala. Ex.: Olá! Obrigado por ligar.",
+        "UPLOAD": "Enviar áudio",
+        "RECORD": "Gravar",
+        "STOP": "Parar e usar",
+        "RECORDING": "Gravando…",
+        "REMOVE_AUDIO": "Tirar o áudio (volta a ler o texto)",
+        "TOO_BIG": "O áudio passa de 10 MB.",
+        "UPLOAD_FAILED": "Não deu para enviar o áudio. Use MP3, WAV, OGG ou M4A.",
+        "MICROPHONE": "Libere o microfone no navegador para gravar."
+      },
+      "INSPECTOR": {
+        "START_HELP": "Os números em que a URA atende ficam no topo da tela. Ligue a saída Seguir ao primeiro bloco.",
+        "VOICE": "Voz da URA",
+        "VOICE_NATURAL": "Voz natural (OpenAI configurada no Chatwoot). Mudou a voz, os áudios são gerados de novo.",
+        "VOICE_CENTRAL": "Sem a OpenAI no Chatwoot, a central lê os textos com voz sintética. Para uma voz natural, configure a integração OpenAI ou envie áudios gravados.",
+        "LABEL": "Nome",
+        "LABEL_PLACEHOLDER": "Ex.: Menu principal, CPF",
+        "LABEL_HELP": "Aparece para quem atende, junto com o que o cliente escolheu.",
+        "PROMPT": "O que a URA fala",
+        "PROMPT_BEFORE_TRANSFER": "O que a URA fala antes de tocar (opcional)",
+        "PROMPT_BEFORE_HANGUP": "Despedida (opcional)",
+        "OPTIONS": "Opções (tecla e nome)",
+        "OPTION_LABEL": "Ex.: Vendas",
+        "ADD_OPTION": "Acrescentar opção",
+        "VARIABLE": "Guardar como",
+        "MIN_DIGITS": "Mínimo de dígitos",
+        "MAX_DIGITS": "Máximo de dígitos",
+        "COLLECT_HELP": "O cliente digita e aperta # para terminar. Quem atende vê o que ele digitou.",
+        "TIMEOUT": "Espera (segundos)",
+        "ATTEMPTS": "Tentativas",
+        "INVALID_PROMPT": "Aviso de opção inválida",
+        "INVALID_PLACEHOLDER": "Ex.: Opção inválida.",
+        "CALLER_HELP": "Usa o cadastro do Chatwoot e o CRM: negócio aberto do cliente, contato com esse número ou número que ainda não está cadastrado.",
+        "TARGET": "Para quem tocar",
+        "NO_PEOPLE": "Nenhuma pessoa com ramal ligado em Telefonia > Configurações.",
+        "PICK_BRANCH": "Escolha a filial",
+        "NUMBER_PLACEHOLDER": "DDD + número",
+        "RING_SECONDS": "Tocar por (segundos)",
+        "MAX_SECONDS": "Duração máxima do recado (segundos)",
+        "VOICEMAIL_HELP": "O recado fica na ligação, em Telefonia > Ligações (fila de retorno) e na aba Ligações do negócio."
+      },
+      "EDITOR": {
+        "BACK": "URAs",
+        "NAME": "Nome da URA",
+        "NAME_REQUIRED": "Dê um nome para a URA.",
+        "ALL_NUMBERS": "Todos os números",
+        "SOME_NUMBERS": "{count} números",
+        "NUMBERS_HINT": "Números em que esta URA atende. Sem nenhum marcado, ela atende todos os números que não têm URA própria.",
+        "NO_NUMBERS": "Nenhum número em Telefonia > Configurações.",
+        "ACTIVE": "Ligada",
+        "INACTIVE": "Desligada",
+        "WARNINGS": "{count} blocos com aviso",
+        "UNSAVED": "Alterações não salvas",
+        "SAVE": "Salvar",
+        "SAVED": "URA salva. A central passa a usar em até 30 segundos.",
+        "SAVE_ERROR": "Não deu para salvar a URA.",
+        "LOAD_ERROR": "Não deu para abrir a URA.",
+        "RETRY": "Tentar de novo",
+        "FIT": "Mostrar tudo",
+        "DUPLICATE": "Duplicar bloco",
+        "DELETE_BLOCK": "Apagar bloco",
+        "TOO_MANY_NODES": "A URA pode ter até {max} blocos.",
+        "LEAVE": "Sair sem salvar as alterações da URA?"
+      },
+      "LIST": {
+        "TITLE": "URA: atendimento automático por voz",
+        "DESCRIPTION": "Monte, em blocos, o que o cliente ouve ao ligar: boas-vindas, menu de opções, horário de atendimento, dígitos (CPF, pedido) e para quem a ligação vai. Quem atende vê por onde o cliente passou.",
+        "NATURAL_VOICE": "Os textos são lidos com voz natural (OpenAI).",
+        "CENTRAL_VOICE": "Os textos são lidos pela voz sintética da central. Envie áudios gravados ou configure a OpenAI para uma voz natural.",
+        "NEW": "Nova URA",
+        "EMPTY": "Nenhuma URA ainda. Sem URA, as ligações tocam direto para os vendedores.",
+        "BLOCKS": "{count} blocos",
+        "EDIT": "Editar",
+        "DELETE": "Apagar URA",
+        "DELETE_CONFIRM": "Apagar a URA {name}? As ligações voltam a tocar direto para os vendedores."
       }
     }
   }

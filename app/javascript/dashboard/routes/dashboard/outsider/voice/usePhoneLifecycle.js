@@ -2,15 +2,19 @@
 // (PhoneWindow) está aberta (Entrega 23, separado na 24): liga o telefone ao entrar na conta, acompanha as
 // mudanças em Telefonia > Configurações, avisa pelo navegador quando toca com a aba em segundo plano, mostra
 // os avisos do telefone (gravação salva...) e pergunta antes de fechar no meio de uma ligação.
+// Entrega 26: recebe os avisos do sussurro (convite, pedido para o cliente ouvir...) pelo canal ao vivo, também
+// na janela própria do telefone.
 import { watch, onBeforeUnmount } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useEventListener } from '@vueuse/core';
 import { useAlert } from 'dashboard/composables';
 import { useAccount } from 'dashboard/composables/useAccount';
 import { useCallInfo } from './useCallInfo';
-import { onCrmChange } from '../crm/live';
+import { onCrmChange, onVoiceSignal, startLiveUpdates } from '../crm/live';
+import { ensureCrmContext } from '../crm/crmStore';
 import {
   CENTRAL_SYNC_WAIT,
+  handleSignal,
   phone,
   restartPhone,
   startPhone,
@@ -61,7 +65,12 @@ export const usePhoneLifecycle = ({ popout = false } = {}) => {
     () => phone.notice?.at,
     () => {
       if (phone.notice && !document.hidden) {
-        useAlert(t(`OUTSIDER_VOICE.NOTICES.${phone.notice.code}`));
+        useAlert(
+          t(
+            `OUTSIDER_VOICE.NOTICES.${phone.notice.code}`,
+            phone.notice.params || {}
+          )
+        );
       }
     }
   );
@@ -69,6 +78,19 @@ export const usePhoneLifecycle = ({ popout = false } = {}) => {
   watch(accountId, id => id && startPhone(id, { popout }), {
     immediate: true,
   });
+
+  // o canal ao vivo e o acesso ao CRM (vincular negócio) também na janela própria do telefone; na do Chatwoot já
+  // vêm pelo CRM e não abrem duas vezes
+  watch(
+    () => [accountId.value, phone.status !== 'off'],
+    ([id, on]) => {
+      if (!id || !on) return;
+      startLiveUpdates(String(id));
+      ensureCrmContext();
+    },
+    { immediate: true }
+  );
+  const stopSignals = onVoiceSignal(handleSignal);
 
   // Telefonia > Configurações salvas (ramal ligado, trocado ou desligado): o telefone busca o ramal de novo
   // quando a central já tiver a configuração nova
@@ -80,6 +102,7 @@ export const usePhoneLifecycle = ({ popout = false } = {}) => {
   });
 
   onBeforeUnmount(() => {
+    stopSignals();
     stopFollowingSettings();
     clearTimeout(settingsTimer);
     closeNotification();

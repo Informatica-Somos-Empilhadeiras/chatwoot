@@ -1,6 +1,7 @@
 <script setup>
 // OUTSIDER: colegas com ramal no telefone (Entrega 23), com o ponto verde de quem está com o telefone
 // conectado. Clicar liga para o ramal (ou transfere a ligação para ele). Atualiza a cada 30 s.
+// Entrega 26: manda junto a pessoa (id e nome), para o convite de sussurro.
 import { ref, computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useIntervalFn } from '@vueuse/core';
@@ -57,7 +58,7 @@ onMounted(load);
           : t('OUTSIDER_VOICE.PHONE.TEAM_OFFLINE')
       "
       data-testid="outsider-phone-team"
-      @click="emit('pick', person.extension)"
+      @click="emit('pick', person.extension, person)"
     >
       <span class="flex items-center min-w-0 gap-2">
         <span class="relative shrink-0">

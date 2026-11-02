@@ -1,6 +1,8 @@
 // OUTSIDER: o que a tela mostra da ligação em andamento (Entrega 23), usado pelo painel do telefone e pelo
 // cartão minimizado: quem é (contato cadastrado, ramal ou o número), situação com o tempo de conversa e os
 // atalhos para o negócio e a conversa do cliente. Entrega 24: o mesmo para cada pessoa da conferência.
+// Entrega 26: o cadastro do cliente, o negócio vinculado, por onde passou na URA e as monitorias (quem é o
+// atendente ouvido ou com quem se sussurra).
 import { computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
@@ -20,10 +22,22 @@ export const useCallInfo = () => {
   const contact = computed(() => call.value?.lookup?.contact);
   const deal = computed(() => call.value?.lookup?.deal);
   const conversationId = computed(() => call.value?.lookup?.conversation_id);
+  const deals = computed(() => call.value?.lookup?.deals || []);
+  const linkedDeal = computed(() => call.value?.deal || null);
+  const ivr = computed(() => call.value?.lookup?.ivr || null);
+  const monitor = computed(() => call.value?.monitor || null);
 
   // nome e segunda linha de uma pessoa da ligação (a principal ou alguém da conferência)
   const nameOf = party => {
     if (!party) return '';
+    if (party.monitor) {
+      return (
+        party.monitor.name ||
+        t('OUTSIDER_VOICE.CALL.INTERNAL', {
+          extension: party.monitor.extension,
+        })
+      );
+    }
     const internal = (party.number || '').length <= 4;
     if (party.lookup?.contact) return party.lookup.contact.name;
     if (internal) {
@@ -37,6 +51,15 @@ export const useCallInfo = () => {
 
   const detailOf = party => {
     if (!party) return '';
+    if (party.monitor) {
+      return party.monitor.customer
+        ? t('OUTSIDER_VOICE.MONITOR.WITH', {
+            customer: party.monitor.customer,
+          })
+        : t('OUTSIDER_VOICE.CALL.INTERNAL', {
+            extension: party.monitor.extension,
+          });
+    }
     if ((party.number || '').length <= 4) {
       return t('OUTSIDER_VOICE.CALL.INTERNAL', { extension: party.number });
     }
@@ -100,11 +123,15 @@ export const useCallInfo = () => {
     router.push(location);
   };
 
-  const openDeal = () =>
+  const openDeal = (id = linkedDeal.value?.id || deal.value?.id) =>
     go({
       path: frontendURL(`accounts/${accountId.value}/crm/opportunities`),
-      query: { negocio: deal.value.id },
+      query: { negocio: id },
     });
+
+  // cadastro completo do cliente (Contatos), aberto na tela do Chatwoot
+  const openContact = (id = contact.value?.id) =>
+    go(frontendURL(`accounts/${accountId.value}/contacts/${id}`));
 
   const openConversation = () =>
     go(
@@ -121,6 +148,10 @@ export const useCallInfo = () => {
     contact,
     deal,
     conversationId,
+    deals,
+    linkedDeal,
+    ivr,
+    monitor,
     title,
     subtitle,
     stateLabel,
@@ -129,6 +160,7 @@ export const useCallInfo = () => {
     detailOf,
     guestState,
     openDeal,
+    openContact,
     openConversation,
   };
 };

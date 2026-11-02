@@ -1,0 +1,47 @@
+{
+  "OUTSIDER_TEAMS": {
+    "SIDEBAR": "Microsoft Teams",
+    "TITLE": "Microsoft Teams",
+    "DESCRIPTION": "Atenda pelo Chatwoot as conversas do Microsoft Teams. Cada robô do Teams ligado aqui vira uma caixa de entrada: as mensagens chegam como conversas e as respostas voltam para o Teams.",
+    "CONNECT": "Ligar um robô do Teams",
+    "EMPTY": "Nenhum robô do Teams ligado. Siga o passo a passo acima e clique em Ligar um robô do Teams.",
+    "CREATED": "Robô ligado. Cole o endereço de mensagens no Azure e envie o pacote do aplicativo no Teams.",
+    "SAVED": "Credenciais salvas.",
+    "SAVE": "Salvar",
+    "CANCEL": "Cancelar",
+    "EDIT": "Trocar credenciais",
+    "DELETE": "Desligar o robô",
+    "DELETE_CONFIRM": "Desligar este robô do Teams? A caixa de entrada e as conversas continuam no Chatwoot, mas as mensagens do Teams param de chegar.",
+    "TEST": "Testar credenciais",
+    "TEST_OK": "Credenciais certas: a Microsoft liberou o acesso do robô.",
+    "TEST_FAILED": "A Microsoft recusou as credenciais. Confira o ID do aplicativo, o segredo e o ID do locatário. {message}",
+    "DOWNLOAD_PACKAGE": "Baixar pacote do app",
+    "ENDPOINT": "Endereço de mensagens",
+    "ENDPOINT_HELP": "Cole em Azure Bot > Configuração > Ponto de extremidade de mensagens. O endereço precisa ser público (HTTPS).",
+    "COPY": "Copiar",
+    "COPIED": "Copiado.",
+    "LAST_ACTIVITY": "Última mensagem do Teams: {date}",
+    "NO_ACTIVITY": "Nenhuma mensagem recebida ainda",
+    "FIELDS": {
+      "NAME": "Nome da caixa de entrada",
+      "NAME_PLACEHOLDER": "Ex.: Atendimento pelo Teams",
+      "APP_ID": "ID do aplicativo (Microsoft App ID)",
+      "TENANT_ID": "ID do locatário (Tenant ID)",
+      "APP_PASSWORD": "Segredo do aplicativo (client secret)",
+      "KEEP_PASSWORD": "Em branco mantém o segredo atual",
+      "HELP": "Os três dados ficam no Azure, no robô criado (Configuração e Microsoft Entra ID). O segredo fica cifrado no Chatwoot e nunca é mostrado de novo. Robô antigo multilocatário: use botframework.com como locatário."
+    },
+    "GUIDE": {
+      "TITLE": "Passo a passo para ligar o Teams",
+      "AZURE": "No portal do Azure, crie um recurso Azure Bot (tipo de aplicativo: locatário único) e anote o ID do aplicativo e o ID do locatário (Configuração).",
+      "SECRET": "Em Configuração > Gerenciar senha, crie um segredo do cliente (client secret) e copie o valor.",
+      "ENDPOINT": "Aqui no Chatwoot, clique em Ligar um robô do Teams, preencha os três dados e salve. Copie o endereço de mensagens e cole no Azure Bot (Configuração > Ponto de extremidade de mensagens).",
+      "CHANNEL": "No Azure Bot, em Canais, ative o canal Microsoft Teams.",
+      "PACKAGE": "Clique em Baixar pacote do app e envie o .zip no Teams (Aplicativos > Gerenciar seus aplicativos > Carregar um aplicativo) ou no centro de administração do Teams, para liberar para a empresa.",
+      "AGENTS": "Na caixa de entrada criada (Configurações > Caixas de entrada), acrescente os agentes que vão atender. Use Testar credenciais para conferir."
+    },
+    "ERRORS": {
+      "GENERIC": "Não deu para concluir. Tente de novo."
+    }
+  }
+}

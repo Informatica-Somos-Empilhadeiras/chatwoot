@@ -146,11 +146,16 @@ class Outsider::Voice::Wallboard
                                          .includes(:user, :contact).order(:started_at).to_a
   end
 
+  # Entrega 26: ramal de quem atende e se quem vê o painel pode ouvir ou sussurrar na ligação (supervisor dele)
   def live
     list = @user_id ? live_calls.select { |call| call.user_id == @user_id } : live_calls
+    monitor = Outsider::Voice::MonitorAccess.new(@settings)
+    viewer = @access.account_user.user_id
     list.map do |call|
       { id: call.id, direction: call.direction, status: call.status, user: call.user&.name, customer: call.contact&.name,
-        number: call.customer_number, started_at: call.started_at, answered_at: call.answered_at }
+        number: call.customer_number, started_at: call.started_at, answered_at: call.answered_at, user_id: call.user_id,
+        extension: call.user_id && @settings.agent_for(call.user_id)&.dig('extension'),
+        can_monitor: call.answered? && monitor.supervisor_of?(viewer, call.user_id) }
     end
   end
 

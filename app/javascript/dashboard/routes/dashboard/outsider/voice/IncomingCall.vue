@@ -2,16 +2,19 @@
 // OUTSIDER: ligação chegando (Entrega 25): janela grande no meio da tela, por cima de tudo, com quem liga, o
 // negócio aberto e os botões grandes de atender e recusar. "Atender depois" esconde a janela e a ligação segue
 // tocando no cartão pequeno (CallMini). Com a aba escondida, o aviso do navegador fica em usePhoneLifecycle.
+// Entrega 26: por onde o cliente passou na URA (opções e dígitos) e o atalho para o cadastro dele.
 import { ref, computed, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useEventListener } from '@vueuse/core';
 import Avatar from 'next/avatar/Avatar.vue';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
+import IvrTrail from './IvrTrail.vue';
 import { useCallInfo } from './useCallInfo';
 import { answer, hangup, askNotifications } from './phone';
 
 const { t } = useI18n();
-const { call, contact, deal, title, subtitle } = useCallInfo();
+const { call, contact, deal, ivr, title, subtitle, openContact } =
+  useCallInfo();
 
 // id da ligação que a pessoa mandou para depois
 const later = ref(null);
@@ -107,6 +110,19 @@ useEventListener(window, 'keydown', event => {
             }}
           </span>
         </span>
+
+        <IvrTrail :ivr="ivr" compact />
+
+        <button
+          v-if="contact"
+          type="button"
+          class="flex items-center gap-1.5 text-sm text-n-blue-11 hover:underline"
+          data-testid="outsider-incoming-contact"
+          @click="openContact()"
+        >
+          <Icon icon="i-lucide-contact-round" class="size-4" />
+          {{ t('OUTSIDER_VOICE.CALL.OPEN_CONTACT') }}
+        </button>
 
         <div class="grid w-full grid-cols-2 gap-4 pt-2">
           <button

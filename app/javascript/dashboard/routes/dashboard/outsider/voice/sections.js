@@ -8,6 +8,8 @@ const SECTIONS = [
   { key: 'calls', icon: 'i-lucide-phone-call', voice: true },
   // Entrega 25
   { key: 'recordings', icon: 'i-lucide-audio-lines', voice: true },
+  // Entrega 26: URA (atendimento automático por voz)
+  { key: 'ivr', icon: 'i-lucide-workflow', admin: true },
   { key: 'settings', icon: 'i-lucide-settings-2', admin: true },
 ];
 

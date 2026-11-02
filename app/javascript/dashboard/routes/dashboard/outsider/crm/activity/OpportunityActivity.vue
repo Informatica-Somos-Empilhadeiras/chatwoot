@@ -2,6 +2,7 @@
 // OUTSIDER: abas Tarefas, Linha do tempo, Auditoria e Propostas de um negócio. Usado na aba CRM da
 // conversa e no painel do negócio na tela do CRM (na conversa, as propostas do contato ficam num
 // bloco próprio, então a aba Propostas sai: showProposals false).
+// Entrega 26: aba Ligações (com a telefonia ligada), com as gravações para ouvir no próprio negócio.
 import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
@@ -9,7 +10,8 @@ import TaskList from './TaskList.vue';
 import ActivityTimeline from './ActivityTimeline.vue';
 import AuditList from './AuditList.vue';
 import ProposalMiniList from '../components/proposals/ProposalMiniList.vue';
-import { bumpActivity } from '../crmStore';
+import OpportunityCalls from './OpportunityCalls.vue';
+import { bumpActivity, crmState } from '../crmStore';
 
 const props = defineProps({
   opportunity: { type: Object, required: true },
@@ -36,6 +38,15 @@ const tabs = computed(() => [
     icon: 'i-lucide-history',
     label: t('OUTSIDER_CRM.ACTIVITY_TABS.TIMELINE'),
   },
+  ...(crmState.access.voice
+    ? [
+        {
+          key: 'calls',
+          icon: 'i-lucide-phone',
+          label: t('OUTSIDER_VOICE.DEAL_CALLS.TAB'),
+        },
+      ]
+    : []),
   {
     key: 'audit',
     icon: 'i-lucide-shield-check',
@@ -99,6 +110,10 @@ const onTasksChanged = () => {
       :opportunity="opportunity"
       :conversation-display-id="conversationDisplayId"
       @changed="emit('changed')"
+    />
+    <OpportunityCalls
+      v-else-if="active === 'calls'"
+      :opportunity="opportunity"
     />
     <ProposalMiniList
       v-else-if="active === 'proposals'"

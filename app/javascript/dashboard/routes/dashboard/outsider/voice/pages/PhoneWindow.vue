@@ -5,6 +5,7 @@
 import { onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import PhonePanel from '../PhonePanel.vue';
+import WhisperInvite from '../WhisperInvite.vue';
 import { usePhoneLifecycle } from '../usePhoneLifecycle';
 import { phone } from '../phone';
 
@@ -20,6 +21,7 @@ onMounted(() => {
 <template>
   <div class="flex flex-col w-full h-full bg-n-solid-2">
     <PhonePanel v-if="phone.status !== 'off'" windowed />
+    <WhisperInvite v-if="phone.status !== 'off'" />
     <p v-else class="p-6 m-0 text-sm text-center text-n-slate-11">
       {{ t('OUTSIDER_VOICE.PHONE.WINDOW_OFF') }}
     </p>

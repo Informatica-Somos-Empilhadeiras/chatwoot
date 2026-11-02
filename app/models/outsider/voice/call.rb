@@ -13,9 +13,13 @@ class Outsider::Voice::Call < ApplicationRecord
   belongs_to :opportunity, class_name: 'Outsider::Crm::Opportunity', optional: true
   belongs_to :task, class_name: 'Outsider::Crm::Task', optional: true
   belongs_to :returned_by, class_name: 'User', optional: true
+  # Entrega 26: URA por onde a ligação passou (ivr_data: opções escolhidas e dígitos digitados)
+  belongs_to :ivr_flow, class_name: 'Outsider::Voice::IvrFlow', optional: true
 
   # gravação feita pelo telefone do navegador (Entrega 24), guardada pelo Active Storage (sem coluna nova)
   has_one_attached :recording
+  # Entrega 26: recado deixado na URA (bloco Recado)
+  has_one_attached :voicemail
 
   enum :direction, { inbound: 0, outbound: 1, internal: 2 }, validate: true
   enum :status, { ringing: 0, answered: 1, missed: 2, unanswered: 3, busy: 4, failed: 5 }, validate: true
@@ -25,6 +29,11 @@ class Outsider::Voice::Call < ApplicationRecord
 
   scope :external, -> { where.not(direction: :internal) }
   scope :to_return, -> { inbound.missed.where(returned_at: nil) }
+
+  # o que a tela mostra da URA (Entrega 26): o nome dela, por onde o cliente passou e o que ele digitou
+  def ivr_summary
+    ivr_data.slice('flow', 'path', 'vars').presence if ivr_data.present?
+  end
 
   # número do cliente: quem ligou (recebida) ou para quem se ligou (feita)
   def customer_number

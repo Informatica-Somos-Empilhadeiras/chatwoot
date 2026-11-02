@@ -6,6 +6,7 @@
 // da unidade vê o botão "Pegar" (fica com o negócio). Com proposta, o selo dela (Entrega 18).
 // Entrega 20 (mais simples): sem a probabilidade em % e sem o código no rodapé (o código fica na dica do
 // card e na busca); o card mostra o que o vendedor usa: cliente, valor, prazo e o que está atrasado.
+// Entrega 26: ligar para o cliente pelo card, com a ligação vinculada ao negócio.
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import Avatar from 'dashboard/components-next/avatar/Avatar.vue';
@@ -14,6 +15,7 @@ import Icon from 'dashboard/components-next/icon/Icon.vue';
 import { formatDate, formatDateTime, formatMoney } from '../helpers';
 import { isReceived } from '../crmStore';
 import ProposalBadge from './ProposalBadge.vue';
+import CallButton from '../../voice/CallButton.vue';
 
 const props = defineProps({
   opportunity: { type: Object, required: true },
@@ -64,7 +66,14 @@ const isNew = computed(() => isReceived(props.opportunity.id));
         :size="18"
         rounded-full
       />
-      <span class="truncate">{{ opportunity.contact.name }}</span>
+      <span class="flex-1 truncate">{{ opportunity.contact.name }}</span>
+      <CallButton
+        v-if="opportunity.status === 'open'"
+        :number="opportunity.contact.phone_number"
+        :deal="{ id: opportunity.id, title: opportunity.title }"
+        @pointerdown.stop
+        @mousedown.stop
+      />
     </div>
 
     <span

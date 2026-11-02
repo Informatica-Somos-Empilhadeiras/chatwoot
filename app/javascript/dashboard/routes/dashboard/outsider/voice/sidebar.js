@@ -15,7 +15,10 @@ export const voiceSidebarItems = (t, accountScopedRoute) => {
         name: `OutsiderVoice-${section.key}`,
         label: t(section.label),
         icon: section.icon,
-        activeOn: [VOICE_ROUTE],
+        activeOn:
+          section.key === 'ivr'
+            ? [VOICE_ROUTE, 'outsider_voice_ivr_editor']
+            : [VOICE_ROUTE],
         to: accountScopedRoute(VOICE_ROUTE, { tab: section.key }),
       })),
     },

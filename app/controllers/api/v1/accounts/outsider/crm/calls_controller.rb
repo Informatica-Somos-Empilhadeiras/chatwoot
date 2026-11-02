@@ -6,7 +6,8 @@ class Api::V1::Accounts::Outsider::Crm::CallsController < Api::V1::Accounts::Out
   FILTERS = %w[direction status user_id].freeze
 
   def index
-    calls = filtered.includes(:user, :contact, :returned_by, recording_attachment: :blob).order(started_at: :desc)
+    calls = filtered.includes(:user, :contact, :returned_by, :opportunity, recording_attachment: :blob, voicemail_attachment: :blob)
+                    .order(started_at: :desc)
     page = [params[:page].to_i, 1].max
     render json: { payload: calls.offset((page - 1) * PER_PAGE).limit(PER_PAGE).map { |call| call_json(call) },
                    meta: { page: page, per_page: PER_PAGE, total: calls.count } }
@@ -29,6 +30,16 @@ class Api::V1::Accounts::Outsider::Crm::CallsController < Api::V1::Accounts::Out
            else csv.calls(params[:source] == 'history' ? filtered.order(started_at: :desc) : board_calls)
            end
     send_data data, filename: "#{export_name}.csv", type: 'text/csv; charset=utf-8'
+  end
+
+  # Entrega 26: liga (ou desliga, sem opportunity_id) a ligação a um negócio que a pessoa enxerga no CRM
+  def link
+    call = visible_calls.find(params[:id])
+    link = ::Outsider::Voice::DealLink.new(Current.account_user)
+    deal = params[:opportunity_id].present? ? link.deal(params[:opportunity_id]) : nil
+    return render json: { error: 'deal_not_found' }, status: :not_found if params[:opportunity_id].present? && deal.nil?
+
+    render json: call_json(link.link(call, deal))
   end
 
   # gravação apagada pelo administrador (Entrega 24)
@@ -75,9 +86,12 @@ class Api::V1::Accounts::Outsider::Crm::CallsController < Api::V1::Accounts::Out
     Date.strptime(month, '%Y-%m').in_time_zone(settings.time_zone).all_month
   end
 
+  def visible_calls
+    ::Outsider::Voice::CallAccess.new(crm_access, settings).scope(::Outsider::Voice::Call.where(account_id: Current.account.id).external)
+  end
+
   def filtered
-    scope = ::Outsider::Voice::CallAccess.new(crm_access, settings).scope(::Outsider::Voice::Call.where(account_id: Current.account.id).external)
-    scope = params[:to_return].present? ? scope.to_return : scope.where(started_at: month_range)
+    scope = params[:to_return].present? ? visible_calls.to_return : visible_calls.where(started_at: month_range)
     scope.where(params.slice(*FILTERS).permit(*FILTERS).to_h.compact_blank)
   end
 
@@ -86,7 +100,10 @@ class Api::V1::Accounts::Outsider::Crm::CallsController < Api::V1::Accounts::Out
                :talk_seconds, :returned_at, :opportunity_id, :contact_id).merge(
                  customer_number: call.customer_number, user: ::Outsider::Crm::Serializer.user(call.user),
                  contact_name: call.contact&.name, returned_by: ::Outsider::Crm::Serializer.user(call.returned_by),
-                 recording_url: call.recording.attached? ? rails_blob_path(call.recording, only_path: true) : nil
+                 recording_url: call.recording.attached? ? rails_blob_path(call.recording, only_path: true) : nil,
+                 voicemail_url: call.voicemail.attached? ? rails_blob_path(call.voicemail, only_path: true) : nil,
+                 opportunity: call.opportunity && { id: call.opportunity.id, title: call.opportunity.title, code: call.opportunity.code },
+                 ivr: call.ivr_summary
                )
   end
 end

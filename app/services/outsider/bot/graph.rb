@@ -75,6 +75,11 @@ class Outsider::Bot::Graph
       { 'nodes' => nodes, 'edges' => clean_edges(Array(graph['edges']), nodes) }
     end
 
+    # horário de atendimento limpo, também usado pela URA da telefonia (Outsider::Voice::IvrGraph)
+    def clean_hours(data)
+      clean_condition(data)
+    end
+
     private
 
     def clean_nodes(list)

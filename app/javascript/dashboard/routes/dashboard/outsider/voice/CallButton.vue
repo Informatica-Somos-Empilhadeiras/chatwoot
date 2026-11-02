@@ -1,6 +1,7 @@
 <script setup>
 // OUTSIDER: ligar com 1 clique pelo telefone do CRM (Entrega 22), no contato, na conversa, no negócio e na
 // fila de retorno. Só aparece para quem tem ramal; a ligação sai com o número do estado do vendedor.
+// Entrega 26: no negócio, a ligação sai vinculada a ele (deal).
 import { useI18n } from 'vue-i18n';
 import { useAlert } from 'dashboard/composables';
 import Button from 'dashboard/components-next/button/Button.vue';
@@ -13,12 +14,14 @@ const props = defineProps({
   // o número escrito, como link (no lugar do botão só com o ícone)
   showNumber: { type: Boolean, default: false },
   label: { type: String, default: '' },
+  // negócio de onde se liga ({ id, title }): a ligação fica vinculada a ele
+  deal: { type: Object, default: null },
 });
 
 const { t } = useI18n();
 
 const call = () => {
-  const error = dial(props.number);
+  const error = dial(props.number, { deal: props.deal });
   if (error) useAlert(t(`OUTSIDER_VOICE.PHONE.ERRORS.${error}`));
 };
 </script>

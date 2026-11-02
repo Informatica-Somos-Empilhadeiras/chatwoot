@@ -1,0 +1,47 @@
+{
+  "OUTSIDER_TEAMS": {
+    "SIDEBAR": "Microsoft Teams",
+    "TITLE": "Microsoft Teams",
+    "DESCRIPTION": "Handle Microsoft Teams conversations in Chatwoot. Each Teams bot connected here becomes an inbox: messages arrive as conversations and replies go back to Teams.",
+    "CONNECT": "Connect a Teams bot",
+    "EMPTY": "No Teams bot connected. Follow the steps above and click Connect a Teams bot.",
+    "CREATED": "Bot connected. Paste the messaging endpoint in Azure and upload the app package to Teams.",
+    "SAVED": "Credentials saved.",
+    "SAVE": "Save",
+    "CANCEL": "Cancel",
+    "EDIT": "Change credentials",
+    "DELETE": "Disconnect bot",
+    "DELETE_CONFIRM": "Disconnect this Teams bot? The inbox and conversations stay in Chatwoot, but Teams messages stop arriving.",
+    "TEST": "Test credentials",
+    "TEST_OK": "Credentials are correct: Microsoft granted the bot access.",
+    "TEST_FAILED": "Microsoft rejected the credentials. Check the app ID, secret and tenant ID. {message}",
+    "DOWNLOAD_PACKAGE": "Download app package",
+    "ENDPOINT": "Messaging endpoint",
+    "ENDPOINT_HELP": "Paste it in Azure Bot > Configuration > Messaging endpoint. The address must be public (HTTPS).",
+    "COPY": "Copy",
+    "COPIED": "Copied.",
+    "LAST_ACTIVITY": "Last Teams message: {date}",
+    "NO_ACTIVITY": "No messages received yet",
+    "FIELDS": {
+      "NAME": "Inbox name",
+      "NAME_PLACEHOLDER": "E.g.: Teams support",
+      "APP_ID": "Application ID (Microsoft App ID)",
+      "TENANT_ID": "Tenant ID",
+      "APP_PASSWORD": "Application secret (client secret)",
+      "KEEP_PASSWORD": "Leave blank to keep the current secret",
+      "HELP": "All three values are in Azure, on the bot you created (Configuration and Microsoft Entra ID). The secret is encrypted in Chatwoot and never shown again. Legacy multi-tenant bot: use botframework.com as tenant."
+    },
+    "GUIDE": {
+      "TITLE": "How to connect Teams",
+      "AZURE": "In the Azure portal, create an Azure Bot resource (app type: single tenant) and note the app ID and tenant ID (Configuration).",
+      "SECRET": "In Configuration > Manage password, create a client secret and copy its value.",
+      "ENDPOINT": "Here in Chatwoot, click Connect a Teams bot, fill in the three values and save. Copy the messaging endpoint and paste it in Azure Bot (Configuration > Messaging endpoint).",
+      "CHANNEL": "In Azure Bot, under Channels, enable the Microsoft Teams channel.",
+      "PACKAGE": "Click Download app package and upload the .zip in Teams (Apps > Manage your apps > Upload an app) or in the Teams admin center to release it to the company.",
+      "AGENTS": "In the new inbox (Settings > Inboxes), add the agents who will reply. Use Test credentials to check."
+    },
+    "ERRORS": {
+      "GENERIC": "Could not finish. Try again."
+    }
+  }
+}

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_10_30_130000) do
+ActiveRecord::Schema[7.1].define(version: 2026_11_02_120000) do
   # These extensions should be enabled to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -1226,6 +1226,48 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_30_130000) do
     t.index ["user_id"], name: "index_notifications_on_user_id"
   end
 
+  create_table "outsider_bot_connections", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.string "name", null: false
+    t.string "kind", default: "http", null: false
+    t.string "base_url", null: false
+    t.string "auth_type", default: "none", null: false
+    t.jsonb "settings", default: {}, null: false
+    t.text "secrets"
+    t.jsonb "headers", default: {}, null: false
+    t.integer "timeout_seconds", default: 10, null: false
+    t.boolean "allow_write", default: false, null: false
+    t.bigint "created_by_id"
+    t.bigint "updated_by_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id", "name"], name: "index_outsider_bot_connections_on_account_id_and_name", unique: true
+  end
+
+  create_table "outsider_bot_dataset_rows", force: :cascade do |t|
+    t.bigint "dataset_id", null: false
+    t.integer "generation", default: 0, null: false
+    t.integer "position", null: false
+    t.jsonb "data", default: {}, null: false
+    t.jsonb "folded", default: {}, null: false
+    t.index ["dataset_id", "generation", "position"], name: "idx_obot_dataset_rows_order"
+    t.index ["folded"], name: "idx_obot_dataset_rows_folded", opclass: :jsonb_path_ops, using: :gin
+  end
+
+  create_table "outsider_bot_datasets", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.string "name", null: false
+    t.jsonb "columns", default: [], null: false
+    t.integer "rows_count", default: 0, null: false
+    t.integer "generation", default: 0, null: false
+    t.string "file_name"
+    t.bigint "created_by_id"
+    t.bigint "updated_by_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id", "name"], name: "index_outsider_bot_datasets_on_account_id_and_name", unique: true
+  end
+
   create_table "outsider_bot_flows", force: :cascade do |t|
     t.bigint "account_id", null: false
     t.string "name", null: false
@@ -1237,6 +1279,23 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_30_130000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["account_id", "active"], name: "index_outsider_bot_flows_on_account_id_and_active"
+  end
+
+  create_table "outsider_bot_logs", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.bigint "flow_id"
+    t.bigint "session_id"
+    t.bigint "conversation_id"
+    t.bigint "connection_id"
+    t.string "node_id"
+    t.string "kind", null: false
+    t.string "status", null: false
+    t.integer "http_status"
+    t.integer "duration_ms"
+    t.jsonb "detail", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.index ["account_id", "id"], name: "index_outsider_bot_logs_on_account_id_and_id"
+    t.index ["created_at"], name: "index_outsider_bot_logs_on_created_at"
   end
 
   create_table "outsider_bot_sessions", force: :cascade do |t|
@@ -1548,6 +1607,20 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_30_130000) do
     t.index ["opportunity_id"], name: "index_outsider_crm_tasks_on_opportunity_id"
   end
 
+  create_table "outsider_teams_connections", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.bigint "inbox_id", null: false
+    t.string "app_id", null: false
+    t.string "tenant_id", null: false
+    t.text "app_password_encrypted", null: false
+    t.string "webhook_token", null: false
+    t.datetime "last_activity_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["inbox_id"], name: "index_outsider_teams_connections_on_inbox_id", unique: true
+    t.index ["webhook_token"], name: "index_outsider_teams_connections_on_webhook_token", unique: true
+  end
+
   create_table "outsider_transfer_requests", force: :cascade do |t|
     t.bigint "account_id", null: false
     t.bigint "conversation_id", null: false
@@ -1586,10 +1659,41 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_30_130000) do
     t.integer "talk_seconds", default: 0, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "ivr_flow_id"
+    t.jsonb "ivr_data", default: {}, null: false
     t.index ["account_id", "contact_id"], name: "index_outsider_voice_calls_on_account_id_and_contact_id"
     t.index ["account_id", "started_at"], name: "index_outsider_voice_calls_on_account_id_and_started_at"
     t.index ["account_id", "user_id", "started_at"], name: "idx_ovoice_calls_on_account_user_started"
     t.index ["linkedid"], name: "index_outsider_voice_calls_on_linkedid", unique: true
+  end
+
+  create_table "outsider_voice_ivr_flows", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.string "name", null: false
+    t.boolean "active", default: false, null: false
+    t.jsonb "graph", default: {}, null: false
+    t.jsonb "numbers", default: [], null: false
+    t.bigint "updated_by_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_outsider_voice_ivr_flows_on_account_id"
+  end
+
+  create_table "outsider_voice_monitors", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.bigint "user_id", null: false
+    t.bigint "target_user_id", null: false
+    t.bigint "call_id"
+    t.string "linkedid", null: false
+    t.string "mode", null: false
+    t.string "kind", null: false
+    t.datetime "started_at", null: false
+    t.datetime "opened_at"
+    t.datetime "ended_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id", "started_at"], name: "index_outsider_voice_monitors_on_account_id_and_started_at"
+    t.index ["linkedid"], name: "index_outsider_voice_monitors_on_linkedid", unique: true
   end
 
   create_table "platform_app_permissibles", force: :cascade do |t|

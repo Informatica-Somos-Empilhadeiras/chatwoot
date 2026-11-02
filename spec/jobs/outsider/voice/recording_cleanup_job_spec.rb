@@ -23,6 +23,15 @@ RSpec.describe Outsider::Voice::RecordingCleanupJob do
     expect(recent.reload.recording).to be_attached
   end
 
+  it 'deletes the IVR voicemails older than the account limit too' do
+    old = recorded_call(31.days.ago)
+    old.voicemail.attach(io: StringIO.new('wav'), filename: 'recado.wav', content_type: 'audio/wav')
+
+    described_class.perform_now
+
+    expect(old.reload.voicemail).not_to be_attached
+  end
+
   it 'keeps the file when it was forwarded to a conversation' do
     old = recorded_call(40.days.ago)
     blob = old.recording.blob

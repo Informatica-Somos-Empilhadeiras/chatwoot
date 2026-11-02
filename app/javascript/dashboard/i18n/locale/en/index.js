@@ -4,6 +4,7 @@ import outsiderCrm from './outsiderCrm.json'; // OUTSIDER: CRM de vendas
 import outsiderWhatsapp from './outsiderWhatsapp.json'; // OUTSIDER: áudio e contato do WhatsApp
 import outsiderVoice from './outsiderVoice.json'; // OUTSIDER: telefonia
 import outsiderTools from './outsiderTools.json'; // OUTSIDER: busca, transferência, bot e aparência
+import outsiderTeams from './outsiderTeams.json'; // OUTSIDER: canal do Microsoft Teams
 import agentBots from './agentBots.json';
 import agentMgmt from './agentMgmt.json';
 import attributesMgmt from './attributesMgmt.json';
@@ -55,6 +56,7 @@ export default {
   ...outsiderWhatsapp, // OUTSIDER
   ...outsiderVoice, // OUTSIDER
   ...outsiderTools, // OUTSIDER
+  ...outsiderTeams, // OUTSIDER
   ...agentBots,
   ...agentMgmt,
   ...attributesMgmt,

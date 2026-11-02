@@ -7,6 +7,8 @@
 // números. Datas e horas no fuso da telefonia. Atualiza a cada ligação e a cada minuto.
 // Entrega 25: mapa do Brasil (e internacionais) com as ligações por estado, custos do período e as ligações
 // por DDD e por filial.
+// Entrega 26: o supervisor ouve em silêncio (ninguém percebe) ou entra sussurrando nas ligações em andamento da
+// equipe dele, pelos botões da lista "Em ligação agora".
 import { ref, computed, watch, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useIntervalFn, useNow } from '@vueuse/core';
@@ -38,6 +40,7 @@ import {
 } from '../format';
 import { errorMessage } from '../../crm/helpers';
 import { useCrmChanges } from '../../crm/live';
+import { phone, monitorCall } from '../phone';
 
 const PERIODS = [
   'today',
@@ -309,6 +312,23 @@ const STATUS_DOT = {
   online: 'bg-n-teal-9',
   offline: 'bg-n-slate-7',
 };
+
+// ouvir (listen) ou sussurrar (whisper) na ligação de alguém da equipe, pelo telefone do supervisor
+const monitor = (call, mode) => {
+  const error = monitorCall(
+    {
+      extension: call.extension,
+      userId: call.user_id,
+      name: call.user,
+      customer: call.customer || formatPhone(call.number),
+    },
+    mode
+  );
+  if (error) useAlert(t(`OUTSIDER_VOICE.PHONE.ERRORS.${error}`));
+};
+
+const canMonitor = call =>
+  call.can_monitor && call.extension && phone.status !== 'off';
 
 const liveTime = call =>
   call.answered_at
@@ -777,6 +797,26 @@ onMounted(load);
               </span>
               <span class="text-xs tabular-nums text-n-slate-11">
                 {{ liveTime(call) }}
+              </span>
+              <span v-if="canMonitor(call)" class="flex gap-0.5 shrink-0">
+                <Button
+                  xs
+                  ghost
+                  slate
+                  icon="i-lucide-ghost"
+                  :title="t('OUTSIDER_VOICE.MONITOR.LISTEN_TITLE')"
+                  data-testid="wallboard-listen"
+                  @click="monitor(call, 'listen')"
+                />
+                <Button
+                  xs
+                  ghost
+                  slate
+                  icon="i-lucide-ear"
+                  :title="t('OUTSIDER_VOICE.MONITOR.WHISPER_TITLE')"
+                  data-testid="wallboard-whisper"
+                  @click="monitor(call, 'whisper')"
+                />
               </span>
             </div>
           </div>

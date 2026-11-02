@@ -2,23 +2,33 @@
 # ramal da pessoa (vazio se a telefonia ou o ramal estão desligados). lookup: quem é o número que está
 # ligando, para a tela mostrar o nome e o negócio aberto antes de atender. recording: a gravação feita pelo
 # telefone do navegador (Entrega 24).
+#
+# Entrega 26: lookup traz também os negócios abertos do cliente e por onde ele passou na URA; call liga a
+# ligação em andamento a um contato (cadastro criado na hora) ou a um negócio; signal leva os avisos do sussurro
+# entre os telefones (Outsider::Voice::Signals); supervisor diz se a pessoa pode monitorar ligações.
 class Api::V1::Accounts::Outsider::VoiceController < Api::V1::Accounts::BaseController
+  DEALS_LIMIT = 10
+  IVR_RECENT = 15.minutes
+
   def me
     agent = settings.enabled? && settings.agent_for(Current.user.id)
     return render json: { enabled: false } unless agent && settings.data['ws_url'].present?
 
     render json: {
-      enabled: true, ws_url: settings.data['ws_url'], extension: agent['extension'], name: Current.user.name,
-      password: settings.sip_password(Current.user.id, agent['extension']), echo_extension: ::Outsider::Voice::Settings::ECHO_EXTENSION
+      enabled: true, ws_url: settings.data['ws_url'], extension: agent['extension'], name: Current.user.name, user_id: Current.user.id,
+      password: settings.sip_password(Current.user.id, agent['extension']), echo_extension: ::Outsider::Voice::Settings::ECHO_EXTENSION,
+      supervisor: crm_access.enabled? && crm_access.manager?
     }.merge(recording_flags)
   end
 
   def lookup
     contact = ::Outsider::Voice::PhoneNumber.find_contact(Current.account, params[:number])
-    return render json: { contact: nil } unless contact
+    ivr = recent_ivr(params[:number])
+    return render json: { contact: nil, ivr: ivr } unless contact
 
-    render json: { contact: contact.slice(:id, :name, :phone_number).merge(thumbnail: contact.avatar_url), deal: deal_json(contact),
-                   conversation_id: contact.conversations.order(last_activity_at: :desc).pick(:display_id) }
+    deals = visible_deals(contact)
+    render json: { contact: contact.slice(:id, :name, :phone_number).merge(thumbnail: contact.avatar_url), deal: deals.first, deals: deals,
+                   conversation_id: contact.conversations.order(last_activity_at: :desc).pick(:display_id), ivr: ivr }
   end
 
   # colegas com ramal ligado, para ligar ou transferir (Entrega 23): online = telefone conectado na central
@@ -43,6 +53,30 @@ class Api::V1::Accounts::Outsider::VoiceController < Api::V1::Accounts::BaseCont
     call ? render(json: { id: call.id }) : head(:not_found)
   end
 
+  # a ligação em andamento (ou que acabou de acabar), achada pelo número e pela hora em que começou no telefone:
+  # contact_id liga ao cadastro do cliente; opportunity_id (vazio desliga) ao negócio
+  def update_call
+    call = current_call
+    return head :not_found unless call
+
+    call.update!(contact: contact_param) if params.key?(:contact_id)
+    if params.key?(:opportunity_id)
+      deal = params[:opportunity_id].present? ? deal_link.deal(params[:opportunity_id]) : nil
+      return head :not_found if params[:opportunity_id].present? && deal.nil?
+
+      deal_link.link(call, deal)
+    end
+    render json: { id: call.id, contact_id: call.contact_id, opportunity: call.opportunity && deal_row(call.opportunity) }
+  end
+
+  def signal
+    ::Outsider::Voice::Signals.new(settings, Current.user)
+                              .deliver(type: params.require(:type), to_user_id: params.require(:to_user_id), data: params[:data]&.permit!.to_h || {})
+    head :no_content
+  rescue ::Outsider::Voice::Signals::Refused => e
+    render json: { error: e.message }, status: :unprocessable_entity
+  end
+
   private
 
   # botão Gravar e gravação automática (Entregas 24 e 25)
@@ -62,13 +96,40 @@ class Api::V1::Accounts::Outsider::VoiceController < Api::V1::Accounts::BaseCont
     @settings ||= ::Outsider::Voice::Settings.new(Current.account)
   end
 
-  # só o negócio que a pessoa pode ver no CRM
-  def deal_json(contact)
-    access = ::Outsider::Crm::Access.new(Current.account_user)
-    return unless access.enabled?
+  def crm_access
+    @crm_access ||= ::Outsider::Crm::Access.new(Current.account_user)
+  end
 
-    deal = ::Outsider::Crm::Opportunity.where(account_id: Current.account.id, contact_id: contact.id).open
-                                       .includes(:stage, :owner).order(updated_at: :desc).find { |item| access.view_opportunity?(item) }
-    deal && { id: deal.id, title: deal.title, value_cents: deal.value_cents, stage: deal.stage.name, owner: deal.owner&.name }
+  def deal_link
+    @deal_link ||= ::Outsider::Voice::DealLink.new(Current.account_user)
+  end
+
+  def current_call
+    ::Outsider::Voice::CallMatch.new(settings, Current.user)
+                                .find(params[:number].to_s.delete('^0-9'), ::Outsider::Voice::CallMatch.time(params[:started_at]))
+  end
+
+  def contact_param
+    params[:contact_id].present? ? Current.account.contacts.find(params[:contact_id]) : nil
+  end
+
+  # os negócios abertos do cliente que a pessoa pode ver no CRM, o mais mexido primeiro
+  def visible_deals(contact)
+    return [] unless crm_access.enabled?
+
+    ::Outsider::Crm::Opportunity.where(account_id: Current.account.id, contact_id: contact.id).open
+                                .includes(:stage, :owner).order(updated_at: :desc)
+                                .select { |item| crm_access.view_opportunity?(item) }.first(DEALS_LIMIT).map { |deal| deal_row(deal) }
+  end
+
+  def deal_row(deal)
+    { id: deal.id, title: deal.title, code: deal.code, value_cents: deal.value_cents, stage: deal.stage&.name, owner: deal.owner&.name }
+  end
+
+  # o que o cliente escolheu e digitou na URA nesta ligação (a recebida mais recente desse número)
+  def recent_ivr(number)
+    ::Outsider::Voice::Call.where(account_id: Current.account.id, direction: :inbound, started_at: IVR_RECENT.ago..)
+                           .where.not(ivr_flow_id: nil).order(started_at: :desc).limit(20)
+                           .find { |call| ::Outsider::Voice::PhoneNumber.same?(call.from_number, number) }&.ivr_summary
   end
 end

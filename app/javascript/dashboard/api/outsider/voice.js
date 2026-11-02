@@ -21,6 +21,64 @@ class VoiceAPI extends ApiClient {
     return axios.get(`${this.url}/voice/lookup`, { params: { number } });
   }
 
+  // Entrega 26: a ligação em andamento, achada pelo número e pela hora em que começou no telefone; changes:
+  // { contact_id } (cadastro do cliente) e/ou { opportunity_id } (negócio; vazio desvincula)
+  updateCall(number, startedAt, changes) {
+    return axios.patch(`${this.url}/voice/call`, {
+      number,
+      started_at: startedAt,
+      ...changes,
+    });
+  }
+
+  // avisos do sussurro entre os telefones (Outsider::Voice::Signals)
+  signal(type, toUserId, data = {}) {
+    return axios.post(`${this.url}/voice/signal`, {
+      type,
+      to_user_id: toUserId,
+      data,
+    });
+  }
+
+  // vincula (ou desvincula, sem opportunityId) uma ligação a um negócio, em Telefonia > Ligações
+  linkCall(callId, opportunityId) {
+    return axios.patch(`${this.url}/crm/calls/${callId}/link`, {
+      opportunity_id: opportunityId || '',
+    });
+  }
+
+  // aba Ligações do negócio
+  getOpportunityCalls(opportunityId) {
+    return axios.get(`${this.url}/crm/opportunities/${opportunityId}/calls`);
+  }
+
+  // Telefonia > URA (só administradores)
+  getIvrFlows() {
+    return axios.get(`${this.url}/crm/ivr_flows`);
+  }
+
+  getIvrFlow(id) {
+    return axios.get(`${this.url}/crm/ivr_flows/${id}`);
+  }
+
+  createIvrFlow(name) {
+    return axios.post(`${this.url}/crm/ivr_flows`, { name });
+  }
+
+  updateIvrFlow(id, flow) {
+    return axios.patch(`${this.url}/crm/ivr_flows/${id}`, flow);
+  }
+
+  deleteIvrFlow(id) {
+    return axios.delete(`${this.url}/crm/ivr_flows/${id}`);
+  }
+
+  uploadIvrAudio(id, file) {
+    const form = new FormData();
+    form.append('file', file, file.name || 'audio.webm');
+    return axios.post(`${this.url}/crm/ivr_flows/${id}/audios`, form);
+  }
+
   getSettings() {
     return axios.get(`${this.url}/crm/voice_settings`);
   }

@@ -4,6 +4,8 @@
 // que aplica as permissões de quem está vendo. Ao reconectar (queda de rede), recarregam também.
 // O aviso de acesso (CRM ligado ou desligado na conta ou para alguém) vai à parte, para quem confere
 // o acesso (onCrmAccessChange); as telas não recarregam por ele.
+// Entrega 26: os avisos do telefone (sussurro), que o servidor manda só para a pessoa certa, vão na hora para
+// quem escuta (onVoiceSignal), sem juntar com os outros.
 import { onBeforeUnmount, onMounted } from 'vue';
 import { createConsumer } from '@rails/actioncable';
 import store from 'dashboard/store';
@@ -13,6 +15,7 @@ const BATCH_DELAY = 400;
 
 const listeners = new Set();
 const accessListeners = new Set();
+const voiceListeners = new Set();
 let consumer = null;
 let subscription = null;
 let subscribedAccount = null;
@@ -33,6 +36,16 @@ const flush = () => {
 };
 
 const received = change => {
+  if (change.kind === 'voice_signal') {
+    voiceListeners.forEach(listener => {
+      try {
+        listener(change.signal);
+      } catch {
+        // um erro aqui não impede os outros de receberem
+      }
+    });
+    return;
+  }
   if (change.kind === 'access') {
     accessListeners.forEach(listener => {
       try {
@@ -90,6 +103,11 @@ export const stopLiveUpdates = () => {
 export const onCrmChange = listener => {
   listeners.add(listener);
   return () => listeners.delete(listener);
+};
+
+export const onVoiceSignal = listener => {
+  voiceListeners.add(listener);
+  return () => voiceListeners.delete(listener);
 };
 
 export const onCrmAccessChange = listener => {

@@ -3,6 +3,8 @@
 // 1 clique e o histórico do mês, com filtros. Cada pessoa vê o que Outsider::Voice::CallAccess deixa (o
 // vendedor, as dele e as perdidas para ele retornar); atualiza sozinho a cada ligação. Entrega 24: exporta a
 // lista com os filtros da tela (planilha) e toca a gravação da ligação, quando houver.
+// Entrega 26: vincular (ou trocar) o negócio do CRM de cada ligação, ouvir o recado deixado na URA e ver por onde
+// o cliente passou nela.
 import { ref, computed, watch, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useI18n } from 'vue-i18n';
@@ -13,6 +15,8 @@ import Select from 'dashboard/components-next/select/Select.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
 import CallButton from '../CallButton.vue';
+import DealPicker from '../DealPicker.vue';
+import IvrTrail from '../IvrTrail.vue';
 import { formatPhone, formatDuration, downloadBlob } from '../format';
 import {
   currentMonth,
@@ -52,8 +56,11 @@ const loaded = ref(false);
 const isLoading = ref(true);
 const isLoadingMore = ref(false);
 const isExporting = ref(false);
-// ligação com a gravação aberta (tocando) na lista
+// ligação com a gravação ou o recado aberto (tocando) na lista: { id, kind: 'recording' | 'voicemail' }
 const playing = ref(null);
+// ligação com a escolha de negócio aberta
+const linking = ref(null);
+const isLinking = ref(false);
 
 // gestor de unidade e administrador filtram por vendedor
 const manager = computed(() => canConfigure(props.access));
@@ -79,6 +86,34 @@ const sellerOptions = computed(() => [
 
 const customerName = call =>
   call.contact_name || formatPhone(call.customer_number);
+
+const isPlaying = (call, kind) =>
+  playing.value?.id === call.id && playing.value.kind === kind;
+
+const togglePlay = (call, kind) => {
+  playing.value = isPlaying(call, kind) ? null : { id: call.id, kind };
+};
+
+const playingUrl = call =>
+  playing.value?.kind === 'voicemail' ? call.voicemail_url : call.recording_url;
+
+const linkDeal = async (call, deal) => {
+  isLinking.value = true;
+  try {
+    const { data } = await VoiceAPI.linkCall(call.id, deal?.id);
+    Object.assign(call, data);
+    linking.value = null;
+    useAlert(
+      deal
+        ? t('OUTSIDER_VOICE.DEAL_LINK.LINKED', { title: deal.title })
+        : t('OUTSIDER_VOICE.DEAL_LINK.UNLINKED')
+    );
+  } catch (error) {
+    useAlert(errorMessage(t, error));
+  } finally {
+    isLinking.value = false;
+  }
+};
 
 const openDeal = id =>
   router.push({
@@ -153,7 +188,7 @@ const deleteRecording = async call => {
   try {
     await VoiceAPI.deleteRecording(call.id);
     call.recording_url = null;
-    playing.value = null;
+    if (playing.value?.kind === 'recording') playing.value = null;
   } catch (error) {
     useAlert(errorMessage(t, error));
   }
@@ -260,6 +295,16 @@ onMounted(load);
           </span>
           <span class="flex items-center gap-2">
             <Button
+              v-if="call.voicemail_url"
+              size="sm"
+              :variant="isPlaying(call, 'voicemail') ? 'solid' : 'ghost'"
+              color="ruby"
+              icon="i-lucide-voicemail"
+              :label="t('OUTSIDER_VOICE.DEAL_CALLS.VOICEMAIL')"
+              data-testid="calls-return-voicemail"
+              @click="togglePlay(call, 'voicemail')"
+            />
+            <Button
               v-if="call.opportunity_id"
               size="sm"
               variant="ghost"
@@ -271,8 +316,17 @@ onMounted(load);
             <CallButton
               :number="call.customer_number"
               :label="t('OUTSIDER_VOICE.PANEL.RETURN.CALL_BACK')"
+              :deal="call.opportunity"
             />
           </span>
+          <IvrTrail v-if="call.ivr" :ivr="call.ivr" class="basis-full" />
+          <audio
+            v-if="isPlaying(call, 'voicemail')"
+            :src="call.voicemail_url"
+            controls
+            autoplay
+            class="w-full h-9 basis-full"
+          />
         </div>
       </section>
 
@@ -359,16 +413,37 @@ onMounted(load);
                       <span class="truncate text-n-slate-12">
                         {{ customerName(call) }}
                       </span>
-                      <button
-                        v-if="call.opportunity_id"
-                        type="button"
-                        class="shrink-0 text-n-slate-11 hover:text-n-slate-12"
-                        :title="t('OUTSIDER_VOICE.PANEL.RETURN.OPEN_DEAL')"
-                        @click="openDeal(call.opportunity_id)"
-                      >
-                        <Icon icon="i-lucide-kanban" class="size-3.5" />
-                      </button>
                       <CallButton show-number :number="call.customer_number" />
+                    </span>
+                    <span class="flex items-center gap-1 mt-0.5 text-xs">
+                      <button
+                        v-if="call.opportunity"
+                        type="button"
+                        class="flex items-center min-w-0 gap-1 text-n-slate-11 hover:text-n-slate-12"
+                        :title="t('OUTSIDER_VOICE.PANEL.RETURN.OPEN_DEAL')"
+                        @click="openDeal(call.opportunity.id)"
+                      >
+                        <Icon
+                          icon="i-lucide-kanban"
+                          class="size-3.5 shrink-0"
+                        />
+                        <span class="truncate max-w-[14rem]">
+                          {{ call.opportunity.title }}
+                        </span>
+                      </button>
+                      <button
+                        type="button"
+                        class="flex items-center gap-1 shrink-0 text-n-blue-11 hover:underline"
+                        data-testid="calls-link-deal"
+                        @click="linking = linking === call.id ? null : call.id"
+                      >
+                        <Icon icon="i-lucide-link" class="size-3.5" />
+                        {{
+                          call.opportunity
+                            ? t('OUTSIDER_VOICE.DEAL_LINK.CHANGE')
+                            : t('OUTSIDER_VOICE.DEAL_LINK.LINK')
+                        }}
+                      </button>
                     </span>
                   </td>
                   <td class="px-4 py-2.5 text-n-slate-12">
@@ -402,17 +477,32 @@ onMounted(load);
                   >
                     <span class="inline-flex items-center gap-2">
                       <button
+                        v-if="call.voicemail_url"
+                        type="button"
+                        class="flex items-center gap-1 px-1.5 py-0.5 text-xs rounded-md"
+                        :class="
+                          isPlaying(call, 'voicemail')
+                            ? 'bg-n-ruby-3 text-n-ruby-11'
+                            : 'bg-n-alpha-2 text-n-slate-11 hover:text-n-slate-12'
+                        "
+                        data-testid="calls-voicemail"
+                        @click="togglePlay(call, 'voicemail')"
+                      >
+                        <Icon icon="i-lucide-voicemail" class="size-3.5" />
+                        {{ t('OUTSIDER_VOICE.DEAL_CALLS.VOICEMAIL') }}
+                      </button>
+                      <button
                         v-if="call.recording_url"
                         type="button"
                         class="flex items-center gap-1 px-1.5 py-0.5 text-xs rounded-md"
                         :class="
-                          playing === call.id
+                          isPlaying(call, 'recording')
                             ? 'bg-n-ruby-3 text-n-ruby-11'
                             : 'bg-n-alpha-2 text-n-slate-11 hover:text-n-slate-12'
                         "
                         :title="t('OUTSIDER_VOICE.PANEL.HISTORY.RECORDING')"
                         data-testid="calls-recording"
-                        @click="playing = playing === call.id ? null : call.id"
+                        @click="togglePlay(call, 'recording')"
                       >
                         <Icon icon="i-lucide-audio-lines" class="size-3.5" />
                         {{ t('OUTSIDER_VOICE.PANEL.HISTORY.RECORDING') }}
@@ -425,18 +515,35 @@ onMounted(load);
                     </span>
                   </td>
                 </tr>
-                <tr v-if="playing === call.id && call.recording_url">
+                <tr v-if="linking === call.id">
+                  <td colspan="5" class="px-4 pb-3">
+                    <div class="max-w-md">
+                      <DealPicker
+                        :current="call.opportunity"
+                        :busy="isLinking"
+                        @pick="linkDeal(call, $event)"
+                        @cancel="linking = null"
+                      />
+                    </div>
+                  </td>
+                </tr>
+                <tr v-if="call.ivr && playing?.id === call.id">
+                  <td colspan="5" class="px-4 pb-2">
+                    <IvrTrail :ivr="call.ivr" />
+                  </td>
+                </tr>
+                <tr v-if="playing?.id === call.id && playingUrl(call)">
                   <td colspan="5" class="px-4 pb-3">
                     <span class="flex items-center gap-2">
                       <audio
-                        :src="call.recording_url"
+                        :src="playingUrl(call)"
                         controls
                         autoplay
                         class="flex-1 h-9"
                         data-testid="calls-recording-player"
                       />
                       <a
-                        :href="call.recording_url"
+                        :href="playingUrl(call)"
                         download
                         class="flex items-center justify-center rounded-lg size-8 text-n-slate-11 hover:bg-n-alpha-2 hover:text-n-slate-12"
                         :title="
@@ -446,7 +553,9 @@ onMounted(load);
                         <Icon icon="i-lucide-download" class="size-4" />
                       </a>
                       <Button
-                        v-if="access.administrator"
+                        v-if="
+                          access.administrator && playing.kind === 'recording'
+                        "
                         size="sm"
                         variant="ghost"
                         color="ruby"

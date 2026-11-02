@@ -11,3 +11,28 @@ pt_BR:
         no_email: 'O contato não tem e-mail.'
         inbox: 'Escolha uma caixa que você atende.'
         too_long: 'A mensagem está longa demais.'
+    ivr:
+      menu: 'Menu'
+      default_name: 'Nova URA'
+      starter:
+        welcome: 'Olá! Obrigado por ligar.'
+        menu_label: 'Menu principal'
+        menu: 'Para falar com vendas, digite 1. Para suporte, digite 2.'
+        invalid: 'Opção inválida.'
+        sales: 'Vendas'
+        support: 'Suporte'
+        wait: 'Aguarde um instante, vamos transferir sua ligação.'
+        voicemail: 'No momento não conseguimos atender. Deixe seu recado após o sinal.'
+        bye: 'Obrigado. Retornaremos em breve.'
+  activerecord:
+    attributes:
+      outsider/voice/ivr_flow:
+        name: 'Nome'
+        numbers: 'Números'
+    errors:
+      models:
+        outsider/voice/ivr_flow:
+          attributes:
+            numbers:
+              taken: 'já têm outra URA ligada'
+              all_taken: 'vazios: já existe outra URA ligada atendendo todos os números'

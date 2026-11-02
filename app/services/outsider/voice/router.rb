@@ -6,6 +6,9 @@
 #
 # Feita: só número nacional (ou 0800/0300/400X); sai com o número do estado do vendedor. A resposta é
 # "número de saída|número discado"; vazia recusa (internacional, 0900, ramal desligado).
+#
+# Entrega 26: número com URA ativa (Outsider::Voice::IvrFlow) responde "ivr" e a central passa a perguntar cada
+# passo a Outsider::Voice::IvrRunner, que também usa as etapas de toque daqui (ring_steps).
 class Outsider::Voice::Router
   PhoneNumber = Outsider::Voice::PhoneNumber
 
@@ -19,13 +22,18 @@ class Outsider::Voice::Router
     number = @settings.number_for(did) || @settings.number_for(to.to_s[/sip:\+?([^@;>]+)@/, 1])
     contact = PhoneNumber.find_contact(@account, from)
     deal = open_deal(contact)
+    did_number = number&.dig('number') || PhoneNumber.digits(did)
+    flow = Outsider::Voice::IvrFlow.for_number(@account, did_number)
     create_call(linkedid, direction: :inbound, from_number: customer_number(from),
-                          to_number: number&.dig('number'), did: number&.dig('number') || PhoneNumber.digits(did),
-                          state_code: number&.dig('state'), contact: contact, opportunity: deal)
-    plan(deal&.owner_id, number&.dig('state'))
+                          to_number: number&.dig('number'), did: did_number, state_code: number&.dig('state'), contact: contact,
+                          opportunity: deal, ivr_flow: flow, ivr_data: flow ? { 'flow' => flow.name } : {})
+    return 'ivr' if flow
+
+    ([@settings.data['ring_seconds']] + ring_steps(deal&.owner_id, number&.dig('state'))).join('|')
   end
 
-  def outbound(linkedid:, extension:, number:)
+  # deal: o negócio de onde a pessoa ligou (Entrega 26), vindo do telefone; vale se ela enxerga o negócio no CRM
+  def outbound(linkedid:, extension:, number:, deal: nil)
     user_id = @settings.user_id_for_extension(extension)
     national = PhoneNumber.national(number)
     return '' unless user_id && national
@@ -33,14 +41,37 @@ class Outsider::Voice::Router
     state = @settings.agent_for(user_id)['state']
     line = @settings.number_for_state(state)
     contact = PhoneNumber.find_contact(@account, national)
+    opportunity = chosen_deal(user_id, deal) || open_deal(contact)
     create_call(linkedid, direction: :outbound, user_id: user_id, from_number: line&.dig('number'), to_number: PhoneNumber.e164(national) || national,
-                          did: line&.dig('number'), state_code: line&.dig('state'), contact: contact, opportunity: open_deal(contact))
+                          did: line&.dig('number'), state_code: line&.dig('state'), contact: contact || opportunity&.contact,
+                          opportunity: opportunity)
     "#{line&.dig('number')}|#{dial_string(national)}"
   end
 
   def internal(linkedid:, extension:, target:)
     create_call(linkedid, direction: :internal, user_id: @settings.user_id_for_extension(extension), from_number: extension.to_s,
                           to_number: target.to_s)
+  end
+
+  # cada etapa soma gente à anterior: o dono continua tocando quando entram os do estado. Sem "tocar primeiro
+  # para o dono" nas Configurações, começa pelos do estado (o dono do estado está entre eles). Cada etapa é
+  # "PJSIP/201&PJSIP/202"
+  def ring_steps(owner_id, state)
+    agents = @settings.enabled_agents
+    owner = @settings.data['owner_first'] ? [agents.dig(owner_id, 'extension')].compact : []
+    local = owner + agents.values.select { |agent| agent['state'] == state }.pluck('extension')
+    steps = [owner, local, local + agents.values.pluck('extension')].map(&:uniq).reject(&:empty?).uniq
+    steps.map { |step| self.class.targets(step) }
+  end
+
+  def self.targets(extensions)
+    extensions.map { |extension| "PJSIP/#{extension}" }.join('&')
+  end
+
+  def dial_string(national)
+    return national if national.match?(PhoneNumber::SPECIAL)
+
+    { 'ddd' => national, 'zero_ddd' => "0#{national}", 'country' => "55#{national}" }.fetch(@settings.data['dial_format'])
   end
 
   private
@@ -53,25 +84,16 @@ class Outsider::Voice::Router
     Outsider::Voice::Call.create_with(account: @account, started_at: Time.current, **attributes).find_or_create_by!(linkedid: linkedid)
   end
 
+  def chosen_deal(user_id, id)
+    return if id.blank?
+
+    account_user = @account.account_users.find_by(user_id: user_id)
+    account_user && Outsider::Voice::DealLink.new(account_user).deal(id)
+  end
+
   def open_deal(contact)
     return unless contact
 
     Outsider::Crm::Opportunity.where(account_id: @account.id, contact_id: contact.id).open.order(updated_at: :desc).first
-  end
-
-  # cada etapa soma gente à anterior: o dono continua tocando quando entram os do estado. Sem "tocar primeiro
-  # para o dono" nas Configurações, começa pelos do estado (o dono do estado está entre eles)
-  def plan(owner_id, state)
-    agents = @settings.enabled_agents
-    owner = @settings.data['owner_first'] ? [agents.dig(owner_id, 'extension')].compact : []
-    local = owner + agents.values.select { |agent| agent['state'] == state }.pluck('extension')
-    steps = [owner, local, local + agents.values.pluck('extension')].map(&:uniq).reject(&:empty?).uniq
-    ([@settings.data['ring_seconds']] + steps.map { |step| step.map { |extension| "PJSIP/#{extension}" }.join('&') }).join('|')
-  end
-
-  def dial_string(national)
-    return national if national.match?(PhoneNumber::SPECIAL)
-
-    { 'ddd' => national, 'zero_ddd' => "0#{national}", 'country' => "55#{national}" }.fetch(@settings.data['dial_format'])
   end
 end

@@ -1,6 +1,6 @@
 <script setup>
 // OUTSIDER: Telefonia (Entrega 23), fora do CRM: Painel (wallboard), Ligações (fila de retorno e histórico),
-// Gravações (Entrega 25) e Configurações (operadora, números, ramais e metas). A seção vem da rota
+// Gravações (Entrega 25), URA (Entrega 26) e Configurações (operadora, números, ramais e metas). A seção vem da rota
 // (telefonia/:tab), escolhida pelos subitens do menu lateral. Usa o acesso do CRM (ver ../sections.js).
 import { ref, computed, watch, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
@@ -10,6 +10,7 @@ import Icon from 'dashboard/components-next/icon/Icon.vue';
 import Wallboard from '../components/Wallboard.vue';
 import CallsPanel from '../components/CallsPanel.vue';
 import RecordingsPanel from '../components/RecordingsPanel.vue';
+import IvrFlowsPanel from '../ivr/IvrFlowsPanel.vue';
 import VoiceSettingsPage from '../components/settings/VoiceSettingsPage.vue';
 import { crmState, ensureCrmContext } from '../../crm/crmStore';
 import { voiceSections } from '../sections';
@@ -77,6 +78,7 @@ watch(
             v-else-if="activeTab === 'recordings'"
             :access="access"
           />
+          <IvrFlowsPanel v-else-if="activeTab === 'ivr'" />
           <VoiceSettingsPage v-else />
         </div>
       </main>

@@ -11,3 +11,28 @@ en:
         no_email: 'The contact has no email.'
         inbox: 'Choose an inbox you work in.'
         too_long: 'The message is too long.'
+    ivr:
+      menu: 'Menu'
+      default_name: 'New IVR'
+      starter:
+        welcome: 'Hello! Thanks for calling.'
+        menu_label: 'Main menu'
+        menu: 'For sales, press 1. For support, press 2.'
+        invalid: 'Invalid option.'
+        sales: 'Sales'
+        support: 'Support'
+        wait: 'Please hold while we transfer your call.'
+        voicemail: 'We cannot take your call right now. Please leave a message after the tone.'
+        bye: 'Thank you. We will call you back soon.'
+  activerecord:
+    attributes:
+      outsider/voice/ivr_flow:
+        name: 'Name'
+        numbers: 'Numbers'
+    errors:
+      models:
+        outsider/voice/ivr_flow:
+          attributes:
+            numbers:
+              taken: 'already have another active IVR'
+              all_taken: 'empty: another active IVR already answers all numbers'
