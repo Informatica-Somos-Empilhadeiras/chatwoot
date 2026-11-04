@@ -1,0 +1,247 @@
+/* OUTSIDER: Chatwoot no celular e no tablet. Só muda o visual em telas pequenas (ou com toque);
+   no computador nada aqui vale. O comportamento fica em useOutsiderResponsive.js.
+   Faixas: celular < 768 px (o Chatwoot mostra a lista OU a conversa), tablet em pé 768-1023 px. */
+
+/* ---------- altura real da tela (barra do navegador e teclado) ---------- */
+.outsider-touch #app {
+  height: var(--outsider-app-height, 100dvh) !important;
+}
+
+.outsider-touch,
+.outsider-touch body {
+  overscroll-behavior-y: none;
+}
+
+/* o botão redondo do menu sai de cima da lista quando o botão do topo da lista está na tela */
+body:has([data-outsider-menu-button]) #mobile-sidebar-launcher {
+  display: none !important;
+}
+
+/* com a barra de navegação de baixo (MobileTabbar.vue) na tela, ela substitui o botão do menu e
+   o conteúdo ganha espaço embaixo para não ficar por trás dela */
+body:has([data-outsider-tabbar]) #mobile-sidebar-launcher,
+body:has([data-outsider-tabbar]) [data-outsider-menu-button] {
+  display: none !important;
+}
+
+body:has([data-outsider-tabbar]) main {
+  padding-bottom: calc(5rem + env(safe-area-inset-bottom)) !important;
+}
+
+/* o telefone aberto no celular fica acima da barra */
+body:has([data-outsider-tabbar]) [data-testid='outsider-phone-panel'] {
+  bottom: calc(5rem + env(safe-area-inset-bottom)) !important;
+  border-radius: 1rem !important;
+  border-width: 1px !important;
+  left: 0.5rem !important;
+  right: 0.5rem !important;
+  width: auto !important;
+  max-height: calc(var(--outsider-app-height, 100dvh) - 6.5rem) !important;
+}
+
+@media (max-width: 767px) {
+  /* ---------- lista de conversas cabe na tela ---------- */
+  /* em celulares de 360 px as abas (Minhas, Esperando, Grupos, Todos) empurravam a lista para
+     fora da tela e cortavam a hora e os botões do topo; agora as abas rolam de lado */
+  .conversations-list-wrap {
+    min-width: 0 !important;
+    max-width: 100%;
+  }
+
+  /* ---------- Contatos: nomes longos não saem do cartão e o título não some ---------- */
+  .flex.items-center.justify-start.flex-1.gap-4:has(> .flex-col.flex-1),
+  .flex.items-center.justify-start.flex-1.gap-4 > .flex-col.flex-1 {
+    min-width: 0 !important;
+  }
+
+  header.sticky.top-0.z-20.px-6 {
+    padding-inline: 1rem !important;
+  }
+
+  header.sticky.top-0.z-20.px-6 > div:first-child {
+    flex-wrap: wrap;
+    padding-block: 1rem !important;
+  }
+
+  header.sticky.top-0.z-20.px-6 > div:first-child > span:first-child {
+    flex-shrink: 0;
+  }
+
+  header.sticky.top-0.z-20.px-6 > div:first-child > div {
+    flex: 1 1 100%;
+  }
+
+  /* ---------- cabeçalho da conversa mais baixo ---------- */
+  .outsider-conv-header {
+    height: auto !important;
+    gap: 0.375rem !important;
+    padding: 0.375rem 0.5rem 0.375rem !important;
+  }
+
+  /* "Anterior" vira só a setinha */
+  .outsider-conv-header > div:first-child > button:first-child {
+    font-size: 0 !important;
+    padding: 0.5rem 0.25rem !important;
+    margin-inline-end: 0.125rem !important;
+  }
+
+  .outsider-conv-header > div:first-child > button:first-child > i {
+    font-size: 1.375rem !important;
+    margin: 0 !important;
+  }
+
+  .outsider-conv-header .header-actions-wrap {
+    gap: 0.375rem !important;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  /* abas Mensagens / CRM */
+  .outsider-conv-header + div.h-10 {
+    height: 2.25rem !important;
+  }
+
+  /* o botão do contato solto em cima das mensagens some: tocar no nome no topo abre o contato */
+  .conversation-details-wrap div:has(> button > .i-ph-user-bold) {
+    display: none !important;
+  }
+
+  /* ---------- mensagens ---------- */
+  .conversation-panel {
+    padding-inline: 0.5rem !important;
+  }
+
+  /* balões com menos espaço por dentro */
+  .message-bubble-container .rounded-xl.px-4.py-3 {
+    padding: 0.4375rem 0.625rem 0.3125rem !important;
+  }
+
+  .message-bubble-container .rounded-xl.px-4.py-3 > .gap-3 {
+    gap: 0.125rem !important;
+  }
+
+  .message-bubble-container {
+    margin-bottom: 0.25rem !important;
+  }
+
+  /* etiqueta do dia menor */
+  .conversation-panel button:has(> .i-lucide-calendar-days) {
+    font-size: 0.75rem !important;
+    line-height: 1rem !important;
+    padding-block: 0.25rem !important;
+    padding-inline: 0.75rem !important;
+    gap: 0.375rem !important;
+  }
+
+  .conversation-panel
+    button:has(> .i-lucide-calendar-days)
+    > .i-lucide-calendar-days {
+    width: 0.875rem !important;
+    height: 0.875rem !important;
+  }
+
+  .conversation-panel div:has(> button > .i-lucide-calendar-days) {
+    padding-block: 0.5rem !important;
+  }
+
+  /* ---------- caixa de resposta numa linha só, como no WhatsApp ---------- */
+  .resizable-editor-wrapper:has(.reply-box) > .cursor-row-resize {
+    display: none !important;
+  }
+
+  .resizable-editor-wrapper .reply-box {
+    display: grid !important;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      'top top top'
+      'clip editor send';
+    align-items: end;
+    margin: 0.25rem 0.375rem calc(0.375rem + env(safe-area-inset-bottom)) !important;
+  }
+
+  .resizable-editor-wrapper .reply-box > * {
+    grid-column: 1 / -1;
+  }
+
+  /* linha de cima (Responder / Mensagem privada) baixinha */
+  .resizable-editor-wrapper .reply-box > div:first-child {
+    grid-area: top;
+    height: 2.25rem !important;
+    padding-inline: 0.375rem 0.25rem !important;
+  }
+
+  .resizable-editor-wrapper .reply-box > div:first-child > button:first-child {
+    height: 1.75rem !important;
+    font-size: 0.8125rem !important;
+    white-space: nowrap;
+  }
+
+  .resizable-editor-wrapper
+    .reply-box
+    > div:first-child
+    > button:first-child
+    * {
+    white-space: nowrap;
+  }
+
+  .resizable-editor-wrapper .reply-box > .reply-box__top {
+    grid-area: editor;
+    min-width: 0;
+  }
+
+  /* a barra de baixo se desmancha: clipe à esquerda e microfone/enviar à direita do texto */
+  .resizable-editor-wrapper
+    .reply-box
+    > [data-composer-bar]:not([style*='display: none']) {
+    display: contents !important;
+  }
+
+  .resizable-editor-wrapper .reply-box > [data-composer-bar] > :first-child {
+    grid-area: clip;
+    align-self: end;
+    margin: 0 0 0.25rem 0.25rem;
+  }
+
+  .resizable-editor-wrapper
+    .reply-box
+    > [data-composer-bar]
+    > [data-composer-send],
+  .resizable-editor-wrapper
+    .reply-box
+    > [data-composer-bar]
+    > [data-composer-mic] {
+    grid-area: send;
+    align-self: end;
+    margin: 0 0.25rem 0.25rem 0;
+  }
+
+  /* emoji e assinatura ficam para o computador (o teclado do celular já tem emoji) */
+  .resizable-editor-wrapper
+    .reply-box
+    > [data-composer-bar]
+    > .outsider-composer-panel {
+    display: none !important;
+  }
+
+  .resizable-editor-wrapper .reply-box .ProseMirror-woot-style {
+    max-height: 8rem !important;
+    /* 16 px: o iPhone não dá zoom ao tocar na caixa */
+    font-size: 1rem !important;
+  }
+
+  /* o texto de ajuda numa linha só, com reticências */
+  .resizable-editor-wrapper .reply-box .ProseMirror p.empty-node::before,
+  .resizable-editor-wrapper .reply-box .ProseMirror .is-editor-empty::before {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    display: block;
+  }
+
+  /* ---------- painel do contato na tela inteira ---------- */
+  div.fixed.max-w-sm:has(> div > .outsider-contact-panel),
+  div.fixed.max-w-sm:has(.outsider-contact-panel) {
+    max-width: none !important;
+  }
+}

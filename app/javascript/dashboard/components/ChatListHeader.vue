@@ -7,6 +7,7 @@ import wootConstants from 'dashboard/constants/globals';
 import ConversationBasicFilter from './widgets/conversation/ConversationBasicFilter.vue';
 import SwitchLayout from 'dashboard/routes/dashboard/conversation/search/SwitchLayout.vue';
 import NextButton from 'dashboard/components-next/button/Button.vue';
+import OutsiderMobileMenuButton from 'dashboard/routes/dashboard/outsider/responsive/MobileMenuButton.vue'; // OUTSIDER: menu no topo da lista, no celular
 
 const props = defineProps({
   pageTitle: { type: String, required: true },
@@ -63,6 +64,7 @@ const toggleConversationLayout = () => {
     }"
   >
     <div class="flex items-center justify-center min-w-0">
+      <OutsiderMobileMenuButton />
       <h1
         class="text-base font-medium truncate text-n-slate-12"
         :title="pageTitle"

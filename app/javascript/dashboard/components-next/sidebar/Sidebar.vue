@@ -25,6 +25,7 @@ import { crmSidebarItems } from 'dashboard/routes/dashboard/outsider/crm/sidebar
 import { voiceSidebarItems } from 'dashboard/routes/dashboard/outsider/voice/sidebar'; // OUTSIDER: Telefonia
 import OutsiderPhoneButton from 'dashboard/routes/dashboard/outsider/voice/PhoneButton.vue'; // OUTSIDER: telefonia
 import { outsiderSettingsItems } from 'dashboard/routes/dashboard/outsider/settings/sidebar'; // OUTSIDER: Aparência e bot
+import OutsiderMobileTabbar from 'dashboard/routes/dashboard/outsider/responsive/MobileTabbar.vue'; // OUTSIDER: barra de baixo no celular
 import ComposeConversation from 'dashboard/components-next/NewConversation/ComposeConversation.vue';
 import {
   SIDEBAR_SORT_SECTIONS,
@@ -139,9 +140,13 @@ const {
   COLLAPSED_THRESHOLD,
 } = useSidebarResize();
 
+// OUTSIDER: no tablet em pé (768 a 1023 px) o menu fica só com os ícones, para sobrar espaço
+const isTabletRail = computed(
+  () => windowWidth.value >= 768 && windowWidth.value < 1024
+);
 // On mobile, sidebar is always expanded (flyout mode)
 const isEffectivelyCollapsed = computed(
-  () => !isMobile.value && isCollapsed.value
+  () => !isMobile.value && (isCollapsed.value || isTabletRail.value) // OUTSIDER: || isTabletRail
 );
 
 // Resize handle logic
@@ -953,7 +958,11 @@ const menuItems = computed(() => {
           !isResizing,
       },
     ]"
-    :style="isMobile ? undefined : { width: `${sidebarWidth}px` }"
+    :style="
+      isMobile
+        ? undefined
+        : { width: `${isTabletRail && !isCollapsed ? 56 : sidebarWidth}px` }
+    "
   >
     <section
       class="grid"
@@ -1077,6 +1086,8 @@ const menuItems = computed(() => {
         <OutsiderPhoneButton />
       </div>
     </section>
+    <!-- OUTSIDER: no celular, os mesmos itens do menu numa barra embaixo da tela -->
+    <OutsiderMobileTabbar :menu-items="menuItems" />
     <!-- Resize Handle (desktop only) -->
     <div
       class="hidden md:block absolute top-0 h-full w-1 cursor-col-resize z-40 ltr:right-0 rtl:left-0 group"

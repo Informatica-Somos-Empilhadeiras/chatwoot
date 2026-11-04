@@ -256,6 +256,9 @@ defineExpose({ reload: load, liveReload });
           :group="group"
           :animation="150"
           :move="canMove"
+          :delay="300"
+          delay-on-touch-only
+          :touch-start-threshold="6"
           filter=".crm-locked"
           :prevent-on-filter="false"
           ghost-class="opacity-40"

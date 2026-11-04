@@ -7,9 +7,13 @@ import { panel, setPanelPosition } from './phone';
 
 const GAP = 16;
 const EDGE = 8;
+// no celular (abaixo de 640 px) o telefone ocupa a largura toda, colado embaixo (ou em cima, para o
+// cartão da ligação não cobrir a caixa de texto), e não arrasta: o dedo rola o conteúdo dele
+const PHONE_WIDTH = 640;
 
-export const useFloating = element => {
+export const useFloating = (element, { phoneEdge = 'bottom' } = {}) => {
   const { width: windowWidth, height: windowHeight } = useWindowSize();
+  const isPhone = computed(() => windowWidth.value < PHONE_WIDTH);
   const { width, height } = useElementSize(element, undefined, {
     box: 'border-box',
   });
@@ -26,6 +30,11 @@ export const useFloating = element => {
   });
 
   const style = computed(() => {
+    if (isPhone.value) {
+      return phoneEdge === 'top'
+        ? { left: '0px', right: '0px', top: '0px' }
+        : { left: '0px', right: '0px', bottom: '0px' };
+    }
     const { right, bottom } = clamp(
       panel.position || { right: GAP, bottom: GAP }
     );
@@ -34,6 +43,7 @@ export const useFloating = element => {
 
   // botões e campos do topo continuam clicáveis: só arrasta pelo fundo
   const startDrag = event => {
+    if (isPhone.value) return;
     if (event.button !== 0 || event.target.closest('button, input, a')) return;
     const start = { x: event.clientX, y: event.clientY };
     const origin = clamp(panel.position || { right: GAP, bottom: GAP });
@@ -58,5 +68,5 @@ export const useFloating = element => {
 
   const resetPosition = () => setPanelPosition(null);
 
-  return { style, startDrag, resetPosition };
+  return { style, startDrag, resetPosition, isPhone };
 };

@@ -76,7 +76,7 @@ const {
 } = useCallInfo();
 
 const root = ref(null);
-const { style, startDrag, resetPosition } = useFloating(root);
+const { style, startDrag, resetPosition, isPhone } = useFloating(root);
 
 const tab = ref('keypad');
 const number = ref('');
@@ -223,22 +223,26 @@ useEventListener(window, 'keydown', event => {
     :class="
       windowed
         ? 'w-full h-full'
-        : 'fixed z-[60] w-[23.5rem] max-w-[calc(100vw-1rem)] max-h-[calc(100vh-1rem)] border shadow-2xl rounded-2xl border-n-weak'
+        : isPhone
+          ? 'fixed z-[60] w-full max-h-[calc(var(--outsider-app-height,100dvh)-2.5rem)] border-t shadow-2xl rounded-t-2xl border-n-weak pb-[env(safe-area-inset-bottom)]'
+          : 'fixed z-[60] w-[23.5rem] max-w-[calc(100vw-1rem)] max-h-[calc(100vh-1rem)] border shadow-2xl rounded-2xl border-n-weak'
     "
     :style="windowed ? undefined : style"
     data-testid="outsider-phone-panel"
   >
     <header
       class="flex items-center justify-between gap-2 py-2.5 border-b ltr:pl-4 ltr:pr-2 rtl:pr-4 rtl:pl-2 border-n-weak shrink-0"
-      :class="{ 'cursor-move select-none': !windowed }"
-      :title="windowed ? undefined : t('OUTSIDER_VOICE.PHONE.DRAG_HINT')"
+      :class="{ 'cursor-move select-none': !windowed && !isPhone }"
+      :title="
+        windowed || isPhone ? undefined : t('OUTSIDER_VOICE.PHONE.DRAG_HINT')
+      "
       data-testid="outsider-phone-header"
       @pointerdown="windowed || startDrag($event)"
       @dblclick="windowed || resetPosition()"
     >
       <div class="flex items-center min-w-0 gap-2">
         <Icon
-          v-if="!windowed"
+          v-if="!windowed && !isPhone"
           icon="i-lucide-grip-vertical"
           class="size-4 shrink-0 text-n-slate-9"
         />
@@ -277,7 +281,7 @@ useEventListener(window, 'keydown', event => {
         />
         <template v-else>
           <Button
-            v-if="!elsewhere"
+            v-if="!elsewhere && !isPhone"
             sm
             ghost
             slate

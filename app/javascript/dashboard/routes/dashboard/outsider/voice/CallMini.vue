@@ -26,7 +26,7 @@ const { t } = useI18n();
 const { call, contact, title, stateLabel, people } = useCallInfo();
 
 const root = ref(null);
-const { style, startDrag } = useFloating(root);
+const { style, startDrag, isPhone } = useFloating(root, { phoneEdge: 'top' });
 
 const conference = computed(() => !!call.value && inConference());
 
@@ -49,13 +49,19 @@ watch(
 <template>
   <div
     ref="root"
-    class="fixed z-[60] w-80 max-w-[calc(100vw-1rem)] flex flex-col gap-2 p-3 border shadow-xl rounded-2xl border-n-weak bg-n-solid-2"
-    :class="{ 'outline outline-2 outline-n-amber-9': call.state === 'ringing' }"
+    class="fixed z-[60] flex flex-col gap-2 p-3 border-n-weak bg-n-solid-2"
+    :class="[
+      isPhone
+        ? 'w-full border-b shadow-lg rounded-b-2xl pt-[max(0.75rem,env(safe-area-inset-top))]'
+        : 'w-80 max-w-[calc(100vw-1rem)] border shadow-xl rounded-2xl',
+      { 'outline outline-2 outline-n-amber-9': call.state === 'ringing' },
+    ]"
     :style="style"
     data-testid="outsider-call-mini"
   >
     <div
-      class="flex items-center gap-3 cursor-move select-none"
+      class="flex items-center gap-3 select-none"
+      :class="{ 'cursor-move': !isPhone }"
       @pointerdown="startDrag"
     >
       <Avatar

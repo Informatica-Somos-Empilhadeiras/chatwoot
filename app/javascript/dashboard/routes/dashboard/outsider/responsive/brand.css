@@ -1,0 +1,68 @@
+/* OUTSIDER: cores da identidade visual da Somos Empilhadeiras, aplicadas sem mudar o jeito do chat.
+   Manual da marca: Dartmouth green #00663B (principal), SGBUS green #90EB54 (destaque),
+   Anti-flash white #F0F0F0 e Night #141414.
+   - A cor de marca do Chatwoot (n-brand: botões principais, aba ativa, links, foco) passa a ser o
+     verde Dartmouth.
+   - Os verdes "de WhatsApp" que o fork usava nos botões de ação (Resolver, enviar, microfone, item
+     ativo do menu, contagem de não lidas, hora da última mensagem) seguem a marca.
+   - O verde do ícone do WhatsApp nas fotos (canal) continua o do WhatsApp, porque identifica o canal.
+   Para voltar às cores antigas basta tirar o import deste arquivo em OutsiderGlobal.vue. */
+
+:root:root {
+  --outsider-brand: #00663b;
+  --outsider-brand-hover: #00522f;
+  --outsider-brand-text: #00663b;
+  --outsider-accent: #90eb54;
+  --outsider-accent-ink: #0b3d24;
+  --outsider-night: #141414;
+  --color-brand: 0 102 59;
+}
+
+:root:root.dark,
+.dark:root {
+  --outsider-brand: #007a46;
+  --outsider-brand-hover: #008a50;
+  --outsider-brand-text: #90eb54;
+  --color-brand: 0 122 70;
+}
+
+/* botões de ação (Resolver, enviar, microfone, gravar áudio, item ativo do menu lateral) */
+.\!bg-\[\#00a884\],
+.bg-\[\#00a884\] {
+  background-color: var(--outsider-brand) !important;
+}
+
+.hover\:\!bg-\[\#008f6f\]:hover,
+.hover\:bg-\[\#008f6f\]:hover,
+.enabled\:hover\:bg-\[\#008f6f\]:enabled:hover,
+.hover\:enabled\:\!bg-\[\#008f6f\]:hover:enabled,
+.dark\:hover\:\!bg-\[\#008f6f\]:hover,
+.\!bg-\[\#008f6f\],
+.dark\:\!bg-\[\#008f6f\] {
+  background-color: var(--outsider-brand-hover) !important;
+}
+
+.text-\[\#00A884\] {
+  color: var(--outsider-brand-text) !important;
+}
+
+/* lista de conversas: hora e contagem de não lidas */
+.outsider-wa-card .text-\[\#1DAA61\],
+.outsider-wa-card .dark\:text-\[\#21C063\] {
+  color: var(--outsider-brand-text) !important;
+}
+
+.outsider-wa-card .bg-\[\#25D366\],
+.outsider-brand-badge {
+  background-color: var(--outsider-accent) !important;
+  color: var(--outsider-accent-ink) !important;
+}
+
+.outsider-brand-dot {
+  background-color: var(--outsider-accent);
+}
+
+/* barra de seleção de mensagens e marcação */
+.bg-\[\#1DAA61\] {
+  background-color: var(--outsider-brand) !important;
+}

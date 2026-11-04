@@ -947,5 +947,13 @@
         "RETENTION_NOTE": "O registro guarda 7 dias e depois se apaga sozinho. Senhas e chaves nunca aparecem aqui."
       }
     }
+  },
+  "OUTSIDER_RESPONSIVE": {
+    "OPEN_MENU": "Abrir o menu",
+    "NAVIGATION": "Navegação principal",
+    "MORE": "Mais",
+    "BACK": "Voltar",
+    "FULL_MENU": "Menu completo, conta e perfil",
+    "OPEN_PHONE": "Abrir o telefone"
   }
 }

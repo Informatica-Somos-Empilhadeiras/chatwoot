@@ -947,5 +947,13 @@
         "RETENTION_NOTE": "The log keeps 7 days and then deletes itself. Passwords and keys never show here."
       }
     }
+  },
+  "OUTSIDER_RESPONSIVE": {
+    "OPEN_MENU": "Open menu",
+    "NAVIGATION": "Main navigation",
+    "MORE": "More",
+    "BACK": "Back",
+    "FULL_MENU": "Full menu, account and profile",
+    "OPEN_PHONE": "Open phone"
   }
 }

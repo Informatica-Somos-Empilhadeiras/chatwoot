@@ -47,6 +47,11 @@ const typingUsers = useMapGetter('conversationTypingStatus/getUserList');
 const allLabels = useMapGetter('labels/getLabels');
 
 const hovered = ref(false);
+// a caixinha de marcar aparece só com o mouse em cima da foto: no toque, tocar na foto abre a
+// conversa (antes o toque contava como "mouse em cima" e marcava a conversa)
+const onAvatarEnter = event => {
+  if (event.pointerType === 'mouse') hovered.value = true;
+};
 
 const contact = computed(() => ({
   ...(props.chat.meta?.sender || {}),
@@ -138,8 +143,8 @@ watch(
     <div
       v-if="!hideThumbnail"
       class="relative shrink-0"
-      @mouseenter="hovered = true"
-      @mouseleave="hovered = false"
+      @pointerenter="onAvatarEnter"
+      @pointerleave="hovered = false"
     >
       <ChannelAvatar
         :name="contact.name"
