@@ -961,8 +961,36 @@
     "EXPAND": "Abrir o menu",
     "COLLAPSE": "Recolher o menu",
     "NEW_CONVERSATION": "Nova conversa",
-    "THEME_NIGHT": "Menu escuro",
-    "THEME_AUTO": "Menu no tema do sistema",
+    "THEME_DARK": "Menu escuro",
+    "THEME_LIGHT": "Menu claro",
+    "PROFILE_MENU": "Seu perfil, status e conta",
+    "GREETING": {
+      "MORNING": "Bom dia",
+      "AFTERNOON": "Boa tarde",
+      "EVENING": "Boa noite"
+    },
+    "COUNT": {
+      "UNREAD": "{count} não lida | {count} não lidas",
+      "NEW": "{count} nova | {count} novas",
+      "TASKS": "{count} tarefa | {count} tarefas"
+    },
+    "MANAGE_CHANNELS": "Configurar os canais",
+    "SETTINGS_ALL": "Todas as configurações",
+    "SETTINGS_LESS": "Esconder a lista",
+    "PHONE": {
+      "TITLE": "Telefone",
+      "EXTENSION": "ramal {extension}",
+      "CALL": "Ligar",
+      "OPEN": "Abrir",
+      "STATUS": {
+        "connecting": "Conectando…",
+        "ready": "Pronto",
+        "offline": "Sem conexão",
+        "failed": "Ramal recusado",
+        "other_tab": "Em outra aba",
+        "in_call": "Em ligação"
+      }
+    },
     "SHOW_ALL": "Ver todos ({count})",
     "SHOW_LESS": "Ver menos",
     "SECTIONS": {

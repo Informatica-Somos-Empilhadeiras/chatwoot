@@ -1,147 +1,108 @@
 <script setup>
 // OUTSIDER: um módulo do menu lateral (Conversas, CRM, Telefonia, Relatórios...).
-// - Aberto: linha com ícone, nome e contagem; com seções, abre e fecha as opções logo abaixo.
+// - Aberto: linha com a caixinha do ícone, o nome e a contagem (ou a seta); o módulo da tela atual
+//   fica na pílula verde e, com opções, mostra a árvore logo abaixo.
 // - Recolhido: só o ícone; passando o mouse (ou com o foco do teclado) abre um quadro ao lado com
 //   as opções, e o clique leva direto à primeira (ou à que já está aberta).
-import { computed, inject, nextTick, ref } from 'vue';
+import { computed, ref } from 'vue';
 import { useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 import Icon from 'next/icon/Icon.vue';
 import NavGroups from './NavGroups.vue';
+import NavFlyout from './NavFlyout.vue';
 import { itemsOf } from '../navModel';
-import { flyout, openFlyout, closeFlyout, keepFlyout } from './navState';
+import { closeFlyout } from './navState';
+import { useFlyout } from './useFlyout';
+import { modulePill, shortCount } from './navCounts';
 
 const props = defineProps({
   module: { type: Object, required: true },
   collapsed: { type: Boolean, default: false },
   open: { type: Boolean, default: false },
+  // a tela atual é deste módulo (vale também para opções mostradas fora dele, como os Canais)
+  activeHere: { type: Boolean, default: false },
   activeItem: { type: Object, default: null },
   count: { type: Number, default: 0 },
   countOf: { type: Function, required: true },
+  // ícone no lugar do do Chatwoot (ex.: engrenagem nas Configurações)
+  icon: { type: [String, Object, Function], default: null },
+  // recolhido: o ícone dentro de um cartão (Configurações)
+  boxed: { type: Boolean, default: false },
 });
 
 const emit = defineEmits(['toggle']);
 
+const { t } = useI18n();
 const router = useRouter();
-const themeClass = inject('outsiderNavThemeClass', ref(''));
 
 const hasGroups = computed(() => props.module.groups.length > 0);
 const items = computed(() => itemsOf(props.module));
-const containsActive = computed(
-  () => !!props.activeItem && items.value.includes(props.activeItem)
-);
-// destino único ativo: pílula verde; módulo com a opção ativa dentro: nome e ícone em verde
-const isActiveLink = computed(() => !hasGroups.value && containsActive.value);
+const shownIcon = computed(() => props.icon || props.module.icon);
+const pill = computed(() => modulePill(props.module.name, props.count, t));
 
 const go = to => to && router.push(to).catch(() => {});
 
 const onRowClick = () => {
-  if (!hasGroups.value) return;
-  if (!props.open && !containsActive.value) go(items.value[0]?.to);
+  if (!props.open && !props.activeHere) go(items.value[0]?.to);
   emit('toggle');
 };
 
 // ---------- recolhido: quadro ao lado ----------
 const trigger = ref(null);
-const position = ref({ top: 0, left: 0 });
-const isFlyoutOpen = computed(() => flyout.name === props.module.name);
-
-const showFlyout = async () => {
-  const rect = trigger.value?.getBoundingClientRect();
-  if (!rect) return;
-  const rtl = document.documentElement.dir === 'rtl';
-  position.value = {
-    top: Math.max(8, rect.top - 6),
-    left: rtl ? undefined : rect.right + 10,
-    right: rtl ? window.innerWidth - rect.left + 10 : undefined,
-  };
-  openFlyout(props.module.name);
-  await nextTick();
-  // não deixa o quadro passar do fim da tela
-  const panel = document.querySelector(
-    `[data-nav-flyout="${props.module.name}"]`
-  );
-  if (!panel) return;
-  const overflow = panel.getBoundingClientRect().bottom - window.innerHeight;
-  if (overflow > 0)
-    position.value = {
-      ...position.value,
-      top: Math.max(8, position.value.top - overflow - 8),
-    };
-};
+const { isOpen, show, hide, style } = useFlyout(
+  computed(() => props.module.name),
+  trigger
+);
 
 const onCollapsedClick = () => {
-  const target = containsActive.value ? props.activeItem : items.value[0];
+  const target =
+    props.activeHere && items.value.includes(props.activeItem)
+      ? props.activeItem
+      : items.value[0];
   go(target?.to);
   if (!hasGroups.value) closeFlyout();
 };
-
-const flyoutStyle = computed(() => ({
-  top: `${position.value.top}px`,
-  ...(position.value.left !== undefined
-    ? { left: `${position.value.left}px` }
-    : { right: `${position.value.right}px` }),
-}));
 </script>
 
 <template>
-  <li class="min-w-0 list-none" :data-nav-module="module.name">
+  <li class="onav-li" :data-nav-module="module.name">
     <!-- ===== menu recolhido ===== -->
     <template v-if="collapsed">
       <button
         ref="trigger"
         type="button"
-        class="relative grid place-content-center mx-auto size-11 rounded-xl transition-colors duration-100"
-        :class="
-          containsActive
-            ? 'bg-n-brand text-white shadow-sm'
-            : isFlyoutOpen
-              ? 'bg-n-alpha-2 text-n-slate-12'
-              : 'text-n-slate-11 hover:bg-n-alpha-2 hover:text-n-slate-12'
-        "
+        class="onav-ri"
+        :class="{ on: activeHere, 'is-hover': isOpen, 'is-boxed': boxed }"
         :aria-label="module.label"
-        :aria-expanded="hasGroups ? isFlyoutOpen : undefined"
-        @mouseenter="showFlyout"
-        @mouseleave="closeFlyout(180)"
-        @focus="showFlyout"
-        @blur="closeFlyout(180)"
+        :aria-expanded="hasGroups ? isOpen : undefined"
+        @mouseenter="show"
+        @mouseleave="hide()"
+        @focus="show"
+        @blur="hide()"
         @click="onCollapsedClick"
       >
-        <span class="grid place-content-center size-5 [&>*]:size-5">
-          <Icon v-if="module.icon" :icon="module.icon" class="size-5" />
+        <span class="onav-ico">
+          <Icon v-if="shownIcon" :icon="shownIcon" />
         </span>
-        <span
-          v-if="count"
-          class="outsider-nav-badge outsider-nav-badge--corner absolute -top-0.5 ltr:-right-0.5 rtl:-left-0.5"
-        >
-          {{ count > 99 ? '99+' : count }}
-        </span>
+        <span v-if="count" class="onav-corner">{{ shortCount(count) }}</span>
       </button>
 
-      <Teleport to="body">
-        <div
-          v-if="isFlyoutOpen"
-          class="outsider-nav-flyout fixed z-[60] w-64 max-h-[calc(100vh-1rem)] overflow-y-auto no-scrollbar rounded-2xl border border-n-weak bg-n-solid-2 p-2 shadow-xl text-n-slate-12"
-          :class="themeClass"
-          :style="flyoutStyle"
-          :data-nav-flyout="module.name"
-          @mouseenter="keepFlyout"
-          @mouseleave="closeFlyout(120)"
-        >
-          <div
-            class="flex items-center gap-2 px-2.5 pt-1 pb-2 text-sm font-semibold text-n-slate-12"
-          >
-            <span>{{ module.label }}</span>
-            <span v-if="count" class="outsider-nav-badge">{{ count }}</span>
-          </div>
-          <NavGroups
-            v-if="hasGroups"
-            :groups="module.groups"
-            :active-item="activeItem"
-            :count-of="countOf"
-            @navigate="closeFlyout()"
-          />
-        </div>
-      </Teleport>
+      <NavFlyout
+        v-if="isOpen"
+        :name="module.name"
+        :title="module.label"
+        :icon="shownIcon"
+        :fly-style="style"
+      >
+        <NavGroups
+          v-if="hasGroups"
+          :groups="module.groups"
+          :active-item="activeItem"
+          :count-of="countOf"
+          variant="fly"
+          @navigate="closeFlyout()"
+        />
+      </NavFlyout>
     </template>
 
     <!-- ===== menu aberto ===== -->
@@ -149,70 +110,55 @@ const flyoutStyle = computed(() => ({
       <RouterLink
         v-if="!hasGroups"
         :to="module.to"
-        class="flex items-center gap-3 h-10 px-3 rounded-xl text-sm transition-colors duration-100 min-w-0"
-        :class="
-          isActiveLink
-            ? 'bg-n-brand text-white font-medium shadow-sm'
-            : 'text-n-slate-11 hover:bg-n-alpha-2 hover:text-n-slate-12'
-        "
+        class="onav-row"
+        :class="{ on: activeHere }"
+        :aria-current="activeHere ? 'page' : undefined"
       >
-        <span
-          class="grid place-content-center size-[18px] shrink-0 [&>*]:size-[18px]"
-        >
-          <Icon v-if="module.icon" :icon="module.icon" class="size-[18px]" />
+        <span class="onav-bx">
+          <span class="onav-ico"><Icon v-if="shownIcon" :icon="shownIcon" /></span>
         </span>
-        <span class="flex-1 min-w-0 truncate">{{ module.label }}</span>
+        <span class="onav-label">{{ module.label }}</span>
         <span
           v-if="count"
-          class="outsider-nav-badge shrink-0"
-          :class="{ 'outsider-nav-badge--on-brand': isActiveLink }"
+          class="onav-pill"
+          :class="{ 'onav-pill--soft': pill.soft && !activeHere }"
         >
-          {{ count > 99 ? '99+' : count }}
+          {{ pill.text }}
         </span>
       </RouterLink>
 
       <button
         v-else
         type="button"
-        class="relative flex items-center w-full gap-3 h-10 px-3 rounded-xl text-sm transition-colors duration-100 min-w-0"
-        :class="
-          containsActive
-            ? 'text-n-slate-12 font-semibold'
-            : 'text-n-slate-11 hover:bg-n-alpha-2 hover:text-n-slate-12'
-        "
+        class="onav-row"
+        :class="{ on: activeHere }"
         :aria-expanded="open"
         @click="onRowClick"
       >
+        <span class="onav-bx">
+          <span class="onav-ico"><Icon v-if="shownIcon" :icon="shownIcon" /></span>
+        </span>
+        <span class="onav-label">{{ module.label }}</span>
         <span
-          v-if="containsActive"
-          class="absolute inset-y-2 w-[3px] rounded-full bg-n-brand ltr:-left-2 rtl:-right-2"
-        />
-        <span
-          class="grid place-content-center size-[18px] shrink-0 [&>*]:size-[18px]"
-          :class="{ 'outsider-nav-brand-text': containsActive }"
+          v-if="count"
+          class="onav-pill"
+          :class="{ 'onav-pill--soft': pill.soft && !activeHere }"
         >
-          <Icon v-if="module.icon" :icon="module.icon" class="size-[18px]" />
-        </span>
-        <span class="flex-1 min-w-0 truncate text-start">{{
-          module.label
-        }}</span>
-        <span v-if="count && !open" class="outsider-nav-badge shrink-0">
-          {{ count > 99 ? '99+' : count }}
+          {{ pill.text }}
         </span>
         <span
-          class="i-lucide-chevron-down size-4 shrink-0 text-n-slate-10 transition-transform duration-150"
-          :class="{ '-rotate-90 rtl:rotate-90': !open }"
+          v-else
+          class="onav-chev"
+          :class="open ? 'i-lucide-chevron-down' : 'i-lucide-chevron-right is-closed'"
         />
       </button>
 
-      <div
-        v-if="hasGroups && open"
-        class="mt-1 mb-2 ms-[1.3rem] ps-2.5 border-s border-n-weak min-w-0"
-      >
+      <div v-if="hasGroups && open" class="onav-sub">
         <NavGroups
           :groups="module.groups"
           :active-item="activeItem"
           :count-of="countOf"
+          variant="sub"
         />
       </div>
     </template>

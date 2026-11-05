@@ -1,69 +1,1216 @@
-/* OUTSIDER: detalhes do menu lateral (DesktopNav.vue) que não cabem bem em classes do Tailwind.
-   As cores vêm das variáveis do Chatwoot e da marca (brand.css), com reserva para quando o
-   brand.css não estiver carregado. */
+/* OUTSIDER: visual do menu lateral do computador (DesktopNav.vue e as peças Nav*.vue).
+   Dois temas, escolhidos no botão do rodapé (o padrão segue o tema do Chatwoot):
+   - claro: painel de vidro (um pouco transparente e desfocado) sobre manchas suaves da marca;
+   - escuro: o painel preto com o brilho verde da primeira simulação.
+   As cores ficam em variáveis (--onav-*) definidas por tema, então as regras abaixo valem para os
+   dois. Verdes da marca: Dartmouth #00663B, SGBUS #90EB54 (texto escuro #0b3d24). */
 
-/* contagem de não lidas / pendentes: verde de destaque da marca (SGBUS) com texto escuro */
-.outsider-nav-badge {
-  display: inline-grid;
+/* ---------------------------------------------------------------- temas */
+.onav-theme-dark {
+  --onav-bg: radial-gradient(
+      120% 60% at 0% 0%,
+      rgb(0 102 59 / 0.42),
+      transparent 60%
+    ),
+    radial-gradient(
+      90% 50% at 100% 100%,
+      rgb(144 235 84 / 0.1),
+      transparent 60%
+    ),
+    linear-gradient(180deg, #181b19, #111312);
+  --onav-blur: none;
+  --onav-border: rgb(255 255 255 / 0.07);
+  --onav-shadow: 0 18px 40px -12px rgb(0 0 0 / 0.45),
+    inset 0 1px 0 rgb(255 255 255 / 0.06);
+  --onav-ring: #151816;
+  --onav-text: #fff;
+  --onav-text-2: #d9dfdc;
+  --onav-text-3: #aeb7b3;
+  --onav-muted: #7f8a86;
+  --onav-muted-2: #9aa5a0;
+  --onav-icon: #e9eeec;
+  --onav-box: rgb(255 255 255 / 0.07);
+  --onav-box-border: transparent;
+  --onav-ctl: rgb(255 255 255 / 0.06);
+  --onav-ctl-border: rgb(255 255 255 / 0.08);
+  --onav-ctl-text: #cfd6d3;
+  --onav-search-text: #8f9a95;
+  --onav-kbd-bg: transparent;
+  --onav-kbd-border: rgb(255 255 255 / 0.12);
+  --onav-hover: rgb(255 255 255 / 0.05);
+  --onav-hover-2: rgb(255 255 255 / 0.08);
+  --onav-divider: rgb(255 255 255 / 0.22);
+  --onav-tree: rgb(255 255 255 / 0.12);
+  --onav-sub-on-bg: rgb(255 255 255 / 0.08);
+  --onav-sub-on-text: #fff;
+  --onav-sub-on-weight: 500;
+  --onav-card: rgb(0 0 0 / 0.28);
+  --onav-card-border: rgb(255 255 255 / 0.08);
+  --onav-chev: #7c8783;
+  --onav-soft: rgb(255 255 255 / 0.09);
+  --onav-soft-text: #cfd6d3;
+  --onav-phone: rgb(144 235 84 / 0.09);
+  --onav-phone-border: rgb(144 235 84 / 0.28);
+  --onav-phone-ico: #90eb54;
+  --onav-phone-ico-ink: #0b3d24;
+  --onav-phone-title: #fff;
+  --onav-phone-sub: #a9e98a;
+  --onav-phone-btn: #90eb54;
+  --onav-phone-btn-ink: #0b3d24;
+  --onav-phone-halo: rgb(144 235 84 / 0.16);
+  --onav-fly: linear-gradient(180deg, #1b1f1d, #141615);
+  --onav-fly-arrow: #1a1e1c;
+  --onav-fly-border: rgb(255 255 255 / 0.09);
+  --onav-fly-shadow: 0 18px 40px -10px rgb(0 0 0 / 0.6);
+  --onav-fly-blur: none;
+  /* tokens do Chatwoot usados pelas peças dele dentro do menu (busca do "Nova conversa" etc.) */
+  --background-color: 20 22 21;
+  color-scheme: dark;
+}
+
+.onav-theme-light {
+  --onav-bg: linear-gradient(
+    180deg,
+    rgb(255 255 255 / 0.62),
+    rgb(255 255 255 / 0.48)
+  );
+  --onav-blur: blur(22px) saturate(1.5);
+  --onav-border: rgb(255 255 255 / 0.75);
+  --onav-shadow: 0 18px 40px -16px rgb(0 50 28 / 0.22),
+    inset 0 1px 0 rgb(255 255 255 / 0.9);
+  --onav-ring: #fff;
+  --onav-text: #141414;
+  --onav-text-2: #2b3330;
+  --onav-text-3: #4a524f;
+  --onav-muted: #6f7a76;
+  --onav-muted-2: #6f7a76;
+  --onav-icon: #2b3330;
+  --onav-box: rgb(255 255 255 / 0.55);
+  --onav-box-border: rgb(255 255 255 / 0.7);
+  --onav-ctl: rgb(255 255 255 / 0.55);
+  --onav-ctl-border: rgb(255 255 255 / 0.7);
+  --onav-ctl-text: #3a423f;
+  --onav-search-text: #7b8581;
+  --onav-kbd-bg: rgb(255 255 255 / 0.7);
+  --onav-kbd-border: #dadfdc;
+  --onav-hover: rgb(255 255 255 / 0.55);
+  --onav-hover-2: rgb(255 255 255 / 0.75);
+  --onav-divider: rgb(20 20 20 / 0.14);
+  --onav-tree: #dadfdc;
+  --onav-sub-on-bg: rgb(0 102 59 / 0.08);
+  --onav-sub-on-text: #00663b;
+  --onav-sub-on-weight: 600;
+  --onav-card: rgb(255 255 255 / 0.42);
+  --onav-card-border: rgb(255 255 255 / 0.7);
+  --onav-chev: #6f7a76;
+  --onav-soft: rgb(255 255 255 / 0.7);
+  --onav-soft-text: #3a423f;
+  --onav-phone: rgb(144 235 84 / 0.16);
+  --onav-phone-border: rgb(0 102 59 / 0.18);
+  --onav-phone-ico: #00663b;
+  --onav-phone-ico-ink: #fff;
+  --onav-phone-title: #141414;
+  --onav-phone-sub: #2f7a2a;
+  --onav-phone-btn: #00663b;
+  --onav-phone-btn-ink: #fff;
+  --onav-phone-halo: rgb(0 102 59 / 0.12);
+  --onav-fly: rgb(255 255 255 / 0.9);
+  --onav-fly-arrow: rgb(255 255 255 / 0.96);
+  --onav-fly-border: rgb(255 255 255 / 0.85);
+  --onav-fly-shadow: 0 18px 40px -14px rgb(0 40 20 / 0.28);
+  --onav-fly-blur: blur(22px) saturate(1.5);
+  color-scheme: light;
+}
+
+/* fundo atrás do vidro (a faixa do menu): manchas suaves da marca */
+.onav-shell.onav-theme-light {
+  background: radial-gradient(
+      60% 18% at 10% 8%,
+      rgb(144 235 84 / 0.55),
+      transparent 70%
+    ),
+    radial-gradient(70% 20% at 40% 45%, rgb(0 102 59 / 0.22), transparent 70%),
+    radial-gradient(60% 18% at 15% 90%, rgb(144 235 84 / 0.45), transparent 70%),
+    #eef1ef;
+}
+
+/* ---------------------------------------------------------------- painel */
+.onav {
+  display: flex;
+  flex-direction: column;
+  border-radius: 22px;
+  border: 1px solid var(--onav-border);
+  background: var(--onav-bg);
+  box-shadow: var(--onav-shadow);
+  backdrop-filter: var(--onav-blur);
+  -webkit-backdrop-filter: var(--onav-blur);
+  color: var(--onav-text-2);
+  font-size: 14px;
+}
+
+/* tablet: aberto por cima da conversa, o vidro fica mais firme para ler bem */
+.onav.onav--overlay.onav-theme-light {
+  --onav-bg: linear-gradient(
+    180deg,
+    rgb(255 255 255 / 0.9),
+    rgb(255 255 255 / 0.84)
+  );
+}
+
+.onav button,
+.onav a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* os botões do Chatwoot vêm com espaçamento próprio; aqui cada peça define o dela */
+:is(
+    .onav-phone-main,
+    .onav-cb,
+    .onav-hh-btn,
+    .onav-ri,
+    .onav-grp-it,
+    .onav-nw,
+    .onav-rph,
+    .onav-ic
+  ) {
+  padding: 0;
+}
+
+.onav :focus-visible,
+.onav-fly :focus-visible {
+  outline: 2px solid #90eb54;
+  outline-offset: 1px;
+}
+
+.onav-ico {
+  display: grid;
   place-items: center;
-  min-width: 1.25rem;
-  height: 1.25rem;
-  padding: 0 0.375rem;
-  border-radius: 9999px;
-  font-size: 11px;
-  font-weight: 700;
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
-  background: var(--outsider-accent, #90eb54);
-  color: var(--outsider-accent-ink, #0b3d24);
+  flex: none;
 }
 
-/* em cima da pílula verde do item ativo */
-.outsider-nav-badge--on-brand {
-  background: rgb(255 255 255 / 0.92);
-  color: rgb(var(--color-brand));
-}
-
-/* no ícone do menu recolhido: menor e com um contorno da cor do menu */
-.outsider-nav-badge--corner {
-  min-width: 1.125rem;
-  height: 1.125rem;
-  padding: 0 0.25rem;
-  font-size: 10px;
-  box-shadow: 0 0 0 2px rgb(var(--background-color));
-}
-
-/* ícones de módulos que trazem o próprio tamanho (ex.: CRM) seguem o tamanho da linha */
-.outsider-nav [class*='size-[18px]'] > span > span[class^='i-'],
-.outsider-nav .size-5 > span > span[class^='i-'] {
+/* ícones de linha seguem o tamanho da caixa; os desenhados (cor da etiqueta) mantêm o deles */
+.onav-ico > span:not([style]),
+.onav-ico > span:not([style]) > span[class^='i-'] {
   width: 100%;
   height: 100%;
 }
 
-/* tema "Noite": só o menu fica escuro, no preto Night da identidade visual */
-.outsider-nav--night {
-  --background-color: 20 20 20;
-  --solid-1: 26 26 26;
-  --solid-2: 30 30 30;
-  --solid-3: 36 36 36;
-  --border-weak: 40 40 40;
-  color-scheme: dark;
+/* linha que separa os blocos: some nas pontas */
+.onav-dv {
+  flex: none;
+  height: 1px;
+  margin: 0 16px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--onav-divider) 15%,
+    var(--onav-divider) 85%,
+    transparent
+  );
 }
 
-.outsider-nav--night.outsider-nav {
-  background-color: #141414;
-  border-color: rgb(34 34 34);
+.onav--rail .onav-dv {
+  width: 32px;
+  margin: 8px auto;
 }
 
-.outsider-nav-flyout.outsider-nav--night {
-  background-color: #1b1b1b;
+/* ---------------------------------------------------------------- topo: perfil */
+.onav-hd {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 14px 14px 16px;
 }
 
-/* verde de texto da marca (no escuro, o SGBUS, que lê melhor no fundo preto) */
-.outsider-nav-brand-text {
-  color: var(--outsider-brand-text, rgb(var(--color-brand)));
+.onav--rail .onav-hd {
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px 0 12px;
 }
 
-.outsider-nav--night {
-  --outsider-brand-text: #90eb54;
+.onav-prof {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 2px;
+  border-radius: 14px;
+  text-align: start;
+}
+
+.onav-prof:hover .onav-nm,
+.onav-prof.is-open .onav-nm {
+  text-decoration: underline;
+  text-decoration-color: var(--onav-divider);
+  text-underline-offset: 3px;
+}
+
+.onav-av {
+  position: relative;
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, #90eb54, #00663b);
+  color: #0b3d24;
+  font-size: 15px;
+  font-weight: 700;
+  box-shadow: 0 0 0 2px rgb(255 255 255 / 0.12);
+}
+
+.onav-av img {
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  object-fit: cover;
+}
+
+.onav-av .onav-status {
+  position: absolute;
+  right: 0;
+  bottom: 1px;
+}
+
+.onav-status {
+  width: 11px;
+  height: 11px;
+  border-radius: 9999px;
+  background: #94a3b8;
+  box-shadow: 0 0 0 2px var(--onav-ring);
+}
+
+.onav-status.is-online,
+.onav-status.is-ready,
+.onav-status.is-in_call {
+  background: #22c55e;
+}
+
+.onav-status.is-busy,
+.onav-status.is-connecting {
+  background: #f59e0b;
+}
+
+.onav-status.is-offline {
+  background: #94a3b8;
+}
+
+.onav-status.is-phone-offline,
+.onav-status.is-failed {
+  background: #ef4444;
+}
+
+.onav-status.is-in_call {
+  animation: onav-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes onav-pulse {
+  50% {
+    box-shadow:
+      0 0 0 2px var(--onav-ring),
+      0 0 0 5px rgb(34 197 94 / 0.35);
+  }
+}
+
+.onav-prof-txt {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.onav-hi {
+  font-size: 11.5px;
+  line-height: 14px;
+  color: var(--onav-muted-2);
+}
+
+.onav-nm {
+  overflow: hidden;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 20px;
+  color: var(--onav-text);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.onav-sw {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  margin-top: 1px;
+  font-size: 11px;
+  color: var(--onav-muted-2);
+}
+
+.onav-sw > span:last-child {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* botões pequenos quadrados (recolher, tema) */
+.onav-cb {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  margin-inline-start: auto;
+  border-radius: 10px;
+  border: 1px solid var(--onav-ctl-border);
+  background: var(--onav-ctl);
+  color: var(--onav-ctl-text);
+  transition: background-color 0.12s;
+}
+
+.onav-cb:hover {
+  background: var(--onav-hover-2);
+  color: var(--onav-text);
+}
+
+.onav--rail .onav-cb {
+  margin: 0;
+}
+
+/* menu do perfil (abre para baixo; no recolhido, ao lado) */
+.onav-prof-menu {
+  top: 4px;
+  inset-inline-start: 0;
+  width: 18rem;
+}
+
+.onav--rail .onav-prof-menu {
+  top: -52px;
+  inset-inline-start: 58px;
+}
+
+.onav-prof-menu > ul {
+  background: rgb(var(--solid-2, 255 255 255));
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
+}
+
+/* ---------------------------------------------------------------- busca e nova conversa */
+.onav-sr {
+  display: flex;
+  gap: 8px;
+  padding: 14px 16px 6px;
+}
+
+.onav--rail .onav-sr {
+  flex-direction: column;
+  align-items: center;
+  padding: 2px 0 0;
+}
+
+.onav-si {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  height: 38px;
+  padding: 0 10px 0 12px;
+  border-radius: 12px;
+  border: 1px solid var(--onav-ctl-border);
+  background: var(--onav-ctl);
+  color: var(--onav-search-text);
+  font-size: 13px;
+  transition: background-color 0.12s;
+}
+
+.onav-si:hover {
+  background: var(--onav-hover-2);
+  color: var(--onav-text-2);
+}
+
+.onav-si kbd {
+  margin-inline-start: auto;
+  padding: 2px 5px;
+  border-radius: 6px;
+  border: 1px solid var(--onav-kbd-border);
+  background: var(--onav-kbd-bg);
+  font: 600 10px/1.2 inherit;
+  font-family: inherit;
+  color: var(--onav-search-text);
+  white-space: nowrap;
+}
+
+.onav--rail .onav-si {
+  flex: none;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border-color: transparent;
+  background: transparent;
+  color: var(--onav-icon);
+}
+
+.onav--rail .onav-si:hover {
+  background: var(--onav-hover-2);
+}
+
+.onav-nw {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: #00663b;
+  color: #fff;
+  box-shadow:
+    0 6px 14px -4px rgb(0 102 59 / 0.7),
+    inset 0 1px 0 rgb(255 255 255 / 0.18);
+  transition: filter 0.12s;
+}
+
+.onav-nw:hover,
+.onav-nw.is-open {
+  filter: brightness(1.12);
+}
+
+.onav--rail .onav-nw {
+  width: 44px;
+  height: 44px;
+  border-radius: 13px;
+}
+
+/* ---------------------------------------------------------------- lista de módulos */
+.onav-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding-bottom: 10px;
+  scrollbar-width: none;
+}
+
+.onav-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.onav--rail .onav-scroll {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.onav-sec {
+  margin: 0;
+  padding: 10px 18px 5px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--onav-muted);
+}
+
+.onav-section + .onav-section {
+  margin-top: 6px;
+}
+
+.onav-section > .onav-dv {
+  margin-bottom: 4px;
+}
+
+.onav-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.onav--rail .onav-list {
+  align-items: center;
+}
+
+.onav-li {
+  min-width: 0;
+  list-style: none;
+}
+
+/* linha de um módulo: caixinha do ícone, nome e contagem (ou seta) */
+.onav-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: calc(100% - 20px);
+  height: 36px;
+  margin: 0 10px;
+  padding: 0 10px 0 4px;
+  border-radius: 12px;
+  color: var(--onav-text-2);
+  font-size: 14px;
+  text-align: start;
+  transition: background-color 0.12s;
+}
+
+.onav-row:not(.on):hover {
+  background: var(--onav-hover);
+  color: var(--onav-text);
+}
+
+.onav-row .onav-bx {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
+  border: 1px solid var(--onav-box-border);
+  background: var(--onav-box);
+  color: var(--onav-icon);
+}
+
+.onav-row .onav-bx .onav-ico {
+  width: 16px;
+  height: 16px;
+}
+
+.onav-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.onav-chev {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  color: var(--onav-chev);
+  transition: transform 0.15s;
+}
+
+[dir='rtl'] .onav-chev.is-closed {
+  transform: scaleX(-1);
+}
+
+.onav-row.on,
+.onav-ri.on,
+.onav-leaf--fly.on {
+  background: linear-gradient(180deg, #0a7a48, #00663b);
+  color: #fff;
+  font-weight: 600;
+  box-shadow:
+    0 8px 18px -8px rgb(0 102 59 / 0.9),
+    inset 0 1px 0 rgb(255 255 255 / 0.16);
+}
+
+.onav-row.on .onav-bx {
+  border-color: transparent;
+  background: rgb(255 255 255 / 0.16);
+  color: #fff;
+}
+
+.onav-row.on .onav-chev {
+  color: rgb(255 255 255 / 0.75);
+}
+
+/* contagens */
+.onav-pill {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  min-width: 20px;
+  padding: 3px 8px;
+  border-radius: 9999px;
+  background: #90eb54;
+  color: #0b3d24;
+  font-size: 10.5px;
+  font-weight: 700;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.onav-pill--sm {
+  min-width: 18px;
+  padding: 2px 6px;
+  font-size: 10px;
+}
+
+.onav-pill--soft {
+  background: var(--onav-soft);
+  color: var(--onav-soft-text);
+}
+
+.onav-pill--warn {
+  background: #ff7a45;
+  color: #fff;
+}
+
+.onav-row.on .onav-pill,
+.onav-leaf--fly.on .onav-pill {
+  background: rgb(255 255 255 / 0.92);
+  color: #00663b;
+}
+
+/* opções do módulo aberto, com a linha da árvore */
+.onav-sub {
+  margin: 2px 10px 6px 30px;
+  padding-inline-start: 10px;
+  border-inline-start: 1px solid var(--onav-tree);
+}
+
+[dir='rtl'] .onav-sub {
+  margin: 2px 30px 6px 10px;
+}
+
+.onav-leaf {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  border-radius: 9px;
+  text-align: start;
+  transition: background-color 0.12s;
+}
+
+.onav-leaf--sub {
+  height: 30px;
+  padding: 0 8px;
+  color: var(--onav-text-3);
+  font-size: 13px;
+}
+
+.onav-leaf--sub:not(.on):hover {
+  background: var(--onav-hover);
+  color: var(--onav-text);
+}
+
+.onav-leaf--sub.on {
+  background: var(--onav-sub-on-bg);
+  color: var(--onav-sub-on-text);
+  font-weight: var(--onav-sub-on-weight);
+}
+
+.onav-leaf--fly {
+  height: 34px;
+  padding: 0 8px;
+  color: var(--onav-text-2);
+  font-size: 13px;
+}
+
+.onav-leaf--fly:not(.on):hover {
+  background: var(--onav-hover-2);
+  color: var(--onav-text);
+}
+
+.onav-leaf .onav-ico {
+  width: 15px;
+  height: 15px;
+  color: var(--onav-muted-2);
+}
+
+.onav-leaf--fly.on .onav-ico {
+  color: #fff;
+}
+
+/* grupos dentro das opções (Pastas, Times, Etiquetas, Segmentos...) */
+.onav-gh {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: 28px;
+  padding: 0 8px;
+  border-radius: 9px;
+  color: var(--onav-muted);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-align: start;
+}
+
+.onav-gh:hover {
+  color: var(--onav-text-2);
+  background: var(--onav-hover);
+}
+
+.onav-gh .onav-chev {
+  width: 14px;
+  height: 14px;
+}
+
+.onav-gh .onav-pill {
+  letter-spacing: 0;
+}
+
+.onav-gl {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin: 0 0 4px;
+  padding: 0;
+}
+
+.onav-more {
+  width: 100%;
+  height: 28px;
+  padding: 0 8px;
+  border-radius: 9px;
+  color: var(--onav-muted-2);
+  font-size: 12px;
+  text-align: start;
+}
+
+.onav-more:hover {
+  color: var(--onav-text);
+  background: var(--onav-hover);
+}
+
+/* ---------------------------------------------------------------- blocos com título (Canais, Configurações) */
+.onav-block {
+  min-width: 0;
+}
+
+.onav-hh {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 14px 6px 18px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--onav-muted);
+}
+
+.onav-hh-btn {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 8px;
+  color: var(--onav-muted);
+}
+
+.onav-hh-btn:hover,
+.onav-hh-btn.is-on {
+  background: var(--onav-hover-2);
+  color: var(--onav-text);
+}
+
+.onav-card {
+  margin: 0 14px 6px;
+  padding: 5px;
+  border-radius: 15px;
+  border: 1px solid var(--onav-card-border);
+  background: var(--onav-card);
+  list-style: none;
+}
+
+/* canal: logo redondo, nome e não lidas */
+.onav-ch {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 38px;
+  padding: 0 8px;
+  border-radius: 10px;
+  color: var(--onav-text-2);
+  font-size: 13px;
+  transition: background-color 0.12s;
+}
+
+.onav-ch:not(.on):hover {
+  background: var(--onav-hover);
+  color: var(--onav-text);
+}
+
+.onav-ch.on {
+  background: var(--onav-sub-on-bg);
+  color: var(--onav-sub-on-text);
+  font-weight: var(--onav-sub-on-weight);
+}
+
+.onav-logo {
+  position: relative;
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 9999px;
+  color: #fff;
+  font-size: 14px;
+}
+
+.onav-theme-light .onav-logo.is-white {
+  box-shadow: 0 0 0 1px #e6e8e7;
+}
+
+.onav-logo > span {
+  width: 15px;
+  height: 15px;
+}
+
+/* atalhos das Configurações: uma fileira de ícones */
+.onav-icons {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  justify-items: center;
+  padding: 6px;
+}
+
+.onav-ic {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  color: var(--onav-icon);
+  transition: background-color 0.12s;
+}
+
+.onav-ic:not(.on):hover {
+  background: var(--onav-hover-2);
+}
+
+.onav-ic.on {
+  background: #00663b;
+  color: #fff;
+}
+
+.onav-ic .onav-ico {
+  width: 17px;
+  height: 17px;
+}
+
+.onav-card .onav-gl,
+.onav-card > .onav-groups {
+  margin: 0;
+}
+
+/* ---------------------------------------------------------------- recolhido */
+.onav-ri {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin: 1px 0;
+  border-radius: 13px;
+  color: var(--onav-icon);
+  transition: background-color 0.12s;
+}
+
+.onav-ri:not(.on):hover,
+.onav-ri:not(.on).is-hover {
+  background: var(--onav-hover-2);
+}
+
+.onav-ri.on.is-hover {
+  filter: brightness(1.1);
+}
+
+.onav-ri.on {
+  color: #fff;
+}
+
+.onav-ri .onav-ico {
+  width: 20px;
+  height: 20px;
+}
+
+.onav-ri.is-boxed:not(.on) {
+  border: 1px solid var(--onav-card-border);
+  background: var(--onav-card);
+}
+
+.onav-corner {
+  position: absolute;
+  top: 1px;
+  inset-inline-end: 0;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border-radius: 9px;
+  background: #90eb54;
+  color: #0b3d24;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 17px;
+  text-align: center;
+  box-shadow: 0 0 0 2px var(--onav-ring);
+}
+
+/* canais no recolhido: logos num cartão logo abaixo de Conversas */
+.onav-grp {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin: 5px 0;
+  padding: 5px;
+  border-radius: 16px;
+  border: 1px solid var(--onav-card-border);
+  background: var(--onav-card);
+}
+
+.onav-grp-it {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  color: var(--onav-icon);
+}
+
+.onav-grp-it:hover {
+  background: var(--onav-hover-2);
+}
+
+.onav-grp-it.on .onav-logo {
+  box-shadow:
+    0 0 0 2px var(--onav-ring),
+    0 0 0 4px #90eb54;
+}
+
+.onav-grp-it .onav-corner {
+  top: -3px;
+  inset-inline-end: -4px;
+  min-width: 15px;
+  height: 15px;
+  padding: 0 3px;
+  font-size: 9px;
+  line-height: 15px;
+}
+
+.onav-grp-more {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--onav-muted-2);
+}
+
+/* ---------------------------------------------------------------- telefone */
+.onav-phone {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 12px 12px;
+  padding: 8px 8px 8px 9px;
+  border-radius: 16px;
+  border: 1px solid var(--onav-phone-border);
+  background: var(--onav-phone);
+}
+
+.onav-phone-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+  text-align: start;
+}
+
+.onav-phone-ico {
+  position: relative;
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 9999px;
+  background: var(--onav-phone-ico);
+  color: var(--onav-phone-ico-ink);
+}
+
+.onav-phone-ico .onav-status {
+  position: absolute;
+  right: -1px;
+  bottom: -1px;
+}
+
+.onav-phone-txt {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.onav-phone-t {
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 17px;
+  color: var(--onav-phone-title);
+}
+
+.onav-phone-s {
+  overflow: hidden;
+  font-size: 11px;
+  line-height: 14px;
+  color: var(--onav-phone-sub);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.onav-phone.is-problem .onav-phone-s {
+  color: #f87171;
+}
+
+.onav-theme-light .onav-phone.is-problem .onav-phone-s {
+  color: #b91c1c;
+}
+
+.onav-phone-btn {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 10px;
+  border-radius: 10px;
+  background: var(--onav-phone-btn);
+  color: var(--onav-phone-btn-ink);
+  font-size: 12px;
+  font-weight: 700;
+  transition: filter 0.12s;
+}
+
+.onav-phone-btn:hover {
+  filter: brightness(1.08);
+}
+
+.onav-rph {
+  position: relative;
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin: 2px auto 12px;
+  border-radius: 9999px;
+  background: var(--onav-phone-ico);
+  color: var(--onav-phone-ico-ink);
+  box-shadow: 0 0 0 4px var(--onav-phone-halo);
+  transition: filter 0.12s;
+}
+
+.onav-rph:hover {
+  filter: brightness(1.08);
+}
+
+.onav-rph .onav-status {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+}
+
+/* ---------------------------------------------------------------- rodapé */
+.onav-ft {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px 13px 18px;
+  font-size: 11.5px;
+  color: var(--onav-muted);
+}
+
+.onav--rail .onav-ft {
+  justify-content: center;
+  padding: 10px 0 14px;
+}
+
+.onav-mk {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  overflow: hidden;
+  border-radius: 7px;
+  background: #00663b;
+}
+
+.onav-mk img,
+.onav-mk svg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.onav-ft .onav-cb {
+  margin-inline-start: auto;
+}
+
+/* ---------------------------------------------------------------- quadro ao lado (recolhido) */
+.onav-fly {
+  position: fixed;
+  z-index: 60;
+  width: 250px;
+  max-height: calc(100vh - 16px);
+  padding: 10px;
+  border-radius: 18px;
+  border: 1px solid var(--onav-fly-border);
+  background: var(--onav-fly);
+  box-shadow: var(--onav-fly-shadow);
+  backdrop-filter: var(--onav-fly-blur);
+  -webkit-backdrop-filter: var(--onav-fly-blur);
+  color: var(--onav-text);
+  font-size: 13px;
+}
+
+.onav-fly-scroll {
+  max-height: calc(100vh - 80px);
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.onav-fly::before {
+  content: '';
+  position: absolute;
+  top: calc(var(--onav-arrow, 22px) - 6px);
+  left: -7px;
+  width: 12px;
+  height: 12px;
+  border-left: 1px solid var(--onav-fly-border);
+  border-bottom: 1px solid var(--onav-fly-border);
+  background: var(--onav-fly-arrow);
+  transform: rotate(45deg);
+}
+
+[dir='rtl'] .onav-fly::before {
+  left: auto;
+  right: -7px;
+  transform: rotate(-135deg);
+}
+
+.onav-fly-t {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--onav-text);
+}
+
+.onav-fly-t:only-child {
+  padding-bottom: 4px;
+}
+
+.onav-fly-t .onav-ico {
+  width: 16px;
+  height: 16px;
+}
+
+.onav-fly .onav-card {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
 }

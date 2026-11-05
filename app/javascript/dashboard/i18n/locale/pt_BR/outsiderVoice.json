@@ -117,6 +117,13 @@
       "CONTACT_FAILED": "Não deu para cadastrar o cliente. Confira o nome e o número."
     },
     "CLICK_TO_CALL": "Ligar pelo telefone do CRM",
+    "HEADER_CALL": {
+      "BUTTON": "Ligar",
+      "TITLE": "Ligar para o contato pelo telefone do CRM",
+      "QUESTION": "Ligar para {name}?",
+      "CANCEL": "Cancelar",
+      "CONFIRM": "Ligar"
+    },
     "CALLING": "Ligando para {number}…",
     "SETTINGS": {
       "TITLE": "Telefonia",

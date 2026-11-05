@@ -117,6 +117,13 @@
       "CONTACT_FAILED": "Could not create the contact. Check the name and number."
     },
     "CLICK_TO_CALL": "Call with the CRM phone",
+    "HEADER_CALL": {
+      "BUTTON": "Call",
+      "TITLE": "Call the contact with the CRM phone",
+      "QUESTION": "Call {name}?",
+      "CANCEL": "Cancel",
+      "CONFIRM": "Call"
+    },
     "CALLING": "Calling {number}…",
     "SETTINGS": {
       "TITLE": "Telephony",

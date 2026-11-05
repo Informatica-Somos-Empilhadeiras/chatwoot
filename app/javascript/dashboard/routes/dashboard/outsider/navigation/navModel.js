@@ -80,8 +80,13 @@ export const countOf = (item, getters) => {
   return Number(item.badgeCount) || 0;
 };
 
+// a maior contagem entre as opções: elas se sobrepõem (as não lidas de "Todas" já incluem as de
+// cada canal, pasta ou etiqueta), então somar contaria a mesma conversa várias vezes
 export const moduleCount = (module, getters) =>
-  itemsOf(module).reduce((sum, item) => sum + countOf(item, getters), 0);
+  itemsOf(module).reduce(
+    (biggest, item) => Math.max(biggest, countOf(item, getters)),
+    0
+  );
 
 const paramsMatch = (item, route) =>
   Object.keys(item.to?.params || {}).every(

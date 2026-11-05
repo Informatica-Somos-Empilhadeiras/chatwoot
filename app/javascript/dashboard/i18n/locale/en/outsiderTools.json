@@ -961,8 +961,36 @@
     "EXPAND": "Expand menu",
     "COLLAPSE": "Collapse menu",
     "NEW_CONVERSATION": "New conversation",
-    "THEME_NIGHT": "Dark menu",
-    "THEME_AUTO": "Menu follows the theme",
+    "THEME_DARK": "Dark menu",
+    "THEME_LIGHT": "Light menu",
+    "PROFILE_MENU": "Your profile, status and account",
+    "GREETING": {
+      "MORNING": "Good morning",
+      "AFTERNOON": "Good afternoon",
+      "EVENING": "Good evening"
+    },
+    "COUNT": {
+      "UNREAD": "{count} unread | {count} unread",
+      "NEW": "{count} new | {count} new",
+      "TASKS": "{count} task | {count} tasks"
+    },
+    "MANAGE_CHANNELS": "Set up channels",
+    "SETTINGS_ALL": "All settings",
+    "SETTINGS_LESS": "Hide the list",
+    "PHONE": {
+      "TITLE": "Phone",
+      "EXTENSION": "ext. {extension}",
+      "CALL": "Call",
+      "OPEN": "Open",
+      "STATUS": {
+        "connecting": "Connecting…",
+        "ready": "Ready",
+        "offline": "No connection",
+        "failed": "Extension refused",
+        "other_tab": "In another tab",
+        "in_call": "On a call"
+      }
+    },
     "SHOW_ALL": "Show all ({count})",
     "SHOW_LESS": "Show less",
     "SECTIONS": {

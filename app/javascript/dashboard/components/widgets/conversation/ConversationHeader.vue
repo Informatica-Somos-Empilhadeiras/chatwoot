@@ -10,6 +10,7 @@ import MoreActions from './MoreActions.vue';
 import SLACardLabel from './components/SLACardLabel.vue';
 import ConversationCallButton from './ConversationCallButton.vue';
 import ConversationSearchButton from './outsider/ConversationSearchButton.vue'; // OUTSIDER: busca na conversa
+import OutsiderHeaderCallButton from 'dashboard/routes/dashboard/outsider/voice/HeaderCallButton.vue'; // OUTSIDER: ligar pelo telefone do CRM
 import ChannelAvatar from 'dashboard/components-next/outsider/whatsappLook/ChannelAvatar.vue'; // OUTSIDER: selo do canal
 import HeaderOwnerPill from 'dashboard/components-next/outsider/whatsappLook/HeaderOwnerPill.vue'; // OUTSIDER: quem está com a conversa
 import { useContactPanelToggle } from 'dashboard/composables/outsider/useContactPanelToggle'; // OUTSIDER
@@ -188,6 +189,8 @@ const copyConversationId = async () => {
       <!-- OUTSIDER: busca dentro da conversa -->
       <ConversationSearchButton :conversation-id="currentChat.id" />
       <ConversationCallButton :inbox="inbox" :chat="currentChat" />
+      <!-- OUTSIDER: Ligar (com confirmação) ao lado de Resolver -->
+      <OutsiderHeaderCallButton :chat="currentChat" :inbox="inbox" />
       <MoreActions :conversation-id="currentChat.id" />
     </div>
   </div>
