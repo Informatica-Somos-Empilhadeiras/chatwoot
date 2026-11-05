@@ -11,13 +11,13 @@ import { getLastMessage } from 'dashboard/helper/conversationHelper';
 import { useConversationPins } from 'dashboard/composables/outsider/useConversationPins';
 import { chatListTime } from 'dashboard/helper/outsider/chatTime';
 import { useMinuteClock } from './useMinuteClock';
-import Avatar from 'next/avatar/Avatar.vue';
 import Checkbox from 'dashboard/components-next/checkbox/Checkbox.vue';
 import CardPriorityIcon from 'dashboard/components-next/Conversation/ConversationCard/CardPriorityIcon.vue';
 import SLACardLabel from 'dashboard/components/widgets/conversation/components/SLACardLabel.vue';
 import CrmValueChip from 'dashboard/routes/dashboard/outsider/crm/conversation/CrmValueChip.vue';
 import ChannelAvatar from './ChannelAvatar.vue';
 import ChatPreview from './ChatPreview.vue';
+import WaOwnerChip from './WaOwnerChip.vue';
 
 const props = defineProps({
   chat: { type: Object, required: true },
@@ -30,6 +30,9 @@ const props = defineProps({
   showInboxName: { type: Boolean, default: false },
   hideThumbnail: { type: Boolean, default: false },
   compact: { type: Boolean, default: false },
+  // lista na largura toda (sem conversa aberta ao lado): o mesmo cartão, com as informações
+  // espalhadas em colunas (WaConversationRow.vue)
+  wide: { type: Boolean, default: false },
 });
 
 const emit = defineEmits([
@@ -104,7 +107,7 @@ const labels = computed(() => {
     return { title, color: label?.color || '#94A3B8' };
   });
 });
-const shownLabels = computed(() => labels.value.slice(0, 2));
+const shownLabels = computed(() => labels.value.slice(0, props.wide ? 3 : 2));
 
 const hasSla = computed(
   () => props.chat?.applied_sla?.id && !props.currentContact?.blocked
@@ -130,8 +133,10 @@ watch(
 
 <template>
   <div
-    class="outsider-wa-card relative flex items-center gap-3 mx-2 my-px px-2.5 py-2 rounded-xl cursor-pointer select-none transition-colors duration-100"
+    class="outsider-wa-card relative flex items-center my-px rounded-xl cursor-pointer select-none transition-colors duration-100"
     :class="{
+      'gap-3 mx-2 px-2.5 py-2': !wide,
+      'outsider-wa-card--wide gap-4 mx-3 px-3 py-2.5': wide,
       'bg-n-alpha-2 dark:bg-n-alpha-3 active': isActiveChat,
       'bg-n-brand/10 selected': selected && !isActiveChat,
       'hover:bg-n-alpha-1 dark:hover:bg-n-alpha-2': !isActiveChat,
@@ -150,7 +155,7 @@ watch(
         :name="contact.name"
         :src="contact.thumbnail"
         :inbox="inbox"
-        :size="compact ? 40 : 48"
+        :size="compact ? 40 : wide ? 44 : 48"
       >
         <template #overlay="{ size }">
           <label
@@ -165,7 +170,109 @@ watch(
       </ChannelAvatar>
     </div>
 
-    <div class="flex flex-col flex-1 min-w-0 gap-0.5">
+    <!-- ===== lista larga: colunas ===== -->
+    <template v-if="wide">
+      <div class="flex flex-col min-w-0 gap-0.5 flex-[2.4_1_0%]">
+        <div class="flex items-center min-w-0 gap-2">
+          <span
+            v-if="isGroup"
+            class="i-lucide-users size-3.5 shrink-0 text-n-slate-10"
+          />
+          <h4
+            class="min-w-0 my-0 truncate text-[15px] leading-5 text-n-slate-12"
+            :class="hasUnread ? 'font-semibold' : 'font-medium'"
+          >
+            {{ contact.name }}
+          </h4>
+          <CardPriorityIcon
+            :priority="chat.priority"
+            class="!size-4 shrink-0"
+          />
+          <span
+            v-if="pinned"
+            v-tooltip.top="t('OUTSIDER_WHATSAPP.LOOK.PINNED')"
+            class="i-lucide-pin size-3.5 rotate-45 shrink-0 text-n-slate-10"
+          />
+        </div>
+        <ChatPreview
+          :message="lastMessage"
+          :typing-name="typingName"
+          :is-group="isGroup"
+          class="text-sm leading-5"
+          :class="hasUnread ? 'text-n-slate-12' : 'text-n-slate-11'"
+        />
+      </div>
+
+      <div class="flex items-center w-44 min-w-0 shrink-0" data-wide-owner>
+        <WaOwnerChip v-if="owner" :owner="owner" class="max-w-full" />
+      </div>
+
+      <div
+        class="flex flex-col justify-center w-40 min-w-0 shrink-0 gap-0.5"
+        data-wide-inbox
+      >
+        <span
+          v-if="showInboxName && inbox.name"
+          class="text-xs leading-4 truncate text-n-slate-11"
+          :title="inbox.name"
+        >
+          {{ inbox.name }}
+        </span>
+        <span class="text-[11px] leading-4 tabular-nums text-n-slate-10">
+          #{{ chat.id }}
+        </span>
+      </div>
+
+      <div
+        class="flex flex-wrap items-center content-center flex-1 min-w-0 gap-x-2 gap-y-1 overflow-hidden max-h-10"
+        data-wide-tags
+      >
+        <span
+          v-for="label in shownLabels"
+          :key="label.title"
+          class="inline-flex items-center gap-1 text-[11px] text-n-slate-11 shrink-0 max-w-28"
+        >
+          <span
+            class="rounded-full size-2 shrink-0"
+            :style="{ background: label.color }"
+          />
+          <span class="truncate">{{ label.title }}</span>
+        </span>
+        <span
+          v-if="labels.length > shownLabels.length"
+          class="text-[11px] text-n-slate-10 shrink-0"
+        >
+          +{{ labels.length - shownLabels.length }}
+        </span>
+        <SLACardLabel v-if="hasSla" :chat="chat" class="shrink-0" />
+        <CrmValueChip
+          :contact-id="chat.meta?.sender?.id"
+          class="shrink-0 !text-[11px] !py-0"
+        />
+      </div>
+
+      <div class="flex flex-col items-end justify-center w-16 shrink-0 gap-1">
+        <span
+          class="text-xs tabular-nums"
+          :class="
+            hasUnread
+              ? 'text-[#1DAA61] dark:text-[#21C063] font-semibold'
+              : 'text-n-slate-10'
+          "
+        >
+          {{ time }}
+        </span>
+        <span
+          v-if="hasUnread"
+          class="inline-grid place-items-center h-5 min-w-5 px-1.5 rounded-full bg-[#25D366] dark:bg-[#21C063] text-[11px] font-bold leading-none text-white dark:text-[#0B141A]"
+        >
+          {{ unreadCount > 99 ? '99+' : unreadCount }}
+        </span>
+      </div>
+    </template>
+
+    <!-- ===== lista ao lado da conversa ===== -->
+    <div v-else class="flex flex-col flex-1 min-w-0 gap-0.5">
       <div class="flex items-center min-w-0 gap-2">
         <span
           v-if="isGroup"
@@ -223,28 +330,7 @@ watch(
         "
         class="flex items-center min-w-0 gap-1.5 overflow-hidden empty:hidden [&:not(:has(*))]:hidden"
       >
-        <span
-          v-if="owner"
-          class="inline-flex items-center max-w-[55%] gap-1 py-px ltr:pl-px ltr:pr-1.5 rtl:pr-px rtl:pl-1.5 text-[11px] font-medium leading-4 rounded-full shrink-0"
-          :class="{
-            'bg-n-alpha-2 text-n-slate-11': owner.kind === 'agent',
-            'bg-n-teal-3 text-n-teal-11': owner.kind === 'me',
-            'bg-n-iris-3 text-n-iris-11': owner.kind === 'bot',
-            'bg-n-amber-3 text-n-amber-11 !pl-1.5': owner.kind === 'none',
-          }"
-          data-owner-chip
-        >
-          <Avatar
-            v-if="owner.kind === 'agent' || owner.kind === 'me'"
-            :name="owner.name"
-            :src="owner.thumbnail"
-            :size="14"
-            rounded-full
-          />
-          <span v-else-if="owner.kind === 'bot'" class="i-lucide-bot size-3" />
-          <span v-else class="i-lucide-user-round-x size-3" />
-          <span class="truncate">{{ owner.name }}</span>
-        </span>
+        <WaOwnerChip v-if="owner" :owner="owner" class="max-w-[55%]" />
         <span
           v-if="showInboxName && inbox.name"
           class="text-[11px] truncate text-n-slate-10 min-w-0"

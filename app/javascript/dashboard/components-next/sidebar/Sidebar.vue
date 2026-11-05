@@ -26,6 +26,7 @@ import { voiceSidebarItems } from 'dashboard/routes/dashboard/outsider/voice/sid
 import OutsiderPhoneButton from 'dashboard/routes/dashboard/outsider/voice/PhoneButton.vue'; // OUTSIDER: telefonia
 import { outsiderSettingsItems } from 'dashboard/routes/dashboard/outsider/settings/sidebar'; // OUTSIDER: Aparência e bot
 import OutsiderMobileTabbar from 'dashboard/routes/dashboard/outsider/responsive/MobileTabbar.vue'; // OUTSIDER: barra de baixo no celular
+import OutsiderDesktopNav from 'dashboard/routes/dashboard/outsider/navigation/desktop/DesktopNav.vue'; // OUTSIDER: menu do computador
 import ComposeConversation from 'dashboard/components-next/NewConversation/ComposeConversation.vue';
 import {
   SIDEBAR_SORT_SECTIONS,
@@ -140,13 +141,9 @@ const {
   COLLAPSED_THRESHOLD,
 } = useSidebarResize();
 
-// OUTSIDER: no tablet em pé (768 a 1023 px) o menu fica só com os ícones, para sobrar espaço
-const isTabletRail = computed(
-  () => windowWidth.value >= 768 && windowWidth.value < 1024
-);
 // On mobile, sidebar is always expanded (flyout mode)
 const isEffectivelyCollapsed = computed(
-  () => !isMobile.value && (isCollapsed.value || isTabletRail.value) // OUTSIDER: || isTabletRail
+  () => !isMobile.value && isCollapsed.value
 );
 
 // Resize handle logic
@@ -938,7 +935,15 @@ const menuItems = computed(() => {
 </script>
 
 <template>
+  <!-- OUTSIDER: no computador e no tablet, o menu novo com os mesmos itens (menuItems) -->
+  <OutsiderDesktopNav
+    v-if="!isMobile"
+    :menu-items="menuItems"
+    @open-key-shortcut-modal="emit('openKeyShortcutModal')"
+    @show-create-account-modal="emit('showCreateAccountModal')"
+  />
   <aside
+    v-else
     v-on-click-outside="[
       closeMobileSidebar,
       {
@@ -958,11 +963,7 @@ const menuItems = computed(() => {
           !isResizing,
       },
     ]"
-    :style="
-      isMobile
-        ? undefined
-        : { width: `${isTabletRail && !isCollapsed ? 56 : sidebarWidth}px` }
-    "
+    :style="isMobile ? undefined : { width: `${sidebarWidth}px` }"
   >
     <section
       class="grid"

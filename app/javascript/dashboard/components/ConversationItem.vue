@@ -5,7 +5,8 @@ import { useStore, useMapGetter } from 'dashboard/composables/store';
 import { frontendURL, conversationUrl } from 'dashboard/helper/URLHelper';
 // OUTSIDER: card no estilo WhatsApp/Telegram (o original continua em widgets/conversation/ConversationCard.vue)
 import ConversationCard from 'dashboard/components-next/outsider/whatsappLook/WaConversationCard.vue';
-import ConversationCardExpanded from 'dashboard/components-next/Conversation/ConversationCard/ConversationCardExpanded.vue';
+// OUTSIDER: lista larga com o mesmo cartão da lista estreita, em colunas (o original continua em ConversationCardExpanded.vue)
+import ConversationCardExpanded from 'dashboard/components-next/outsider/whatsappLook/WaConversationRow.vue';
 import ContextMenu from 'dashboard/components/ui/ContextMenu.vue';
 import ConversationContextMenu from './widgets/conversation/contextMenu/Index.vue';
 

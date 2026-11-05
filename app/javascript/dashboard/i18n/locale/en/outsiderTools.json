@@ -955,5 +955,21 @@
     "BACK": "Back",
     "FULL_MENU": "Full menu, account and profile",
     "OPEN_PHONE": "Open phone"
+  },
+  "OUTSIDER_NAV": {
+    "LABEL": "Main menu",
+    "EXPAND": "Expand menu",
+    "COLLAPSE": "Collapse menu",
+    "NEW_CONVERSATION": "New conversation",
+    "THEME_NIGHT": "Dark menu",
+    "THEME_AUTO": "Menu follows the theme",
+    "SHOW_ALL": "Show all ({count})",
+    "SHOW_LESS": "Show less",
+    "SECTIONS": {
+      "SERVICE": "Service",
+      "SALES": "Sales",
+      "MANAGE": "Management",
+      "MORE": "More"
+    }
   }
 }

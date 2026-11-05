@@ -12,7 +12,7 @@
 // - Em "Mais", um módulo com seções abre as seções no mesmo quadro (Mais > Relatórios > Visão geral).
 // A barra some com uma conversa aberta (a conversa usa a tela toda, como no WhatsApp) e com o
 // teclado aberto.
-import { computed, ref, watch, nextTick, isVNode, h } from 'vue';
+import { computed, ref, watch, nextTick } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { useEventListener, useWindowSize } from '@vueuse/core';
@@ -20,6 +20,14 @@ import { useStore } from 'vuex';
 import { useSidebarContext } from 'dashboard/components-next/sidebar/provider';
 import { phone, setPanelOpen } from '../voice/phone';
 import { SMALL_SCREEN, viewportState } from './screen';
+import {
+  renderIcon,
+  makeAllowed,
+  toModules,
+  itemsOf,
+  countOf as countOfItem,
+  moduleCount as moduleCountOf,
+} from '../navigation/navModel';
 
 const props = defineProps({
   menuItems: { type: Array, default: () => [] },
@@ -38,63 +46,9 @@ const store = useStore();
 const { isAllowed, resolvePath } = useSidebarContext();
 const { width } = useWindowSize();
 
-const renderIcon = icon => {
-  if (!icon) return null;
-  if (typeof icon === 'function' || isVNode(icon)) return icon;
-  return h('span', { class: icon });
-};
+const allowed = makeAllowed(isAllowed);
 
-const allowed = to => {
-  try {
-    return !!to && isAllowed(to);
-  } catch {
-    return false;
-  }
-};
-
-// item do menu -> { name, label, icon, to, groups: [{ label, items }] }
-const toModule = item => {
-  if (!item.children) {
-    return allowed(item.to)
-      ? {
-          name: item.name,
-          label: item.label,
-          icon: item.icon,
-          to: item.to,
-          groups: [],
-          getterKeys: item.getterKeys,
-        }
-      : null;
-  }
-  const loose = [];
-  const groups = [];
-  item.children.forEach(child => {
-    if (child.children) {
-      const items = child.children.filter(sub => allowed(sub.to));
-      if (items.length)
-        groups.push({
-          name: child.name,
-          label: child.label,
-          icon: child.icon,
-          items,
-        });
-    } else if (allowed(child.to)) {
-      loose.push(child);
-    }
-  });
-  if (loose.length)
-    groups.unshift({ name: `${item.name}-main`, label: '', items: loose });
-  if (!groups.length) return null;
-  return {
-    name: item.name,
-    label: item.label,
-    icon: item.icon,
-    to: null,
-    groups,
-  };
-};
-
-const modules = computed(() => props.menuItems.map(toModule).filter(Boolean));
+const modules = computed(() => toModules(props.menuItems, allowed));
 
 const primaryModules = computed(() => {
   const list = PRIMARY.map(name =>
@@ -109,9 +63,6 @@ const moreModules = computed(() =>
   modules.value.filter(m => !primaryModules.value.includes(m))
 );
 
-const itemsOf = module =>
-  module.to ? [module] : module.groups.flatMap(g => g.items);
-
 const isItemActive = item => {
   if (!item.to) return false;
   if (item.activeOn?.includes(route.name)) return true;
@@ -125,12 +76,8 @@ const activeModule = computed(
     (moreModules.value.some(isModuleActive) ? 'more' : null)
 );
 
-const countOf = item => {
-  if (item.getterKeys?.count) return store.getters[item.getterKeys.count] || 0;
-  return Number(item.badgeCount) || 0;
-};
-const moduleCount = module =>
-  itemsOf(module).reduce((sum, item) => sum + countOf(item), 0);
+const countOf = item => countOfItem(item, store.getters);
+const moduleCount = module => moduleCountOf(module, store.getters);
 
 // ---------- quadro de opções acima do botão ----------
 const sheet = ref(null); // { anchor, title, groups, back, actions }

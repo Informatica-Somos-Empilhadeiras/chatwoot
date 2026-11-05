@@ -1,0 +1,69 @@
+/* OUTSIDER: detalhes do menu lateral (DesktopNav.vue) que não cabem bem em classes do Tailwind.
+   As cores vêm das variáveis do Chatwoot e da marca (brand.css), com reserva para quando o
+   brand.css não estiver carregado. */
+
+/* contagem de não lidas / pendentes: verde de destaque da marca (SGBUS) com texto escuro */
+.outsider-nav-badge {
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  padding: 0 0.375rem;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  background: var(--outsider-accent, #90eb54);
+  color: var(--outsider-accent-ink, #0b3d24);
+}
+
+/* em cima da pílula verde do item ativo */
+.outsider-nav-badge--on-brand {
+  background: rgb(255 255 255 / 0.92);
+  color: rgb(var(--color-brand));
+}
+
+/* no ícone do menu recolhido: menor e com um contorno da cor do menu */
+.outsider-nav-badge--corner {
+  min-width: 1.125rem;
+  height: 1.125rem;
+  padding: 0 0.25rem;
+  font-size: 10px;
+  box-shadow: 0 0 0 2px rgb(var(--background-color));
+}
+
+/* ícones de módulos que trazem o próprio tamanho (ex.: CRM) seguem o tamanho da linha */
+.outsider-nav [class*='size-[18px]'] > span > span[class^='i-'],
+.outsider-nav .size-5 > span > span[class^='i-'] {
+  width: 100%;
+  height: 100%;
+}
+
+/* tema "Noite": só o menu fica escuro, no preto Night da identidade visual */
+.outsider-nav--night {
+  --background-color: 20 20 20;
+  --solid-1: 26 26 26;
+  --solid-2: 30 30 30;
+  --solid-3: 36 36 36;
+  --border-weak: 40 40 40;
+  color-scheme: dark;
+}
+
+.outsider-nav--night.outsider-nav {
+  background-color: #141414;
+  border-color: rgb(34 34 34);
+}
+
+.outsider-nav-flyout.outsider-nav--night {
+  background-color: #1b1b1b;
+}
+
+/* verde de texto da marca (no escuro, o SGBUS, que lê melhor no fundo preto) */
+.outsider-nav-brand-text {
+  color: var(--outsider-brand-text, rgb(var(--color-brand)));
+}
+
+.outsider-nav--night {
+  --outsider-brand-text: #90eb54;
+}
