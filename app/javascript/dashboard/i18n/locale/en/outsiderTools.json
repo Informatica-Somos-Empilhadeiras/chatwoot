@@ -961,8 +961,8 @@
     "EXPAND": "Expand menu",
     "COLLAPSE": "Collapse menu",
     "NEW_CONVERSATION": "New conversation",
-    "THEME_DARK": "Dark menu",
-    "THEME_LIGHT": "Light menu",
+    "THEME_DARK": "Dark mode",
+    "THEME_LIGHT": "Light mode",
     "PROFILE_MENU": "Your profile, status and account",
     "GREETING": {
       "MORNING": "Good morning",

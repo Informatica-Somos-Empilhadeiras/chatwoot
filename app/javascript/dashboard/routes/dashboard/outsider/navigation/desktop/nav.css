@@ -1,137 +1,106 @@
 /* OUTSIDER: visual do menu lateral do computador (DesktopNav.vue e as peças Nav*.vue).
-   Dois temas, escolhidos no botão do rodapé (o padrão segue o tema do Chatwoot):
-   - claro: painel de vidro (um pouco transparente e desfocado) sobre manchas suaves da marca;
-   - escuro: o painel preto com o brilho verde da primeira simulação.
-   As cores ficam em variáveis (--onav-*) definidas por tema, então as regras abaixo valem para os
-   dois. Verdes da marca: Dartmouth #00663B, SGBUS #90EB54 (texto escuro #0b3d24). */
+   O menu acompanha o tema do Chatwoot (claro ou escuro), que o botão do rodapé troca para a tela
+   inteira. As cores de fundo, texto e linhas vêm das variáveis do próprio Chatwoot (_next-colors.scss),
+   então o painel combina com o resto da tela; o verde da marca fica só nos destaques (item ativo,
+   contagens, nova conversa e telefone). Verdes da marca: Dartmouth #00663B, SGBUS #90EB54 (texto
+   escuro #0b3d24). As regras abaixo usam as variáveis --onav-*, definidas por tema. */
 
 /* ---------------------------------------------------------------- temas */
-.onav-theme-dark {
-  --onav-bg: radial-gradient(
-      120% 60% at 0% 0%,
-      rgb(0 102 59 / 0.42),
-      transparent 60%
-    ),
-    radial-gradient(
-      90% 50% at 100% 100%,
-      rgb(144 235 84 / 0.1),
-      transparent 60%
-    ),
-    linear-gradient(180deg, #181b19, #111312);
-  --onav-blur: none;
-  --onav-border: rgb(255 255 255 / 0.07);
-  --onav-shadow: 0 18px 40px -12px rgb(0 0 0 / 0.45),
-    inset 0 1px 0 rgb(255 255 255 / 0.06);
-  --onav-ring: #151816;
-  --onav-text: #fff;
-  --onav-text-2: #d9dfdc;
-  --onav-text-3: #aeb7b3;
-  --onav-muted: #7f8a86;
-  --onav-muted-2: #9aa5a0;
-  --onav-icon: #e9eeec;
-  --onav-box: rgb(255 255 255 / 0.07);
-  --onav-box-border: transparent;
-  --onav-ctl: rgb(255 255 255 / 0.06);
-  --onav-ctl-border: rgb(255 255 255 / 0.08);
-  --onav-ctl-text: #cfd6d3;
-  --onav-search-text: #8f9a95;
-  --onav-kbd-bg: transparent;
-  --onav-kbd-border: rgb(255 255 255 / 0.12);
-  --onav-hover: rgb(255 255 255 / 0.05);
-  --onav-hover-2: rgb(255 255 255 / 0.08);
-  --onav-divider: rgb(255 255 255 / 0.22);
-  --onav-tree: rgb(255 255 255 / 0.12);
-  --onav-sub-on-bg: rgb(255 255 255 / 0.08);
-  --onav-sub-on-text: #fff;
-  --onav-sub-on-weight: 500;
-  --onav-card: rgb(0 0 0 / 0.28);
-  --onav-card-border: rgb(255 255 255 / 0.08);
-  --onav-chev: #7c8783;
-  --onav-soft: rgb(255 255 255 / 0.09);
-  --onav-soft-text: #cfd6d3;
-  --onav-phone: rgb(144 235 84 / 0.09);
-  --onav-phone-border: rgb(144 235 84 / 0.28);
-  --onav-phone-ico: #90eb54;
-  --onav-phone-ico-ink: #0b3d24;
-  --onav-phone-title: #fff;
-  --onav-phone-sub: #a9e98a;
-  --onav-phone-btn: #90eb54;
-  --onav-phone-btn-ink: #0b3d24;
-  --onav-phone-halo: rgb(144 235 84 / 0.16);
-  --onav-fly: linear-gradient(180deg, #1b1f1d, #141615);
-  --onav-fly-arrow: #1a1e1c;
-  --onav-fly-border: rgb(255 255 255 / 0.09);
-  --onav-fly-shadow: 0 18px 40px -10px rgb(0 0 0 / 0.6);
-  --onav-fly-blur: none;
-  /* tokens do Chatwoot usados pelas peças dele dentro do menu (busca do "Nova conversa" etc.) */
-  --background-color: 20 22 21;
-  color-scheme: dark;
-}
-
 .onav-theme-light {
-  --onav-bg: linear-gradient(
-    180deg,
-    rgb(255 255 255 / 0.62),
-    rgb(255 255 255 / 0.48)
-  );
-  --onav-blur: blur(22px) saturate(1.5);
-  --onav-border: rgb(255 255 255 / 0.75);
-  --onav-shadow: 0 18px 40px -16px rgb(0 50 28 / 0.22),
-    inset 0 1px 0 rgb(255 255 255 / 0.9);
-  --onav-ring: #fff;
-  --onav-text: #141414;
-  --onav-text-2: #2b3330;
-  --onav-text-3: #4a524f;
-  --onav-muted: #6f7a76;
-  --onav-muted-2: #6f7a76;
-  --onav-icon: #2b3330;
-  --onav-box: rgb(255 255 255 / 0.55);
-  --onav-box-border: rgb(255 255 255 / 0.7);
-  --onav-ctl: rgb(255 255 255 / 0.55);
-  --onav-ctl-border: rgb(255 255 255 / 0.7);
-  --onav-ctl-text: #3a423f;
-  --onav-search-text: #7b8581;
-  --onav-kbd-bg: rgb(255 255 255 / 0.7);
-  --onav-kbd-border: #dadfdc;
-  --onav-hover: rgb(255 255 255 / 0.55);
-  --onav-hover-2: rgb(255 255 255 / 0.75);
-  --onav-divider: rgb(20 20 20 / 0.14);
-  --onav-tree: #dadfdc;
+  --onav-bg: rgb(var(--solid-1) / 0.86);
+  --onav-blur: blur(20px) saturate(1.4);
+  --onav-border: rgb(var(--border-weak));
+  --onav-shadow: 0 12px 32px -18px rgb(0 0 0 / 0.18),
+    0 1px 2px rgb(0 0 0 / 0.04);
+  --onav-ring: rgb(var(--solid-1));
+  --onav-text: rgb(var(--slate-12));
+  --onav-text-2: rgb(var(--slate-12));
+  --onav-text-3: rgb(var(--slate-11));
+  --onav-muted: rgb(var(--slate-10));
+  --onav-muted-2: rgb(var(--slate-11));
+  --onav-icon: rgb(var(--slate-12));
+  --onav-box: rgb(var(--slate-3));
+  --onav-box-border: transparent;
+  --onav-ctl: rgb(var(--slate-3));
+  --onav-ctl-border: rgb(var(--border-weak));
+  --onav-ctl-text: rgb(var(--slate-11));
+  --onav-search-text: rgb(var(--slate-10));
+  --onav-kbd-bg: rgb(var(--solid-1));
+  --onav-kbd-border: rgb(var(--border-strong));
+  --onav-hover: rgb(var(--slate-3));
+  --onav-hover-2: rgb(var(--slate-4));
+  --onav-divider: rgb(var(--slate-6));
+  --onav-tree: rgb(var(--slate-5));
   --onav-sub-on-bg: rgb(0 102 59 / 0.08);
   --onav-sub-on-text: #00663b;
   --onav-sub-on-weight: 600;
-  --onav-card: rgb(255 255 255 / 0.42);
-  --onav-card-border: rgb(255 255 255 / 0.7);
-  --onav-chev: #6f7a76;
-  --onav-soft: rgb(255 255 255 / 0.7);
-  --onav-soft-text: #3a423f;
-  --onav-phone: rgb(144 235 84 / 0.16);
+  --onav-card: rgb(var(--slate-2));
+  --onav-card-border: rgb(var(--border-weak));
+  --onav-chev: rgb(var(--slate-10));
+  --onav-soft: rgb(var(--slate-4));
+  --onav-soft-text: rgb(var(--slate-11));
+  --onav-phone: rgb(144 235 84 / 0.14);
   --onav-phone-border: rgb(0 102 59 / 0.18);
   --onav-phone-ico: #00663b;
   --onav-phone-ico-ink: #fff;
-  --onav-phone-title: #141414;
+  --onav-phone-title: rgb(var(--slate-12));
   --onav-phone-sub: #2f7a2a;
   --onav-phone-btn: #00663b;
   --onav-phone-btn-ink: #fff;
   --onav-phone-halo: rgb(0 102 59 / 0.12);
-  --onav-fly: rgb(255 255 255 / 0.9);
-  --onav-fly-arrow: rgb(255 255 255 / 0.96);
-  --onav-fly-border: rgb(255 255 255 / 0.85);
-  --onav-fly-shadow: 0 18px 40px -14px rgb(0 40 20 / 0.28);
-  --onav-fly-blur: blur(22px) saturate(1.5);
-  color-scheme: light;
+  --onav-fly: rgb(var(--solid-1) / 0.97);
+  --onav-fly-arrow: rgb(var(--solid-1));
+  --onav-fly-border: rgb(var(--border-weak));
+  --onav-fly-shadow: 0 18px 40px -14px rgb(0 0 0 / 0.22);
+  --onav-fly-blur: blur(20px) saturate(1.4);
 }
 
-/* fundo atrás do vidro (a faixa do menu): manchas suaves da marca */
-.onav-shell.onav-theme-light {
-  background: radial-gradient(
-      60% 18% at 10% 8%,
-      rgb(144 235 84 / 0.55),
-      transparent 70%
-    ),
-    radial-gradient(70% 20% at 40% 45%, rgb(0 102 59 / 0.22), transparent 70%),
-    radial-gradient(60% 18% at 15% 90%, rgb(144 235 84 / 0.45), transparent 70%),
-    #eef1ef;
+.onav-theme-dark {
+  --onav-bg: rgb(var(--solid-1));
+  --onav-blur: none;
+  --onav-border: rgb(var(--border-strong));
+  --onav-shadow: 0 12px 32px -16px rgb(0 0 0 / 0.6);
+  --onav-ring: rgb(var(--solid-1));
+  --onav-text: rgb(var(--slate-12));
+  --onav-text-2: rgb(var(--slate-12));
+  --onav-text-3: rgb(var(--slate-11));
+  --onav-muted: rgb(var(--slate-10));
+  --onav-muted-2: rgb(var(--slate-11));
+  --onav-icon: rgb(var(--slate-12));
+  --onav-box: rgb(var(--slate-4));
+  --onav-box-border: transparent;
+  --onav-ctl: rgb(var(--slate-3));
+  --onav-ctl-border: rgb(var(--border-strong));
+  --onav-ctl-text: rgb(var(--slate-11));
+  --onav-search-text: rgb(var(--slate-10));
+  --onav-kbd-bg: transparent;
+  --onav-kbd-border: rgb(var(--border-strong));
+  --onav-hover: rgb(var(--slate-3));
+  --onav-hover-2: rgb(var(--slate-4));
+  --onav-divider: rgb(var(--slate-6));
+  --onav-tree: rgb(var(--slate-5));
+  --onav-sub-on-bg: rgb(144 235 84 / 0.1);
+  --onav-sub-on-text: #90eb54;
+  --onav-sub-on-weight: 600;
+  --onav-card: rgb(var(--slate-2));
+  --onav-card-border: rgb(var(--border-strong));
+  --onav-chev: rgb(var(--slate-10));
+  --onav-soft: rgb(var(--slate-4));
+  --onav-soft-text: rgb(var(--slate-11));
+  --onav-phone: rgb(144 235 84 / 0.09);
+  --onav-phone-border: rgb(144 235 84 / 0.28);
+  --onav-phone-ico: #90eb54;
+  --onav-phone-ico-ink: #0b3d24;
+  --onav-phone-title: rgb(var(--slate-12));
+  --onav-phone-sub: #a9e98a;
+  --onav-phone-btn: #90eb54;
+  --onav-phone-btn-ink: #0b3d24;
+  --onav-phone-halo: rgb(144 235 84 / 0.16);
+  --onav-fly: rgb(var(--solid-2));
+  --onav-fly-arrow: rgb(var(--solid-2));
+  --onav-fly-border: rgb(var(--border-strong));
+  --onav-fly-shadow: 0 18px 40px -10px rgb(0 0 0 / 0.6);
+  --onav-fly-blur: none;
 }
 
 /* ---------------------------------------------------------------- painel */
@@ -148,13 +117,9 @@
   font-size: 14px;
 }
 
-/* tablet: aberto por cima da conversa, o vidro fica mais firme para ler bem */
-.onav.onav--overlay.onav-theme-light {
-  --onav-bg: linear-gradient(
-    180deg,
-    rgb(255 255 255 / 0.9),
-    rgb(255 255 255 / 0.84)
-  );
+/* tablet: aberto por cima da conversa, o fundo fica firme para ler bem */
+.onav.onav--overlay {
+  --onav-bg: rgb(var(--solid-1) / 0.97);
 }
 
 .onav button,
@@ -233,6 +198,7 @@
   align-items: center;
   gap: 12px;
   min-width: 0;
+  max-width: 100%;
   padding: 2px;
   border-radius: 14px;
   text-align: start;
@@ -314,9 +280,14 @@
 }
 
 .onav-prof-txt {
+  flex: 1;
   display: flex;
   flex-direction: column;
   min-width: 0;
+}
+
+.onav--open .onav-prof {
+  width: 100%;
 }
 
 .onav-hi {
@@ -1134,6 +1105,11 @@
   overflow: hidden;
   border-radius: 7px;
   background: #00663b;
+  color: #fff;
+  font:
+    800 11px/1 Arvo,
+    Georgia,
+    serif;
 }
 
 .onav-mk img,

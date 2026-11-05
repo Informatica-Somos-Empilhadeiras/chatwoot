@@ -8,8 +8,8 @@
 //  - telefone em destaque (status, ramal e "Ligar");
 //  - busca e nova conversa;
 //  - seções com título (Atendimento, Vendas, Gestão e "Mais" para o que vier de novo, ver
-//    sections.js); um módulo aberto por vez, com a árvore das opções; Canais num bloco próprio logo
-//    depois de Conversas;
+//    sections.js); um módulo aberto por vez, com a árvore das opções; os Canais ficam dentro de
+//    Conversas (aparecem com ela aberta), no mesmo tamanho grande, com o logo de cada canal;
 //  - Configurações com os atalhos em ícones;
 //  - no rodapé, a empresa e o tema do menu.
 //
@@ -17,8 +17,8 @@
 // fica salva nas preferências da pessoa (a mesma do Chatwoot, sidebar_width). No tablet em pé ele
 // fica recolhido e o botão abre o menu por cima da tela, sem empurrar a conversa.
 //
-// Tema do menu (botão do rodapé, salvo em outsider_nav_theme): claro, em vidro, ou escuro, com o
-// brilho verde. Sem escolha, segue o tema do Chatwoot.
+// Tema: o menu acompanha o tema do Chatwoot (claro ou escuro) e o botão do rodapé troca o tema da
+// tela inteira, igual a "Alterar tema" do menu do perfil.
 import { computed, nextTick, provide, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useStore } from 'vuex';
@@ -28,9 +28,12 @@ import { vOnClickOutside } from '@vueuse/components';
 import { useKbd } from 'dashboard/composables/utils/useKbd';
 import { useUISettings } from 'dashboard/composables/useUISettings';
 import { useMapGetter } from 'dashboard/composables/store';
+import { LocalStorage } from 'shared/helpers/localStorage';
+import { LOCAL_STORAGE_KEYS } from 'dashboard/constants/localStorage';
+import { setColorTheme } from 'dashboard/helper/themeHelper';
+import { brandingState } from 'dashboard/routes/dashboard/outsider/branding/useAccountBranding';
 import { useSidebarContext } from 'dashboard/components-next/sidebar/provider';
 import ComposeConversation from 'dashboard/components-next/NewConversation/ComposeConversation.vue';
-import Logo from 'next/icon/Logo.vue';
 import NavProfile from './NavProfile.vue';
 import NavModule from './NavModule.vue';
 import NavChannels from './NavChannels.vue';
@@ -73,7 +76,7 @@ const { t } = useI18n();
 const route = useRoute();
 const store = useStore();
 const searchShortcut = useKbd(['$mod', 'k']);
-const { uiSettings, updateUISettings } = useUISettings();
+const { updateUISettings } = useUISettings();
 const { isAllowed, resolvePath, sidebarWidth } = useSidebarContext();
 const { width: windowWidth } = useWindowSize();
 const currentAccount = useMapGetter('getCurrentAccount');
@@ -177,31 +180,41 @@ const shellWidth = computed(
   () => (isTablet.value ? COLLAPSED_WIDTH : panelWidth.value) + GUTTER
 );
 
-// ---------- tema do menu ----------
-const appDark = ref(document.body.classList.contains('dark'));
+// ---------- tema (o do Chatwoot, para a tela inteira) ----------
+const isDark = ref(document.body.classList.contains('dark'));
 useMutationObserver(
   document.body,
   () => {
-    appDark.value = document.body.classList.contains('dark');
+    isDark.value = document.body.classList.contains('dark');
   },
   { attributes: true, attributeFilter: ['class'] }
 );
-const isDark = computed(() => {
-  const choice = uiSettings.value?.outsider_nav_theme;
-  if (choice === 'night') return true;
-  if (choice === 'light') return false;
-  return appDark.value;
-});
-// "dark" faz as peças do Chatwoot dentro do menu (nova conversa, menu do perfil) ficarem escuras
 const themeClass = computed(() =>
-  isDark.value ? 'onav-theme-dark dark' : 'onav-theme-light'
+  isDark.value ? 'onav-theme-dark' : 'onav-theme-light'
 );
 provide('outsiderNavThemeClass', themeClass);
+// mesmo caminho do "Alterar tema" do Chatwoot (useAppearanceHotKeys.js): fica salvo no navegador
 const toggleTheme = () => {
-  updateUISettings({ outsider_nav_theme: isDark.value ? 'light' : 'night' });
+  LocalStorage.set(
+    LOCAL_STORAGE_KEYS.COLOR_SCHEME,
+    isDark.value ? 'light' : 'dark'
+  );
+  setColorTheme(window.matchMedia('(prefers-color-scheme: dark)').matches);
 };
 const themeLabel = computed(() =>
   isDark.value ? t('OUTSIDER_NAV.THEME_LIGHT') : t('OUTSIDER_NAV.THEME_DARK')
+);
+
+// marca da empresa no rodapé: o logo da conta (Configurações > Aparência) ou a inicial do nome
+const logoFailed = ref(false);
+watch(
+  () => brandingState.logoUrl,
+  () => {
+    logoFailed.value = false;
+  }
+);
+const companyInitial = computed(() =>
+  (currentAccount.value?.name || '').trim().charAt(0).toUpperCase()
 );
 
 const clickOutsideOptions = {
@@ -212,7 +225,6 @@ const clickOutsideOptions = {
 <template>
   <div
     class="onav-shell relative h-full shrink-0 transition-[width] duration-200 ease-out"
-    :class="isDark ? '' : 'onav-theme-light'"
     :style="{ width: `${shellWidth}px` }"
     data-outsider-desktop-nav
   >
@@ -299,7 +311,11 @@ const clickOutsideOptions = {
                 @toggle="toggleModule(module.name)"
               />
               <NavChannels
-                v-if="module.name === CONVERSATION && channels"
+                v-if="
+                  module.name === CONVERSATION &&
+                  channels &&
+                  (collapsed || openModule === CONVERSATION)
+                "
                 :group="channels"
                 :collapsed="collapsed"
                 :active-item="activeItem"
@@ -332,7 +348,15 @@ const clickOutsideOptions = {
       <!-- ===== empresa e tema do menu ===== -->
       <footer class="onav-ft">
         <template v-if="!collapsed">
-          <span class="onav-mk"><Logo /></span>
+          <span class="onav-mk">
+            <img
+              v-if="brandingState.logoUrl && !logoFailed"
+              :src="brandingState.logoUrl"
+              alt=""
+              @error="logoFailed = true"
+            />
+            <template v-else>{{ companyInitial }}</template>
+          </span>
           <span class="flex-1 min-w-0 truncate">{{ currentAccount?.name }}</span>
         </template>
         <button
