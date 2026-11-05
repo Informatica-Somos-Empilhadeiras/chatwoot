@@ -21,6 +21,7 @@ import { reactive, watch } from 'vue';
 import VoiceAPI from 'dashboard/api/outsider/voice';
 import { frontendURL } from 'dashboard/helper/URLHelper';
 import { startTone, stopTone } from './ringtone';
+import { formatPhone } from './format';
 
 const ICE_SERVERS = [{ urls: 'stun:stun.l.google.com:19302' }];
 // a ligação sai com os endereços que o navegador achou até aqui (o endereço público vem do STUN)
@@ -44,9 +45,11 @@ const POPOUT_NAME = 'outsider-phone';
 const POPOUT_FEATURES = 'popup,width=400,height=760';
 // a janela própria espera um pouco a resposta das abas antes de tomar a linha (para não derrubar ligação)
 const POPOUT_HANDSHAKE = 400;
-// convite para sussurrar vale 2 minutos (o mesmo prazo do servidor)
+// convite para entrar na ligação vale 2 minutos (o mesmo prazo do servidor); toca por até 30 s
 const INVITE_VISIBLE = 120000;
-const WHISPER_HEADER = /^(supervisor|guest):(\d+)$/;
+const INVITE_RING = 30000;
+// quem entra pela central: "supervisor:<id>:whisper" ou "guest:<id>:open|whisper" (como foi convidado)
+const WHISPER_HEADER = /^(supervisor|guest):(\d+)(?::(open|whisper))?$/;
 export const MONITOR_PREFIX = { listen: '*80', whisper: '*81' };
 
 // status: off (sem telefone: telefonia ou ramal desligados), connecting, ready, offline (sem conexão com a
@@ -130,6 +133,8 @@ const legs = new Map();
 let mixer = null;
 let recorder = null;
 let inviteTimer = null;
+let inviteRingTimer = null;
+let inviteRinging = false;
 // supervisor que estava ouvindo e passou a sussurrar: a ligação nova sai assim que a de ouvir acaba
 let relaunch = null;
 
@@ -543,10 +548,11 @@ const setupLeg = (id, current) => {
   current.on('failed', event => endLeg(id, endReason(event)));
 };
 
-// alguém entrando para sussurrar na ligação em andamento: o telefone atende sozinho (a central só manda depois de
-// conferir que é o supervisor do atendente ou um colega convidado por ele)
+// alguém entrando na ligação em andamento: o telefone atende sozinho (a central só manda depois de conferir que é
+// o supervisor do atendente ou um colega convidado por ele). Supervisor entra sussurrando; o colega, falando com o
+// cliente (open) ou só com o atendente (whisper), como foi convidado
 const acceptWhisper = (current, request, header) => {
-  const [, kind, userId] = header.match(WHISPER_HEADER);
+  const [, kind, userId, start] = header.match(WHISPER_HEADER);
   const id = nextId;
   nextId += 1;
   phone.call.whispers.push({
@@ -555,7 +561,7 @@ const acceptWhisper = (current, request, header) => {
     userId: Number(userId),
     name: request.from.display_name || request.from.uri.user || '',
     state: 'ringing',
-    mode: 'whisper',
+    mode: kind === 'guest' && start === 'open' ? 'open' : 'whisper',
     request: false,
     answeredAt: null,
     endReason: '',
@@ -565,12 +571,16 @@ const acceptWhisper = (current, request, header) => {
     mediaConstraints: MEDIA,
     pcConfig: { iceServers: ICE_SERVERS },
   });
-  notify(kind === 'supervisor' ? 'SUPERVISOR_JOINED' : 'GUEST_JOINED', {
-    name: request.from.display_name || '',
-  });
+  let notice = 'GUEST_JOINED';
+  if (kind === 'supervisor') notice = 'SUPERVISOR_JOINED';
+  else if (start === 'open') notice = 'GUEST_JOINED_OPEN';
+  notify(notice, { name: request.from.display_name || '' });
 };
 
 const onSession = ({ session: current, originator, request }) => {
+  // ligação nova: o toque passa a ser dela (o do convite não pode mais parar o som dela)
+  clearTimeout(inviteRingTimer);
+  inviteRinging = false;
   if (originator === 'local') {
     const target = outgoing;
     outgoing = null;
@@ -638,6 +648,8 @@ const onSession = ({ session: current, originator, request }) => {
 const disconnect = () => {
   generation += 1;
   relaunch = null;
+  inviteRinging = false;
+  clearTimeout(inviteRingTimer);
   stopTone();
   const sessions = [...legs.values()].map(leg => leg.session);
   legs.clear();
@@ -950,7 +962,7 @@ export const monitorCall = (target, mode) => {
       userId: target.userId,
       name: target.name || '',
       customer: target.customer || '',
-      open: false,
+      open: !!target.open,
       pending: false,
     },
   };
@@ -1010,21 +1022,36 @@ export const setWhisperMode = (id, mode, approved = true) => {
   return null;
 };
 
-// atendente convida um colega (com ramal) para sussurrar nesta ligação
-export const inviteToWhisper = async person => {
+// atendente convida um colega (com ramal) para esta ligação: mode open (fala com o cliente junto) ou whisper (só
+// com o atendente; para o cliente ouvir, o atendente permite depois)
+export const inviteToCall = async (person, mode = 'open') => {
   if (phone.call?.state !== 'active' || phone.call.monitor) return;
-  const customer = phone.call.lookup?.contact?.name || phone.call.number;
-  if (await signal('invite', person.id, { customer })) {
+  const customer =
+    phone.call.lookup?.contact?.name || formatPhone(phone.call.number);
+  if (await signal('invite', person.id, { customer, mode })) {
     notify('INVITE_SENT', { name: person.name });
   }
+};
+
+const stopInviteRing = () => {
+  clearTimeout(inviteRingTimer);
+  if (inviteRinging) stopTone();
+  inviteRinging = false;
+};
+
+const clearInvite = () => {
+  phone.invite = null;
+  clearTimeout(inviteTimer);
+  stopInviteRing();
 };
 
 export const acceptInvite = () => {
   const invite = phone.invite;
   if (!invite) return null;
   if (!phone.holder) return remote('acceptInvite');
-  phone.invite = null;
-  clearTimeout(inviteTimer);
+  const blocked = canDial();
+  if (blocked) return blocked;
+  clearInvite();
   return monitorCall(
     {
       extension: invite.extension,
@@ -1032,6 +1059,7 @@ export const acceptInvite = () => {
       name: invite.name,
       customer: invite.customer,
       kind: 'guest',
+      open: invite.mode === 'open',
     },
     'whisper'
   );
@@ -1041,8 +1069,7 @@ export const declineInvite = () => {
   const invite = phone.invite;
   if (!invite) return null;
   if (!phone.holder) return remote('declineInvite');
-  phone.invite = null;
-  clearTimeout(inviteTimer);
+  clearInvite();
   signal('invite_declined', invite.userId);
   return null;
 };
@@ -1055,17 +1082,22 @@ export const handleSignal = data => {
     item => item.userId === from.id && item.state !== 'ended'
   );
   if (data.type === 'invite') {
+    clearInvite();
     phone.invite = {
       userId: from.id,
       name: from.name,
       extension: data.extension,
       customer: data.customer,
+      mode: data.mode === 'whisper' ? 'whisper' : 'open',
       at: Date.now(),
     };
-    clearTimeout(inviteTimer);
-    inviteTimer = setTimeout(() => {
-      phone.invite = null;
-    }, INVITE_VISIBLE);
+    inviteTimer = setTimeout(clearInvite, INVITE_VISIBLE);
+    // toca como ligação chegando, menos se a pessoa já estiver numa ligação
+    if (!phone.call || phone.call.state === 'ended') {
+      inviteRinging = true;
+      startTone('incoming');
+      inviteRingTimer = setTimeout(stopInviteRing, INVITE_RING);
+    }
   } else if (data.type === 'invite_declined') {
     notify('INVITE_DECLINED', { name: from.name });
   } else if (data.type === 'apply_mode' && whisper) {

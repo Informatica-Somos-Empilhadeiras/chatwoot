@@ -4,8 +4,9 @@
 // pode ir para outro monitor. Sem ligação: teclado grande e a equipe. Na ligação: quem é, tempo, barras da
 // voz e os botões grandes em grade (espera, mudo, incluir na conferência, transferir, teclado e gravar), com
 // o Encerrar vermelho embaixo. Na conferência, a lista de quem está na conversa, com o botão de tirar.
-// Entrega 26: o cliente da ligação (URA, cadastro e negócio vinculado, em CallContext), quem está sussurrando
-// (WhisperList), convidar um colega para sussurrar (na tela de incluir) e a monitoria (MonitorView).
+// Entrega 26: o cliente da ligação (URA, cadastro e negócio vinculado, em CallContext), quem está sussurrando ou foi
+// convidado (WhisperList), "Convidar agente" (o colega recebe o convite e entra falando com o cliente ou só com o
+// atendente) e a monitoria (MonitorView).
 import { ref, computed, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useEventListener } from '@vueuse/core';
@@ -45,7 +46,7 @@ import {
   useThisTab,
   openPopout,
   showPopout,
-  inviteToWhisper,
+  inviteToCall,
 } from './phone';
 
 const props = defineProps({
@@ -84,8 +85,8 @@ const number = ref('');
 const mode = ref('');
 const target = ref('');
 const streams = ref({});
-// na tela de incluir: incluir na conversa ou convidar para sussurrar (só os atendentes ouvem)
-const inviteMode = ref(false);
+// convidar agente: entra falando com o cliente (open) ou só com o atendente (whisper)
+const inviteKind = ref('open');
 
 const inCall = computed(() =>
   ['ringing', 'dialing', 'active'].includes(call.value?.state)
@@ -147,11 +148,11 @@ const pressKey = digit => {
 const openMode = value => {
   mode.value = mode.value === value ? '' : value;
   target.value = '';
-  inviteMode.value = false;
+  inviteKind.value = 'open';
 };
 
 const invite = (_extension, person) => {
-  inviteToWhisper(person);
+  inviteToCall(person, inviteKind.value);
   mode.value = '';
 };
 
@@ -606,41 +607,43 @@ useEventListener(window, 'keydown', event => {
                 @click="mode = ''"
               />
             </div>
-            <div
-              v-if="mode === 'conference'"
-              class="grid grid-cols-2 gap-1 p-1 rounded-xl bg-n-alpha-1"
-            >
-              <button
-                v-for="option in [false, true]"
-                :key="String(option)"
-                type="button"
-                class="flex items-center justify-center gap-1.5 py-1.5 text-xs rounded-lg"
-                :class="
-                  inviteMode === option
-                    ? 'bg-n-solid-3 text-n-slate-12 font-medium shadow-sm'
-                    : 'text-n-slate-11 hover:text-n-slate-12'
-                "
-                :data-testid="`outsider-conference-${option ? 'whisper' : 'join'}`"
-                @click="inviteMode = option"
-              >
-                <Icon
-                  :icon="option ? 'i-lucide-ear' : 'i-lucide-user-plus'"
-                  class="size-3.5"
-                />
-                {{
-                  option
-                    ? t('OUTSIDER_VOICE.WHISPER.INVITE')
-                    : t('OUTSIDER_VOICE.CALL.CONFERENCE')
-                }}
-              </button>
-            </div>
             <PhoneKeypad v-if="mode === 'keypad'" @press="sendDigit" />
-            <template v-else-if="mode === 'conference' && inviteMode">
+            <!-- convidar agente: o colega recebe o convite com o nome do cliente -->
+            <template v-else-if="mode === 'invite'">
+              <div class="grid grid-cols-2 gap-1 p-1 rounded-xl bg-n-alpha-1">
+                <button
+                  v-for="kind in ['open', 'whisper']"
+                  :key="kind"
+                  type="button"
+                  class="flex items-center justify-center gap-1.5 py-1.5 text-xs rounded-lg"
+                  :class="
+                    inviteKind === kind
+                      ? 'bg-n-solid-3 text-n-slate-12 font-medium shadow-sm'
+                      : 'text-n-slate-11 hover:text-n-slate-12'
+                  "
+                  :data-testid="`outsider-invite-${kind}`"
+                  @click="inviteKind = kind"
+                >
+                  <Icon
+                    :icon="kind === 'open' ? 'i-lucide-users' : 'i-lucide-ear'"
+                    class="size-3.5"
+                  />
+                  {{
+                    kind === 'open'
+                      ? t('OUTSIDER_VOICE.WHISPER.INVITE_MODES.OPEN')
+                      : t('OUTSIDER_VOICE.WHISPER.INVITE_MODES.WHISPER')
+                  }}
+                </button>
+              </div>
               <span class="text-xs text-n-slate-11">
-                {{ t('OUTSIDER_VOICE.WHISPER.INVITE_HINT') }}
+                {{
+                  inviteKind === 'open'
+                    ? t('OUTSIDER_VOICE.WHISPER.INVITE_HINTS.OPEN')
+                    : t('OUTSIDER_VOICE.WHISPER.INVITE_HINTS.WHISPER')
+                }}
               </span>
               <TeamList
-                icon="i-lucide-ear"
+                :icon="inviteKind === 'open' ? 'i-lucide-send' : 'i-lucide-ear'"
                 :exclude="[call.number, ...guests.map(guest => guest.number)]"
                 @pick="invite"
               />
@@ -695,6 +698,18 @@ useEventListener(window, 'keydown', event => {
               />
             </template>
           </div>
+
+          <Button
+            v-if="!mode && !monitoring"
+            slate
+            faded
+            icon="i-lucide-user-round-plus"
+            :label="t('OUTSIDER_VOICE.CALL.INVITE_AGENT')"
+            :disabled="!active"
+            class="w-full"
+            data-testid="outsider-call-invite"
+            @click="openMode('invite')"
+          />
 
           <button
             type="button"

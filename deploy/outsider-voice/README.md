@@ -135,8 +135,10 @@ escolhido em Telefonia > Configurações (Brasília se ninguém mudar).
 
 ## 7. URA, escuta do supervisor e sussurro (Entrega 26)
 
-Esta entrega muda a central: **recrie o contêiner** para ela ganhar o `ffmpeg` (áudios da URA) e o `espeak-ng`
-(voz sintética):
+O plano de discagem (escuta, sussurro, convite e URA) vem do Chatwoot junto com a configuração, a cada 30 s: basta
+atualizar o Chatwoot. Só a **URA** precisa do contêiner recriado, para a central ganhar o `ffmpeg` (áudios da URA) e
+o `espeak-ng` (voz sintética). Enquanto a central não for recriada, Telefonia > Configurações mostra o aviso e as
+ligações tocam direto para os vendedores, mesmo com URA ligada:
 
 ```bash
 docker compose up -d --build central
@@ -156,6 +158,9 @@ docker compose up -d --build central
   ninguém percebe (sem bipe). Sussurrando, só os atendentes ouvem; o supervisor abre a conversa para o cliente quando
   quiser. O atendente também pode convidar um colega para sussurrar (na tela de incluir na conferência); para o cliente
   ouvir o colega, o atendente precisa permitir.
+- **Convidar agente**: na ligação, o botão "Convidar agente para a ligação" chama um colega com ramal. Ele recebe o
+  convite (com toque e o nome do cliente) e entra falando com o cliente junto, ou só com o atendente (sussurro), como
+  o atendente escolheu.
 - **Negócio da ligação**: ligar pelo negócio (painel ou cartão do Kanban) já vincula a ligação a ele; durante ou
   depois da ligação dá para trocar o negócio pelo telefone ou em Telefonia > Ligações. As gravações ficam na aba
   Ligações do negócio.
@@ -171,6 +176,7 @@ docker compose up -d --build central
 | "A operadora recusou o usuário ou a senha" | Confira usuário, usuário de autenticação e senha com a operadora. |
 | Ligação da operadora não chega | Libere o IP da operadora na porta 5060 e confira os IPs em Telefonia > Configurações. |
 | URA muda (sem fala) | Confira no log "áudio da URA ... pronto". Sem `ffmpeg`/`espeak-ng`, recrie o contêiner (passo 7). |
+| Ouvir/sussurrar mostra "Número não permitido ou linha indisponível" | A central ainda está com o plano de discagem antigo: atualize o Chatwoot e espere 30 s (ela busca o plano novo sozinha). |
 | Ouvir/sussurrar não conecta | Só funciona com o atendente em ligação atendida e para o gestor da unidade dele ou o administrador. |
 
 Comandos úteis dentro da central:

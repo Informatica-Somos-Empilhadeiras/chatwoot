@@ -2,6 +2,7 @@
 // OUTSIDER: Telefonia > Configurações (Entrega 22; ver app/services/outsider/voice/settings.rb). Os dados que a
 // operadora manda (colados no quadro de texto ou digitados), os números por estado, os ramais e as regras de
 // toque. Mostra também se a central está conectada, registrada na operadora e quais ramais estão online.
+// Entrega 26: avisa quando a central precisa ser recriada para a URA falar.
 // Entrega 25: a mesma tela mostra também as partes Gravações, Custos e Filiais (prop part), cada uma no seu
 // item do menu, e salva tudo junto como antes.
 import { ref, computed, onMounted } from 'vue';
@@ -55,6 +56,8 @@ const decimal = value => {
 
 const form = ref(null);
 const status = ref({});
+// comando para recriar a central no servidor (Entrega 26), mostrado no aviso de central desatualizada
+const REBUILD_COMMAND = 'docker compose up -d --build central';
 const install = ref({});
 const people = ref([]);
 const password = ref('');
@@ -350,6 +353,18 @@ onMounted(load);
                     })
                   : t('OUTSIDER_VOICE.SETTINGS.STATUS.NO_EXTENSIONS')
               }}
+            </span>
+          </li>
+          <!-- Entrega 26: central sem os programas de áudio da URA (contêiner não recriado) -->
+          <li
+            v-if="status.online && (status.outdated || !status.audio)"
+            class="flex items-start gap-2 px-2 py-1.5 -mx-2 rounded-lg bg-n-amber-3 text-n-amber-11"
+            data-testid="voice-central-outdated"
+          >
+            <span class="rounded-full size-2 shrink-0 mt-1.5 bg-n-amber-9" />
+            <span class="flex flex-col gap-0.5">
+              <span>{{ t('OUTSIDER_VOICE.SETTINGS.STATUS.OUTDATED') }}</span>
+              <code class="text-xs">{{ REBUILD_COMMAND }}</code>
             </span>
           </li>
           <li class="flex items-center gap-2">

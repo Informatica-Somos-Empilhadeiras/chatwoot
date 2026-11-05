@@ -38,13 +38,19 @@ sync_file() {
   return 0
 }
 
+# versão desta central (Outsider::Voice::CentralStatus::CURRENT_VERSION) e se ela fala os áudios da URA
+VERSION=26
+AUDIO=no
+command -v ffmpeg >/dev/null && command -v espeak-ng >/dev/null && AUDIO=yes
+
 report() {
   local registration extensions
   registration=$("$ASTERISK" -rx "pjsip show registrations" 2>/dev/null | grep -oE 'Registered|Unregistered|Rejected|Stopped|Retrying' | head -1)
   extensions=$("$ASTERISK" -rx "pjsip show contacts" 2>/dev/null \
     | awk '$1 == "Contact:" && $2 ~ /^[1-5][0-9][0-9]\// && $4 != "Unavail" { split($2, aor, "/"); print aor[1] }' | sort -u | paste -sd, -)
   curl -fsS --max-time 10 -H "X-Voice-Token: ${VOICE_TOKEN}" --data-urlencode "registration=${registration}" \
-    --data-urlencode "extensions=${extensions}" "${VOICE_URL}/status" >/dev/null || log "não consegui avisar o Chatwoot"
+    --data-urlencode "extensions=${extensions}" --data-urlencode "version=${VERSION}" --data-urlencode "audio=${AUDIO}" \
+    "${VOICE_URL}/status" >/dev/null || log "não consegui avisar o Chatwoot"
 }
 
 # áudios das URAs: uma linha "nome|audio" ou "nome|tts|texto em base64" por áudio (Outsider::Voice::IvrPrompts).

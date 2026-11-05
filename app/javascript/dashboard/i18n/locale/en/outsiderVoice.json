@@ -107,14 +107,16 @@
       "MODES": {
         "KEYPAD": "Keypad",
         "TRANSFER": "Transfer",
-        "CONFERENCE": "Add to conference"
+        "CONFERENCE": "Add to conference",
+        "INVITE": "Invite an agent"
       },
       "OPEN_CONTACT": "Open contact",
       "CREATE_CONTACT": "Add contact",
       "CONTACT_NAME": "Customer name",
       "SAVE_CONTACT": "Save",
       "CONTACT_CREATED": "Contact created and linked to this call.",
-      "CONTACT_FAILED": "Could not create the contact. Check the name and number."
+      "CONTACT_FAILED": "Could not create the contact. Check the name and number.",
+      "INVITE_AGENT": "Invite an agent to the call"
     },
     "CLICK_TO_CALL": "Call with the CRM phone",
     "HEADER_CALL": {
@@ -146,7 +148,8 @@
         "NO_EXTENSIONS": "No extension connected now",
         "TOKEN_OK": "PBX token set on the server",
         "TOKEN_MISSING": "OUTSIDER_VOICE_TOKEN is missing in the server .env (see the installation guide)",
-        "CENTRAL_URL": "PBX VOICE_URL (same server):"
+        "CENTRAL_URL": "PBX VOICE_URL (same server):",
+        "OUTDATED": "The phone server is running an old container. Listening, whispering and invites already work; for the IVR to speak, rebuild the phone server on the host:"
       },
       "PASTE": {
         "TITLE": "Operator data",
@@ -541,7 +544,8 @@
       "INVITE_DECLINED": "{name} declined the whisper invite.",
       "WHISPER_REQUEST": "{name} wants to talk to the customer. Allow it on the phone.",
       "WHISPER_REFUSED": "The agent did not allow talking to the customer.",
-      "SIGNAL_FAILED": "Could not reach the other phone. Try again."
+      "SIGNAL_FAILED": "Could not reach the other phone. Try again.",
+      "GUEST_JOINED_OPEN": "{name} joined the call: the customer hears them too."
     },
     "KINDS": {
       "LOCAL_FIXED": "Landline, same area code",
@@ -595,8 +599,14 @@
       "REQUEST": "{name} wants to talk to the customer.",
       "ALLOW": "Allow",
       "DENY": "Deny",
-      "INVITE": "Invite to whisper",
-      "INVITE_HINT": "Your colleague hears the call and talks only to you; the customer does not hear. You must allow it for the customer to hear."
+      "INVITE_MODES": {
+        "OPEN": "Talk to the customer",
+        "WHISPER": "Only with me (whisper)"
+      },
+      "INVITE_HINTS": {
+        "OPEN": "Your colleague gets an invite with the customer's name and, once in, talks with you and the customer.",
+        "WHISPER": "Your colleague hears the call and talks only to you; the customer does not hear. You can let the customer hear later."
+      }
     },
     "MONITOR": {
       "LISTENING": "Listening silently",
@@ -615,10 +625,12 @@
       "WHISPER_TITLE": "Join whispering (only the agent hears)"
     },
     "INVITE": {
-      "TITLE": "Whisper invite",
+      "TITLE": "Invite to join the call",
       "BODY": "{name} invited you to listen and whisper on the call with {customer}.",
       "JOIN": "Join",
-      "DECLINE": "Decline"
+      "DECLINE": "Decline",
+      "BODY_OPEN": "{name} invited you to join the call with {customer} and talk with the customer too.",
+      "NOTIFICATION": "{name} invited you to a call"
     },
     "DEAL_CALLS": {
       "TAB": "Calls",
@@ -773,7 +785,8 @@
         "BLOCKS": "{count} blocks",
         "EDIT": "Edit",
         "DELETE": "Delete IVR",
-        "DELETE_CONFIRM": "Delete the IVR {name}? Calls will ring the sales team directly again."
+        "DELETE_CONFIRM": "Delete the IVR {name}? Calls will ring the sales team directly again.",
+        "CENTRAL_OUTDATED": "The phone server is not ready for the IVR yet: rebuild its container on the host (docker compose up -d --build central). Until then, calls ring the sales team directly."
       }
     }
   }

@@ -29,6 +29,7 @@ RSpec.describe Outsider::Voice::IvrRunner do
   before do
     settings.update('enabled' => true, 'numbers' => [{ 'number' => '6232345678', 'state' => 'GO' }],
                     'agents' => { seller.id.to_s => { 'extension' => '201', 'state' => 'GO', 'enabled' => true } })
+    Outsider::Voice::CentralStatus.new(account).report(registration: 'Registered', extensions: ['201'], version: 26, audio: true)
   end
 
   def step(node = nil, input: nil, dialstatus: nil)

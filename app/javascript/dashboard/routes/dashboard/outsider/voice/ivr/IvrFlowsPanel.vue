@@ -103,6 +103,17 @@ onMounted(load);
         <p class="mb-0 text-sm text-n-slate-11">
           {{ t('OUTSIDER_VOICE.IVR.LIST.DESCRIPTION') }}
         </p>
+        <p
+          v-if="!isLoading && !options.central_ready"
+          class="flex items-start gap-1.5 px-2 py-1.5 mb-0 text-xs rounded-lg bg-n-amber-3 text-n-amber-11"
+          data-testid="ivr-central-outdated"
+        >
+          <Icon
+            icon="i-lucide-triangle-alert"
+            class="size-3.5 shrink-0 mt-px"
+          />
+          {{ t('OUTSIDER_VOICE.IVR.LIST.CENTRAL_OUTDATED') }}
+        </p>
         <p class="flex items-center gap-1.5 mb-0 text-xs text-n-slate-11">
           <Icon icon="i-lucide-audio-lines" class="size-3.5" />
           {{

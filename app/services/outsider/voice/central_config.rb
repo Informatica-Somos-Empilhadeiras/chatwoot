@@ -1,9 +1,12 @@
 # OUTSIDER: a configuração que a central (Asterisk) busca no Chatwoot a cada 30 s (Entrega 22). pjsip é a
-# parte que muda com a tela de Configurações: operadora, ramais e endereços; extensions traz só as variáveis
-# do plano de discagem (a lógica fica fixa em deploy/outsider-voice/asterisk/extensions.conf).
+# parte que muda com a tela de Configurações: operadora, ramais e endereços; extensions traz as variáveis e,
+# desde a Entrega 26, o plano de discagem inteiro (lib/outsider/voice/dialplan.conf): mudança no plano chega à
+# central sem recriar o contêiner. No contêiner antigo o arquivo gerado é lido antes do plano fixo e vale no lugar
+# dele (o Asterisk fica com a primeira definição de cada ramal).
 class Outsider::Voice::CentralConfig
   TRUNK = 'operadora'.freeze
   PRIVATE_NETS = %w[10.0.0.0/8 172.16.0.0/12 192.168.0.0/16].freeze
+  DIALPLAN = Rails.root.join('lib/outsider/voice/dialplan.conf')
 
   def initialize(settings)
     @settings = settings
@@ -17,7 +20,7 @@ class Outsider::Voice::CentralConfig
 
   def extensions
     agents = @settings.enabled_agents.values.map { |agent| "PJSIP/#{agent['extension']}" }
-    [header, '[globals]', "ALL_AGENTS=#{agents.join('&')}", "RING_SECONDS=#{@settings.data['ring_seconds']}", ''].join("\n")
+    [header, '[globals]', "ALL_AGENTS=#{agents.join('&')}", "RING_SECONDS=#{@settings.data['ring_seconds']}", '', DIALPLAN.read].join("\n")
   end
 
   private

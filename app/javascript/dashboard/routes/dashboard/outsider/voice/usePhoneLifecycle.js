@@ -60,6 +60,30 @@ export const usePhoneLifecycle = ({ popout = false } = {}) => {
     }
   );
 
+  // convite de colega para entrar na ligação dele, com a aba escondida: aviso do navegador
+  watch(
+    () => phone.invite?.at,
+    () => {
+      const { invite } = phone;
+      if (
+        !invite ||
+        !document.hidden ||
+        !('Notification' in window) ||
+        Notification.permission !== 'granted'
+      ) {
+        return;
+      }
+      const alert = new Notification(
+        t('OUTSIDER_VOICE.INVITE.NOTIFICATION', { name: invite.name }),
+        { body: invite.customer, tag: 'outsider-invite' }
+      );
+      alert.onclick = () => {
+        window.focus();
+        alert.close();
+      };
+    }
+  );
+
   // avisos do telefone (a gravação vai para a ligação no fim dela)
   watch(
     () => phone.notice?.at,

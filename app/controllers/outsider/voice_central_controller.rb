@@ -81,7 +81,8 @@ class Outsider::VoiceCentralController < ActionController::API
 
   def status
     Outsider::Voice::CentralStatus.new(@settings.account)
-                                  .report(registration: params[:registration].to_s.first(40), extensions: params[:extensions].to_s.split(','))
+                                  .report(registration: params[:registration].to_s.first(40), extensions: params[:extensions].to_s.split(','),
+                                          version: params[:version].to_i.nonzero?, audio: params[:audio] == 'yes')
     render plain: ''
   end
 

@@ -30,7 +30,7 @@ RSpec.describe 'Outsider voice central: monitoring and IVR', type: :request do
 
   it 'lets the unit manager listen and whisper, and records every monitoring until it ends' do
     expect(monitor('202', '201', 'listen')).to eq('ok')
-    expect(monitor('202', '201', 'whisper')).to eq("supervisor:#{manager.id}")
+    expect(monitor('202', '201', 'whisper')).to eq("supervisor:#{manager.id}:whisper")
 
     records = Outsider::Voice::Monitor.where(account_id: account.id)
     expect(records.pluck(:user_id, :target_user_id, :mode, :kind)).to contain_exactly(
@@ -45,11 +45,37 @@ RSpec.describe 'Outsider voice central: monitoring and IVR', type: :request do
     expect(monitor('201', '202', 'listen')).to eq('')
     expect(monitor('203', '201', 'whisper')).to eq('')
 
-    Outsider::Voice::Signals.new(Outsider::Voice::Settings.new(account), agent).deliver(type: 'invite', to_user_id: colleague.id,
-                                                                                        data: { customer: 'Cliente' })
+    signals = Outsider::Voice::Signals.new(Outsider::Voice::Settings.new(account), agent)
+    signals.deliver(type: 'invite', to_user_id: colleague.id, data: { customer: 'Cliente' })
     expect(monitor('203', '201', 'listen')).to eq('')
-    expect(monitor('203', '201', 'whisper', linkedid: 'G1')).to eq("guest:#{colleague.id}")
+    expect(monitor('203', '201', 'whisper', linkedid: 'G1')).to eq("guest:#{colleague.id}:open")
+    expect(Outsider::Voice::Monitor.find_by!(linkedid: 'G1').opened_at).to be_present
     expect(monitor('203', '201', 'whisper', linkedid: 'G2')).to eq('')
+  end
+
+  it 'lets the invited colleague join only talking to the agent when invited to whisper' do
+    Outsider::Voice::Signals.new(Outsider::Voice::Settings.new(account), agent)
+                            .deliver(type: 'invite', to_user_id: colleague.id, data: { customer: 'Cliente', mode: 'whisper' })
+
+    expect(monitor('203', '201', 'whisper', linkedid: 'G3')).to eq("guest:#{colleague.id}:whisper")
+    expect(Outsider::Voice::Monitor.find_by!(linkedid: 'G3').opened_at).to be_nil
+  end
+
+  it 'gives the central the whole dialplan, so a new one needs no container rebuild' do
+    get "#{base}/extensions", headers: headers
+    expect(response.body).to include('ALL_AGENTS=PJSIP/201&PJSIP/202&PJSIP/203', '[from-agents]', 'exten => _*80[1-5]XX',
+                                     'exten => _*81[1-5]XX', '[outsider-ivr]', '(whisper|open)')
+  end
+
+  it 'rings the sales team instead of the IVR while the central has no audio programs' do
+    Outsider::Voice::IvrFlow.create!(account: account, name: 'URA', active: true, graph: {})
+    post "#{base}/status", params: { registration: 'Registered', extensions: '201' }, headers: headers
+    post "#{base}/inbound", params: { linkedid: 'OLD1', did: '6232345678', from: '62999998888' }, headers: headers
+    expect(response.body).to start_with('20|')
+
+    post "#{base}/status", params: { registration: 'Registered', extensions: '201', version: '26', audio: 'yes' }, headers: headers
+    post "#{base}/inbound", params: { linkedid: 'NEW1', did: '6232345678', from: '62999998888' }, headers: headers
+    expect(response.body).to eq('ivr')
   end
 
   it 'answers the IVR steps, the audio list and keeps the voicemail on the call' do
@@ -59,6 +85,7 @@ RSpec.describe 'Outsider voice central: monitoring and IVR', type: :request do
                            { 'id' => 'vm', 'type' => 'voicemail', 'data' => { 'prompt' => { 'text' => 'Deixe o recado' } } }],
                'edges' => [{ 'from' => 'start', 'port' => 'next', 'to' => 'vm' }] }
     )
+    Outsider::Voice::CentralStatus.new(account).report(registration: 'Registered', extensions: [], version: 26, audio: true)
     post "#{base}/inbound", params: { linkedid: 'IN1', did: '6232345678', from: '62999998888' }, headers: headers
     expect(response.body).to eq('ivr')
 

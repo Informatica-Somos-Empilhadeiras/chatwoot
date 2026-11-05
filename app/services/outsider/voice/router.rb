@@ -23,7 +23,7 @@ class Outsider::Voice::Router
     contact = PhoneNumber.find_contact(@account, from)
     deal = open_deal(contact)
     did_number = number&.dig('number') || PhoneNumber.digits(did)
-    flow = Outsider::Voice::IvrFlow.for_number(@account, did_number)
+    flow = ivr_flow(did_number)
     create_call(linkedid, direction: :inbound, from_number: customer_number(from),
                           to_number: number&.dig('number'), did: did_number, state_code: number&.dig('state'), contact: contact,
                           opportunity: deal, ivr_flow: flow, ivr_data: flow ? { 'flow' => flow.name } : {})
@@ -82,6 +82,11 @@ class Outsider::Voice::Router
 
   def create_call(linkedid, **attributes)
     Outsider::Voice::Call.create_with(account: @account, started_at: Time.current, **attributes).find_or_create_by!(linkedid: linkedid)
+  end
+
+  # URA só com a central pronta para os áudios dela; central antiga toca para os vendedores como antes
+  def ivr_flow(did_number)
+    Outsider::Voice::IvrFlow.for_number(@account, did_number) if Outsider::Voice::CentralStatus.new(@account).ivr_ready?
   end
 
   def chosen_deal(user_id, id)

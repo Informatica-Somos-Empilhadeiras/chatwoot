@@ -107,14 +107,16 @@
       "MODES": {
         "KEYPAD": "Teclado",
         "TRANSFER": "Transferir",
-        "CONFERENCE": "Incluir na conferência"
+        "CONFERENCE": "Incluir na conferência",
+        "INVITE": "Convidar agente"
       },
       "OPEN_CONTACT": "Abrir cadastro",
       "CREATE_CONTACT": "Cadastrar cliente",
       "CONTACT_NAME": "Nome do cliente",
       "SAVE_CONTACT": "Salvar",
       "CONTACT_CREATED": "Cliente cadastrado e ligado a esta ligação.",
-      "CONTACT_FAILED": "Não deu para cadastrar o cliente. Confira o nome e o número."
+      "CONTACT_FAILED": "Não deu para cadastrar o cliente. Confira o nome e o número.",
+      "INVITE_AGENT": "Convidar agente para a ligação"
     },
     "CLICK_TO_CALL": "Ligar pelo telefone do CRM",
     "HEADER_CALL": {
@@ -146,7 +148,8 @@
         "NO_EXTENSIONS": "Nenhum ramal conectado agora",
         "TOKEN_OK": "Token da central configurado no servidor",
         "TOKEN_MISSING": "Falta o OUTSIDER_VOICE_TOKEN no .env do servidor (veja o guia de instalação)",
-        "CENTRAL_URL": "VOICE_URL da central (no mesmo servidor):"
+        "CENTRAL_URL": "VOICE_URL da central (no mesmo servidor):",
+        "OUTDATED": "A central está com a versão antiga do contêiner. Escuta, sussurro e convite já funcionam; para a URA falar, recrie a central no servidor:"
       },
       "PASTE": {
         "TITLE": "Dados da operadora",
@@ -541,7 +544,8 @@
       "INVITE_DECLINED": "{name} recusou o convite para sussurrar.",
       "WHISPER_REQUEST": "{name} quer falar com o cliente. Permita no telefone.",
       "WHISPER_REFUSED": "O atendente não permitiu falar com o cliente.",
-      "SIGNAL_FAILED": "Não deu para avisar o outro telefone. Tente de novo."
+      "SIGNAL_FAILED": "Não deu para avisar o outro telefone. Tente de novo.",
+      "GUEST_JOINED_OPEN": "{name} entrou na ligação: o cliente também ouve."
     },
     "KINDS": {
       "LOCAL_FIXED": "Fixo do mesmo DDD",
@@ -595,8 +599,14 @@
       "REQUEST": "{name} quer falar com o cliente.",
       "ALLOW": "Permitir",
       "DENY": "Recusar",
-      "INVITE": "Convidar para sussurrar",
-      "INVITE_HINT": "O colega ouve a ligação e fala só com você; o cliente não ouve. Para o cliente ouvir, você precisa permitir."
+      "INVITE_MODES": {
+        "OPEN": "Falar com o cliente",
+        "WHISPER": "Só comigo (sussurro)"
+      },
+      "INVITE_HINTS": {
+        "OPEN": "O colega recebe o convite com o nome do cliente e, ao entrar, conversa com você e com o cliente.",
+        "WHISPER": "O colega ouve a ligação e fala só com você; o cliente não ouve. Para o cliente ouvir, você permite depois."
+      }
     },
     "MONITOR": {
       "LISTENING": "Ouvindo em silêncio",
@@ -615,10 +625,12 @@
       "WHISPER_TITLE": "Entrar sussurrando (só o atendente ouve)"
     },
     "INVITE": {
-      "TITLE": "Convite para sussurrar",
+      "TITLE": "Convite para entrar na ligação",
       "BODY": "{name} chamou você para ouvir e sussurrar na ligação com {customer}.",
       "JOIN": "Entrar",
-      "DECLINE": "Recusar"
+      "DECLINE": "Recusar",
+      "BODY_OPEN": "{name} chamou você para entrar na ligação com {customer} e falar junto com o cliente.",
+      "NOTIFICATION": "{name} chamou você para uma ligação"
     },
     "DEAL_CALLS": {
       "TAB": "Ligações",
@@ -773,7 +785,8 @@
         "BLOCKS": "{count} blocos",
         "EDIT": "Editar",
         "DELETE": "Apagar URA",
-        "DELETE_CONFIRM": "Apagar a URA {name}? As ligações voltam a tocar direto para os vendedores."
+        "DELETE_CONFIRM": "Apagar a URA {name}? As ligações voltam a tocar direto para os vendedores.",
+        "CENTRAL_OUTDATED": "A central ainda não está pronta para a URA: recrie o contêiner da central no servidor (docker compose up -d --build central). Até lá, as ligações tocam direto para os vendedores."
       }
     }
   }

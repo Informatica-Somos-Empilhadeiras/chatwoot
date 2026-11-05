@@ -1,6 +1,7 @@
 <script setup>
-// OUTSIDER: convite de um colega para sussurrar na ligação dele (Entrega 26). Entrar liga para a ligação dele
-// ouvindo tudo e falando só com ele; o convite some sozinho em 2 minutos.
+// OUTSIDER: convite de um colega para entrar na ligação dele (Entrega 26). Entrar liga para a ligação dele: falando
+// junto com o cliente (open) ou só com ele, sussurrando (whisper), como ele convidou. Toca como ligação chegando e
+// some sozinho em 2 minutos.
 import { useI18n } from 'vue-i18n';
 import Avatar from 'next/avatar/Avatar.vue';
 import Button from 'dashboard/components-next/button/Button.vue';
@@ -28,7 +29,12 @@ const join = () => {
       <span
         class="flex items-center gap-1.5 text-xs font-medium text-n-violet-11"
       >
-        <Icon icon="i-lucide-ear" class="size-4" />
+        <Icon
+          :icon="
+            phone.invite.mode === 'whisper' ? 'i-lucide-ear' : 'i-lucide-users'
+          "
+          class="size-4"
+        />
         {{ t('OUTSIDER_VOICE.INVITE.TITLE') }}
       </span>
       <div class="flex items-center gap-3">
@@ -40,10 +46,15 @@ const join = () => {
         />
         <p class="mb-0 text-sm text-n-slate-12">
           {{
-            t('OUTSIDER_VOICE.INVITE.BODY', {
-              name: phone.invite.name,
-              customer: phone.invite.customer,
-            })
+            phone.invite.mode === 'whisper'
+              ? t('OUTSIDER_VOICE.INVITE.BODY', {
+                  name: phone.invite.name,
+                  customer: phone.invite.customer,
+                })
+              : t('OUTSIDER_VOICE.INVITE.BODY_OPEN', {
+                  name: phone.invite.name,
+                  customer: phone.invite.customer,
+                })
           }}
         </p>
       </div>

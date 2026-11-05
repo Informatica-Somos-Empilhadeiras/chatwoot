@@ -2,7 +2,8 @@
 # vivo do CRM (Outsider::Crm::UpdatesChannel filtra por to_user_id). O servidor confere cada aviso antes de
 # repassar:
 #
-#   invite          atendente -> colega: convite para sussurrar na ligação (vale 2 minutos, uma vez)
+#   invite          atendente -> colega: convite para entrar na ligação (vale 2 minutos, uma vez), falando com o
+#                   cliente (mode open, o padrão) ou só com o atendente (mode whisper)
 #   invite_declined colega -> atendente: recusou o convite
 #   request_mode    quem sussurra -> atendente: open (o cliente passa a ouvir) ou whisper (volta a só os atendentes).
 #                   Do supervisor, ou para voltar ao sussurro, vira apply_mode (o telefone do atendente obedece);
@@ -33,8 +34,9 @@ class Outsider::Voice::Signals
   private
 
   def invite(guest_id, data)
-    Redis::Alfred.setex(Outsider::Voice::MonitorAccess.invite_key(@account.id, @user.id, guest_id), '1', Outsider::Voice::MonitorAccess::INVITE_TTL)
-    relay(guest_id, 'invite', customer: data['customer'].to_s.first(80), extension: @settings.agent_for(@user.id)['extension'])
+    mode = MODES.include?(data['mode']) ? data['mode'] : 'open'
+    Redis::Alfred.setex(Outsider::Voice::MonitorAccess.invite_key(@account.id, @user.id, guest_id), mode, Outsider::Voice::MonitorAccess::INVITE_TTL)
+    relay(guest_id, 'invite', customer: data['customer'].to_s.first(80), extension: @settings.agent_for(@user.id)['extension'], mode: mode)
   end
 
   def invite_declined(host_id, _data)

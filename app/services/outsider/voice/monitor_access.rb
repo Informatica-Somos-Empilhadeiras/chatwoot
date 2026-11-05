@@ -3,12 +3,13 @@
 # Supervisor: o administrador da conta (qualquer atendente) ou o gestor de uma unidade do CRM (os atendentes das
 # unidades que ele gerencia). Ouve em silêncio (*80 + ramal: ninguém percebe) ou entra sussurrando (*81 + ramal:
 # só os atendentes ouvem) e pode passar a falar com o cliente quando quiser.
-# Convidado: o colega que o atendente chamou para sussurrar (convite de 2 minutos, usado uma vez). Para o cliente
-# ouvir o convidado, o atendente precisa permitir (Outsider::Voice::Signals).
+# Convidado: o colega que o atendente chamou para a ligação (convite de 2 minutos, usado uma vez), para falar junto
+# com o cliente (open) ou só com o atendente (whisper). Do sussurro para o cliente ouvir, o atendente precisa
+# permitir (Outsider::Voice::Signals).
 #
 # A central pergunta aqui antes de cada monitoria; a resposta é texto simples para o plano de discagem: "ok" para
-# ouvir, "supervisor:<id>" ou "guest:<id>" para sussurrar (vai num cabeçalho para o telefone do atendente) e vazio
-# para recusar. Toda monitoria liberada fica registrada (Outsider::Voice::Monitor).
+# ouvir, "<supervisor|guest>:<id>:<whisper|open>" para entrar (vai num cabeçalho para o telefone do atendente) e
+# vazio para recusar. Toda monitoria liberada fica registrada (Outsider::Voice::Monitor).
 class Outsider::Voice::MonitorAccess
   INVITE_TTL = 2.minutes
 
@@ -39,11 +40,11 @@ class Outsider::Voice::MonitorAccess
     target_user_id = @settings.user_id_for_extension(target)
     return '' unless user_id && target_user_id && Outsider::Voice::Monitor::MODES.include?(mode)
 
-    kind = monitor_kind(user_id, target_user_id, mode)
+    kind, start = monitor_kind(user_id, target_user_id, mode)
     return '' unless kind
 
-    record(linkedid, user_id, target_user_id, mode, kind)
-    mode == 'listen' ? 'ok' : "#{kind}:#{user_id}"
+    record(linkedid, user_id, target_user_id, mode, kind, start)
+    mode == 'listen' ? 'ok' : "#{kind}:#{user_id}:#{start}"
   end
 
   # fim da ligação de quem monitora (a central avisa o fim pelo mesmo linkedid)
@@ -53,17 +54,35 @@ class Outsider::Voice::MonitorAccess
 
   private
 
+  # [quem é, como entra]: o supervisor entra sussurrando; o convidado, como o atendente convidou
   def monitor_kind(user_id, target_user_id, mode)
-    return 'supervisor' if supervisor_of?(user_id, target_user_id)
+    return %w[supervisor whisper] if supervisor_of?(user_id, target_user_id)
     return unless mode == 'whisper'
 
-    'guest' if Redis::Alfred.delete(self.class.invite_key(@account.id, target_user_id, user_id)).to_i.positive?
+    invited = take_invite(target_user_id, user_id)
+    ['guest', invited] if invited
   end
 
-  def record(linkedid, user_id, target_user_id, mode, kind)
+  # o convite vale uma vez: lê e apaga de uma vez só
+  def take_invite(host_id, guest_id)
+    key = self.class.invite_key(@account.id, host_id, guest_id)
+    value, = Redis::Alfred.with do |conn|
+      conn.multi do |transaction|
+        transaction.get(key)
+        transaction.del(key)
+      end
+    end
+    return if value.nil?
+
+    Outsider::Voice::Signals::MODES.include?(value) ? value : 'whisper'
+  end
+
+  def record(linkedid, user_id, target_user_id, mode, kind, start)
     call = Outsider::Voice::Call.where(account_id: @account.id, user_id: target_user_id, ended_at: nil, status: :answered)
                                 .where(started_at: Outsider::Voice::Wallboard::LIVE_WINDOW.ago..).order(started_at: :desc).first
+    now = Time.current
     Outsider::Voice::Monitor.create_with(account: @account, user_id: user_id, target_user_id: target_user_id, call: call, mode: mode,
-                                         kind: kind, started_at: Time.current).find_or_create_by!(linkedid: linkedid)
+                                         kind: kind, started_at: now, opened_at: start == 'open' ? now : nil)
+                            .find_or_create_by!(linkedid: linkedid)
   end
 end

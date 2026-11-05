@@ -97,6 +97,7 @@ class Api::V1::Accounts::Outsider::Crm::IvrFlowsController < Api::V1::Accounts::
       numbers: settings.numbers.map { |row| row.slice('number', 'state', 'label') },
       people: User.where(id: agents.keys).order(:name).map { |user| { id: user.id, name: user.name, extension: agents[user.id]['extension'] } },
       branches: settings.branches, natural_voice: ::Outsider::Voice::Speech.new(Current.account).available?,
+      central_ready: ::Outsider::Voice::CentralStatus.new(Current.account).ivr_ready?,
       voices: ::Outsider::Voice::IvrGraph::VOICES
     }
   end
