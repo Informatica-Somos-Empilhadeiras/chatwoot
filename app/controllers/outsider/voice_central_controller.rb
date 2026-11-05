@@ -9,6 +9,8 @@ class Outsider::VoiceCentralController < ActionController::API
   MIN_TOKEN = 32
   MAX_VOICEMAIL = 20.megabytes
 
+  # a configuração tem a senha da operadora e muda a cada salvamento: nenhum proxy (Cloudflare...) pode guardar
+  before_action { response.headers['Cache-Control'] = 'no-store' }
   before_action :authenticate_central
   before_action :load_settings
 

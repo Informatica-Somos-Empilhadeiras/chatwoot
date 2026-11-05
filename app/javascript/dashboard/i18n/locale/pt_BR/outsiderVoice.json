@@ -154,9 +154,13 @@
         "TOKEN_MISSING": "Falta o OUTSIDER_VOICE_TOKEN no .env do servidor (veja o guia de instalação)",
         "CENTRAL_URL": "VOICE_URL da central (no mesmo servidor):",
         "OUTDATED": "A central está com a versão antiga do contêiner. Escuta, sussurro e convite já funcionam; para a URA falar, recrie a central no servidor:",
-        "DIALPLAN_OK": "Plano de discagem (escuta, sussurro e URA) buscado pela central às {time}",
-        "DIALPLAN_MISSING": "A central não busca o plano de discagem neste Chatwoot há mais de 2 minutos: escuta, sussurro e URA não funcionam. Confira se o VOICE_URL da central aponta para este Chatwoot e reinicie a central.",
-        "VERSION": "Versão da telefonia neste Chatwoot: {version}"
+        "DIALPLAN_OK": "Plano de discagem (escuta, sussurro e URA) buscado pela central neste Chatwoot às {time}",
+        "DIALPLAN_MISSING": "A central avisa este Chatwoot, mas não busca o plano de discagem aqui há mais de 2 minutos: escuta, sussurro e URA não funcionam. Se o VOICE_URL dela passa por um proxy ou cache (como o Cloudflare), deixe /outsider/voice/central sem cache e reinicie a central.",
+        "VERSION": "Versão da telefonia neste Chatwoot: {version}",
+        "DIALPLAN_WAITING": "Este Chatwoot acabou de reiniciar: esperando a central buscar o plano de discagem (ela busca a cada 30 s).",
+        "OTHER_CHATWOOT": "A central está falando com outro Chatwoot ({version}), ligado ao mesmo banco, e não com este: é de lá que ela recebe o plano de discagem antigo, sem escuta, sussurro e URA. Aponte o VOICE_URL da central para este Chatwoot (ou desligue o antigo) e reinicie a central.",
+        "SERVER_OUTDATED": "O servidor do Chatwoot ainda roda o código antigo da telefonia ({version}), embora esta tela já seja a nova: reinicie o Chatwoot (web e Sidekiq) com a atualização e recarregue esta página.",
+        "OLD_VERSION": "versão antiga"
       },
       "PASTE": {
         "TITLE": "Dados da operadora",

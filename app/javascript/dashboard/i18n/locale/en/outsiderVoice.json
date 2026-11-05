@@ -154,9 +154,13 @@
         "TOKEN_MISSING": "OUTSIDER_VOICE_TOKEN is missing in the server .env (see the installation guide)",
         "CENTRAL_URL": "PBX VOICE_URL (same server):",
         "OUTDATED": "The phone server is running an old container. Listening, whispering and invites already work; for the IVR to speak, rebuild the phone server on the host:",
-        "DIALPLAN_OK": "Dialplan (listening, whispering and IVR) fetched by the phone server at {time}",
-        "DIALPLAN_MISSING": "The phone server has not fetched the dialplan from this Chatwoot for over 2 minutes: listening, whispering and IVR do not work. Check that the server's VOICE_URL points to this Chatwoot and restart it.",
-        "VERSION": "Phone version in this Chatwoot: {version}"
+        "DIALPLAN_OK": "Dialplan (listening, whispering and IVR) fetched from this Chatwoot by the phone server at {time}",
+        "DIALPLAN_MISSING": "The phone server reports to this Chatwoot but has not fetched the dialplan here for over 2 minutes: listening, whispering and IVR do not work. If its VOICE_URL goes through a proxy or cache (such as Cloudflare), serve /outsider/voice/central without cache and restart the phone server.",
+        "VERSION": "Phone version in this Chatwoot: {version}",
+        "DIALPLAN_WAITING": "This Chatwoot has just restarted: waiting for the phone server to fetch the dialplan (it fetches every 30 s).",
+        "OTHER_CHATWOOT": "The phone server is talking to another Chatwoot ({version}) on the same database, not this one: it gets the old dialplan from there, without listening, whispering and IVR. Point the phone server's VOICE_URL to this Chatwoot (or shut the old one down) and restart the phone server.",
+        "SERVER_OUTDATED": "The Chatwoot server still runs the old phone code ({version}), although this screen is already the new one: restart Chatwoot (web and Sidekiq) with the update and reload this page.",
+        "OLD_VERSION": "old version"
       },
       "PASTE": {
         "TITLE": "Operator data",

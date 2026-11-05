@@ -26,7 +26,8 @@ class Outsider::Voice::CentralConfig
   private
 
   def header
-    ['; Gerado pelo Chatwoot (Outsider::Voice::CentralConfig). Nao edite: a central troca este arquivo sozinha.', '']
+    ["; Gerado pelo Chatwoot (Outsider::Voice::CentralConfig, telefonia #{Outsider::Voice::CentralStatus::TELEPHONY_VERSION}). " \
+     'Nao edite: a central troca este arquivo sozinha.', '']
   end
 
   def transports

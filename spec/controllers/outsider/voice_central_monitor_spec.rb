@@ -63,9 +63,24 @@ RSpec.describe 'Outsider voice central: monitoring and IVR', type: :request do
 
   it 'gives the central the whole dialplan, so a new one needs no container rebuild' do
     get "#{base}/extensions", headers: headers
-    expect(Outsider::Voice::CentralStatus.new(account).to_h).to include(dialplan_at: be_present, telephony_version: '26d')
-    expect(response.body).to include('ALL_AGENTS=PJSIP/201&PJSIP/202&PJSIP/203', '[from-agents]', 'exten => _*80[1-5]XX',
-                                     'exten => _*81[1-5]XX', '[outsider-ivr]', '(whisper|open)')
+    expect(response.headers['Cache-Control']).to eq('no-store')
+    expect(Outsider::Voice::CentralStatus.new(account).to_h).to include(dialplan: 'ok', telephony_version: '26e')
+    expect(response.body).to include('telefonia 26e', 'ALL_AGENTS=PJSIP/201&PJSIP/202&PJSIP/203', '[from-agents]',
+                                     'exten => _*80[1-5]XX', 'exten => _*81[1-5]XX', '[outsider-ivr]', '(whisper|open)')
+  end
+
+  it 'tells when the central talks to another Chatwoot or does not fetch the dialplan here' do
+    stub_const('Outsider::Voice::CentralStatus::LOADED_AT', 10.minutes.ago)
+    status = Outsider::Voice::CentralStatus.new(account)
+    # o Chatwoot antigo, no mesmo Redis, grava o aviso da central sem a versão dele
+    Redis::Alfred.setex("outsider_voice_status:#{account.id}", { at: Time.current.to_i, registration: 'Registered' }.to_json, 60)
+    expect(status.to_h).to include(online: true, dialplan: 'other', chatwoot: nil)
+
+    post "#{base}/status", params: { registration: 'Registered', extensions: '201' }, headers: headers
+    expect(status.to_h).to include(dialplan: 'missing', chatwoot: '26e')
+
+    stub_const('Outsider::Voice::CentralStatus::LOADED_AT', 1.minute.ago)
+    expect(status.to_h[:dialplan]).to eq('waiting')
   end
 
   it 'rings the sales team instead of the IVR while the central has no audio programs' do

@@ -9,11 +9,22 @@
 #
 # Entrega 26d: guarda também quando a central buscou o plano de discagem neste Chatwoot (ela busca a cada 30 s, em
 # qualquer versão) e mostra a versão da telefonia que está rodando, para conferir se o servidor foi atualizado.
+#
+# Entrega 26e: o aviso da central guarda a versão do Chatwoot que o recebeu, e o estado do plano de discagem (dialplan)
+# é calculado aqui, no relógio do servidor:
+#   ok       a central buscou o plano neste Chatwoot nos últimos 2 minutos
+#   other    o último aviso dela chegou a outro Chatwoot ligado ao mesmo banco e Redis (o VOICE_URL aponta para lá):
+#            é de lá que ela recebe o plano de discagem, o antigo
+#   waiting  este Chatwoot acabou de subir e a central ainda não voltou a buscar (ela busca a cada 30 s)
+#   missing  a central avisa este Chatwoot, mas não busca o plano aqui (proxy ou cache no caminho)
 class Outsider::Voice::CentralStatus
   TTL = 5.minutes
   ONLINE_FOR = 90.seconds
+  DIALPLAN_FRESH = 2.minutes
   # versão da telefonia neste código (Telefonia > Configurações): sobe a cada entrega que muda a central
-  TELEPHONY_VERSION = '26d'.freeze
+  TELEPHONY_VERSION = '26e'.freeze
+  # aviso de antes deste processo subir (logo depois de atualizar) ainda pode ser do Chatwoot antigo
+  LOADED_AT = Time.current
 
   def initialize(account)
     @account = account
@@ -21,7 +32,7 @@ class Outsider::Voice::CentralStatus
 
   def report(registration:, extensions:, version: nil, audio: false)
     Redis::Alfred.setex(key, { at: Time.current.to_i, registration: registration, extensions: extensions, version: version,
-                               audio: audio }.to_json, TTL)
+                               audio: audio, chatwoot: TELEPHONY_VERSION }.to_json, TTL)
   end
 
   # a central buscou o plano de discagem (Outsider::VoiceCentralController#extensions)
@@ -42,15 +53,23 @@ class Outsider::Voice::CentralStatus
   def to_h
     data = JSON.parse(Redis::Alfred.get(key) || '{}')
     seen_at = data['at'] && Time.zone.at(data['at'])
+    dialplan = dialplan_at
     {
       online: seen_at.present? && seen_at > ONLINE_FOR.ago, seen_at: seen_at,
       registration: data['registration'], extensions: Array(data['extensions']), version: data['version'],
-      ivr_ready: data['audio'] == true || Redis::Alfred.exists?(prompts_key), dialplan_at: dialplan_at,
-      telephony_version: TELEPHONY_VERSION
+      ivr_ready: data['audio'] == true || Redis::Alfred.exists?(prompts_key), dialplan_at: dialplan,
+      dialplan: dialplan_state(seen_at, data['chatwoot'], dialplan), chatwoot: data['chatwoot'], telephony_version: TELEPHONY_VERSION
     }
   end
 
   private
+
+  def dialplan_state(seen_at, chatwoot, dialplan)
+    return 'other' if seen_at && seen_at > LOADED_AT && chatwoot != TELEPHONY_VERSION
+    return 'ok' if dialplan && dialplan > DIALPLAN_FRESH.ago
+
+    DIALPLAN_FRESH.ago < LOADED_AT ? 'waiting' : 'missing'
+  end
 
   def key
     "outsider_voice_status:#{@account.id}"

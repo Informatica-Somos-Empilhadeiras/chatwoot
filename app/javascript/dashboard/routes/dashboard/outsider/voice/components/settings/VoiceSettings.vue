@@ -3,6 +3,7 @@
 // operadora manda (colados no quadro de texto ou digitados), os números por estado, os ramais e as regras de
 // toque. Mostra também se a central está conectada, registrada na operadora e quais ramais estão online.
 // Entrega 26: avisa quando a central precisa ser recriada para a URA falar.
+// Entrega 26e: diz de onde a central recebe o plano de discagem e se o servidor do Chatwoot já roda esta versão.
 // Entrega 25: a mesma tela mostra também as partes Gravações, Custos e Filiais (prop part), cada uma no seu
 // item do menu, e salva tudo junto como antes.
 import { ref, computed, onMounted } from 'vue';
@@ -58,6 +59,14 @@ const form = ref(null);
 const status = ref({});
 // comando para recriar a central no servidor (Entrega 26), mostrado no aviso de central desatualizada
 const REBUILD_COMMAND = 'docker compose up -d --build central';
+// Entrega 26e: o estado do plano de discagem vem do servidor (Outsider::Voice::CentralStatus)
+const DIALPLAN_DOTS = {
+  ok: 'bg-n-teal-9',
+  waiting: 'bg-n-amber-9',
+  other: 'bg-n-ruby-9',
+  missing: 'bg-n-ruby-9',
+};
+const DIALPLAN_PROBLEMS = ['other', 'missing'];
 const install = ref({});
 const people = ref([]);
 const password = ref('');
@@ -139,14 +148,20 @@ const registrationLabel = computed(() => {
     : t(path);
 });
 
-// Entrega 26d: a central busca o plano de discagem neste Chatwoot a cada 30 s; sem busca há 2 min, ela não está
-// falando com este Chatwoot (VOICE_URL) ou não consegue buscar
-const DIALPLAN_FRESH = 2 * 60 * 1000;
-const dialplanFresh = computed(
-  () =>
-    !!status.value.dialplan_at &&
-    Date.now() - new Date(status.value.dialplan_at).getTime() < DIALPLAN_FRESH
-);
+const dialplanLabel = computed(() => {
+  const { dialplan, dialplan_at: at, chatwoot } = status.value;
+  if (dialplan === 'ok')
+    return t('OUTSIDER_VOICE.SETTINGS.STATUS.DIALPLAN_OK', {
+      time: new Date(at).toLocaleTimeString(),
+    });
+  if (dialplan === 'other')
+    return t('OUTSIDER_VOICE.SETTINGS.STATUS.OTHER_CHATWOOT', {
+      version: chatwoot || t('OUTSIDER_VOICE.SETTINGS.STATUS.OLD_VERSION'),
+    });
+  if (dialplan === 'waiting')
+    return t('OUTSIDER_VOICE.SETTINGS.STATUS.DIALPLAN_WAITING');
+  return t('OUTSIDER_VOICE.SETTINGS.STATUS.DIALPLAN_MISSING');
+});
 
 const centralLabel = computed(() => {
   if (status.value.online) return t('OUTSIDER_VOICE.SETTINGS.STATUS.ONLINE');
@@ -364,24 +379,41 @@ onMounted(load);
               }}
             </span>
           </li>
-          <!-- Entrega 26d: a central busca o plano de discagem (escuta, sussurro e URA) neste Chatwoot -->
+          <!-- Entrega 26e: o servidor do Chatwoot ainda roda o código de antes desta tela (não foi reiniciado) -->
           <li
-            v-if="status.online"
-            class="flex items-center gap-2"
+            v-if="!status.dialplan"
+            class="flex items-start gap-2 px-2 py-1.5 -mx-2 rounded-lg bg-n-ruby-3 text-n-ruby-11"
+            data-testid="voice-server-outdated"
+          >
+            <span class="rounded-full size-2 shrink-0 mt-1.5 bg-n-ruby-9" />
+            <span>
+              {{
+                t('OUTSIDER_VOICE.SETTINGS.STATUS.SERVER_OUTDATED', {
+                  version:
+                    status.telephony_version ||
+                    t('OUTSIDER_VOICE.SETTINGS.STATUS.OLD_VERSION'),
+                })
+              }}
+            </span>
+          </li>
+          <!-- Entrega 26e: de onde a central recebe o plano de discagem (escuta, sussurro e URA) -->
+          <li
+            v-else-if="status.online"
+            class="flex items-start gap-2"
             data-testid="voice-central-dialplan"
           >
             <span
-              class="rounded-full size-2 shrink-0"
-              :class="dialplanFresh ? 'bg-n-teal-9' : 'bg-n-ruby-9'"
+              class="rounded-full size-2 shrink-0 mt-1.5"
+              :class="DIALPLAN_DOTS[status.dialplan]"
             />
-            <span :class="dialplanFresh ? 'text-n-slate-12' : 'text-n-ruby-11'">
-              {{
-                dialplanFresh
-                  ? t('OUTSIDER_VOICE.SETTINGS.STATUS.DIALPLAN_OK', {
-                      time: new Date(status.dialplan_at).toLocaleTimeString(),
-                    })
-                  : t('OUTSIDER_VOICE.SETTINGS.STATUS.DIALPLAN_MISSING')
-              }}
+            <span
+              :class="
+                DIALPLAN_PROBLEMS.includes(status.dialplan)
+                  ? 'text-n-ruby-11'
+                  : 'text-n-slate-12'
+              "
+            >
+              {{ dialplanLabel }}
             </span>
           </li>
           <!-- Entrega 26: central sem os programas de áudio da URA (contêiner não recriado) -->
