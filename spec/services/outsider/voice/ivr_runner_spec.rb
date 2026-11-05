@@ -67,6 +67,27 @@ RSpec.describe Outsider::Voice::IvrRunner do
     expect(step('menu', input: '1')).to eq("record|#{sounds('Deixe o recado')}|60|vm")
   end
 
+  it 'rings the sales team instead of dropping the caller at a dead end or a block deleted mid call' do
+    flow.update!(graph: { 'nodes' => graph['nodes'], 'edges' => [{ 'from' => 'start', 'port' => 'next', 'to' => 'hello' }] })
+    router.inbound(linkedid: 'L1', did: '6232345678', from: '62999998888')
+
+    expect(step('hello')).to eq('ring||20|_end|PJSIP/201')
+    expect(step('_end', dialstatus: 'NOANSWER')).to eq('hangup|')
+    expect(step('apagado')).to eq('hangup|')
+
+    router.inbound(linkedid: 'L2', did: '6232345678', from: '62999998888')
+    call = Outsider::Voice::Call.find_by!(linkedid: 'L2')
+    expect(described_class.new(settings, call).step(node_id: 'apagado')).to eq('ring||20|_end|PJSIP/201')
+  end
+
+  it 'hangs up at a dead end after the customer left a voicemail' do
+    flow.update!(graph: { 'nodes' => graph['nodes'], 'edges' => [{ 'from' => 'start', 'port' => 'next', 'to' => 'vm' }] })
+    router.inbound(linkedid: 'L1', did: '6232345678', from: '62999998888')
+
+    expect(step).to eq("record|#{sounds('Deixe o recado')}|60|vm")
+    expect(step('vm')).to eq('hangup|')
+  end
+
   it 'rings everyone like before when the number has no IVR or the flow lost its start' do
     flow.update!(active: false)
     expect(router.inbound(linkedid: 'L1', did: '6232345678', from: '62999998888')).to eq('20|PJSIP/201')
@@ -87,6 +108,7 @@ RSpec.describe Outsider::Voice::IvrRunner do
       node = answer.split('|', -1).last
       answer
     end
+    expect(answers).to include('ring||20|_end|PJSIP/201')
     expect(answers.last).to eq('hangup|')
 
     other = Outsider::Voice::IvrFlow.new(account: account, name: 'Outra', active: true, graph: graph)

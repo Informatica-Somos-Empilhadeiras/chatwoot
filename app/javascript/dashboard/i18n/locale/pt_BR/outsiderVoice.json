@@ -677,7 +677,7 @@
         "talk": "Falar com o cliente",
         "logic": "Decidir o caminho",
         "route": "Atender e encerrar",
-        "HINT": "Clique num bloco para criar. Com um bloco escolhido, o novo já sai ligado a ele. Ligue os blocos arrastando da bolinha de uma saída até outro bloco."
+        "HINT": "Clique num bloco para criar. Com um bloco escolhido, o novo já sai ligado a ele. Ligue os blocos arrastando da bolinha de uma saída até outro bloco. Saída sem bloco ligado manda a ligação para os vendedores (depois de tocar para alguém ou do recado, encerra)."
       },
       "SUMMARY": {
         "AUDIO": "Áudio enviado",

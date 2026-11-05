@@ -2,13 +2,13 @@
 # operadora e quais ramais estão conectados; fica 5 minutos no Redis. Sem notícia há mais de 90 s, a central
 # aparece fora do ar na tela de Configurações.
 #
-# Entrega 26: a central conta também a versão dela e se tem os programas de áudio da URA (ffmpeg e espeak-ng).
-# Central antiga (sem esses dados) segue tocando para os vendedores, mas a URA só entra com audio: true.
+# Entrega 26: a URA só entra com a central pronta para ela (ivr_ready). A central conta a versão dela e se tem os
+# programas de áudio (ffmpeg e espeak-ng); a primeira imagem da Entrega 26 não conta, mas já busca a lista de áudios
+# da URA (prompts_seen!), o que basta. Central antiga, sem nada disso, toca para os vendedores como sempre: o plano de
+# discagem dela não conhece a URA e desligaria a ligação.
 class Outsider::Voice::CentralStatus
   TTL = 5.minutes
   ONLINE_FOR = 90.seconds
-  # versão do contêiner da central desta entrega (deploy/outsider-voice/entrypoint.sh)
-  CURRENT_VERSION = 26
 
   def initialize(account)
     @account = account
@@ -19,9 +19,14 @@ class Outsider::Voice::CentralStatus
                                audio: audio }.to_json, TTL)
   end
 
+  # a central buscou a lista de áudios da URA (Outsider::VoiceCentralController#prompts)
+  def prompts_seen!
+    Redis::Alfred.setex(prompts_key, '1', TTL)
+  end
+
   # a central tem como falar os áudios da URA (contêiner recriado na Entrega 26 ou depois)
   def ivr_ready?
-    to_h[:audio]
+    to_h[:ivr_ready]
   end
 
   def to_h
@@ -30,7 +35,7 @@ class Outsider::Voice::CentralStatus
     {
       online: seen_at.present? && seen_at > ONLINE_FOR.ago, seen_at: seen_at,
       registration: data['registration'], extensions: Array(data['extensions']), version: data['version'],
-      audio: data['audio'] == true, outdated: data['version'].to_i < CURRENT_VERSION
+      ivr_ready: data['audio'] == true || Redis::Alfred.exists?(prompts_key)
     }
   end
 
@@ -38,5 +43,9 @@ class Outsider::Voice::CentralStatus
 
   def key
     "outsider_voice_status:#{@account.id}"
+  end
+
+  def prompts_key
+    "outsider_voice_prompts_seen:#{@account.id}"
   end
 end

@@ -677,7 +677,7 @@
         "talk": "Talk to the customer",
         "logic": "Choose the path",
         "route": "Answer and finish",
-        "HINT": "Click a block to add it. With a block selected, the new one is linked to it. Link blocks by dragging from an exit dot to another block."
+        "HINT": "Click a block to add it. With a block selected, the new one is linked to it. Link blocks by dragging from an exit dot to another block. An exit with no block sends the call to the sales team (after ringing someone or a voicemail, it hangs up)."
       },
       "SUMMARY": {
         "AUDIO": "Uploaded audio",

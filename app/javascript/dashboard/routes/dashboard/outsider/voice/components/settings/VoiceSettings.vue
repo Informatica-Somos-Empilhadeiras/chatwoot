@@ -357,7 +357,7 @@ onMounted(load);
           </li>
           <!-- Entrega 26: central sem os programas de áudio da URA (contêiner não recriado) -->
           <li
-            v-if="status.online && (status.outdated || !status.audio)"
+            v-if="status.online && !status.ivr_ready"
             class="flex items-start gap-2 px-2 py-1.5 -mx-2 rounded-lg bg-n-amber-3 text-n-amber-11"
             data-testid="voice-central-outdated"
           >

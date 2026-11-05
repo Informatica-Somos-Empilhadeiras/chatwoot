@@ -54,7 +54,9 @@ class Outsider::VoiceCentralController < ActionController::API
                                                                          dialstatus: params[:dialstatus])
   end
 
+  # só a central da Entrega 26 em diante busca a lista: é o sinal de que ela já conhece a URA
   def prompts
+    Outsider::Voice::CentralStatus.new(@settings.account).prompts_seen!
     render plain: ivr_prompts.manifest
   end
 

@@ -78,6 +78,15 @@ RSpec.describe 'Outsider voice central: monitoring and IVR', type: :request do
     expect(response.body).to eq('ivr')
   end
 
+  it 'trusts the first Entrega 26 central, which syncs the IVR audios without telling its version' do
+    Outsider::Voice::IvrFlow.create!(account: account, name: 'URA', active: true, graph: {})
+    post "#{base}/status", params: { registration: 'Registered', extensions: '201' }, headers: headers
+    get "#{base}/prompts", headers: headers
+
+    post "#{base}/inbound", params: { linkedid: 'IVR26', did: '6232345678', from: '62999998888' }, headers: headers
+    expect(response.body).to eq('ivr')
+  end
+
   it 'answers the IVR steps, the audio list and keeps the voicemail on the call' do
     Outsider::Voice::IvrFlow.create!(
       account: account, name: 'URA', active: true,

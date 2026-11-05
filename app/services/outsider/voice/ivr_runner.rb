@@ -1,6 +1,6 @@
 # OUTSIDER: a URA em andamento numa ligação (Entrega 26). A central pergunta o que fazer a cada passo, contando
 # em que bloco estava (node), o que o cliente digitou (input) e como terminou a tentativa de tocar (dialstatus);
-# a resposta é uma instrução em texto simples para o plano de discagem (deploy/outsider-voice/asterisk/extensions.conf):
+# a resposta é uma instrução em texto simples para o plano de discagem (lib/outsider/voice/dialplan.conf):
 #
 #   play|<sons>|<bloco>                                   fala e segue
 #   menu|<sons>|<segundos>|<bloco>                        fala e espera 1 tecla
@@ -12,8 +12,11 @@
 #
 # <sons> são os áudios dos blocos (Outsider::Voice::IvrPrompts) separados por "&", ou vazio. Os blocos de decisão
 # (horário, quem está ligando) não falam: são resolvidos aqui mesmo. Por onde o cliente passou e o que digitou
-# fica na ligação (ivr_data), para quem atende ver; o fluxo para sozinho depois de MAX_STEPS passos (laço no
-# desenho). Sem URA ou sem bloco de início, toca para todos como sem URA.
+# fica na ligação (ivr_data), para quem atende ver. Sem URA ou sem bloco de início, toca para todos como sem URA.
+#
+# O cliente não é derrubado por erro no desenho: saída sem bloco ligado, bloco apagado no meio da ligação ou laço
+# (mais de MAX_STEPS passos) tocam para os vendedores pela regra de sempre (dead_end). Só desliga quem passou pelo
+# bloco Encerrar, ou quem chegou ao fim do desenho depois de já ter tocado para alguém ou deixado recado.
 class Outsider::Voice::IvrRunner
   MAX_STEPS = 60
   END_NODE = '_end'.freeze
@@ -32,9 +35,13 @@ class Outsider::Voice::IvrRunner
     return finish('hangup|') if node_id == END_NODE
     return finish(fallback) unless @graph&.start
 
-    current = node_id.present? ? @graph.node(node_id.to_s) : nil
-    target, retry_prompt = current ? resolve(current, input.to_s, dialstatus.to_s) : [@graph.next_of(@graph.start, 'next'), false]
-    finish(run(target, retry_prompt))
+    return finish(run(@graph.next_of(@graph.start, 'next'), false)) if node_id.blank?
+
+    current = @graph.node(node_id.to_s)
+    # o bloco saiu do desenho com a ligação em andamento
+    return finish(dead_end) unless current
+
+    finish(run(*resolve(current, input.to_s, dialstatus.to_s)))
   end
 
   private
@@ -89,7 +96,7 @@ class Outsider::Voice::IvrRunner
   def run(node, retry_prompt)
     loop do
       @state['steps'] = @state['steps'].to_i + 1
-      return 'hangup|' if node.nil? || @state['steps'] > MAX_STEPS
+      return dead_end if node.nil? || @state['steps'] > MAX_STEPS
 
       case node['type']
       when 'hours' then node = @graph.next_of(node, Outsider::Bot::Hours.new(node['data']).open_now? ? 'inside' : 'outside')
@@ -97,6 +104,7 @@ class Outsider::Voice::IvrRunner
       when 'start' then node = @graph.next_of(node, 'next')
       else
         instruction = instruction(node, retry_prompt)
+        @state['rang'] = true if instruction && node['type'] == 'transfer'
         return instruction if instruction
 
         # transferência sem ninguém para tocar: segue como se ninguém tivesse atendido
@@ -161,8 +169,15 @@ class Outsider::Voice::IvrRunner
   end
 
   def fallback
+    @state['rang'] = true
     steps = router.ring_steps(@call.opportunity&.owner_id, @call.state_code)
     (["ring||#{@settings.data['ring_seconds']}|#{END_NODE}"] + steps).join('|')
+  end
+
+  # fim do desenho sem o bloco Encerrar: toca para os vendedores, a não ser que já tenha tocado ou o cliente tenha
+  # deixado recado
+  def dead_end
+    @state['rang'] || @state['voicemail'] ? 'hangup|' : fallback
   end
 
   def router

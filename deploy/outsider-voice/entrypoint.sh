@@ -38,7 +38,7 @@ sync_file() {
   return 0
 }
 
-# versão desta central (Outsider::Voice::CentralStatus::CURRENT_VERSION) e se ela fala os áudios da URA
+# versão desta central e se ela fala os áudios da URA (Outsider::Voice::CentralStatus)
 VERSION=26
 AUDIO=no
 command -v ffmpeg >/dev/null && command -v espeak-ng >/dev/null && AUDIO=yes
