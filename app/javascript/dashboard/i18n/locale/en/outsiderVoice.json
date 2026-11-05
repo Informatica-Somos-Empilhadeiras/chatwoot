@@ -77,7 +77,11 @@
         "MICROPHONE": "The browser did not allow the microphone",
         "FAILED": "The call dropped",
         "EXTENSION_OFFLINE": "Extension offline: the person does not have Chatwoot open or the extension is off",
-        "TRANSFERRED": "Transferred to extension {extension}"
+        "TRANSFERRED": "Transferred to extension {extension}",
+        "MONITOR_OUTDATED": "The phone server does not know listening and whispering yet: it has the old dialplan. See Phone > Settings.",
+        "MONITOR_REFUSED": "The phone server refused: only the administrator and the agent's unit manager can listen or whisper.",
+        "MONITOR_BUSY": "The agent's phone refused: their call has ended or was not answered yet.",
+        "MONITOR_UNAVAILABLE": "The agent's phone did not respond."
       },
       "HOLD": "Hold",
       "RESUME": "Resume",
@@ -149,7 +153,10 @@
         "TOKEN_OK": "PBX token set on the server",
         "TOKEN_MISSING": "OUTSIDER_VOICE_TOKEN is missing in the server .env (see the installation guide)",
         "CENTRAL_URL": "PBX VOICE_URL (same server):",
-        "OUTDATED": "The phone server is running an old container. Listening, whispering and invites already work; for the IVR to speak, rebuild the phone server on the host:"
+        "OUTDATED": "The phone server is running an old container. Listening, whispering and invites already work; for the IVR to speak, rebuild the phone server on the host:",
+        "DIALPLAN_OK": "Dialplan (listening, whispering and IVR) fetched by the phone server at {time}",
+        "DIALPLAN_MISSING": "The phone server has not fetched the dialplan from this Chatwoot for over 2 minutes: listening, whispering and IVR do not work. Check that the server's VOICE_URL points to this Chatwoot and restart it.",
+        "VERSION": "Phone version in this Chatwoot: {version}"
       },
       "PASTE": {
         "TITLE": "Operator data",

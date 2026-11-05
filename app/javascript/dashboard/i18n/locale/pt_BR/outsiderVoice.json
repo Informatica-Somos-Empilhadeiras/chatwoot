@@ -77,7 +77,11 @@
         "MICROPHONE": "O navegador não liberou o microfone",
         "FAILED": "A ligação caiu",
         "EXTENSION_OFFLINE": "Ramal desconectado: a pessoa não está com o Chatwoot aberto ou o ramal está desligado",
-        "TRANSFERRED": "Transferida para o ramal {extension}"
+        "TRANSFERRED": "Transferida para o ramal {extension}",
+        "MONITOR_OUTDATED": "A central ainda não conhece a escuta e o sussurro: ela está com o plano de discagem antigo. Veja Telefonia > Configurações.",
+        "MONITOR_REFUSED": "A central não liberou: só o administrador e o gestor da unidade do atendente podem ouvir ou sussurrar.",
+        "MONITOR_BUSY": "O telefone do atendente recusou: a ligação dele já acabou ou ainda não foi atendida.",
+        "MONITOR_UNAVAILABLE": "O telefone do atendente não respondeu."
       },
       "HOLD": "Espera",
       "RESUME": "Retomar",
@@ -149,7 +153,10 @@
         "TOKEN_OK": "Token da central configurado no servidor",
         "TOKEN_MISSING": "Falta o OUTSIDER_VOICE_TOKEN no .env do servidor (veja o guia de instalação)",
         "CENTRAL_URL": "VOICE_URL da central (no mesmo servidor):",
-        "OUTDATED": "A central está com a versão antiga do contêiner. Escuta, sussurro e convite já funcionam; para a URA falar, recrie a central no servidor:"
+        "OUTDATED": "A central está com a versão antiga do contêiner. Escuta, sussurro e convite já funcionam; para a URA falar, recrie a central no servidor:",
+        "DIALPLAN_OK": "Plano de discagem (escuta, sussurro e URA) buscado pela central às {time}",
+        "DIALPLAN_MISSING": "A central não busca o plano de discagem neste Chatwoot há mais de 2 minutos: escuta, sussurro e URA não funcionam. Confira se o VOICE_URL da central aponta para este Chatwoot e reinicie a central.",
+        "VERSION": "Versão da telefonia neste Chatwoot: {version}"
       },
       "PASTE": {
         "TITLE": "Dados da operadora",

@@ -6,9 +6,14 @@
 # programas de áudio (ffmpeg e espeak-ng); a primeira imagem da Entrega 26 não conta, mas já busca a lista de áudios
 # da URA (prompts_seen!), o que basta. Central antiga, sem nada disso, toca para os vendedores como sempre: o plano de
 # discagem dela não conhece a URA e desligaria a ligação.
+#
+# Entrega 26d: guarda também quando a central buscou o plano de discagem neste Chatwoot (ela busca a cada 30 s, em
+# qualquer versão) e mostra a versão da telefonia que está rodando, para conferir se o servidor foi atualizado.
 class Outsider::Voice::CentralStatus
   TTL = 5.minutes
   ONLINE_FOR = 90.seconds
+  # versão da telefonia neste código (Telefonia > Configurações): sobe a cada entrega que muda a central
+  TELEPHONY_VERSION = '26d'.freeze
 
   def initialize(account)
     @account = account
@@ -17,6 +22,11 @@ class Outsider::Voice::CentralStatus
   def report(registration:, extensions:, version: nil, audio: false)
     Redis::Alfred.setex(key, { at: Time.current.to_i, registration: registration, extensions: extensions, version: version,
                                audio: audio }.to_json, TTL)
+  end
+
+  # a central buscou o plano de discagem (Outsider::VoiceCentralController#extensions)
+  def dialplan_seen!
+    Redis::Alfred.setex(dialplan_key, Time.current.to_i.to_s, TTL)
   end
 
   # a central buscou a lista de áudios da URA (Outsider::VoiceCentralController#prompts)
@@ -35,7 +45,8 @@ class Outsider::Voice::CentralStatus
     {
       online: seen_at.present? && seen_at > ONLINE_FOR.ago, seen_at: seen_at,
       registration: data['registration'], extensions: Array(data['extensions']), version: data['version'],
-      ivr_ready: data['audio'] == true || Redis::Alfred.exists?(prompts_key)
+      ivr_ready: data['audio'] == true || Redis::Alfred.exists?(prompts_key), dialplan_at: dialplan_at,
+      telephony_version: TELEPHONY_VERSION
     }
   end
 
@@ -43,6 +54,15 @@ class Outsider::Voice::CentralStatus
 
   def key
     "outsider_voice_status:#{@account.id}"
+  end
+
+  def dialplan_at
+    at = Redis::Alfred.get(dialplan_key)
+    at && Time.zone.at(at.to_i)
+  end
+
+  def dialplan_key
+    "outsider_voice_dialplan_seen:#{@account.id}"
   end
 
   def prompts_key

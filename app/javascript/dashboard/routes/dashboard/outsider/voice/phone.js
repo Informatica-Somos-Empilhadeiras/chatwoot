@@ -163,6 +163,25 @@ const audioSender = session =>
     ?.getSenders()
     .find(sender => sender.track?.kind === 'audio');
 
+// monitoria que não chegou a entrar (Entrega 26d): o motivo diz onde está o problema. "Não encontrado" é a central
+// sem os códigos *80/*81 (plano de discagem antigo); recusa (503) é o Chatwoot negando a permissão; ocupado é o
+// telefone do atendente sem ligação atendida
+const monitorReason = ({ cause }) => {
+  const { causes } = JsSIP.C;
+  if ([causes.NOT_FOUND, causes.ADDRESS_INCOMPLETE].includes(cause)) {
+    return 'MONITOR_OUTDATED';
+  }
+  if (cause === causes.BUSY) return 'MONITOR_BUSY';
+  if ([causes.UNAVAILABLE, causes.NO_ANSWER].includes(cause)) {
+    return 'MONITOR_UNAVAILABLE';
+  }
+  if ([causes.SIP_FAILURE_CODE, causes.REJECTED].includes(cause)) {
+    return 'MONITOR_REFUSED';
+  }
+  // sem conexão com a central e afins: o motivo de sempre
+  return null;
+};
+
 const endReason = ({ originator, cause, message }) => {
   const { causes } = JsSIP.C;
   if (originator === 'local' || cause === causes.BYE) return 'DONE';
@@ -545,7 +564,13 @@ const setupLeg = (id, current) => {
     autoRecord();
   });
   current.on('ended', event => endLeg(id, endReason(event)));
-  current.on('failed', event => endLeg(id, endReason(event)));
+  current.on('failed', event => {
+    const monitoring =
+      phone.call?.id === id &&
+      phone.call.monitor &&
+      event.originator !== 'local';
+    endLeg(id, (monitoring && monitorReason(event)) || endReason(event));
+  });
 };
 
 // alguém entrando na ligação em andamento: o telefone atende sozinho (a central só manda depois de conferir que é

@@ -17,6 +17,7 @@ class Outsider::VoiceCentralController < ActionController::API
   end
 
   def extensions
+    Outsider::Voice::CentralStatus.new(@settings.account).dialplan_seen!
     render plain: Outsider::Voice::CentralConfig.new(@settings).extensions
   end
 

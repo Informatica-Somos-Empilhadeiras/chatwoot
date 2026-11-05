@@ -139,6 +139,15 @@ const registrationLabel = computed(() => {
     : t(path);
 });
 
+// Entrega 26d: a central busca o plano de discagem neste Chatwoot a cada 30 s; sem busca há 2 min, ela não está
+// falando com este Chatwoot (VOICE_URL) ou não consegue buscar
+const DIALPLAN_FRESH = 2 * 60 * 1000;
+const dialplanFresh = computed(
+  () =>
+    !!status.value.dialplan_at &&
+    Date.now() - new Date(status.value.dialplan_at).getTime() < DIALPLAN_FRESH
+);
+
 const centralLabel = computed(() => {
   if (status.value.online) return t('OUTSIDER_VOICE.SETTINGS.STATUS.ONLINE');
   if (!status.value.seen_at) return t('OUTSIDER_VOICE.SETTINGS.STATUS.NEVER');
@@ -355,6 +364,26 @@ onMounted(load);
               }}
             </span>
           </li>
+          <!-- Entrega 26d: a central busca o plano de discagem (escuta, sussurro e URA) neste Chatwoot -->
+          <li
+            v-if="status.online"
+            class="flex items-center gap-2"
+            data-testid="voice-central-dialplan"
+          >
+            <span
+              class="rounded-full size-2 shrink-0"
+              :class="dialplanFresh ? 'bg-n-teal-9' : 'bg-n-ruby-9'"
+            />
+            <span :class="dialplanFresh ? 'text-n-slate-12' : 'text-n-ruby-11'">
+              {{
+                dialplanFresh
+                  ? t('OUTSIDER_VOICE.SETTINGS.STATUS.DIALPLAN_OK', {
+                      time: new Date(status.dialplan_at).toLocaleTimeString(),
+                    })
+                  : t('OUTSIDER_VOICE.SETTINGS.STATUS.DIALPLAN_MISSING')
+              }}
+            </span>
+          </li>
           <!-- Entrega 26: central sem os programas de áudio da URA (contêiner não recriado) -->
           <li
             v-if="status.online && !status.ivr_ready"
@@ -387,6 +416,16 @@ onMounted(load);
             >
               {{ centralUrl }}
             </code>
+          </li>
+          <li
+            class="flex items-center gap-2 text-xs text-n-slate-11"
+            data-testid="voice-telephony-version"
+          >
+            {{
+              t('OUTSIDER_VOICE.SETTINGS.STATUS.VERSION', {
+                version: status.telephony_version || '—',
+              })
+            }}
           </li>
         </ul>
       </div>

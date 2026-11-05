@@ -63,6 +63,7 @@ RSpec.describe 'Outsider voice central: monitoring and IVR', type: :request do
 
   it 'gives the central the whole dialplan, so a new one needs no container rebuild' do
     get "#{base}/extensions", headers: headers
+    expect(Outsider::Voice::CentralStatus.new(account).to_h).to include(dialplan_at: be_present, telephony_version: '26d')
     expect(response.body).to include('ALL_AGENTS=PJSIP/201&PJSIP/202&PJSIP/203', '[from-agents]', 'exten => _*80[1-5]XX',
                                      'exten => _*81[1-5]XX', '[outsider-ivr]', '(whisper|open)')
   end
