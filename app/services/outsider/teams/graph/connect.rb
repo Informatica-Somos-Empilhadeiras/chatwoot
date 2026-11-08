@@ -26,7 +26,8 @@ class Outsider::Teams::Graph::Connect
                            refresh_token: tokens[:refresh_token], token_expires_at: tokens[:expires_at], status: 'active',
                            last_error: nil)
     link.save!
-    Outsider::Teams::Graph::Subscriptions.new(link).sync!
+    Outsider::Teams::Graph::Subscriptions.new(link).plan!
+    Outsider::Teams::Graph::SyncJob.perform_later(link.id)
     link
   rescue Outsider::Teams::Graph::Login::Error => e
     raise Error, e.message

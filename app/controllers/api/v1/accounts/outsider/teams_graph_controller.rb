@@ -67,15 +67,16 @@ class Api::V1::Accounts::Outsider::TeamsGraphController < Api::V1::Accounts::Bas
     render_error(e.message, :bad_gateway)
   end
 
-  # chats ligados ou não, os canais escolhidos (só canais das equipes da própria pessoa) e o jeito de ver os canais
-  # (channel_view: 'conversa' = mensagens em sequência, como no WhatsApp; 'publicacoes' = cartões, como no Teams)
+  # chats ligados ou não, os canais (all_channels: todos os das equipes da pessoa, novos entram sozinhos, menos os
+  # desmarcados; senão só os marcados) e o jeito de ver os canais ('conversa' = em sequência, como no WhatsApp;
+  # 'publicacoes' = cartões, como no Teams). Os avisos da Microsoft e as mensagens antigas vêm depois (SyncJob).
   def update_me
     my_link.channel_view = params[:channel_view] if params[:channel_view].in?(%w[conversa publicacoes])
-    if params.key?(:channels) || params.key?(:sync_chats)
-      my_link.assign_attributes(sync_chats: ActiveModel::Type::Boolean.new.cast(params.fetch(:sync_chats, my_link.sync_chats)),
-                                channels: chosen_channels)
+    if params.key?(:channels) || params.key?(:sync_chats) || params.key?(:all_channels)
+      apply_choices
       my_link.save!
-      ::Outsider::Teams::Graph::Subscriptions.new(my_link).sync!
+      ::Outsider::Teams::Graph::Subscriptions.new(my_link).plan!
+      ::Outsider::Teams::Graph::SyncJob.perform_later(my_link.id)
     else
       my_link.save!
     end
@@ -128,15 +129,27 @@ class Api::V1::Accounts::Outsider::TeamsGraphController < Api::V1::Accounts::Bas
     render_error('not_connected', :unprocessable_entity) unless my_link && my_link.status != 'disconnected'
   end
 
-  def chosen_channels
+  def apply_choices
+    cast = ActiveModel::Type::Boolean.new
+    my_link.sync_chats = cast.cast(params.fetch(:sync_chats, my_link.sync_chats))
+    my_link.all_channels = cast.cast(params.fetch(:all_channels, my_link.all_channels))
+    return unless params.key?(:channels)
+
+    available = ::Outsider::Teams::Graph::AutoChannels.new(my_link).available
+    chosen = chosen_channels(available)
+    my_link.channels = chosen
+    return unless my_link.all_channels
+
+    keys = chosen.map { |channel| "#{channel['team_id']}|#{channel['channel_id']}" }
+    my_link.hidden_channels = available.reject { |channel| keys.include?("#{channel['team_id']}|#{channel['channel_id']}") }
+                                       .map { |channel| channel.slice('team_id', 'channel_id') }
+  end
+
+  def chosen_channels(available)
     wanted = Array(params[:channels]).map { |channel| channel.permit(:team_id, :channel_id).to_h }
-    available = ::Outsider::Teams::Graph::Directory.new(my_link).teams.flat_map do |team|
-      team['channels'].map { |channel| channel.merge('team_id' => team['team_id'], 'team_name' => team['team_name']) }
-    end
     wanted.filter_map do |item|
-      found = available.find { |channel| channel['team_id'] == item['team_id'] && channel['channel_id'] == item['channel_id'] }
-      found&.slice('team_id', 'team_name', 'channel_id', 'channel_name')
-    end.uniq.first(50)
+      available.find { |channel| channel['team_id'] == item['team_id'] && channel['channel_id'] == item['channel_id'] }
+    end.uniq.first(::Outsider::Teams::Graph::AutoChannels::MAX_CHANNELS)
   end
 
   def links_row(link)

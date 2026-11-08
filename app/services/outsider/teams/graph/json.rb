@@ -52,11 +52,13 @@ module Outsider::Teams::Graph::Json
     {
       id: link.id, user_id: link.user_id, user_name: link.user&.name, display_name: link.display_name, email: link.email,
       status: link.status, last_error: link.last_error, sync_chats: link.sync_chats, channels: link.channel_list,
+      all_channels: link.all_channels, hidden_channels: Array(link.hidden_channels), history_at: link.history_at&.iso8601,
       channel_view: link.channel_view,
       last_activity_at: link.last_activity_at&.iso8601, created_at: link.created_at.iso8601,
       subscriptions: link.subscriptions.map do |subscription|
         { kind: subscription.kind, channel_id: subscription.channel_id, ok: subscription.subscription_id.present? &&
-          subscription.expires_at.present? && subscription.expires_at > Time.current, error: subscription.last_error }
+          subscription.expires_at.present? && subscription.expires_at > Time.current, error: subscription.last_error,
+          pending: subscription.subscription_id.blank? && subscription.last_error.blank? }
       end
     }
   end

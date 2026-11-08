@@ -13,6 +13,7 @@ RSpec.describe 'Outsider Conectar meu Teams (Microsoft Graph)', type: :request d
   let(:link) do
     Outsider::TeamsLink.create!(account: account, user: agent, ms_user_id: 'ms-agent', display_name: 'Agente Teams',
                                 access_token: 'token-agente', refresh_token: 'refresh-agente', token_expires_at: 1.hour.from_now,
+                                all_channels: false,
                                 channels: [{ 'team_id' => 'team-1', 'team_name' => 'Comercial', 'channel_id' => '19:canal@thread.tacv2',
                                              'channel_name' => 'Propostas' }])
   end
@@ -56,9 +57,13 @@ RSpec.describe 'Outsider Conectar meu Teams (Microsoft Graph)', type: :request d
          params: { code: 'codigo-1', state: query['state'] }, headers: admin.create_new_auth_token, as: :json
     expect(response).to have_http_status(:unprocessable_entity)
 
-    post "/api/v1/accounts/#{account.id}/outsider/teams_graph/finish",
-         params: { code: 'codigo-1', state: query['state'] }, headers: agent.create_new_auth_token, as: :json
+    stub_request(:get, %r{graph.microsoft.com/v1.0/me/joinedTeams}).to_return(graph_json(value: []))
+    perform_enqueued_jobs(only: Outsider::Teams::Graph::SyncJob) do
+      post "/api/v1/accounts/#{account.id}/outsider/teams_graph/finish",
+           params: { code: 'codigo-1', state: query['state'] }, headers: agent.create_new_auth_token, as: :json
+    end
     expect(response).to have_http_status(:ok)
+    expect(Outsider::Teams::Graph::HistoryJob).to have_been_enqueued
     expect(token).to have_been_requested
     expect(subscribe).to have_been_requested
     created = Outsider::TeamsLink.find_by!(user: agent)
@@ -338,5 +343,72 @@ RSpec.describe 'Outsider Conectar meu Teams (Microsoft Graph)', type: :request d
       .to_return(graph_json({ error: 'invalid_grant', error_description: 'AADSTS50173: senha trocada' }, status: 400))
     expect { Outsider::Teams::Graph::Client.new(link).get('/me') }.to raise_error(Outsider::Teams::Graph::Client::Reconnect)
     expect(link.reload.status).to eq('reconnect')
+  end
+
+  it 'brings every channel by itself (new ones too), saves without waiting for Microsoft and skips unticked channels' do
+    link.update!(all_channels: true, channels: [])
+    teams = stub_request(:get, %r{graph.microsoft.com/v1.0/me/joinedTeams})
+            .to_return(graph_json(value: [{ id: 'team-1', displayName: 'Comercial' }]))
+    channels = [{ id: '19:geral', displayName: 'Geral' }, { id: '19:propostas', displayName: 'Propostas' }]
+    stub_request(:get, %r{graph.microsoft.com/v1.0/teams/team-1/channels}).to_return { graph_json(value: channels) }
+
+    expect(Outsider::Teams::Graph::AutoChannels.new(link).refresh!).to be(true)
+    expect(link.reload.channel_list.pluck('channel_name')).to eq(%w[Geral Propostas])
+
+    # salvar responde na hora: os avisos da Microsoft ficam "ativando" até o SyncJob terminar
+    expect do
+      choices = { all_channels: true, sync_chats: true, channels: [{ team_id: 'team-1', channel_id: '19:geral' }] }
+      patch "/api/v1/accounts/#{account.id}/outsider/teams_graph/me", headers: agent.create_new_auth_token, as: :json, params: choices
+    end.to have_enqueued_job(Outsider::Teams::Graph::SyncJob).with(link.id)
+    expect(response).to have_http_status(:ok)
+    body = response.parsed_body
+    expect(body['all_channels']).to be(true)
+    expect(body['hidden_channels']).to eq([{ 'team_id' => 'team-1', 'channel_id' => '19:propostas' }])
+    expect(body['subscriptions'].pluck('pending')).to all(be(true))
+    expect(body['subscriptions'].size).to eq(2)
+
+    # canal novo na equipe: entra sozinho; o desmarcado continua fora
+    channels << { id: '19:novo', displayName: 'Novo' }
+    Rails.cache.clear
+    expect(Outsider::Teams::Graph::AutoChannels.new(link.reload).refresh!).to be(true)
+    expect(link.reload.channel_list.pluck('channel_name')).to eq(%w[Geral Novo])
+    expect(teams).to have_been_requested.at_least_times(2)
+  end
+
+  it 'brings older chat and channel messages quietly, once' do
+    chats = { value: [{ id: '19:chat-a', lastMessagePreview: { createdDateTime: 2.days.ago.iso8601 } },
+                      { id: '19:chat-velho', lastMessagePreview: { createdDateTime: 200.days.ago.iso8601 } }] }
+    stub_request(:get, %r{graph.microsoft.com/v1.0/me/chats\?}).to_return(graph_json(chats))
+    stub_request(:get, %r{graph.microsoft.com/v1.0/chats/19(:|%3A)chat-a\?}).to_return(
+      graph_json(chatType: 'oneOnOne', members: [{ userId: 'ms-agent', displayName: 'Agente Teams' },
+                                                 { userId: 'ms-ju', displayName: 'Juliana' }])
+    )
+    message = lambda do |id, text, from, at|
+      { id: id, messageType: 'message', createdDateTime: at, body: { contentType: 'text', content: text },
+        from: { user: { id: from, displayName: from == 'ms-agent' ? 'Agente Teams' : 'Juliana' } } }
+    end
+    chat_messages = stub_request(:get, %r{graph.microsoft.com/v1.0/chats/19(:|%3A)chat-a/messages}).to_return(
+      graph_json(value: [message.call('2', 'Pode sim', 'ms-agent', 1.day.ago.iso8601),
+                         message.call('1', 'Bom dia, tem a proposta?', 'ms-ju', 2.days.ago.iso8601)])
+    )
+    post = message.call('p1', 'Tabela nova', 'ms-ju', 3.days.ago.iso8601)
+                  .merge(replies: [message.call('r1', 'Valeu', 'ms-agent', 2.days.ago.iso8601).merge(replyToId: 'p1')])
+    stub_request(:get, %r{graph.microsoft.com/v1.0/teams/team-1/channels/19(:|%3A)canal(@|%40)thread.tacv2/messages})
+      .to_return(graph_json(value: [post]))
+
+    expect { Outsider::Teams::Graph::HistoryJob.perform_now(link.id) }.not_to have_enqueued_job(Outsider::Push::DeliverJob)
+    chat = link.threads.find_by!(chat_id: '19:chat-a')
+    expect(chat.messages.order(:sent_at).pluck(:content, :mine)).to eq([['Bom dia, tem a proposta?', false], ['Pode sim', true]])
+    expect(chat).to have_attributes(title: 'Juliana', unread_count: 0, last_message_preview: 'Você: Pode sim')
+    expect(link.threads.find_by(chat_id: '19:chat-velho')).to be_nil
+    channel = link.threads.find_by!(channel_id: '19:canal@thread.tacv2')
+    expect(channel.messages.find_by!(graph_id: 'r1').reply_to_graph_id).to eq('p1')
+    expect(link.reload.history_at).to be_present
+    expect(link.history_channels).to eq(['team-1|19:canal@thread.tacv2'])
+
+    # de novo: nada muda e não busca outra vez
+    Outsider::Teams::Graph::HistoryJob.perform_now(link.id)
+    expect(chat_messages).to have_been_requested.once
+    expect(chat.messages.count).to eq(2)
   end
 end

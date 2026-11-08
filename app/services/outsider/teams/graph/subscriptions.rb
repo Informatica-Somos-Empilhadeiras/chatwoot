@@ -39,6 +39,19 @@ class Outsider::Teams::Graph::Subscriptions
     @link.subscriptions.reload
   end
 
+  # na hora de salvar: só marca o que falta como "ativando" (sem falar com a Microsoft); o SyncJob faz o resto
+  def plan!
+    wanted = desired
+    @link.subscriptions.each do |subscription|
+      next unless wanted.key?(key_of(subscription))
+
+      wanted.delete(key_of(subscription))
+      subscription.update!(last_error: nil) if subscription.subscription_id.blank?
+    end
+    wanted.each_value { |attributes| @link.subscriptions.create!(attributes) }
+    @link.subscriptions.reload
+  end
+
   def remove_all!
     @link.subscriptions.each { |subscription| remove(subscription) }
   end
@@ -52,6 +65,8 @@ class Outsider::Teams::Graph::Subscriptions
                          last_error: nil)
   rescue Outsider::Teams::Graph::Client::Error => e
     fail!(subscription, e.message)
+  rescue StandardError => e
+    fail!(subscription, "#{e.class}: #{e.message}")
   end
 
   # renova; assinatura que a Microsoft já apagou é criada de novo

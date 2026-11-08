@@ -6,6 +6,7 @@
 # id do Teams e não entra duas vezes. Edição e exclusão no Teams atualizam a mensagem. Arquivos (OneDrive/SharePoint) e
 # imagens coladas não são baixados: fica só nome e endereço (Outsider::Teams::Graph::Files mostra na hora).
 # Citação (responder citando no Teams) fica em quote; menção à pessoa (@ela, ou @canal/@equipe no canal) em mentions_me.
+# quiet: mensagem antiga (Outsider::Teams::Graph::History): entra sem push, sem aviso ao vivo e sem contar como não lida.
 class Outsider::Teams::Graph::Inbound
   CHAT = %r{chats\('([^']+)'\)/messages\('([^']+)'\)}
   CHANNEL = %r{teams\('([^']+)'\)/channels\('([^']+)'\)/messages\('([^']+)'\)(?:/replies\('([^']+)'\))?}
@@ -33,25 +34,30 @@ class Outsider::Teams::Graph::Inbound
     CGI.unescapeHTML(ActionView::Base.full_sanitizer.sanitize(html)).tr("\u00A0", ' ').gsub(/[ \t]+\n/, "\n").gsub(/\n{3,}/, "\n\n").strip
   end
 
-  def initialize(link, ref, change_type = 'created')
+  def initialize(link, ref, change_type = 'created', quiet: false)
     @link = link
     @ref = ref
     @change_type = change_type.to_s
+    @quiet = quiet
     @client = Outsider::Teams::Graph::Client.new(link)
   end
 
-  def perform
+  # data: a mensagem já lida do Graph (histórico); sem ela, busca pelo endereço do aviso
+  def perform(data = nil)
     return mark_deleted if @change_type == 'deleted'
 
-    data = fetch
+    data ||= fetch
     return if data.nil? || data['messageType'] != 'message'
+    return if @quiet && data['deletedDateTime'].present?
 
     thread = find_or_create_thread
     message = thread.messages.find_by(graph_id: data['id'])
-    return update_existing(thread, message, data) if message
+    return (@quiet ? message : update_existing(thread, message, data)) if message
 
     message = create_message(thread, data)
     touch_thread(thread, message)
+    return message if @quiet
+
     Outsider::Teams::Graph::Notifier.message(@link, thread, message)
     # aviso novo (push): só mensagem nova de outra pessoa
     Outsider::Push::DeliverJob.perform_later('teams', message.id) if message.previously_new_record? && !message.mine
@@ -151,8 +157,8 @@ class Outsider::Teams::Graph::Inbound
     return if thread.last_message_at.present? && thread.last_message_at > message.sent_at
 
     attributes = { last_message_at: message.sent_at, last_message_preview: preview(thread, message) }
-    attributes[:unread_count] = thread.unread_count + 1 unless message.mine
-    attributes[:mention_count] = thread.mention_count + 1 if message.mentions_me
+    attributes[:unread_count] = thread.unread_count + 1 unless message.mine || @quiet
+    attributes[:mention_count] = thread.mention_count + 1 if message.mentions_me && !@quiet
     thread.update!(attributes)
     @link.update_columns(last_activity_at: Time.current) # rubocop:disable Rails/SkipsModelValidations
   end

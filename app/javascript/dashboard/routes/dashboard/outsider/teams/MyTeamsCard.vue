@@ -2,7 +2,7 @@
 // OUTSIDER: "Meu Teams" em Configurações > Microsoft Teams. Antes de conectar: um botão só, que leva
 // para o login da Microsoft. Conectado: quem é, entrar de novo, desconectar e o que trazer para o
 // Chatwoot (meus chats e os canais das minhas equipes).
-import { computed, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useAlert } from 'dashboard/composables';
 import TeamsGraphAPI from 'dashboard/api/outsider/teamsGraph';
@@ -18,21 +18,49 @@ const emit = defineEmits(['changed']);
 
 const { t } = useI18n();
 const me = computed(() => props.info.me);
-const connected = computed(() => me.value && me.value.status !== 'disconnected');
+const connected = computed(
+  () => me.value && me.value.status !== 'disconnected'
+);
 const isGoing = ref(false);
 const isSaving = ref(false);
 const isLoadingTeams = ref(false);
 const directory = ref([]);
 const syncChats = ref(true);
+const allChannels = ref(true);
 const chosen = ref(new Set());
 
 const channelKey = (teamId, channelId) => `${teamId}|${channelId}`;
 
-const fillChoices = () => {
-  syncChats.value = me.value?.sync_chats ?? true;
+const directoryKeys = () =>
+  directory.value.flatMap(team =>
+    team.channels.map(channel => channelKey(team.team_id, channel.channel_id))
+  );
+
+// "Todos os canais": tudo marcado menos o que a pessoa desmarcou; senão, só os escolhidos
+const fillChannels = () => {
+  if (allChannels.value && directory.value.length) {
+    const hidden = new Set(
+      (me.value?.hidden_channels || []).map(c =>
+        channelKey(c.team_id, c.channel_id)
+      )
+    );
+    chosen.value = new Set(directoryKeys().filter(key => !hidden.has(key)));
+    return;
+  }
   chosen.value = new Set(
     (me.value?.channels || []).map(c => channelKey(c.team_id, c.channel_id))
   );
+};
+
+const fillChoices = () => {
+  syncChats.value = me.value?.sync_chats ?? true;
+  allChannels.value = me.value?.all_channels ?? true;
+  fillChannels();
+};
+
+const setAllChannels = value => {
+  allChannels.value = value;
+  if (value) chosen.value = new Set(directoryKeys());
 };
 
 const savedTeams = () => {
@@ -57,6 +85,7 @@ const loadDirectory = async (refresh = false) => {
   try {
     const { data } = await TeamsGraphAPI.directory(refresh);
     directory.value = data.payload;
+    fillChannels();
   } catch (error) {
     // sem a Microsoft no momento: mostra ao menos os canais já escolhidos, para não parecer que sumiram
     directory.value = savedTeams();
@@ -66,8 +95,18 @@ const loadDirectory = async (refresh = false) => {
   }
 };
 
+// só recarrega as escolhas quando elas mudam no servidor (a tela confere sozinha enquanto a Microsoft trabalha)
+const choicesSignature = computed(() =>
+  JSON.stringify([
+    me.value?.status,
+    me.value?.sync_chats,
+    me.value?.all_channels,
+    me.value?.channels,
+    me.value?.hidden_channels,
+  ])
+);
 watch(
-  me,
+  choicesSignature,
   () => {
     fillChoices();
     loadDirectory();
@@ -101,7 +140,11 @@ const save = async () => {
       const [team_id, channel_id] = key.split('|');
       return { team_id, channel_id };
     });
-    await TeamsGraphAPI.updateMe({ sync_chats: syncChats.value, channels });
+    await TeamsGraphAPI.updateMe({
+      sync_chats: syncChats.value,
+      all_channels: allChannels.value,
+      channels,
+    });
     useAlert(t('OUTSIDER_TEAMS_GRAPH.SAVED'));
     emit('changed');
   } catch (error) {
@@ -123,8 +166,28 @@ const disconnect = async () => {
 };
 
 const problems = computed(() =>
-  (me.value?.subscriptions || []).filter(item => !item.ok)
+  (me.value?.subscriptions || []).filter(item => !item.ok && !item.pending)
 );
+
+// avisos da Microsoft sendo pedidos e mensagens antigas chegando (em segundo plano): a tela confere sozinha
+const working = computed(
+  () =>
+    me.value?.status === 'active' &&
+    ((me.value?.subscriptions || []).some(item => item.pending) ||
+      (me.value?.sync_chats && !me.value?.history_at))
+);
+let pollTimer = null;
+let polls = 0;
+const schedulePoll = () => {
+  clearTimeout(pollTimer);
+  if (!working.value || polls >= 40) return;
+  pollTimer = setTimeout(() => {
+    polls += 1;
+    emit('changed');
+  }, 6000);
+};
+watch([working, me], schedulePoll, { immediate: true });
+onBeforeUnmount(() => clearTimeout(pollTimer));
 </script>
 
 <template>
@@ -185,7 +248,9 @@ const problems = computed(() =>
       <div class="flex flex-wrap items-center gap-3.5">
         <Avatar :name="me.display_name || '?'" :size="46" rounded-full />
         <div class="flex-1 min-w-[200px]">
-          <h3 class="flex flex-wrap items-center gap-2 mb-0 text-[15px] font-semibold text-n-slate-12">
+          <h3
+            class="flex flex-wrap items-center gap-2 mb-0 text-[15px] font-semibold text-n-slate-12"
+          >
             {{ t('OUTSIDER_TEAMS_GRAPH.MY_TITLE') }}
             <span
               v-if="me.status === 'active'"
@@ -237,9 +302,18 @@ const problems = computed(() =>
         <Icon icon="i-lucide-triangle-alert" class="size-4 mt-0.5 shrink-0" />
         {{
           t('OUTSIDER_TEAMS_GRAPH.NOTICES_PROBLEM', {
-            reason: problems[0].error || '',
+            reason:
+              problems[0].error || t('OUTSIDER_TEAMS_GRAPH.NOTICES_NO_REASON'),
           })
         }}
+      </p>
+      <p
+        v-if="working"
+        class="flex items-center gap-2 p-2.5 mt-3 mb-0 text-sm rounded-xl tms-soft"
+        data-testid="teams-working"
+      >
+        <Spinner :size="14" class="shrink-0" />
+        {{ t('OUTSIDER_TEAMS_GRAPH.WORKING') }}
       </p>
     </section>
 
@@ -256,7 +330,9 @@ const problems = computed(() =>
       <label
         class="flex items-center gap-3.5 p-3 mb-4 border cursor-pointer rounded-xl border-n-weak bg-n-surface-1"
       >
-        <span class="flex items-center justify-center size-9 rounded-xl tms-soft">
+        <span
+          class="flex items-center justify-center size-9 rounded-xl tms-soft"
+        >
           <Icon icon="i-lucide-message-circle" class="size-[18px]" />
         </span>
         <span class="flex-1">
@@ -267,10 +343,41 @@ const problems = computed(() =>
             {{ t('OUTSIDER_TEAMS_GRAPH.MY_CHATS_HELP') }}
           </span>
         </span>
-        <input v-model="syncChats" type="checkbox" class="!m-0 size-5 accent-[#5b5fc7]" />
+        <input
+          v-model="syncChats"
+          type="checkbox"
+          class="!m-0 size-5 accent-[#5b5fc7]"
+        />
       </label>
 
-      <div class="flex items-center gap-2 mb-2 text-sm font-semibold text-n-slate-12">
+      <label
+        class="flex items-center gap-3.5 p-3 mb-3 border cursor-pointer rounded-xl border-n-weak bg-n-surface-1"
+        data-testid="teams-all-channels"
+      >
+        <span
+          class="flex items-center justify-center size-9 rounded-xl tms-soft"
+        >
+          <Icon icon="i-lucide-layers" class="size-[18px]" />
+        </span>
+        <span class="flex-1">
+          <span class="block text-sm font-semibold text-n-slate-12">
+            {{ t('OUTSIDER_TEAMS_GRAPH.ALL_CHANNELS') }}
+          </span>
+          <span class="block text-xs text-n-slate-11">
+            {{ t('OUTSIDER_TEAMS_GRAPH.ALL_CHANNELS_HELP') }}
+          </span>
+        </span>
+        <input
+          :checked="allChannels"
+          type="checkbox"
+          class="!m-0 size-5 accent-[#5b5fc7]"
+          @change="setAllChannels($event.target.checked)"
+        />
+      </label>
+
+      <div
+        class="flex items-center gap-2 mb-2 text-sm font-semibold text-n-slate-12"
+      >
         <Icon icon="i-lucide-hash" class="size-4" />
         {{ t('OUTSIDER_TEAMS_GRAPH.MY_CHANNELS') }}
         <span class="px-2 py-0.5 text-xs rounded-full tms-soft">
@@ -288,7 +395,10 @@ const problems = computed(() =>
       <div v-if="isLoadingTeams" class="flex justify-center py-6">
         <Spinner :size="18" />
       </div>
-      <p v-else-if="!directory.length" class="py-3 mb-0 text-sm text-n-slate-11">
+      <p
+        v-else-if="!directory.length"
+        class="py-3 mb-0 text-sm text-n-slate-11"
+      >
         {{ t('OUTSIDER_TEAMS_GRAPH.NO_TEAMS') }}
       </p>
       <div v-else class="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
@@ -297,7 +407,9 @@ const problems = computed(() =>
           :key="team.team_id"
           class="px-3.5 py-2.5 border rounded-xl border-n-weak bg-n-surface-1"
         >
-          <div class="flex items-center gap-2 mb-1 text-sm font-semibold text-n-slate-12">
+          <div
+            class="flex items-center gap-2 mb-1 text-sm font-semibold text-n-slate-12"
+          >
             <Avatar :name="team.team_name || '?'" :size="22" />
             <span class="truncate">{{ team.team_name }}</span>
           </div>
@@ -309,7 +421,9 @@ const problems = computed(() =>
             <input
               type="checkbox"
               class="!m-0 size-4 accent-[#5b5fc7]"
-              :checked="chosen.has(channelKey(team.team_id, channel.channel_id))"
+              :checked="
+                chosen.has(channelKey(team.team_id, channel.channel_id))
+              "
               @change="toggle(team.team_id, channel.channel_id)"
             />
             <Icon icon="i-lucide-hash" class="size-3.5 text-n-slate-10" />
