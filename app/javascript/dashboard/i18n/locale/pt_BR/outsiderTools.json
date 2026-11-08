@@ -999,5 +999,84 @@
       "MANAGE": "Gestão",
       "MORE": "Mais"
     }
+  },
+  "OUTSIDER_PUSH": {
+    "SIDEBAR": "Notificações",
+    "TITLE": "Minhas notificações",
+    "DESCRIPTION": "Avisos no computador e no celular com a foto, de onde veio e a mensagem. Substituem as notificações do navegador do Chatwoot.",
+    "DISABLED": "O aviso novo está desligado no servidor (OUTSIDER_PUSH=off). Valem as notificações padrão do Chatwoot.",
+    "ERROR": "Não deu certo. Tente de novo.",
+    "SECTIONS": {
+      "WHATSAPP": "WhatsApp e outros canais de cliente",
+      "TEAMS": "Teams",
+      "CHATWOOT": "Chatwoot",
+      "PRIVACY": "Privacidade"
+    },
+    "PREFS": {
+      "TITLE": "O que me avisa",
+      "HELP": "Já vem tudo ligado. Desligue só o que não quiser.",
+      "WA_ASSIGNED": "Conversas atribuídas a mim",
+      "WA_ASSIGNED_HELP": "Cada mensagem nova do cliente",
+      "WA_UNASSIGNED": "Conversas sem responsável nas minhas caixas",
+      "WA_UNASSIGNED_HELP": "Até alguém assumir a conversa",
+      "WA_GROUPS": "Grupos do WhatsApp",
+      "WA_GROUPS_HELP": "Seguem as mesmas regras acima",
+      "TEAMS_CHATS": "Chats individuais",
+      "TEAMS_MENTIONS": "Quando me citarem ({'@'})",
+      "TEAMS_MENTIONS_HELP": "Em chat em grupo ou em canal",
+      "TEAMS_REPLIES": "Respostas às minhas publicações",
+      "TEAMS_REPLIES_HELP": "E às publicações em que eu respondi",
+      "TEAMS_GROUPS": "Todas as mensagens dos chats em grupo",
+      "CHATWOOT": "Conversa atribuída a mim e citação em nota privada",
+      "HIDE_CONTENT": "Esconder o texto da mensagem na tela bloqueada",
+      "HIDE_CONTENT_HELP": "Mostra só \"Nova mensagem de Fulano\""
+    },
+    "DEVICES": {
+      "TITLE": "Meus aparelhos",
+      "EMPTY": "Nenhum aparelho ativado ainda.",
+      "THIS": "Este aparelho",
+      "SINCE": "{label} · ativado em {date}",
+      "ACTIVATED": "Ativado em {date}",
+      "ACTIVE": "Ativo",
+      "REMOVE": "Parar de avisar neste aparelho",
+      "ACTIVATE_HERE": "Ativar neste aparelho",
+      "TEST": "Enviar push de teste",
+      "TEST_SENT": "Push de teste enviado para {count} aparelho(s).",
+      "TEST_NONE": "Nenhum aparelho recebeu. Ative neste aparelho primeiro.",
+      "HOW_PHONE": "Como ativar no celular",
+      "UNSUPPORTED": "Este navegador não recebe avisos. Use Chrome, Edge ou Firefox.",
+      "IPHONE_HOME": "No iPhone os avisos só chegam com o Chatwoot na Tela de Início: no Safari, toque em Compartilhar > Adicionar à Tela de Início e abra pelo ícone."
+    },
+    "HELP": {
+      "ANDROID": "Abra o Chatwoot no Chrome do celular, entre com a sua conta e toque em Ativar agora no aviso amarelo (ou aqui, em Ativar neste aparelho). Chega como qualquer app.",
+      "IPHONE": "Abra o Chatwoot no Safari, toque em Compartilhar > Adicionar à Tela de Início. Abra pelo ícone novo, entre e toque em Ativar agora. Regra da Apple: sem a Tela de Início o iPhone não recebe."
+    },
+    "TEAM": {
+      "TITLE": "Equipe",
+      "ADMINS_ONLY": "só administradores",
+      "HELP": "Mostra só se o push está ativo. As escolhas de cada pessoa continuam sendo dela.",
+      "COL_PERSON": "Pessoa",
+      "COL_DEVICES": "Aparelhos",
+      "COL_STATUS": "Situação",
+      "ACTIVE": "Ativo",
+      "NEVER": "Nunca ativou",
+      "BLOCKED": "Bloqueou no navegador",
+      "REMIND": "Lembrar",
+      "REMIND_SENT": "Lembrado",
+      "REMINDED": "{name} vai ver o aviso para ativar na próxima vez que abrir o Chatwoot.",
+      "HOW_FIX": "Como resolver"
+    },
+    "BANNER": {
+      "TITLE": "Ative as notificações neste aparelho",
+      "TEXT": "Assim você recebe as mensagens dos clientes e do Teams mesmo com o Chatwoot minimizado.",
+      "REMINDED": "O administrador pediu para você ativar: assim nenhuma mensagem de cliente passa sem você ver.",
+      "BLOCKED_TITLE": "As notificações estão bloqueadas neste navegador",
+      "BLOCKED_TEXT": "Clique no cadeado ao lado do endereço do site > Notificações > Permitir e recarregue a página.",
+      "ACTIVATE": "Ativar agora",
+      "CLOSE": "Agora não",
+      "DONE": "Pronto! Este aparelho vai receber os avisos.",
+      "NOT_ALLOWED": "O navegador não deu licença. Dá para liberar depois no cadeado ao lado do endereço.",
+      "FAILED": "Não deu para ativar neste navegador."
+    }
   }
 }

@@ -53,6 +53,8 @@ class Outsider::Teams::Graph::Inbound
     message = create_message(thread, data)
     touch_thread(thread, message)
     Outsider::Teams::Graph::Notifier.message(@link, thread, message)
+    # aviso novo (push): só mensagem nova de outra pessoa
+    Outsider::Push::DeliverJob.perform_later('teams', message.id) if message.previously_new_record? && !message.mine
     message
   end
 

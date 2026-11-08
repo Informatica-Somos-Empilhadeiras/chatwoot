@@ -21,4 +21,11 @@ export const outsiderSettingsItems = (t, accountScopedRoute) => [
     icon: 'i-lucide-messages-square',
     to: accountScopedRoute('outsider_teams_settings'),
   },
+  // aviso novo no navegador e no celular (todos)
+  {
+    name: 'Settings Outsider Push',
+    label: t('OUTSIDER_PUSH.SIDEBAR'),
+    icon: 'i-lucide-bell-ring',
+    to: accountScopedRoute('outsider_push_settings'),
+  },
 ];

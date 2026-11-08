@@ -5,6 +5,8 @@
 import TransferNotices from './transfer/TransferNotices.vue';
 // visualizador de documentos (PDF, Word, Excel, PowerPoint) dentro do Chatwoot
 import FileViewer from 'dashboard/components-next/outsider/fileViewer/FileViewer.vue';
+// aviso novo (push): pede para ativar neste aparelho e abre a conversa ao clicar no aviso
+import PushBanner from './push/PushBanner.vue';
 import { useAccountBranding } from './branding/useAccountBranding';
 // item Teams do menu e as não lidas (só para quem conectou o próprio Teams)
 import { watch } from 'vue';
@@ -28,4 +30,5 @@ watch(currentAccountId, id => id && startTeamsUpdates(id), { immediate: true });
 <template>
   <TransferNotices />
   <FileViewer />
+  <PushBanner />
 </template>

@@ -999,5 +999,84 @@
       "MANAGE": "Management",
       "MORE": "More"
     }
+  },
+  "OUTSIDER_PUSH": {
+    "SIDEBAR": "Notifications",
+    "TITLE": "My notifications",
+    "DESCRIPTION": "Alerts on your computer and phone with the photo, where it came from and the message. They replace Chatwoot's browser notifications.",
+    "DISABLED": "The new alerts are turned off on the server (OUTSIDER_PUSH=off). Chatwoot's default notifications apply.",
+    "ERROR": "Something went wrong. Try again.",
+    "SECTIONS": {
+      "WHATSAPP": "WhatsApp and other customer channels",
+      "TEAMS": "Teams",
+      "CHATWOOT": "Chatwoot",
+      "PRIVACY": "Privacy"
+    },
+    "PREFS": {
+      "TITLE": "What alerts me",
+      "HELP": "Everything starts on. Turn off only what you don't want.",
+      "WA_ASSIGNED": "Conversations assigned to me",
+      "WA_ASSIGNED_HELP": "Every new customer message",
+      "WA_UNASSIGNED": "Unassigned conversations in my inboxes",
+      "WA_UNASSIGNED_HELP": "Until someone takes the conversation",
+      "WA_GROUPS": "WhatsApp groups",
+      "WA_GROUPS_HELP": "Same rules as above",
+      "TEAMS_CHATS": "1:1 chats",
+      "TEAMS_MENTIONS": "When someone mentions me ({'@'})",
+      "TEAMS_MENTIONS_HELP": "In group chats or channels",
+      "TEAMS_REPLIES": "Replies to my posts",
+      "TEAMS_REPLIES_HELP": "And to posts I replied to",
+      "TEAMS_GROUPS": "Every message in group chats",
+      "CHATWOOT": "Conversation assigned to me and mention in a private note",
+      "HIDE_CONTENT": "Hide the message text on the lock screen",
+      "HIDE_CONTENT_HELP": "Shows only \"New message from Someone\""
+    },
+    "DEVICES": {
+      "TITLE": "My devices",
+      "EMPTY": "No device activated yet.",
+      "THIS": "This device",
+      "SINCE": "{label} · activated on {date}",
+      "ACTIVATED": "Activated on {date}",
+      "ACTIVE": "Active",
+      "REMOVE": "Stop alerts on this device",
+      "ACTIVATE_HERE": "Activate on this device",
+      "TEST": "Send test push",
+      "TEST_SENT": "Test push sent to {count} device(s).",
+      "TEST_NONE": "No device received it. Activate this device first.",
+      "HOW_PHONE": "How to activate on the phone",
+      "UNSUPPORTED": "This browser can't receive alerts. Use Chrome, Edge or Firefox.",
+      "IPHONE_HOME": "On iPhone alerts only arrive with Chatwoot on the Home Screen: in Safari, tap Share > Add to Home Screen and open it from the icon."
+    },
+    "HELP": {
+      "ANDROID": "Open Chatwoot in Chrome on the phone, sign in and tap Activate now on the yellow notice (or Activate on this device here). It arrives like any app.",
+      "IPHONE": "Open Chatwoot in Safari, tap Share > Add to Home Screen. Open it from the new icon, sign in and tap Activate now. Apple's rule: without the Home Screen the iPhone gets nothing."
+    },
+    "TEAM": {
+      "TITLE": "Team",
+      "ADMINS_ONLY": "administrators only",
+      "HELP": "Shows only whether push is active. Each person's choices stay theirs.",
+      "COL_PERSON": "Person",
+      "COL_DEVICES": "Devices",
+      "COL_STATUS": "Status",
+      "ACTIVE": "Active",
+      "NEVER": "Never activated",
+      "BLOCKED": "Blocked in the browser",
+      "REMIND": "Remind",
+      "REMIND_SENT": "Reminded",
+      "REMINDED": "{name} will see the activation notice next time Chatwoot opens.",
+      "HOW_FIX": "How to fix"
+    },
+    "BANNER": {
+      "TITLE": "Turn on notifications on this device",
+      "TEXT": "So you get customer and Teams messages even with Chatwoot minimized.",
+      "REMINDED": "Your administrator asked you to turn them on, so no customer message goes unseen.",
+      "BLOCKED_TITLE": "Notifications are blocked in this browser",
+      "BLOCKED_TEXT": "Click the lock next to the site address > Notifications > Allow, then reload the page.",
+      "ACTIVATE": "Activate now",
+      "CLOSE": "Not now",
+      "DONE": "Done! This device will receive alerts.",
+      "NOT_ALLOWED": "The browser did not allow it. You can allow it later from the lock next to the address.",
+      "FAILED": "Could not activate in this browser."
+    }
   }
 }

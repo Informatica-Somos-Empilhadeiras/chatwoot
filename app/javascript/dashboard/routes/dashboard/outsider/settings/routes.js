@@ -3,6 +3,7 @@
 // Entrega 26: Microsoft Teams (robôs do Teams ligados a caixas de entrada).
 // "Conectar meu Teams": a tela do Teams vale para todos (cada um conecta o próprio; a parte da empresa
 // só aparece para administradores) e a área Teams do menu (chats e canais de quem conectou).
+// Notificações: o aviso novo (push) que substitui o do Chatwoot no navegador; vale para todos.
 import { frontendURL } from 'dashboard/helper/URLHelper';
 import SettingsWrapper from 'dashboard/routes/dashboard/settings/SettingsWrapper.vue';
 import BrandingSettings from '../branding/BrandingSettings.vue';
@@ -10,6 +11,7 @@ import BotFlowsIndex from '../bot/BotFlowsIndex.vue';
 import BotFlowEditor from '../bot/BotFlowEditor.vue';
 import TeamsSettings from '../teams/TeamsSettings.vue';
 import TeamsArea from '../teams/TeamsArea.vue';
+import PushSettings from '../push/PushSettings.vue';
 
 const meta = { permissions: ['administrator'] };
 
@@ -35,6 +37,13 @@ export const routes = [
         path: 'teams',
         name: 'outsider_teams_settings',
         component: TeamsSettings,
+        meta: { permissions: ['administrator', 'agent'] },
+      },
+      // aviso novo no navegador e no celular (cada pessoa escolhe o que recebe)
+      {
+        path: 'notifications',
+        name: 'outsider_push_settings',
+        component: PushSettings,
         meta: { permissions: ['administrator', 'agent'] },
       },
     ],

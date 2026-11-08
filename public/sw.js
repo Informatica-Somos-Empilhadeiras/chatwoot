@@ -1,7 +1,15 @@
 /* eslint-disable no-restricted-globals, no-console */
 /* globals clients */
+// OUTSIDER: aviso novo (foto, "Nome · origem", texto, agrupado por conversa). Ver public/outsider-push-sw.js
+importScripts('/outsider-push-sw.js');
+
 self.addEventListener('push', event => {
   let notification = event.data && event.data.json();
+  // OUTSIDER: aviso novo
+  if (self.outsiderPush && self.outsiderPush.handles(notification)) {
+    event.waitUntil(self.outsiderPush.show(notification));
+    return;
+  }
 
   event.waitUntil(
     self.registration.showNotification(notification.title, {
@@ -14,6 +22,8 @@ self.addEventListener('push', event => {
 });
 
 self.addEventListener('notificationclick', event => {
+  // OUTSIDER: aviso novo (Abrir conversa / Marcar como lida)
+  if (self.outsiderPush && self.outsiderPush.click(event)) return;
   let notification = event.notification;
 
   event.waitUntil(
