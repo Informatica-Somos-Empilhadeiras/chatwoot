@@ -6,6 +6,7 @@ Rails.application.routes.prepend do
         scope module: :accounts do
           namespace :outsider do
             get 'file_views/:id', to: 'file_views#show'
+            get 'file_views/:id/peek', to: 'file_views#peek'
           end
         end
       end

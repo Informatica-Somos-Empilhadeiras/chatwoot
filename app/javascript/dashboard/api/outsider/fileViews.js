@@ -11,6 +11,11 @@ class FileViewsAPI extends ApiClient {
   show(attachmentId) {
     return axios.get(`${this.url}/${attachmentId}`);
   }
+
+  // começo do arquivo para a miniatura: { type: pdf|image|text|table|none, url, src, lines, rows, pages }
+  peek(attachmentId) {
+    return axios.get(`${this.url}/${attachmentId}/peek`);
+  }
 }
 
 export default new FileViewsAPI();

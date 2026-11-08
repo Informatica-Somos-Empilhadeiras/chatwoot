@@ -320,7 +320,11 @@
     },
     "DOCUMENT": {
       "VIEW": "Visualizar",
-      "DOWNLOAD": "Baixar"
+      "DOWNLOAD": "Baixar",
+      "OPEN": "Abrir {name}",
+      "PAGES": "{count} página | {count} páginas",
+      "SLIDES": "{count} slide | {count} slides",
+      "SHEET": "Aba {name}"
     },
     "FILE_VIEWER": {
       "LOADING": "Abrindo o arquivo…",

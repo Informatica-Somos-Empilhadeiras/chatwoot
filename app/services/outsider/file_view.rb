@@ -80,6 +80,12 @@ class Outsider::FileView
     extension.present? ? "#{base.first(80)}.#{extension}" : base.first(80)
   end
 
+  # endereço temporário do arquivo (relativo ao Chatwoot)
+  def signed_path
+    token = self.class.verifier.generate({ 'a' => @attachment.id }, expires_in: EXPIRES)
+    "#{PATH}/#{token}/#{ERB::Util.url_encode(safe_filename)}"
+  end
+
   private
 
   def kind_and_reason
@@ -108,10 +114,8 @@ class Outsider::FileView
   def view_url(kind)
     return nil if kind == 'none'
 
-    token = self.class.verifier.generate({ 'a' => @attachment.id }, expires_in: EXPIRES)
-    path = "#{PATH}/#{token}/#{ERB::Util.url_encode(safe_filename)}"
     # PDF e texto abrem no mesmo endereço em que a pessoa está (a janela só aceita a mesma origem);
     # o Office na web precisa do endereço público completo
-    kind == 'office' ? "#{OFFICE_VIEWER}#{CGI.escape("#{self.class.site}#{path}")}" : path
+    kind == 'office' ? "#{OFFICE_VIEWER}#{CGI.escape("#{self.class.site}#{signed_path}")}" : signed_path
   end
 end
