@@ -3,6 +3,8 @@
 // aparência da conta (favicon, título da aba, logo e papel de parede das conversas) e o acabamento
 // das conversas no estilo WhatsApp/Telegram e o ajuste para celular e tablet.
 import TransferNotices from './transfer/TransferNotices.vue';
+// visualizador de documentos (PDF, Word, Excel, PowerPoint) dentro do Chatwoot
+import FileViewer from 'dashboard/components-next/outsider/fileViewer/FileViewer.vue';
 import { useAccountBranding } from './branding/useAccountBranding';
 // visual das conversas no estilo WhatsApp/Telegram (balões com rabinho, modo seleção)
 import 'dashboard/components-next/outsider/whatsappLook/whatsappLook.css';
@@ -18,4 +20,5 @@ useOutsiderResponsive();
 
 <template>
   <TransferNotices />
+  <FileViewer />
 </template>

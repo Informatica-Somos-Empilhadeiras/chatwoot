@@ -6,12 +6,14 @@ import LocationCardBubble from './LocationCard.vue';
 import VoiceBubble from './VoiceBubble.vue';
 import NoticeBubble from './NoticeBubble.vue';
 import BotMenuCard from './BotMenuCard.vue';
+import DocumentBubble from './DocumentBubble.vue';
 import { isMediaAlbum } from 'dashboard/helper/outsider/mediaAlbum';
 import { isContactCardMessage } from 'dashboard/helper/outsider/contactCard';
 import { isLocationMessage } from 'dashboard/helper/outsider/location';
 import { isVoiceWithHeader } from 'dashboard/helper/outsider/voiceNote';
 import { evolutionNoticeOf } from 'dashboard/helper/outsider/evolutionNotice';
 import { isBotMenuMessage } from 'dashboard/helper/outsider/botMenu';
+import { isDocumentMessage } from 'dashboard/helper/outsider/documentFile';
 
 // mesmo caso em que o Chatwoot usaria a bolha de áudio, mais o áudio de grupo (só com quem enviou)
 const isVoiceMessage = props =>
@@ -28,5 +30,6 @@ export const outsiderBubbleFor = props => {
   if (isContactCardMessage(props)) return ContactCardBubble;
   if (isLocationMessage(props)) return LocationCardBubble;
   if (isVoiceMessage(props)) return VoiceBubble;
+  if (isDocumentMessage(props)) return DocumentBubble;
   return null;
 };

@@ -317,6 +317,27 @@
         "COPY_EMAIL": "Copy e-mail",
         "PROFILE": "Profile"
       }
+    },
+    "DOCUMENT": {
+      "VIEW": "View",
+      "DOWNLOAD": "Download"
+    },
+    "FILE_VIEWER": {
+      "LOADING": "Opening the file…",
+      "OPEN_TAB": "Open in a new tab",
+      "EDIT": "Edit in Office",
+      "DOWNLOAD": "Download",
+      "CLOSE": "Close (Esc)",
+      "OPEN": "Open",
+      "MOBILE_PDF": "On a phone, the PDF opens in the device viewer.",
+      "REASONS": {
+        "UNSUPPORTED": "This file type cannot be viewed here. Use Download.",
+        "TOO_BIG": "File too large to view here (Excel up to 5 MB; Word and PowerPoint up to 10 MB). Use Download.",
+        "NOT_PUBLIC": "Word, Excel and PowerPoint only open here on the public Chatwoot address. In the test environment, use Download.",
+        "MISSING": "The file is no longer available.",
+        "NO_ACCESS": "You do not have access to this file in Microsoft 365.",
+        "LOAD": "Could not open the file right now. Try again or use Download."
+      }
     }
   }
 }

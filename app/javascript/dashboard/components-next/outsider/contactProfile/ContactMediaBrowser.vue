@@ -17,6 +17,11 @@ import {
   formatSize,
 } from '../mediaViewer/mediaHelpers';
 import { useConversationLinks } from './useConversationLinks';
+import {
+  canViewInChatwoot,
+  extensionOf as documentExtension,
+} from 'dashboard/helper/outsider/documentFile';
+import { openAttachmentInViewer } from '../fileViewer/fileViewerStore';
 
 const props = defineProps({
   contactId: { type: Number, default: null },
@@ -78,8 +83,11 @@ const openViewer = item => {
   viewer.value = item;
 };
 
-const openDocument = item =>
-  window.open(item.data_url, '_blank', 'noopener,noreferrer');
+// PDF, Word, Excel, PowerPoint e texto abrem no visualizador do Chatwoot; o resto baixa
+const openDocument = item => {
+  if (canViewInChatwoot(documentExtension(item))) openAttachmentInViewer(item);
+  else window.open(item.data_url, '_blank', 'noopener,noreferrer');
+};
 
 const goToMessage = (messageId, conversationId) => {
   if (!messageId) return;

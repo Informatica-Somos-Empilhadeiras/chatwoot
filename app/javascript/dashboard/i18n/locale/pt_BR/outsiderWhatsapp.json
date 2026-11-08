@@ -317,6 +317,27 @@
         "COPY_EMAIL": "Copiar e-mail",
         "PROFILE": "Perfil"
       }
+    },
+    "DOCUMENT": {
+      "VIEW": "Visualizar",
+      "DOWNLOAD": "Baixar"
+    },
+    "FILE_VIEWER": {
+      "LOADING": "Abrindo o arquivo…",
+      "OPEN_TAB": "Abrir em outra aba",
+      "EDIT": "Editar no Office",
+      "DOWNLOAD": "Baixar",
+      "CLOSE": "Fechar (Esc)",
+      "OPEN": "Abrir",
+      "MOBILE_PDF": "No celular, o PDF abre no visualizador do próprio aparelho.",
+      "REASONS": {
+        "UNSUPPORTED": "Este tipo de arquivo não pode ser visualizado aqui. Use Baixar.",
+        "TOO_BIG": "Arquivo grande demais para visualizar aqui (Excel até 5 MB; Word e PowerPoint até 10 MB). Use Baixar.",
+        "NOT_PUBLIC": "Word, Excel e PowerPoint só abrem aqui no endereço oficial do Chatwoot. No ambiente de testes, use Baixar.",
+        "MISSING": "O arquivo não está mais disponível.",
+        "NO_ACCESS": "Você não tem acesso a este arquivo na Microsoft.",
+        "LOAD": "Não foi possível abrir o arquivo agora. Tente de novo ou use Baixar."
+      }
     }
   }
 }
