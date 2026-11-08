@@ -1,0 +1,91 @@
+/* OUTSIDER: cores da área Teams. O roxo do Teams marca tudo o que é Teams (abas, não lidas, balões
+   e botões), para não confundir com o verde do WhatsApp do atendimento. */
+.tms {
+  --tms-accent: #5b5fc7;
+  --tms-accent-hover: #4f52b2;
+  --tms-soft: #e8ebfa;
+  --tms-soft-text: #3d3fa3;
+  --tms-mine: #e3e6fb;
+  --tms-bg: #f5f5fa;
+  --tms-line: #dcdff5;
+}
+
+.dark .tms {
+  --tms-accent: #7579eb;
+  --tms-accent-hover: #8a8df0;
+  --tms-soft: #2b2d55;
+  --tms-soft-text: #c5c8ff;
+  --tms-mine: #2f3263;
+  --tms-bg: #141420;
+  --tms-line: #3a3d6b;
+}
+
+.tms .tms-accent-bg {
+  background: var(--tms-accent);
+  color: #fff;
+}
+
+.tms .tms-accent-bg:hover {
+  background: var(--tms-accent-hover);
+}
+
+.tms .tms-soft {
+  background: var(--tms-soft);
+  color: var(--tms-soft-text);
+}
+
+.tms .tms-text {
+  color: var(--tms-soft-text);
+}
+
+.tms .tms-count {
+  background: var(--tms-accent);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 999px;
+  min-width: 19px;
+  height: 19px;
+  padding: 0 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tms .tms-bg {
+  background: var(--tms-bg);
+}
+
+.tms .tms-mine {
+  background: var(--tms-mine);
+}
+
+.tms .tms-outline {
+  outline: 2px solid var(--tms-line);
+}
+
+.tms .tms-border {
+  border-color: var(--tms-line);
+}
+
+/* mensagem que chamou a pessoa (@menção): borda roxa à esquerda */
+.tms .tms-mention {
+  box-shadow: inset 3px 0 0 var(--tms-accent);
+}
+
+/* clicou na citação: a mensagem citada pisca para a pessoa achar */
+.tms .tms-flash {
+  border-radius: 14px;
+  animation: tms-flash 1.6s ease-out;
+}
+
+@keyframes tms-flash {
+  0%,
+  40% {
+    background-color: var(--tms-soft);
+  }
+
+  100% {
+    background-color: transparent;
+  }
+}

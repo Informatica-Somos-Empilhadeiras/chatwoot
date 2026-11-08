@@ -36,6 +36,7 @@ export const toModule = (item, allowed) => {
           activeOn: item.activeOn || [],
           getterKeys: item.getterKeys,
           navSection: item.navSection,
+          countMode: item.countMode,
           groups: [],
         }
       : null;
@@ -65,6 +66,7 @@ export const toModule = (item, allowed) => {
     icon: item.icon,
     to: null,
     navSection: item.navSection,
+    countMode: item.countMode,
     groups,
   };
 };
@@ -81,10 +83,14 @@ export const countOf = (item, getters) => {
 };
 
 // a maior contagem entre as opções: elas se sobrepõem (as não lidas de "Todas" já incluem as de
-// cada canal, pasta ou etiqueta), então somar contaria a mesma conversa várias vezes
+// cada canal, pasta ou etiqueta), então somar contaria a mesma conversa várias vezes. Módulo com
+// opções que não se repetem (Teams: Chats e Canais) pede a soma com countMode: 'sum'.
 export const moduleCount = (module, getters) =>
   itemsOf(module).reduce(
-    (biggest, item) => Math.max(biggest, countOf(item, getters)),
+    (total, item) =>
+      module.countMode === 'sum'
+        ? total + countOf(item, getters)
+        : Math.max(total, countOf(item, getters)),
     0
   );
 

@@ -6,6 +6,10 @@ import TransferNotices from './transfer/TransferNotices.vue';
 // visualizador de documentos (PDF, Word, Excel, PowerPoint) dentro do Chatwoot
 import FileViewer from 'dashboard/components-next/outsider/fileViewer/FileViewer.vue';
 import { useAccountBranding } from './branding/useAccountBranding';
+// item Teams do menu e as não lidas (só para quem conectou o próprio Teams)
+import { watch } from 'vue';
+import { useMapGetter } from 'dashboard/composables/store';
+import { startTeamsUpdates } from './teams/teamsStore';
 // visual das conversas no estilo WhatsApp/Telegram (balões com rabinho, modo seleção)
 import 'dashboard/components-next/outsider/whatsappLook/whatsappLook.css';
 // celular e tablet: altura real da tela com o teclado, painel do contato e arrastar no toque
@@ -16,6 +20,9 @@ import './responsive/brand.css';
 
 useAccountBranding();
 useOutsiderResponsive();
+
+const currentAccountId = useMapGetter('getCurrentAccountId');
+watch(currentAccountId, id => id && startTeamsUpdates(id), { immediate: true });
 </script>
 
 <template>

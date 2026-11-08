@@ -23,6 +23,7 @@ import Logo from 'next/icon/Logo.vue';
 // OUTSIDER: item do CRM (ícone com aviso de encaminhamento e as seções como subitens; some sem acesso)
 import { crmSidebarItems } from 'dashboard/routes/dashboard/outsider/crm/sidebar';
 import { voiceSidebarItems } from 'dashboard/routes/dashboard/outsider/voice/sidebar'; // OUTSIDER: Telefonia
+import { teamsSidebarItems } from 'dashboard/routes/dashboard/outsider/teams/sidebar'; // OUTSIDER: área Teams
 import OutsiderPhoneButton from 'dashboard/routes/dashboard/outsider/voice/PhoneButton.vue'; // OUTSIDER: telefonia
 import { outsiderSettingsItems } from 'dashboard/routes/dashboard/outsider/settings/sidebar'; // OUTSIDER: Aparência e bot
 import OutsiderMobileTabbar from 'dashboard/routes/dashboard/outsider/responsive/MobileTabbar.vue'; // OUTSIDER: barra de baixo no celular
@@ -491,6 +492,8 @@ const menuItems = computed(() => {
         },
       ],
     },
+    // OUTSIDER: área Teams (chats e canais de quem conectou o próprio Teams)
+    ...teamsSidebarItems(t, accountScopedRoute),
     // OUTSIDER: página Status do WhatsApp
     {
       name: 'WhatsappStatus',
