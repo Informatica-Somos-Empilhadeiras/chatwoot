@@ -45,6 +45,13 @@ const SECTIONS = [
     items: ['chatwoot'],
   },
   {
+    key: 'phone',
+    icon: 'i-lucide-phone-missed',
+    tone: 'green',
+    items: ['calls_missed'],
+    voice: true,
+  },
+  {
     key: 'privacy',
     icon: 'i-lucide-lock',
     tone: 'slate',
@@ -60,6 +67,7 @@ const WITH_HELP = new Set([
   'teams_mentions',
   'teams_replies',
   'hide_content',
+  'calls_missed',
 ]);
 
 const isLoading = ref(true);
@@ -69,6 +77,10 @@ const showHelp = ref(false);
 const reminded = ref(new Set());
 
 const info = computed(() => pushState.info);
+// "Telefone" só para quem tem ramal ligado na Telefonia
+const sections = computed(() =>
+  SECTIONS.filter(section => !section.voice || info.value?.voice)
+);
 const prefs = computed(() => info.value?.prefs || {});
 const activeHere = computed(
   () =>
@@ -202,7 +214,7 @@ onMounted(load);
             <p class="mb-2 text-sm text-n-slate-11">
               {{ t('OUTSIDER_PUSH.PREFS.HELP') }}
             </p>
-            <div v-for="section in SECTIONS" :key="section.key" class="mt-3">
+            <div v-for="section in sections" :key="section.key" class="mt-3">
               <div
                 class="flex items-center gap-1.5 mb-1 text-xs font-semibold tracking-wide uppercase text-n-slate-11"
               >

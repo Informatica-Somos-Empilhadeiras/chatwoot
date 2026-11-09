@@ -602,6 +602,30 @@ const acceptWhisper = (current, request, header) => {
   notify(notice, { name: request.from.display_name || '' });
 };
 
+// OUTSIDER (push): ligações recusadas aqui, pelo id da central (X-Outsider-Call, posto pelo plano de discagem).
+// A central toca em etapas que somam gente (dono, estado, todos); sem isto quem recusou tocaria de novo.
+const DECLINE_MEMORY = 10 * 60 * 1000;
+const declinedCalls = new Map();
+// a ligação que está tocando aqui agora: { id, central }
+let ringingCentral = null;
+
+const wasDeclined = central => {
+  const at = declinedCalls.get(central);
+  if (at && Date.now() - at < DECLINE_MEMORY) return true;
+  declinedCalls.delete(central);
+  return false;
+};
+
+const rememberDecline = id => {
+  if (!ringingCentral || ringingCentral.id !== id) return;
+  const { central } = ringingCentral;
+  if (!central) return;
+  declinedCalls.forEach((at, key) => {
+    if (Date.now() - at >= DECLINE_MEMORY) declinedCalls.delete(key);
+  });
+  declinedCalls.set(central, Date.now());
+};
+
 const onSession = ({ session: current, originator, request }) => {
   // ligação nova: o toque passa a ser dela (o do convite não pode mais parar o som dela)
   clearTimeout(inviteRingTimer);
@@ -652,6 +676,12 @@ const onSession = ({ session: current, originator, request }) => {
     current.terminate({ status_code: 486 });
     return;
   }
+  // OUTSIDER (push): quem recusou não toca de novo quando a central soma mais gente na próxima etapa da mesma ligação
+  const central = request.getHeader('X-Outsider-Call') || '';
+  if (central && wasDeclined(central)) {
+    current.terminate({ status_code: 486 });
+    return;
+  }
   const id = nextId;
   nextId += 1;
   clearTimeout(endedTimer);
@@ -663,6 +693,7 @@ const onSession = ({ session: current, originator, request }) => {
     name: request.from.display_name || '',
     state: 'ringing',
   });
+  ringingCentral = { id, central };
   setupLeg(id, current);
   lookup(id, number);
   startTone('incoming');
@@ -1205,6 +1236,7 @@ export const hangup = () => {
   if (!phone.holder) return remote('hangup');
   const main = mainLeg();
   if (phone.call.state === 'ringing') {
+    rememberDecline(phone.call.id);
     if (!main.session.isEnded()) main.session.terminate({ status_code: 486 });
     return null;
   }

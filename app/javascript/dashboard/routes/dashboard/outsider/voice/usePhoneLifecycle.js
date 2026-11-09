@@ -2,6 +2,8 @@
 // (PhoneWindow) está aberta (Entrega 23, separado na 24): liga o telefone ao entrar na conta, acompanha as
 // mudanças em Telefonia > Configurações, avisa pelo navegador quando toca com a aba em segundo plano, mostra
 // os avisos do telefone (gravação salva...) e pergunta antes de fechar no meio de uma ligação.
+// OUTSIDER (push): o aviso de ligação tocando tem Atender e Recusar e vem do service worker; "Ligar de volta" do aviso
+// de ligação perdida liga por aqui.
 // Entrega 26: recebe os avisos do sussurro (convite, pedido para o cliente ouvir...) pelo canal ao vivo, também
 // na janela própria do telefone.
 import { watch, onBeforeUnmount } from 'vue';
@@ -14,7 +16,10 @@ import { onCrmChange, onVoiceSignal, startLiveUpdates } from '../crm/live';
 import { ensureCrmContext } from '../crm/crmStore';
 import {
   CENTRAL_SYNC_WAIT,
+  answer,
+  dial,
   handleSignal,
+  hangup,
   phone,
   restartPhone,
   startPhone,
@@ -26,14 +31,25 @@ export const usePhoneLifecycle = ({ popout = false } = {}) => {
   const { accountId } = useAccount();
   const { call, title, subtitle } = useCallInfo();
 
-  let notification = null;
-
-  const closeNotification = () => {
-    notification?.close();
-    notification = null;
+  // OUTSIDER (push): tocando com o Chatwoot em segundo plano, o aviso vem do service worker (o mesmo do push novo),
+  // com os botões Atender e Recusar; ele só aparece se nenhuma aba do Chatwoot está na frente
+  const worker = async message => {
+    if (!('serviceWorker' in navigator)) return;
+    try {
+      const registration = await navigator.serviceWorker.getRegistration();
+      registration?.active?.postMessage(message);
+    } catch {
+      // sem service worker: fica só a tela de ligação recebida
+    }
   };
 
-  // tocando com a aba escondida: aviso do navegador (se a pessoa já liberou notificações do Chatwoot)
+  let ringing = false;
+  const closeNotification = () => {
+    if (!ringing) return;
+    ringing = false;
+    worker({ type: 'outsider:call-stop' });
+  };
+
   watch(
     () => [call.value?.state, title.value],
     ([state]) => {
@@ -41,24 +57,59 @@ export const usePhoneLifecycle = ({ popout = false } = {}) => {
         closeNotification();
         return;
       }
-      if (
-        !document.hidden ||
-        !('Notification' in window) ||
-        Notification.permission !== 'granted'
-      ) {
+      if (!('Notification' in window) || Notification.permission !== 'granted')
         return;
-      }
-      closeNotification();
-      notification = new Notification(
-        t('OUTSIDER_VOICE.CALL.NOTIFICATION', { name: title.value }),
-        { body: subtitle.value, tag: 'outsider-call', requireInteraction: true }
-      );
-      notification.onclick = () => {
-        window.focus();
-        closeNotification();
-      };
+      ringing = true;
+      worker({
+        type: 'outsider:call-ring',
+        title: t('OUTSIDER_VOICE.CALL.NOTIFICATION', { name: title.value }),
+        body: subtitle.value,
+        person: title.value,
+        photo: call.value?.lookup?.contact?.thumbnail || null,
+        answer_label: t('OUTSIDER_VOICE.CALL.ANSWER'),
+        decline_label: t('OUTSIDER_VOICE.CALL.REJECT'),
+      });
     }
   );
+
+  // clicou no aviso: Atender (traz o Chatwoot para frente), Recusar (a central passa para o próximo) ou só abrir
+  const startDial = number => {
+    let tries = 0;
+    const attempt = () => {
+      const error = dial(number);
+      if (error === 'NOT_READY' && tries < 20) {
+        tries += 1;
+        setTimeout(attempt, 1000);
+      } else if (error) {
+        useAlert(t(`OUTSIDER_VOICE.PHONE.ERRORS.${error}`));
+      }
+    };
+    attempt();
+  };
+
+  const onWorkerMessage = event => {
+    const data = event.data || {};
+    if (data.type === 'outsider:call') {
+      if (data.action === 'answer') answer();
+      else if (data.action === 'decline') hangup();
+      return;
+    }
+    // "Ligar de volta" no aviso de ligação perdida
+    if (data.type === 'outsider:push-open' && data.dial) startDial(data.dial);
+  };
+  if ('serviceWorker' in navigator) {
+    useEventListener(navigator.serviceWorker, 'message', onWorkerMessage);
+  }
+  // "Ligar de volta" com o Chatwoot fechado: o aviso abre o Chatwoot com ?outsider_dial=número
+  if (!popout) {
+    const url = new URL(window.location.href);
+    const pending = url.searchParams.get('outsider_dial');
+    if (pending) {
+      url.searchParams.delete('outsider_dial');
+      window.history.replaceState(window.history.state, '', url.toString());
+      startDial(pending);
+    }
+  }
 
   // convite de colega para entrar na ligação dele, com a aba escondida: aviso do navegador
   watch(

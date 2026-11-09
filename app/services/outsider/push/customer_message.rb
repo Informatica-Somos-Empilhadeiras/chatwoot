@@ -68,8 +68,9 @@ class Outsider::Push::CustomerMessage
     url = "#{Outsider::Push.site}/app/accounts/#{@account.id}/conversations/#{@conversation.display_id}"
     Outsider::Push.payload(
       kind: kind, title: title, body: body(user), url: url, tag: "c-#{@conversation.id}",
-      icon: @conversation.contact&.avatar_url.presence,
-      read: Outsider::Push.read_token({ 'u' => user.id, 'c' => @conversation.id })
+      person: @conversation.contact&.name.presence || sender_name, photo: @conversation.contact&.avatar_url.presence,
+      read: Outsider::Push.read_token({ 'u' => user.id, 'c' => @conversation.id }),
+      reply: Outsider::Push.reply_token({ 'u' => user.id, 'c' => @conversation.id })
     )
   end
 end

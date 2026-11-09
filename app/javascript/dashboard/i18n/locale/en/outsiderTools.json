@@ -1010,6 +1010,7 @@
       "WHATSAPP": "WhatsApp and other customer channels",
       "TEAMS": "Teams",
       "CHATWOOT": "Chatwoot",
+      "PHONE": "Phone",
       "PRIVACY": "Privacy"
     },
     "PREFS": {
@@ -1029,7 +1030,9 @@
       "TEAMS_GROUPS": "Every message in group chats",
       "CHATWOOT": "Conversation assigned to me and mention in a private note",
       "HIDE_CONTENT": "Hide the message text on the lock screen",
-      "HIDE_CONTENT_HELP": "Shows only \"New message from Someone\""
+      "HIDE_CONTENT_HELP": "Shows only \"New message from Someone\"",
+      "CALLS_MISSED": "Missed call",
+      "CALLS_MISSED_HELP": "Even with Chatwoot closed, with a \"Call back\" button"
     },
     "DEVICES": {
       "TITLE": "My devices",

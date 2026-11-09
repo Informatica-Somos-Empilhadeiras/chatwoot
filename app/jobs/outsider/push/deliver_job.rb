@@ -1,5 +1,5 @@
 # OUTSIDER: manda o aviso novo (push) fora do caminho da mensagem. kind: customer (mensagem de cliente), teams (mensagem
-# do Teams) ou notice (atribuição e citação do Chatwoot).
+# do Teams), notice (atribuição e citação do Chatwoot) ou missed_call (ligação perdida da Telefonia).
 class Outsider::Push::DeliverJob < ApplicationJob
   queue_as :default
 
@@ -16,6 +16,9 @@ class Outsider::Push::DeliverJob < ApplicationJob
     when 'notice'
       notification = Notification.find_by(id: id)
       Outsider::Push::ChatwootNotice.new(notification).perform if notification
+    when 'missed_call'
+      call = Outsider::Voice::Call.find_by(id: id)
+      Outsider::Push::MissedCall.new(call).perform if call
     end
   end
 end

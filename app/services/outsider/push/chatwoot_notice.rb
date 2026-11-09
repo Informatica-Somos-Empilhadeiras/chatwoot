@@ -48,8 +48,11 @@ class Outsider::Push::ChatwootNotice
     url = "#{Outsider::Push.site}/app/accounts/#{@account.id}/conversations/#{@conversation.display_id}"
     Outsider::Push.payload(
       kind: 'chatwoot', title: title, body: body, url: url, tag: "c-#{@conversation.id}",
-      icon: @conversation.contact&.avatar_url.presence,
-      read: Outsider::Push.read_token({ 'u' => @user.id, 'c' => @conversation.id })
+      person: mention? ? @notification.secondary_actor.try(:sender)&.name : @conversation.contact&.name,
+      photo: mention? ? @notification.secondary_actor.try(:sender).try(:avatar_url) : @conversation.contact&.avatar_url.presence,
+      read: Outsider::Push.read_token({ 'u' => @user.id, 'c' => @conversation.id }),
+      # na citação em nota privada não tem resposta rápida: iria para o cliente
+      reply: mention? ? nil : Outsider::Push.reply_token({ 'u' => @user.id, 'c' => @conversation.id })
     )
   end
 end

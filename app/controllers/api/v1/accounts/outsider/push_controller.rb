@@ -48,7 +48,8 @@ class Api::V1::Accounts::Outsider::PushController < Api::V1::Accounts::BaseContr
     sent = ::Outsider::Push::Sender.new(Current.user).deliver(
       ::Outsider::Push.payload(kind: 'chatwoot', title: "#{Current.user.name} · Teste", body: 'Assim chegam os avisos do Chatwoot.',
                                url: "#{::Outsider::Push.site}/app/accounts/#{Current.account.id}/settings/outsider/notifications",
-                               tag: "test-#{Time.current.to_i}", test: true)
+                               tag: "test-#{Time.current.to_i}", test: true, person: Current.user.name,
+                               photo: Current.user.avatar_url.presence)
     )
     render json: { sent: sent }
   end
@@ -77,8 +78,14 @@ class Api::V1::Accounts::Outsider::PushController < Api::V1::Accounts::BaseContr
     {
       enabled: ::Outsider::Push.enabled?, vapid: VapidService.public_key.present?, prefs: setting.merged_prefs,
       permission: setting.permission, reminded_at: setting.reminded_at&.iso8601, devices: devices, admin: administrator?,
-      team: administrator? ? team : []
+      team: administrator? ? team : [], voice: voice?
     }
+  end
+
+  # a pessoa tem ramal ligado na Telefonia: aparece "Ligação perdida"
+  def voice?
+    settings = ::Outsider::Voice::Settings.new(Current.account)
+    settings.enabled? && settings.agent_for(Current.user.id).present?
   end
 
   def devices

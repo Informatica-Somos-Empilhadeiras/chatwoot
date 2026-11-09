@@ -162,4 +162,79 @@ RSpec.describe 'Outsider aviso novo (push)', type: :request do
     post "#{url}/remind/#{admin.id}", headers: admin.create_new_auth_token, as: :json
     expect(Outsider::PushSetting.for(admin, account).reminded_at).to be_present
   end
+
+  it 'responde pelo próprio aviso: a mensagem sai em nome da pessoa e a conversa fica lida' do
+    device_for(ana)
+    conversation = conversation_with(assignee: ana)
+    Outsider::Push::CustomerMessage.new(customer_message(conversation)).perform
+    payload = sent.last[:payload]
+    expect(payload).to include('person' => 'Marcos Pereira', 'reply_placeholder' => 'Envie uma resposta rápida')
+    expect(payload['icon']).to end_with('/outsider/push/whatsapp.png').or end_with('/outsider/push/chatwoot.png')
+
+    # o token de "marcar como lida" não serve para responder
+    post '/outsider/push/reply', params: { token: payload['read'], text: 'Oi' }, as: :json
+    expect(response).to have_http_status(:unauthorized)
+
+    post '/outsider/push/reply', params: { token: payload['reply'], text: 'Temos sim, já te mando a proposta' }, as: :json
+    expect(response).to have_http_status(:created)
+    reply = conversation.messages.outgoing.last
+    expect(reply).to have_attributes(content: 'Temos sim, já te mando a proposta', sender: ana, private: false)
+    expect(conversation.reload.assignee_last_seen_at).to be_present
+
+    # quem saiu da caixa não responde mais
+    InboxMember.where(user: ana, inbox: inbox).destroy_all
+    post '/outsider/push/reply', params: { token: payload['reply'], text: 'Oi' }, as: :json
+    expect(response).to have_http_status(:forbidden)
+  end
+
+  it 'responde no Teams pelo aviso (no canal, dentro da mesma publicação)' do
+    device_for(ana)
+    link = Outsider::TeamsLink.create!(account: account, user: ana, ms_user_id: 'ms-ana', status: 'active', display_name: 'Ana')
+    channel = link.threads.create!(kind: 'channel', team_id: 'team-1', channel_id: '19:c', title: 'Vendas Sul')
+    post_message = channel.messages.create!(sender_name: 'Paula', content: '@Ana pode ver?', mentions_me: true, graph_id: 'p1',
+                                            sent_at: Time.current)
+    Outsider::Push::TeamsMessage.new(post_message).perform
+    token = sent.last[:payload]['reply']
+    expect(sent.last[:payload]).to include('person' => 'Paula')
+
+    expect do
+      post '/outsider/push/reply', params: { token: token, text: 'Vejo agora' }, as: :json
+    end.to have_enqueued_job(Outsider::Teams::Graph::SendJob)
+    expect(response).to have_http_status(:created)
+    expect(channel.messages.where(mine: true).last).to have_attributes(content: 'Vejo agora', reply_to_graph_id: 'p1',
+                                                                       status: 'sending')
+  end
+
+  it 'avisa a ligação perdida para o dono do negócio, com "Ligar de volta"' do
+    settings = Outsider::Voice::Settings.new(account)
+    settings.update(
+      'enabled' => true, 'numbers' => [{ 'number' => '6232345678', 'state' => 'GO' }],
+      'agents' => { ana.id.to_s => { 'extension' => '201', 'state' => 'GO', 'enabled' => true },
+                    bruno.id.to_s => { 'extension' => '202', 'state' => 'GO', 'enabled' => true } }
+    )
+    device_for(ana)
+    device_for(bruno)
+    contact.update!(phone_number: '+5562999998888')
+    crm_opportunity(account, crm_unit(account), contact: contact, owner: ana)
+    Outsider::Voice::Router.new(settings).inbound(linkedid: 'L9', did: '6232345678', from: '62999998888')
+
+    expect do
+      Outsider::Voice::CallEvents.new(settings).hangup(linkedid: 'L9', dialstatus: 'NOANSWER', cause: '16')
+    end.to have_enqueued_job(Outsider::Push::DeliverJob).with('missed_call', Outsider::Voice::Call.last.id)
+
+    perform_enqueued_jobs(only: Outsider::Push::DeliverJob)
+    expect(sent.pluck(:endpoint)).to contain_exactly(%r{/#{ana.id}/1})
+    expect(sent.last[:payload]).to include('kind' => 'phone', 'title' => 'Ligação perdida · Marcos Pereira',
+                                           'call_label' => 'Ligar de volta', 'number' => '+5562999998888',
+                                           'path' => "/app/accounts/#{account.id}/telefonia/calls")
+    expect(sent.last[:payload]['body']).to start_with('(62) 99999-8888 · às ')
+
+    # sem dono: os do estado; quem desligou "Ligação perdida" não recebe
+    sent.clear
+    Outsider::PushSetting.for(bruno, account).update!(prefs: { 'calls_missed' => false })
+    call = Outsider::Voice::Call.last
+    call.update!(opportunity: nil)
+    Outsider::Push::MissedCall.new(call).perform
+    expect(sent.pluck(:endpoint)).to contain_exactly(%r{/#{ana.id}/1})
+  end
 end

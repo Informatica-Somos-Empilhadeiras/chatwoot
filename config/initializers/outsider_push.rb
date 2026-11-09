@@ -35,4 +35,6 @@ Rails.application.routes.prepend do
 
   # "Marcar como lida" no próprio aviso (token assinado, sem a sessão da pessoa)
   post 'outsider/push/read', to: 'outsider/push_read#create'
+  # "Envie uma resposta rápida" no próprio aviso
+  post 'outsider/push/reply', to: 'outsider/push_reply#create'
 end

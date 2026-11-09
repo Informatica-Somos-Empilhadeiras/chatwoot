@@ -18,19 +18,13 @@ class Outsider::PushReadController < ActionController::API
     conversation = Conversation.find_by(id: conversation_id)
     return unless conversation && user.account_users.exists?(account_id: conversation.account_id)
 
-    now = Time.current
-    Notification::MarkConversationReadService.new(user: user, account: conversation.account, conversation: conversation).perform
-    updates = { agent_last_seen_at: now }
-    updates[:assignee_last_seen_at] = now if conversation.assignee_id == user.id
-    conversation.update_columns(updates) # rubocop:disable Rails/SkipsModelValidations
-    Conversations::UnreadCounts::Notifier.new(conversation).perform
+    Outsider::Push::MarkRead.conversation(user, conversation)
   end
 
   def read_teams(user, thread_id)
     thread = Outsider::TeamsThread.joins(:link).find_by(id: thread_id, outsider_teams_links: { user_id: user.id })
     return unless thread
 
-    thread.update!(unread_count: 0, mention_count: 0, last_read_at: Time.current)
-    Outsider::Teams::Graph::Notifier.changed(thread.link)
+    Outsider::Push::MarkRead.teams(thread)
   end
 end

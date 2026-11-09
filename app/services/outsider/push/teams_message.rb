@@ -48,12 +48,21 @@ class Outsider::Push::TeamsMessage
     @message.mentions_me ? "Mencionou você: #{text}" : text
   end
 
+  # no canal, a resposta rápida vai dentro da mesma publicação
+  def post_id
+    return nil unless @thread.kind == 'channel'
+
+    @message.reply_to_graph_id.presence || @message.graph_id.presence
+  end
+
   def payload_for(user)
     kind = @thread.kind == 'channel' ? 'channels' : 'chats'
     url = "#{Outsider::Push.site}/app/accounts/#{@link.account_id}/teams/#{kind}/#{@thread.id}"
     Outsider::Push.payload(
       kind: 'teams', title: "#{@message.sender_name.presence || 'Teams'} · #{origin}", body: body(user), url: url,
-      tag: "t-#{@thread.id}", read: Outsider::Push.read_token({ 'u' => user.id, 't' => @thread.id })
+      tag: "t-#{@thread.id}", person: @message.sender_name.presence || 'Teams',
+      read: Outsider::Push.read_token({ 'u' => user.id, 't' => @thread.id }),
+      reply: Outsider::Push.reply_token({ 'u' => user.id, 't' => @thread.id, 'p' => post_id }.compact)
     )
   end
 end

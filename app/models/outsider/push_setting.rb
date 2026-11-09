@@ -12,6 +12,7 @@ class Outsider::PushSetting < ApplicationRecord
     'teams_replies' => true,  # respostas às publicações em que escrevi
     'teams_groups' => false,  # todas as mensagens dos chats em grupo
     'chatwoot' => true,       # conversa atribuída a mim e citação em nota privada
+    'calls_missed' => true,   # ligação perdida (Telefonia)
     'hide_content' => false   # esconder o texto na tela bloqueada
   }.freeze
   PERMISSIONS = %w[granted denied default unsupported].freeze

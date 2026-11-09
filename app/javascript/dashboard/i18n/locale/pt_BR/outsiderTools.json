@@ -1010,6 +1010,7 @@
       "WHATSAPP": "WhatsApp e outros canais de cliente",
       "TEAMS": "Teams",
       "CHATWOOT": "Chatwoot",
+      "PHONE": "Telefone",
       "PRIVACY": "Privacidade"
     },
     "PREFS": {
@@ -1029,7 +1030,9 @@
       "TEAMS_GROUPS": "Todas as mensagens dos chats em grupo",
       "CHATWOOT": "Conversa atribuída a mim e citação em nota privada",
       "HIDE_CONTENT": "Esconder o texto da mensagem na tela bloqueada",
-      "HIDE_CONTENT_HELP": "Mostra só \"Nova mensagem de Fulano\""
+      "HIDE_CONTENT_HELP": "Mostra só \"Nova mensagem de Fulano\"",
+      "CALLS_MISSED": "Ligação perdida",
+      "CALLS_MISSED_HELP": "Também com o Chatwoot fechado, com o botão \"Ligar de volta\""
     },
     "DEVICES": {
       "TITLE": "Meus aparelhos",

@@ -4,6 +4,7 @@
 # atendeu vira tarefa "Retornar ligação" no negócio aberto do cliente (para o dono). Quando um vendedor liga
 # para o número e o cliente atende, as perdidas desse número saem da fila de retorno e a tarefa fica feita.
 # As ligações com cliente aparecem na linha do tempo do negócio.
+# Recebida perdida também vira aviso "Ligação perdida" no navegador e no celular (Outsider::Push::MissedCall).
 class Outsider::Voice::CallEvents
   # DIALSTATUS do Asterisk quando ninguém conversou
   OUTBOUND_STATUS = { 'BUSY' => :busy, 'CHANUNAVAIL' => :failed, 'CONGESTION' => :failed }.freeze
@@ -62,6 +63,7 @@ class Outsider::Voice::CallEvents
     return if call.internal?
 
     create_return_task(call) if call.missed?
+    Outsider::Push::DeliverJob.perform_later('missed_call', call.id) if call.missed? && Outsider::Push.enabled?
     mark_returned(call) if call.outbound? && call.answered?
     log_on_deal(call)
   end
