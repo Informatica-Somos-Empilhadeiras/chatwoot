@@ -9,8 +9,12 @@
 #   preview: endereço da visualização do arquivo (OneDrive/SharePoint), só para ler, no visualizador do Chatwoot.
 #   members: quem dá para @mencionar (participantes do chat; no canal, quem já escreveu nele).
 #   read: zera as não lidas e as menções.
+#   react: reage a uma mensagem (ou tira a reação) em nome da pessoa, como no Teams.
+#   mentions: as mensagens que citaram a pessoa neste chat ou canal (últimos 60 dias), para ir de uma a outra.
 class Api::V1::Accounts::Outsider::TeamsThreadsController < Api::V1::Accounts::BaseController
   CHAT_PAGE = 50
+  MENTION_DAYS = 60
+  MAX_MENTIONS = 50
   POST_PAGE = 15
   MAX_FILES = 5
   MAX_FILE = 25.megabytes
@@ -91,6 +95,25 @@ class Api::V1::Accounts::Outsider::TeamsThreadsController < Api::V1::Accounts::B
     refresh_chat_members if @thread.kind == 'chat'
     people = Array(@thread.members).select { |member| member['id'].present? && member['name'].present? && member['id'] != my_link.ms_user_id }
     render json: { payload: people.uniq { |member| member['id'] }.sort_by { |member| member['name'].downcase }.map { |m| m.slice('id', 'name') } }
+  end
+
+  def react
+    return render_error('not_connected', :unprocessable_entity) unless my_link.status == 'active'
+
+    message = @thread.messages.find(params[:message_id])
+    emoji = params[:emoji].to_s.strip.first(16)
+    return render_error('reaction', :unprocessable_entity) if emoji.blank? || message.graph_id.blank? || message.deleted_at
+
+    ::Outsider::Teams::Graph::Reactions.new(my_link, message).apply!(emoji, on: ActiveModel::Type::Boolean.new.cast(params[:on]))
+    render json: json.message(message.reload)
+  rescue ::Outsider::Teams::Graph::Client::Error => e
+    render_error("reaction_failed:#{e.message}", :bad_gateway)
+  end
+
+  def mentions
+    items = @thread.messages.where(mentions_me: true, deleted_at: nil, sent_at: MENTION_DAYS.days.ago..)
+                   .order(sent_at: :desc, id: :desc).limit(MAX_MENTIONS).pluck(:id, :sent_at, :sender_name).reverse
+    render json: { payload: items.map { |id, sent_at, sender| { id: id, sent_at: sent_at.iso8601, sender_name: sender } } }
   end
 
   def read

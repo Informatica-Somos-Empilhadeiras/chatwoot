@@ -411,4 +411,61 @@ RSpec.describe 'Outsider Conectar meu Teams (Microsoft Graph)', type: :request d
     expect(chat_messages).to have_been_requested.once
     expect(chat.messages.count).to eq(2)
   end
+
+  it 'keeps reactions and voice notes from Teams, reacts as the person and lists the mentions of a chat' do
+    chat = 'https://graph.microsoft.com/v1.0/chats/19%3Achat%40unq.gbl.spaces/messages'
+    stub_request(:get, %r{graph.microsoft.com/v1.0/chats/19:chat@unq.gbl.spaces\?})
+      .to_return(graph_json(chatType: 'oneOnOne', members: [{ userId: 'ms-agent', displayName: 'Agente' },
+                                                            { userId: 'ms-ricardo', displayName: 'Ricardo Mendes' }]))
+    stub_request(:get, "#{chat}/311")
+      .to_return(graph_json(id: '311', messageType: 'message', createdDateTime: '2026-11-09T09:00:00Z',
+                            from: { user: { id: 'ms-ricardo', displayName: 'Ricardo Mendes' } }, body: { content: '' },
+                            attachments: [{ contentType: 'reference', name: 'Recording 2.m4a',
+                                            contentUrl: 'https://empresa-my.sharepoint.com/Recording%202.m4a' }],
+                            reactions: [{ reactionType: '❤️', user: { user: { id: 'ms-agent' } } },
+                                        { reactionType: 'like', user: { user: { id: 'ms-paula', displayName: 'Paula' } } },
+                                        { reactionType: 'like', user: { user: { id: 'ms-ricardo' } } }]))
+    ref = Outsider::Teams::Graph::Inbound.parse("chats('19:chat@unq.gbl.spaces')/messages('311')")
+    message = Outsider::Teams::Graph::Inbound.new(link, ref).perform
+    expect(message.attachments.sole).to include('kind' => 'audio', 'name' => 'Recording 2.m4a')
+    expect(message.reactions).to eq([{ 'type' => '❤️', 'user_id' => 'ms-agent', 'name' => 'Agente' },
+                                     { 'type' => '👍', 'user_id' => 'ms-paula', 'name' => 'Paula' },
+                                     { 'type' => '👍', 'user_id' => 'ms-ricardo', 'name' => 'Ricardo Mendes' }])
+    expect(message.thread.last_message_preview).to eq('🎤 Áudio')
+
+    thread_url = "/api/v1/accounts/#{account.id}/outsider/teams_threads/#{message.thread_id}"
+    get "#{thread_url}/messages", headers: agent.create_new_auth_token, as: :json
+    shown = response.parsed_body['payload'].sole
+    expect(shown['attachments'].sole).to include('kind' => 'audio', 'audio_url' => a_string_starting_with('/outsider/teams/media?t='))
+    expect(shown['reactions']).to eq([{ 'emoji' => '❤️', 'count' => 1, 'mine' => true, 'names' => ['Você'] },
+                                      { 'emoji' => '👍', 'count' => 2, 'mine' => false, 'names' => ['Paula', 'Ricardo Mendes'] }])
+
+    # reagir vai para o Teams em nome da pessoa; tirar a reação também
+    set = stub_request(:post, "#{chat}/311/setReaction").with(body: { reactionType: '😆' }.to_json).to_return(status: 204)
+    post "#{thread_url}/messages/#{message.id}/react", params: { emoji: '😆', on: true }, headers: agent.create_new_auth_token, as: :json
+    expect(set).to have_been_requested
+    expect(response.parsed_body['reactions'].last).to include('emoji' => '😆', 'mine' => true)
+    unset = stub_request(:post, "#{chat}/311/unsetReaction").with(body: { reactionType: '❤️' }.to_json).to_return(status: 204)
+    post "#{thread_url}/messages/#{message.id}/react", params: { emoji: '❤️', on: false }, headers: agent.create_new_auth_token, as: :json
+    expect(unset).to have_been_requested
+    expect(response.parsed_body['reactions'].pluck('emoji')).to eq(%w[👍 😆])
+
+    # o Teams avisa a mensagem de novo quando alguém reage: a lista troca sem apagar nada
+    stub_request(:get, "#{chat}/311")
+      .to_return(graph_json(id: '311', messageType: 'message', createdDateTime: '2026-11-09T09:00:00Z',
+                            from: { user: { id: 'ms-ricardo', displayName: 'Ricardo Mendes' } }, body: { content: '' },
+                            attachments: [{ contentType: 'reference', name: 'Recording 2.m4a',
+                                            contentUrl: 'https://empresa-my.sharepoint.com/Recording%202.m4a' }],
+                            reactions: [{ reactionType: '😮', user: { user: { id: 'ms-paula', displayName: 'Paula' } } }]))
+    Outsider::Teams::Graph::Inbound.new(link, ref, 'updated').perform
+    expect(message.reload.reactions).to eq([{ 'type' => '😮', 'user_id' => 'ms-paula', 'name' => 'Paula' }])
+
+    # as citações do chat, das mais antigas para as mais novas
+    message.thread.messages.create!(sender_name: 'Ricardo Mendes', content: '@Agente viu?', mentions_me: true, sent_at: 2.days.ago)
+    message.thread.messages.create!(sender_name: 'Ricardo Mendes', content: 'sem citação', sent_at: 1.day.ago)
+    message.thread.messages.create!(sender_name: 'Ricardo Mendes', content: '@Agente de novo', mentions_me: true, sent_at: 1.hour.ago)
+    get "#{thread_url}/mentions", headers: agent.create_new_auth_token, as: :json
+    expect(response.parsed_body['payload'].pluck('sender_name')).to eq(['Ricardo Mendes', 'Ricardo Mendes'])
+    expect(response.parsed_body['payload'].map { |item| item['sent_at'] }).to eq(response.parsed_body['payload'].map { |item| item['sent_at'] }.sort)
+  end
 end

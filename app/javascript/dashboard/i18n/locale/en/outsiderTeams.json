@@ -122,8 +122,21 @@
       "REPLY_TO": "The message you replied to has not reached Teams yet. Try again shortly.",
       "RESEND": "The pasted image was not sent. Send it again.",
       "UPLOAD_FAILED": "Could not upload the file to OneDrive. {name}",
-      "NOT_FOUND": "Not found."
-    }
+      "NOT_FOUND": "Not found.",
+      "REACTION": "Could not react to this message.",
+      "REACTION_FAILED": "Teams did not accept the reaction."
+    },
+    "REACT": "React",
+    "MORE_EMOJIS": "More emojis",
+    "EMOJI": "Emoji",
+    "MENTION_BAR": "You were mentioned {count} time | You were mentioned {count} times",
+    "MENTION_PREV": "Previous mention",
+    "MENTION_NEXT": "Next mention",
+    "MENTION_HIDE": "Hide",
+    "COLLAPSE_ALL": "Collapse all",
+    "EXPAND_ALL": "Expand all",
+    "COLLAPSE_TEAM": "Collapse team",
+    "EXPAND_TEAM": "Expand team"
   },
   "OUTSIDER_TEAMS_GRAPH": {
     "TITLE": "Microsoft Teams",

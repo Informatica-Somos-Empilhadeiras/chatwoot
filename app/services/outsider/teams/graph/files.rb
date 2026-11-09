@@ -16,6 +16,8 @@ class Outsider::Teams::Graph::Files
   MEDIA_PATH = '/outsider/teams/media'.freeze
   MEDIA_EXPIRES = 2.hours
   IMAGES = %w[png jpg jpeg gif webp bmp heic heif].freeze
+  # áudios (inclusive as mensagens de voz do Teams no celular): tocam no próprio Chatwoot
+  AUDIOS = %w[m4a mp3 ogg oga opus wav aac weba amr flac].freeze
   MICROSOFT_HOSTS = %w[sharepoint.com svc.ms microsoft.com office.com office.net live.com microsoftpersonalcontent.com 1drv.com
                        onedrive.com sharepointonline.com].freeze
 
@@ -29,6 +31,17 @@ class Outsider::Teams::Graph::Files
 
   def self.image?(name)
     IMAGES.include?(extension(name))
+  end
+
+  def self.audio?(name)
+    AUDIOS.include?(extension(name))
+  end
+
+  # o tipo do anexo para as telas: image, audio ou file (mensagens antigas guardaram áudio como file)
+  def self.kind_of(attachment)
+    return 'image' if attachment['kind'] == 'image'
+
+    audio?(attachment['name']) ? 'audio' : attachment['kind'].presence || 'file'
   end
 
   def self.source(url)
@@ -52,7 +65,7 @@ class Outsider::Teams::Graph::Files
                                                                                                     serializer: JSON)
   end
 
-  # kind: thumb | image | download
+  # kind: thumb | image | download | audio (tocar no Chatwoot: o endereço temporário da Microsoft)
   def self.media_url(message, index, kind)
     token = verifier.generate({ 'm' => message.id, 'i' => index, 'k' => kind }, expires_in: MEDIA_EXPIRES)
     "#{MEDIA_PATH}?t=#{token}"

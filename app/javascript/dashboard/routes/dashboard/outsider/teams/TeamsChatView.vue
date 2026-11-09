@@ -4,6 +4,8 @@
 // canal, o nome de quem escreveu em cima. Separador por dia e "Mensagens novas" desde a última leitura.
 // Responder (passar o mouse no balão) cita a mensagem: no chat sai como "responder citando" do Teams; no canal a
 // resposta entra na publicação e a citação aparece aqui. "@você" marca quem chamou a pessoa.
+// Reações (👍 ❤️ ...) embaixo do balão e botão de reagir; barra de menções no topo para ir de uma citação à outra
+// (busca as mensagens mais antigas se a citação ainda não estiver na tela).
 import { computed, nextTick, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useMapGetter } from 'dashboard/composables/store';
@@ -14,6 +16,8 @@ import TeamsGraphAPI from 'dashboard/api/outsider/teamsGraph';
 import TeamsThreadHeader from './TeamsThreadHeader.vue';
 import TeamsComposer from './TeamsComposer.vue';
 import TeamsAttachments from './TeamsAttachments.vue';
+import TeamsReactions from './TeamsReactions.vue';
+import TeamsMentionBar from './TeamsMentionBar.vue';
 import { useTeamsThread } from './useTeamsThread';
 import { dayKey, dayLabel, timeOf } from './helpers';
 
@@ -123,16 +127,40 @@ const quoteTitle = quote =>
     ? t('OUTSIDER_TEAMS_AREA.QUOTE_POST', { name: quote.sender })
     : quote.sender;
 
+const highlight = (id, extraClass = 'tms-flash') => {
+  const el = scroller.value?.querySelector(`[data-teams-message="${id}"]`);
+  if (!el) return false;
+  el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  el.classList.add(extraClass);
+  setTimeout(() => el.classList.remove(extraClass), 1600);
+  return true;
+};
+
 const jumpTo = quote => {
   const target = items.value.find(
     item => item.id === quote.message_id || item.graph_id === quote.graph_id
   );
-  if (!target) return;
-  const el = scroller.value?.querySelector(`[data-teams-message="${target.id}"]`);
-  if (!el) return;
-  el.scrollIntoView({ block: 'center', behavior: 'smooth' });
-  el.classList.add('tms-flash');
-  setTimeout(() => el.classList.remove('tms-flash'), 1600);
+  if (target) highlight(target.id);
+};
+
+// citação ainda não carregada: busca as mensagens anteriores até ela aparecer (no máximo 20 páginas)
+const jumpToMention = async mention => {
+  for (let page = 0; page < 20; page += 1) {
+    if (items.value.some(item => item.id === mention.id)) break;
+    if (!more.value) break;
+    // eslint-disable-next-line no-await-in-loop
+    await loadOlder();
+  }
+  await nextTick();
+  highlight(mention.id, 'tms-mention-target');
+};
+
+const loadedIds = computed(() => items.value.map(item => item.id));
+
+const onReacted = updated => {
+  const index = items.value.findIndex(item => item.id === updated.id);
+  if (index >= 0)
+    items.value.splice(index, 1, { ...items.value[index], ...updated });
 };
 
 const answer = message => {
@@ -179,6 +207,11 @@ const placeholder = computed(() => {
       :view-mode="channelMode ? 'conversa' : 'publicacoes'"
       @back="emit('back')"
       @change-view="mode => emit('changeView', mode)"
+    />
+    <TeamsMentionBar
+      :thread="thread"
+      :loaded-ids="loadedIds"
+      @jump="jumpToMention"
     />
     <div
       ref="scroller"
@@ -314,7 +347,21 @@ const placeholder = computed(() => {
               >
                 <Icon icon="i-lucide-reply" class="size-4" />
               </button>
+              <TeamsReactions
+                :message="row.message"
+                :can-react="canWrite"
+                :align-end="row.message.mine"
+                only="button"
+                @updated="onReacted"
+              />
             </div>
+            <TeamsReactions
+              :message="row.message"
+              :can-react="canWrite"
+              :align-end="row.message.mine"
+              only="chips"
+              @updated="onReacted"
+            />
             <div
               v-if="row.message.status !== 'sent'"
               class="flex items-center justify-end gap-1 mt-0.5 text-[11px]"

@@ -2,7 +2,7 @@
 # Files.media_url, vale 2 horas e só sai para o dono da área). Nada fica gravado no Chatwoot:
 #   thumb/image de arquivo do OneDrive/SharePoint: redireciona para a miniatura temporária da Microsoft;
 #   image/download de imagem colada no Teams: lê do Graph com o token do dono e repassa;
-#   download de arquivo: redireciona para o endereço temporário de download da Microsoft.
+#   download de arquivo (e audio, para tocar no Chatwoot): redireciona para o endereço temporário de download da Microsoft.
 class Outsider::TeamsMediaController < ActionController::API
   def show
     data = Outsider::Teams::Graph::Files.read_media(params[:t])
@@ -22,7 +22,7 @@ class Outsider::TeamsMediaController < ActionController::API
 
   def respond_with(kind)
     return send_hosted(kind == 'download' ? 'attachment' : 'inline') if @attachment['hosted'].present?
-    return go(@files.download_url(@attachment)) if kind == 'download'
+    return go(@files.download_url(@attachment)) if %w[download audio].include?(kind)
 
     go(@files.thumbnail_url(@attachment, kind == 'image' ? 'large' : 'medium'))
   end

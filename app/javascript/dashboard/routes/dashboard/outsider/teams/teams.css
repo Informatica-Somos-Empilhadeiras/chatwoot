@@ -89,3 +89,16 @@
     background-color: transparent;
   }
 }
+
+/* reação da própria pessoa (como no Teams, com a borda roxa) */
+.tms .tms-reaction-mine {
+  border-color: var(--tms-accent);
+  background: var(--tms-soft);
+  color: var(--tms-soft-text);
+}
+
+/* mensagem em que a pessoa foi citada, quando a barra de menções pula até ela */
+.tms .tms-mention-target > div > div > div:first-child {
+  outline: 2px solid var(--tms-accent);
+  outline-offset: 2px;
+}

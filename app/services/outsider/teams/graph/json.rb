@@ -18,8 +18,17 @@ module Outsider::Teams::Graph::Json
       mine: message.mine, sender_name: message.sender_name, subject: message.subject, content: message.content,
       quote: message.quote, mentions_me: message.mentions_me, status: message.status, error: message.error,
       sent_at: message.sent_at.iso8601, edited_at: message.edited_at&.iso8601, deleted: message.deleted_at.present?,
-      attachments: attachments(message)
+      attachments: attachments(message), reactions: reactions(message)
     }
+  end
+
+  # [{ emoji, count, mine, names }] na ordem em que apareceram
+  def reactions(message)
+    me = message.thread&.link&.ms_user_id
+    Array(message.reactions).group_by { |item| item['type'] }.map do |emoji, items|
+      { emoji: emoji, count: items.size, mine: items.any? { |item| me.present? && item['user_id'] == me },
+        names: items.filter_map { |item| item['user_id'] == me ? 'Você' : item['name'] }.first(20) }
+    end
   end
 
   # miniatura e download por endereço assinado (vale 2 horas); visualizar pede o endereço na hora (preview)
@@ -27,13 +36,15 @@ module Outsider::Teams::Graph::Json
     files = Outsider::Teams::Graph::Files
     Array(message.attachments).each_with_index.map do |attachment, index|
       ready = message.id.present? && !attachment['pending']
+      kind = files.kind_of(attachment)
       {
-        index: index, kind: attachment['kind'], name: attachment['name'], size: attachment['size'],
+        index: index, kind: kind, name: attachment['name'], size: attachment['size'],
         extension: files.extension(attachment['name']), source: attachment['source'],
         thumb_url: if ready
                      files.media_url(message, index, attachment['kind'] == 'image' ? 'image' : 'thumb')
                    end,
         download_url: ready ? files.media_url(message, index, 'download') : nil,
+        audio_url: ready && kind == 'audio' ? files.media_url(message, index, 'audio') : nil,
         edit_url: edit_url(attachment)
       }
     end

@@ -5,6 +5,7 @@
 # Mensagem escrita pela própria pessoa (no Teams ou pelo Chatwoot) fica como "minha"; a que o Chatwoot mandou já tem o
 # id do Teams e não entra duas vezes. Edição e exclusão no Teams atualizam a mensagem. Arquivos (OneDrive/SharePoint) e
 # imagens coladas não são baixados: fica só nome e endereço (Outsider::Teams::Graph::Files mostra na hora).
+# Reações (👍 ❤️ ...) ficam em reactions e mudam quando o Teams avisa que a mensagem foi alterada.
 # Citação (responder citando no Teams) fica em quote; menção à pessoa (@ela, ou @canal/@equipe no canal) em mentions_me.
 # quiet: mensagem antiga (Outsider::Teams::Graph::History): entra sem push, sem aviso ao vivo e sem contar como não lida.
 class Outsider::Teams::Graph::Inbound
@@ -129,6 +130,7 @@ class Outsider::Teams::Graph::Inbound
       graph_id: data['id'], reply_to_graph_id: thread.channel? ? data['replyToId'].presence : nil, mine: mine,
       sender_name: sender_name(data), sender_ms_id: sender_id, subject: data['subject'].presence&.first(250),
       content: self.class.text_of(data['body']), attachments: attachments(data), quote: quote(data), status: 'sent',
+      reactions: Outsider::Teams::Graph::Reactions.parse(data['reactions'], thread),
       mentions_me: !mine && mentions_me?(thread, data), sent_at: Time.zone.parse(data['createdDateTime'].to_s) || Time.current
     )
   rescue ActiveRecord::RecordNotUnique
@@ -139,6 +141,7 @@ class Outsider::Teams::Graph::Inbound
     deleted = data['deletedDateTime'].present?
     message.update!(content: deleted ? nil : self.class.text_of(data['body']), attachments: deleted ? [] : attachments(data),
                     edited_at: Time.zone.parse(data['lastEditedDateTime'].to_s) || message.edited_at,
+                    reactions: deleted ? [] : Outsider::Teams::Graph::Reactions.parse(data['reactions'], thread),
                     deleted_at: deleted ? (Time.zone.parse(data['deletedDateTime'].to_s) || Time.current) : nil)
     Outsider::Teams::Graph::Notifier.message(@link, thread, message, action: 'updated')
     message
@@ -183,7 +186,10 @@ class Outsider::Teams::Graph::Inbound
     first = Array(list).first
     return '' unless first
 
-    first['kind'] == 'image' && first['hosted'].present? ? '🖼 Imagem' : "📎 #{first['name']}"
+    return '🖼 Imagem' if first['kind'] == 'image' && first['hosted'].present?
+    return '🎤 Áudio' if first['kind'] == 'audio'
+
+    "📎 #{first['name']}"
   end
 
   # arquivos do Teams (referências ao OneDrive/SharePoint) e imagens coladas na mensagem: só nome e endereço
@@ -193,7 +199,13 @@ class Outsider::Teams::Graph::Inbound
       next unless attachment['contentType'] == 'reference' && url.start_with?('https://')
 
       name = attachment['name'].presence || CGI.unescape(File.basename(URI.parse(url).path.to_s)).presence || 'Arquivo'
-      { 'kind' => Outsider::Teams::Graph::Files.image?(name) ? 'image' : 'file', 'name' => name, 'url' => url,
+      files = Outsider::Teams::Graph::Files
+      kind = if files.image?(name) then 'image'
+             elsif files.audio?(name) then 'audio'
+             else
+               'file'
+             end
+      { 'kind' => kind, 'name' => name, 'url' => url,
         'source' => Outsider::Teams::Graph::Files.source(url) }
     rescue URI::InvalidURIError
       nil

@@ -2,6 +2,7 @@
 // OUTSIDER: um canal do Teams aberto no modo Publicações. Cada publicação vira um cartão com as respostas
 // embaixo, como no Teams. "Responder" responde dentro da publicação; sem resposta escolhida, sai uma
 // publicação nova. O modo Conversa (em sequência, como no WhatsApp) fica no TeamsChatView.
+// Reações nas publicações e respostas; barra de menções no topo para ir de uma citação à outra.
 import { computed, nextTick, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useMapGetter } from 'dashboard/composables/store';
@@ -12,6 +13,8 @@ import TeamsGraphAPI from 'dashboard/api/outsider/teamsGraph';
 import TeamsThreadHeader from './TeamsThreadHeader.vue';
 import TeamsComposer from './TeamsComposer.vue';
 import TeamsAttachments from './TeamsAttachments.vue';
+import TeamsReactions from './TeamsReactions.vue';
+import TeamsMentionBar from './TeamsMentionBar.vue';
 import { useTeamsThread } from './useTeamsThread';
 import { listTime, timeOf } from './helpers';
 
@@ -71,6 +74,41 @@ const olderKeepingPlace = async () => {
   });
 };
 
+const allIds = computed(() =>
+  items.value.flatMap(post => [
+    post.id,
+    ...(post.replies || []).map(reply => reply.id),
+  ])
+);
+
+const onReacted = updated => {
+  if (updated.reply_to_graph_id) {
+    const post = items.value.find(
+      item => item.graph_id === updated.reply_to_graph_id
+    );
+    if (post) upsert((post.replies ||= []), updated);
+  } else {
+    upsert(items.value, updated);
+  }
+};
+
+const jumpToMention = async mention => {
+  for (let page = 0; page < 20; page += 1) {
+    if (allIds.value.includes(mention.id)) break;
+    if (!more.value) break;
+    // eslint-disable-next-line no-await-in-loop
+    await loadOlder();
+  }
+  await nextTick();
+  const el = scroller.value?.querySelector(
+    `[data-teams-message="${mention.id}"]`
+  );
+  if (!el) return;
+  el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  el.classList.add('tms-flash');
+  setTimeout(() => el.classList.remove('tms-flash'), 1600);
+};
+
 const answer = post => {
   replyTo.value = post;
   composer.value?.focus();
@@ -101,6 +139,11 @@ const onSend = async ({ content, files }) => {
       @back="emit('back')"
       @change-view="mode => emit('changeView', mode)"
     />
+    <TeamsMentionBar
+      :thread="thread"
+      :loaded-ids="allIds"
+      @jump="jumpToMention"
+    />
     <div
       ref="scroller"
       class="flex flex-col flex-1 min-h-0 gap-3.5 px-3 py-4 overflow-y-auto md:px-7 tms-bg"
@@ -130,8 +173,9 @@ const onSend = async ({ content, files }) => {
         class="overflow-hidden border shadow-sm shrink-0 rounded-2xl bg-n-surface-1 border-n-weak"
         :class="replyTo?.id === post.id ? 'tms-outline' : ''"
         data-testid="teams-post"
+        :data-teams-message="post.id"
       >
-        <div class="flex gap-3 px-4 pt-3 pb-2.5">
+        <div class="flex gap-3 px-4 pt-3 pb-2.5 group">
           <Avatar :name="post.sender_name || '?'" :size="36" rounded-full />
           <div class="flex-1 min-w-0">
             <div class="text-xs text-n-slate-11">
@@ -162,6 +206,20 @@ const onSend = async ({ content, files }) => {
               {{ post.content }}
             </p>
             <TeamsAttachments v-if="!post.deleted" :message="post" />
+            <div class="flex items-end gap-1">
+              <TeamsReactions
+                :message="post"
+                :can-react="canWrite"
+                only="chips"
+                @updated="onReacted"
+              />
+              <TeamsReactions
+                :message="post"
+                :can-react="canWrite"
+                only="button"
+                @updated="onReacted"
+              />
+            </div>
             <p
               v-if="post.status !== 'sent'"
               class="flex items-center gap-1 mt-1 mb-0 text-[11px]"
@@ -191,7 +249,8 @@ const onSend = async ({ content, files }) => {
           <div
             v-for="reply in post.replies"
             :key="reply.id"
-            class="flex gap-2.5 text-sm"
+            class="flex gap-2.5 text-sm group"
+            :data-teams-message="reply.id"
           >
             <Avatar :name="reply.sender_name || '?'" :size="26" rounded-full />
             <div class="flex-1 min-w-0">
@@ -216,6 +275,20 @@ const onSend = async ({ content, files }) => {
               >
                 {{ reply.content }}
                 <TeamsAttachments :message="reply" />
+              </div>
+              <div class="flex items-end gap-1">
+                <TeamsReactions
+                  :message="reply"
+                  :can-react="canWrite"
+                  only="chips"
+                  @updated="onReacted"
+                />
+                <TeamsReactions
+                  :message="reply"
+                  :can-react="canWrite"
+                  only="button"
+                  @updated="onReacted"
+                />
               </div>
               <span
                 v-if="reply.status !== 'sent'"

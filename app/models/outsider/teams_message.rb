@@ -2,7 +2,7 @@
 # a publicação tem reply_to_graph_id vazio e as respostas apontam para ela. attachments: só nome, tamanho e onde está cada
 # arquivo (OneDrive/SharePoint ou imagem colada no Teams); nada é gravado no Chatwoot (Outsider::Teams::Graph::Files).
 # quote: a mensagem citada { graph_id, sender, text }. mentions_me: a mensagem chama a pessoa (@ela, @canal, @equipe).
-# status: sending/sent/failed.
+# status: sending/sent/failed. reactions: [{ type: emoji, user_id, name }] (Outsider::Teams::Graph::Reactions).
 class Outsider::TeamsMessage < ApplicationRecord
   self.table_name = 'outsider_teams_messages'
 

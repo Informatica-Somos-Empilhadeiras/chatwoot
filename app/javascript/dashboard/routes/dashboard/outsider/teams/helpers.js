@@ -67,6 +67,8 @@ export const errorText = (error, t) => {
     'reply_to',
     'resend',
     'upload_failed',
+    'reaction',
+    'reaction_failed',
     'not_found',
   ];
   if (known.includes(code)) {

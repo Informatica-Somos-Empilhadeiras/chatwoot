@@ -30,6 +30,9 @@ module Outsider::Push::Text
     attachment = Array(message.attachments).first
     return '' unless attachment
 
-    attachment['kind'] == 'image' ? '📷 Foto' : "📄 #{attachment['name'].presence || 'Arquivo'}"
+    return '📷 Foto' if attachment['kind'] == 'image'
+    return '🎤 Áudio' if Outsider::Teams::Graph::Files.audio?(attachment['name'])
+
+    "📄 #{attachment['name'].presence || 'Arquivo'}"
   end
 end

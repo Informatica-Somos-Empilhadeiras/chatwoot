@@ -39,6 +39,8 @@ Rails.application.routes.prepend do
                 post :messages, action: :send_message
                 post 'messages/:message_id/retry', action: :retry
                 post 'messages/:message_id/attachments/:index/preview', action: :preview
+                post 'messages/:message_id/react', action: :react
+                get :mentions
                 get :members
                 post :read
               end

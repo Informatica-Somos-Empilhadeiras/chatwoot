@@ -1,7 +1,9 @@
 <script setup>
 // OUTSIDER: lista da área Teams. Abas Chats e Canais (com as não lidas); os chats em ordem da última
 // mensagem e os canais agrupados por equipe. A busca filtra pelo nome e pela última mensagem.
-import { computed, ref } from 'vue';
+// Quem citou a pessoa sobe para o topo (chat, canal e a equipe dele) com o selo "@". Cada equipe recolhe e abre
+// (o Chatwoot lembra as recolhidas, por conta); "Recolher tudo / Abrir tudo" quando há mais de uma equipe.
+import { computed, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import Avatar from 'dashboard/components-next/avatar/Avatar.vue';
@@ -29,32 +31,86 @@ const route = useRoute();
 const router = useRouter();
 const search = ref('');
 
+// citações primeiro (mantendo a ordem entre si)
+const mentionsFirst = list =>
+  [...list].sort(
+    (a, b) => (b.mention_count ? 1 : 0) - (a.mention_count ? 1 : 0)
+  );
+
 const filtered = computed(() => {
   const term = search.value.trim().toLowerCase();
-  if (!term) return props.threads;
-  return props.threads.filter(thread =>
-    [thread.title, thread.team_name, thread.last_message_preview]
-      .filter(Boolean)
-      .some(text => text.toLowerCase().includes(term))
-  );
+  const list = !term
+    ? props.threads
+    : props.threads.filter(thread =>
+        [thread.title, thread.team_name, thread.last_message_preview]
+          .filter(Boolean)
+          .some(text => text.toLowerCase().includes(term))
+      );
+  return mentionsFirst(list);
 });
 
-// canais: [{ team, items }] em ordem alfabética da equipe
+// canais: [{ team, items, unread, mentions }]; equipes com citação primeiro, depois em ordem alfabética
 const teams = computed(() => {
   const groups = {};
   filtered.value.forEach(thread => {
     const team = thread.team_name || t('OUTSIDER_TEAMS_AREA.TEAM_FALLBACK');
     (groups[team] ||= []).push(thread);
   });
+  const sum = (items, key) =>
+    items.reduce((total, item) => total + (item[key] || 0), 0);
   return Object.keys(groups)
     .sort((a, b) => a.localeCompare(b))
     .map(team => ({
       team,
-      items: groups[team].sort((a, b) =>
-        (a.title || '').localeCompare(b.title || '')
+      items: mentionsFirst(
+        groups[team].sort((a, b) =>
+          (a.title || '').localeCompare(b.title || '')
+        )
       ),
-    }));
+      unread: sum(groups[team], 'unread_count'),
+      mentions: sum(groups[team], 'mention_count'),
+    }))
+    .sort((a, b) => (b.mentions ? 1 : 0) - (a.mentions ? 1 : 0));
 });
+
+// ---------- equipes recolhidas (lembradas neste navegador, por conta) ----------
+const collapsedKey = computed(
+  () => `outsider_teams_collapsed_${route.params.accountId}`
+);
+const readCollapsed = () => {
+  try {
+    return JSON.parse(localStorage.getItem(collapsedKey.value) || '[]');
+  } catch {
+    return [];
+  }
+};
+const collapsed = ref(readCollapsed());
+watch(collapsedKey, () => {
+  collapsed.value = readCollapsed();
+});
+const saveCollapsed = () => {
+  try {
+    localStorage.setItem(collapsedKey.value, JSON.stringify(collapsed.value));
+  } catch {
+    // sem localStorage só não lembra
+  }
+};
+const isCollapsed = team => collapsed.value.includes(team);
+const toggleTeam = team => {
+  collapsed.value = isCollapsed(team)
+    ? collapsed.value.filter(item => item !== team)
+    : [...collapsed.value, team];
+  saveCollapsed();
+};
+const allCollapsed = computed(
+  () => teams.value.length > 0 && teams.value.every(group => isCollapsed(group.team))
+);
+const toggleAll = () => {
+  collapsed.value = allCollapsed.value ? [] : teams.value.map(group => group.team);
+  saveCollapsed();
+};
+// buscando, tudo aberto (senão o resultado some dentro da equipe recolhida)
+const showItems = group => search.value.trim() || !isCollapsed(group.team);
 
 const subtitle = thread => {
   if (thread.chat_type === 'oneOnOne') return t('OUTSIDER_TEAMS_AREA.CHAT_1_1');
@@ -208,15 +264,58 @@ const goTab = routeKind =>
 
       <!-- canais por equipe -->
       <template v-else>
+        <button
+          v-if="teams.length > 1"
+          type="button"
+          class="flex items-center gap-1 px-2.5 pt-1 text-[11px] text-n-slate-10 hover:text-n-slate-12"
+          data-teams-toggle-all
+          @click="toggleAll"
+        >
+          <Icon
+            :icon="allCollapsed ? 'i-lucide-chevrons-up-down' : 'i-lucide-chevrons-down-up'"
+            class="size-3.5"
+          />
+          {{
+            allCollapsed
+              ? t('OUTSIDER_TEAMS_AREA.EXPAND_ALL')
+              : t('OUTSIDER_TEAMS_AREA.COLLAPSE_ALL')
+          }}
+        </button>
         <div v-for="group in teams" :key="group.team" class="mb-1">
-          <div
-            class="flex items-center gap-2 px-2.5 pt-3 pb-1 text-[11px] font-bold tracking-wide uppercase text-n-slate-11"
-          >
-            <Avatar :name="group.team" :size="20" />
-            {{ group.team }}
-          </div>
           <button
-            v-for="thread in group.items"
+            type="button"
+            class="flex items-center w-full gap-2 px-2.5 pt-3 pb-1 text-[11px] font-bold tracking-wide uppercase text-n-slate-11 hover:text-n-slate-12"
+            :title="
+              isCollapsed(group.team)
+                ? t('OUTSIDER_TEAMS_AREA.EXPAND_TEAM')
+                : t('OUTSIDER_TEAMS_AREA.COLLAPSE_TEAM')
+            "
+            data-teams-team
+            @click="toggleTeam(group.team)"
+          >
+            <Icon
+              :icon="
+                showItems(group)
+                  ? 'i-lucide-chevron-down'
+                  : 'i-lucide-chevron-right'
+              "
+              class="size-3.5 shrink-0"
+            />
+            <Avatar :name="group.team" :size="20" />
+            <span class="flex-1 min-w-0 text-left truncate">{{ group.team }}</span>
+            <template v-if="!showItems(group)">
+              <span
+                v-if="group.mentions"
+                class="tms-count"
+                :title="t('OUTSIDER_TEAMS_AREA.MENTIONED_YOU')"
+              >
+                @
+              </span>
+              <span v-if="group.unread" class="tms-count">{{ group.unread }}</span>
+            </template>
+          </button>
+          <button
+            v-for="thread in showItems(group) ? group.items : []"
             :key="thread.id"
             type="button"
             class="flex items-center w-full gap-2.5 px-2.5 py-2 text-left rounded-xl"

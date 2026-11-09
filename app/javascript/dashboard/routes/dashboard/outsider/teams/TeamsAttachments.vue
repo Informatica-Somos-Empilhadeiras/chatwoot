@@ -2,13 +2,15 @@
 // OUTSIDER: anexos de uma mensagem do Teams, sem nada gravado no Chatwoot. Imagens: a imagem vem da Microsoft na hora.
 // Arquivos (OneDrive/SharePoint): cartão como o do WhatsApp, com a miniatura da primeira página que a Microsoft gera,
 // o nome, o tipo e o botãozinho de baixar. Clicar abre o visualizador do Chatwoot (só para ler); "Editar no Office"
-// abre o arquivo no Office/OneDrive.
+// abre o arquivo no Office/OneDrive. Áudios (inclusive as mensagens de voz do Teams) tocam aqui, no player do WhatsApp.
 import { computed, reactive } from 'vue';
 import { useI18n } from 'vue-i18n';
 import TeamsGraphAPI from 'dashboard/api/outsider/teamsGraph';
 import { formatSize } from 'dashboard/components-next/outsider/mediaViewer/mediaHelpers';
 import { docColor } from 'dashboard/helper/outsider/documentFile';
 import { openFileViewerWith } from 'dashboard/components-next/outsider/fileViewer/fileViewerStore';
+import VoicePlayer from 'dashboard/components-next/message/outsider/VoicePlayer.vue';
+import { ORIENTATION } from 'dashboard/components-next/message/constants';
 
 const props = defineProps({ message: { type: Object, required: true } });
 const { t } = useI18n();
@@ -16,7 +18,19 @@ const { t } = useI18n();
 const broken = reactive({});
 const all = computed(() => props.message.attachments || []);
 const images = computed(() => all.value.filter(item => item.kind === 'image'));
-const files = computed(() => all.value.filter(item => item.kind !== 'image'));
+const audios = computed(() =>
+  all.value.filter(item => item.kind === 'audio' && item.audio_url)
+);
+const files = computed(() =>
+  all.value.filter(item => item.kind !== 'image' && !audios.value.includes(item))
+);
+// o player do WhatsApp: { id (para lembrar o que já foi ouvido), dataUrl }
+const audioAttachment = item => ({
+  id: `teams-${props.message.id}-${item.index}`,
+  // o player quer um endereço completo
+  dataUrl: new URL(item.audio_url, window.location.origin).href,
+});
+const audioSender = computed(() => ({ name: props.message.sender_name }));
 
 const meta = file =>
   [String(file.extension || '').toUpperCase(), formatSize(file.size)]
@@ -85,6 +99,18 @@ const open = item => {
           {{ image.name }}
         </span>
       </button>
+    </div>
+    <div
+      v-for="audio in audios"
+      :key="`a-${audio.index}`"
+      class="w-72 max-w-full"
+      data-teams-audio
+    >
+      <VoicePlayer
+        :attachment="audioAttachment(audio)"
+        :sender="audioSender"
+        :orientation="message.mine ? ORIENTATION.RIGHT : ORIENTATION.LEFT"
+      />
     </div>
     <div
       v-for="file in files"

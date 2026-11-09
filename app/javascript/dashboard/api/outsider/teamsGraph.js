@@ -101,6 +101,19 @@ class TeamsGraphAPI extends ApiClient {
   read(id) {
     return axios.post(`${this.url}/teams_threads/${id}/read`);
   }
+
+  // reage (on true) ou tira a reação (on false) com o emoji; devolve a mensagem com as reações novas
+  react(id, messageId, emoji, on) {
+    return axios.post(
+      `${this.url}/teams_threads/${id}/messages/${messageId}/react`,
+      { emoji, on }
+    );
+  }
+
+  // mensagens que citaram a pessoa neste chat/canal: [{ id, sent_at, sender_name }]
+  mentions(id) {
+    return axios.get(`${this.url}/teams_threads/${id}/mentions`);
+  }
 }
 
 export default new TeamsGraphAPI();

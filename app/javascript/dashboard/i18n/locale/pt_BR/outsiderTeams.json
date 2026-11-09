@@ -122,8 +122,21 @@
       "REPLY_TO": "A mensagem respondida ainda não chegou ao Teams. Tente de novo em instantes.",
       "RESEND": "A imagem colada não foi enviada. Mande de novo.",
       "UPLOAD_FAILED": "Não deu para mandar o arquivo para o OneDrive. {name}",
-      "NOT_FOUND": "Não encontrado."
-    }
+      "NOT_FOUND": "Não encontrado.",
+      "REACTION": "Não deu para reagir a esta mensagem.",
+      "REACTION_FAILED": "O Teams não aceitou a reação."
+    },
+    "REACT": "Reagir",
+    "MORE_EMOJIS": "Mais emojis",
+    "EMOJI": "Emoji",
+    "MENTION_BAR": "Você foi citado {count} vez | Você foi citado {count} vezes",
+    "MENTION_PREV": "Citação anterior",
+    "MENTION_NEXT": "Próxima citação",
+    "MENTION_HIDE": "Esconder",
+    "COLLAPSE_ALL": "Recolher tudo",
+    "EXPAND_ALL": "Abrir tudo",
+    "COLLAPSE_TEAM": "Recolher a equipe",
+    "EXPAND_TEAM": "Abrir a equipe"
   },
   "OUTSIDER_TEAMS_GRAPH": {
     "TITLE": "Microsoft Teams",

@@ -2,7 +2,10 @@
 // OUTSIDER: caixa de escrever da área Teams. Avisa que a mensagem sai no Teams em nome da pessoa e mostra a
 // mensagem citada (responder). Enter manda; Shift+Enter quebra a linha; até 5 anexos (vão para o OneDrive ou
 // para os arquivos do canal, como no Teams). "@" abre a lista de pessoas do chat ou do canal para mencionar.
+// O botão de emoji abre o seletor do Chatwoot e põe o emoji onde está o cursor.
 import { computed, nextTick, ref } from 'vue';
+import { onClickOutside } from '@vueuse/core';
+import EmojiPicker from 'shared/components/emoji/EmojiPicker.vue';
 import { useI18n } from 'vue-i18n';
 import { useAlert } from 'dashboard/composables';
 import Avatar from 'dashboard/components-next/avatar/Avatar.vue';
@@ -30,6 +33,24 @@ const text = ref('');
 const files = ref([]);
 const input = ref(null);
 const fileInput = ref(null);
+const emojiBox = ref(null);
+const showEmoji = ref(false);
+onClickOutside(emojiBox, () => {
+  showEmoji.value = false;
+});
+
+const insertEmoji = ({ emoji }) => {
+  const el = input.value;
+  const start = el ? el.selectionStart : text.value.length;
+  const end = el ? el.selectionEnd : text.value.length;
+  text.value = text.value.slice(0, start) + emoji + text.value.slice(end);
+  nextTick(() => {
+    const caret = start + emoji.length;
+    el?.focus();
+    el?.setSelectionRange(caret, caret);
+    resize();
+  });
+};
 
 // ---------- @menção ----------
 const members = ref(null);
@@ -291,6 +312,24 @@ defineExpose({ focus });
         class="hidden"
         @change="pick"
       />
+      <span ref="emojiBox" class="relative inline-flex">
+        <button
+          type="button"
+          class="hover:text-n-slate-12 disabled:opacity-40"
+          :class="showEmoji ? 'tms-text' : ''"
+          :disabled="disabled"
+          :title="t('OUTSIDER_TEAMS_AREA.EMOJI')"
+          data-teams-emoji
+          @click="showEmoji = !showEmoji"
+        >
+          <Icon icon="i-lucide-smile" class="size-5" />
+        </button>
+        <EmojiPicker
+          v-if="showEmoji"
+          class="left-0 mb-2 bottom-full"
+          @select="insertEmoji"
+        />
+      </span>
       <slot name="tools" />
       <button
         type="button"
