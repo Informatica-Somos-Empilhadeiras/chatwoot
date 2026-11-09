@@ -48,7 +48,7 @@ class Api::V1::Accounts::Outsider::PushController < Api::V1::Accounts::BaseContr
     sent = ::Outsider::Push::Sender.new(Current.user).deliver(
       ::Outsider::Push.payload(kind: 'chatwoot', title: "#{Current.user.name} · Teste", body: 'Assim chegam os avisos do Chatwoot.',
                                url: "#{::Outsider::Push.site}/app/accounts/#{Current.account.id}/settings/outsider/notifications",
-                               tag: "test-#{Time.current.to_i}")
+                               tag: "test-#{Time.current.to_i}", test: true)
     )
     render json: { sent: sent }
   end

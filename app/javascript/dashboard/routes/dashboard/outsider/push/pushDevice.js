@@ -49,8 +49,13 @@ export const deviceLabel = () => {
   return system ? `${browser} · ${system}` : browser;
 };
 
+// updateViaCache 'none': o navegador sempre confere o sw.js e o outsider-push-sw.js no servidor (sem cache),
+// então a versão nova do aviso chega no próximo carregamento do Chatwoot
 const registration = async () => {
-  await navigator.serviceWorker.register('/sw.js');
+  const registered = await navigator.serviceWorker.register('/sw.js', {
+    updateViaCache: 'none',
+  });
+  registered.update().catch(() => {});
   return navigator.serviceWorker.ready;
 };
 

@@ -148,6 +148,7 @@ RSpec.describe 'Outsider aviso novo (push)', type: :request do
     post "#{url}/permission", headers: bruno.create_new_auth_token, as: :json, params: { permission: 'denied' }
     post "#{url}/test", headers: ana.create_new_auth_token, as: :json
     expect(response.parsed_body['sent']).to eq(1)
+    expect(sent.last[:payload]).to include('test' => true, 'title' => 'Ana · Teste')
 
     post "#{url}/remind/#{bruno.id}", headers: ana.create_new_auth_token, as: :json
     expect(response).to have_http_status(:forbidden)

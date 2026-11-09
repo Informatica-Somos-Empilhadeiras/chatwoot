@@ -4,6 +4,10 @@
 //   Foto de quem mandou, "Nome · de onde veio" e o texto. Várias mensagens da mesma conversa viram um aviso só
 //   ("3 mensagens novas · texto"). Se a pessoa já está olhando aquela conversa, não mostra nada.
 //   Botões: "Abrir conversa" (usa a aba do Chatwoot que já está aberta) e "Marcar como lida".
+// versão nova do aviso assume na hora (sem esperar a pessoa fechar todas as abas do Chatwoot)
+self.addEventListener('install', () => self.skipWaiting());
+self.addEventListener('activate', event => event.waitUntil(clients.claim()));
+
 self.outsiderPush = (() => {
   const handles = data => !!(data && data.outsider);
 
@@ -26,7 +30,8 @@ self.outsiderPush = (() => {
         client.focused &&
         samePath(client.url, data.path)
     );
-    if (watching) return null;
+    // o push de teste aparece mesmo com a pessoa olhando a tela de onde mandou
+    if (watching && !data.test) return null;
 
     const previous = await self.registration.getNotifications({
       tag: data.tag,

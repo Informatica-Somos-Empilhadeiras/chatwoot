@@ -41,13 +41,14 @@ module Outsider::Push
   end
 
   # o aviso no formato que o public/outsider-push-sw.js entende
-  def payload(kind:, title:, body:, url:, tag:, icon: nil, read: nil)
+  # test: aviso do botão "Enviar push de teste", que aparece mesmo com a pessoa olhando a tela de notificações
+  def payload(kind:, title:, body:, url:, tag:, icon: nil, read: nil, test: false)
     path = url.to_s.sub(site, '')
     {
       outsider: 1, kind: kind, title: title.to_s.truncate(90), body: body.to_s.squish.truncate(180),
       icon: icon.presence || "#{site}#{ICONS.fetch(kind, ICONS['chatwoot'])}", badge: "#{site}#{BADGES.fetch(kind, BADGES['chatwoot'])}",
       tag: tag, url: url, path: path, read: read, more: '%<n>s mensagens novas', open_label: 'Abrir conversa',
-      read_label: 'Marcar como lida'
+      read_label: 'Marcar como lida', test: test
     }
   end
 end
