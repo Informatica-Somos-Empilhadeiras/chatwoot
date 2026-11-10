@@ -6,14 +6,14 @@ RSpec.describe Outsider::DeliveryCheck do
   let(:inbox) { channel.inbox }
   let(:customer) { create(:contact, account: account, phone_number: '+5562999990001', identifier: '5562999990001@s.whatsapp.net') }
   let(:conversation) { create(:conversation, account: account, inbox: inbox, contact: customer) }
-  let(:api) { instance_double(Outsider::EvolutionApi, instance: 'CENTRAL') }
+  let(:api) { instance_double(Outsider::EvolutionApi, instance: 'CENTRAL', whatsapp_numbers: []) }
   let(:records) { [] }
   let(:push) { instance_double(Outsider::Push::UndeliveredMessage, perform: 1) }
 
   around { |example| with_modified_env(OUTSIDER_DELIVERY_CHECK: 'true', EVOLUTION_API_KEY: 'chave') { example.run } }
 
   before do
-    Redis::Alfred.scan_each(match: 'outsider_delivery_check:*') { |key| Redis::Alfred.delete(key) }
+    Redis::Alfred.scan_each(match: 'outsider_delivery_ch*') { |key| Redis::Alfred.delete(key) }
     allow(Outsider::EvolutionApi).to receive(:new).with(inbox).and_return(api)
     allow(api).to receive(:find_all_messages) { records }
     allow(Outsider::Push::UndeliveredMessage).to receive(:new).and_return(push)
@@ -163,6 +163,67 @@ RSpec.describe Outsider::DeliveryCheck do
 
       expect(message.reload).to have_attributes(source_id: 'WAID:WA1', status: 'sent')
       expect(message.content_attributes['outsider_wa_ids']).to eq(%w[WA1 WA2])
+    end
+  end
+
+  describe 'a message Evolution linked by itself' do
+    # com acesso ao banco do Chatwoot, a Evolution grava o id do WhatsApp direto na mensagem, sem passar pelo Rails
+    it 'leaves the clock with the status WhatsApp reports for that id' do
+      delivered = sent('Chegou?')
+      plain = sent('Só enviada')
+      delivered.update_columns(source_id: 'WAID:WA1') # rubocop:disable Rails/SkipsModelValidations
+      plain.update_columns(source_id: 'WAID:WA2') # rubocop:disable Rails/SkipsModelValidations
+      records << record('WA1', text: 'outro texto, o que vale é o id', statuses: %w[DELIVERY_ACK])
+
+      described_class.new(inbox).perform(follow: false)
+
+      expect([delivered, plain].map { |message| message.reload.content_attributes['outsider_delivery'] }).to all(eq('confirmed'))
+      expect([delivered, plain].map(&:status)).to eq(%w[delivered sent])
+      expect([delivered, plain].map(&:source_id)).to eq(%w[WAID:WA1 WAID:WA2])
+    end
+
+    it 'makes the check trusted, so a message without the id fails at the deadline' do
+      linked = sent('Saiu')
+      lost = sent('Não saiu')
+      linked.update_columns(source_id: 'WAID:WA1') # rubocop:disable Rails/SkipsModelValidations
+
+      check_after_deadline(lost)
+
+      expect([linked.reload.status, lost.reload.status]).to eq(%w[sent failed])
+    end
+  end
+
+  describe 'a contact WhatsApp moved to its new address' do
+    let(:new_address) { '98765432101234@lid' }
+
+    before { allow(api).to receive(:whatsapp_numbers).and_return([{ 'exists' => true, 'jid' => new_address, 'number' => customer.identifier }]) }
+
+    def sent_to_new_address(id, text)
+      record(id, text: text).deep_merge('key' => { 'remoteJid' => new_address })
+    end
+
+    it 'asks Evolution where it sends that contact messages and remembers the answer' do
+      first = sent('Bom dia')
+      described_class.webhook_started(first.id)
+      records << sent_to_new_address('WA1', 'Bom dia')
+      described_class.new(inbox).perform
+
+      second = sent('Segue a proposta')
+      records << sent_to_new_address('WA2', 'Segue a proposta')
+      described_class.new(inbox).perform
+
+      expect([first.reload.source_id, second.reload.source_id]).to eq(%w[WAID:WA1 WAID:WA2])
+      expect(api).to have_received(:whatsapp_numbers).with([customer.identifier]).once
+    end
+
+    it 'does not ask before the message was handed to Evolution, nor again within minutes' do
+      message = sent('Bom dia')
+      described_class.new(inbox).perform
+      expect(api).not_to have_received(:whatsapp_numbers)
+
+      described_class.webhook_started(message.id)
+      3.times { described_class.new(inbox).perform }
+      expect(api).to have_received(:whatsapp_numbers).once
     end
   end
 

@@ -12,10 +12,13 @@
 # A mensagem que o webhook dava como falha só por demora (a Evolution responde depois de mandar, e um
 # arquivo grande passa do tempo do webhook) fica no relógio e vira ✓ quando aparece no WhatsApp.
 #
-# Como acha: a Evolution não diz qual mensagem do WhatsApp é de qual mensagem do Chatwoot. Entre as
-# enviadas pela empresa no mesmo chat que ainda não são de nenhuma mensagem do Chatwoot, vale a de mesmo
-# texto (ou um arquivo para cada anexo), na ordem; no fim do prazo, a enviada logo depois da mensagem
-# (Outsider::DeliveryMatch). Achada, o id fica no source_id (WAID:<id>), como nas que vêm do WhatsApp.
+# Como acha:
+# - a Evolution com acesso ao banco do Chatwoot (CHATWOOT_IMPORT_DATABASE_CONNECTION_URI) grava o id do
+#   WhatsApp direto na mensagem (source_id WAID:<id>) assim que envia: é só ver a situação desse id;
+# - sem isso, a Evolution não diz qual mensagem do WhatsApp é de qual mensagem do Chatwoot. Entre as
+#   enviadas pela empresa no mesmo chat (Outsider::DeliveryChat) que ainda não são de nenhuma mensagem do
+#   Chatwoot, vale a de mesmo texto (ou um arquivo para cada anexo); no fim do prazo, a enviada logo depois
+#   da mensagem (Outsider::DeliveryMatch). Achada, o id fica no source_id, como nas que vêm do WhatsApp.
 #
 # Trava de segurança: uma mensagem só é dada como não confirmada na caixa em que a conferência confirmou
 # alguma mensagem nos últimos PROVEN_FOR. Se a Evolution deixar de responder do jeito esperado (ou o
@@ -47,7 +50,6 @@ class Outsider::DeliveryCheck
   SOON_LOCK = 4
   LOCK = 60
   PAGE_SIZE = 200
-  RANK = { 'sent' => 0, 'delivered' => 1, 'read' => 2 }.freeze
   # o contato do robô da Evolution: o que vai para ele é comando (/status, /init), não mensagem do WhatsApp
   BOT_PHONE = '+123456'.freeze
   KEY = 'outsider_delivery_check'.freeze
@@ -95,6 +97,7 @@ class Outsider::DeliveryCheck
   def initialize(inbox)
     @inbox = inbox
     @api = Outsider::EvolutionApi.new(inbox)
+    @chats = Outsider::DeliveryChat.new(inbox, @api)
   end
 
   # follow: também acompanha as ✓ enviadas até virarem ✓✓ entregue (a conferência de cada minuto); sem ele,
@@ -130,7 +133,7 @@ class Outsider::DeliveryCheck
 
   # em conferência, ou dadas como não confirmadas (ainda podem aparecer)
   def waiting
-    @waiting ||= recent.select { |message| message.source_id.blank? && [CHECKING, UNCONFIRMED].include?(message.content_attributes[STATE]) }
+    @waiting ||= recent.select { |message| [CHECKING, UNCONFIRMED].include?(message.content_attributes[STATE]) }
   end
 
   # já no WhatsApp com ✓, esperando a ✓✓ (nos grupos o WhatsApp não manda a entrega: ficam com ✓)
@@ -142,20 +145,44 @@ class Outsider::DeliveryCheck
   end
 
   def confirm(records)
+    linked, loose = waiting.partition { |message| message.source_id.to_s.start_with?('WAID:') }
+    confirm_linked(linked, records)
     free = unclaimed(records)
-    deadlines = waiting.index_by(&:id).transform_values { |message| deadline(message) }
-    waiting.group_by(&:conversation).each do |conversation, messages|
-      chat = free.select { |record| Outsider::WhatsappMessageKey.chat?(record, conversation.contact) }
-      found = matches(messages, chat, deadlines)
+    deadlines = loose.index_by(&:id).transform_values { |message| deadline(message) }
+    loose.group_by(&:conversation).each do |conversation, messages|
+      found = matches(messages, free, conversation.contact, deadlines)
       free -= found.values.flatten
       messages.each { |message| settle(message, found[message.id], deadlines[message.id]) }
     end
   end
 
-  # achar alguma pelo texto ou pelo arquivo prova que a conferência funciona nesta caixa (a trava de segurança)
-  def matches(messages, chat, deadlines)
-    match = Outsider::DeliveryMatch.new(messages, chat, deadlines)
-    match.found.tap { Redis::Alfred.setex(key(:proven), 1, PROVEN_FOR.to_i) if match.exact? }
+  # A mensagem já está com o id do WhatsApp (a Evolution gravou direto no banco, ou a busca da reação achou):
+  # ela saiu, é só ver a situação
+  def confirm_linked(messages, records)
+    by_id = records.index_by { |record| record.dig('key', 'id') }
+    messages.each { |message| confirmed(message, by_id.values_at(message.source_id.delete_prefix('WAID:')).compact) }
+    prove if messages.any?
+  end
+
+  def matches(messages, free, contact, deadlines)
+    match = Outsider::DeliveryMatch.new(messages, @chats.records(free, contact), deadlines)
+    found = match.found
+    if lost?(messages, found) && @chats.learn(contact)
+      match = Outsider::DeliveryMatch.new(messages, @chats.records(free, contact), deadlines)
+      found = match.found
+    end
+    prove if match.exact?
+    found
+  end
+
+  # já foi entregue à Evolution e não apareceu no chat do contato: ela pode ter mandado para o endereço novo dele
+  def lost?(messages, found)
+    messages.any? { |message| found[message.id].size < Outsider::DeliveryMatch.wanted(message) && webhook_at(message) }
+  end
+
+  # confirmar uma mensagem prova que a conferência funciona nesta caixa (a trava de segurança)
+  def prove
+    Redis::Alfred.setex(key(:proven), 1, PROVEN_FOR.to_i)
   end
 
   # as enviadas pela empresa que ainda não são de nenhuma mensagem do Chatwoot, da mais antiga para a mais nova
@@ -166,12 +193,17 @@ class Outsider::DeliveryCheck
     records.reject { |record| taken.include?(record.dig('key', 'id')) }.sort_by { |record| record['messageTimestamp'].to_i }
   end
 
+  # quando o webhook da mensagem foi para a Evolution (nil enquanto não foi)
+  def webhook_at(message)
+    @webhook_at ||= {}
+    @webhook_at.fetch(message.id) { @webhook_at[message.id] = Redis::Alfred.get("#{KEY}:webhook:#{message.id}")&.to_i }
+  end
+
   # o prazo conta de quando o webhook foi para a Evolution
   def deadline(message)
-    sent_at = Redis::Alfred.get("#{KEY}:webhook:#{message.id}")
-    return self.class.since(message) + UNSENT_WINDOW if sent_at.blank?
+    return self.class.since(message) + UNSENT_WINDOW unless webhook_at(message)
 
-    Time.zone.at(sent_at.to_i) + (message.attachments.any? ? MEDIA_WINDOW : TEXT_WINDOW)
+    Time.zone.at(webhook_at(message)) + (message.attachments.any? ? MEDIA_WINDOW : TEXT_WINDOW)
   end
 
   def settle(message, records, deadline)
@@ -183,11 +215,11 @@ class Outsider::DeliveryCheck
 
   def confirmed(message, records)
     ids = records.map { |record| record.dig('key', 'id') }
-    status = status_for(message, records)
+    status = Outsider::DeliveryStatus.of(message, records)
     attributes = message.content_attributes.except('external_error').merge(STATE => CONFIRMED)
     attributes[WA_IDS] = ids if ids.many?
     attributes['external_error'] = text(:refused) if status == 'failed'
-    message.update!(source_id: "WAID:#{ids.first}", status: status, content_attributes: attributes)
+    message.update!(source_id: ids.first ? "WAID:#{ids.first}" : message.source_id, status: status, content_attributes: attributes)
     Outsider::Push::UndeliveredMessage.new(message).perform if status == 'failed'
   end
 
@@ -212,29 +244,12 @@ class Outsider::DeliveryCheck
       found = by_id.values_at(*ids).compact
       next if found.size < ids.size
 
-      status = status_for(message, found)
+      status = Outsider::DeliveryStatus.of(message, found)
       next if status == message.status
 
       Messages::StatusUpdateService.new(message, status, (text(:refused) if status == 'failed')).perform
       Outsider::Push::UndeliveredMessage.new(message).perform if status == 'failed'
     end
-  end
-
-  # o que o WhatsApp diz, sem voltar atrás (a lida não vira entregue); com vários anexos, vale o mais atrasado
-  def status_for(message, records)
-    statuses = records.map { |record| record_status(record) }
-    return 'failed' if statuses.include?('failed')
-
-    whatsapp = statuses.min_by { |status| RANK[status] }
-    message.failed? ? whatsapp : [message.status, whatsapp].max_by { |status| RANK[status] }
-  end
-
-  def record_status(record)
-    updates = Array(record['MessageUpdate']).pluck('status')
-    return 'read' if updates.intersect?(%w[READ PLAYED])
-    return 'delivered' if updates.include?('DELIVERY_ACK')
-
-    updates.include?('ERROR') ? 'failed' : 'sent'
   end
 
   def text(name)

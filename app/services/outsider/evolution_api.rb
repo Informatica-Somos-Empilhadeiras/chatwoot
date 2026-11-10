@@ -178,11 +178,13 @@ class Outsider::EvolutionApi
     nil
   end
 
+  def version
+    request { self.class.get("#{@base_url}/", headers: headers, timeout: DEFAULT_TIMEOUT) }['version'].to_s
+  end
+
   # a Evolution ajustada para guardar quem viu tem "outsider" na versão
   def views_supported?
-    Rails.cache.fetch("outsider_evolution_views/#{@base_url}", expires_in: 10.minutes) do
-      request { self.class.get("#{@base_url}/", headers: headers, timeout: DEFAULT_TIMEOUT) }['version'].to_s.include?('outsider')
-    end
+    Rails.cache.fetch("outsider_evolution_views/#{@base_url}", expires_in: 10.minutes) { version.include?('outsider') }
   rescue Error
     false
   end

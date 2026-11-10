@@ -128,9 +128,9 @@ const isRead = computed(() => {
 });
 
 // OUTSIDER: mensagem em conferência na Evolution (Outsider::DeliveryCheck no servidor): o balão mostra o
-// relógio até o WhatsApp confirmar o envio. A conferência desiste em menos de uma hora; passado esse
-// tempo o balão volta ao ✓ de antes, para um relógio esquecido não ficar girando para sempre.
-const DELIVERY_CHECK_SECONDS = 3600;
+// relógio até o WhatsApp confirmar o envio. A conferência resolve cada mensagem em até 15 minutos; passado
+// esse tempo o balão volta ao ✓ de antes, para um relógio esquecido (conferência parada) não ficar girando.
+const DELIVERY_CHECK_SECONDS = 1200;
 const isCheckingDelivery = computed(() => {
   const attributes = contentAttributes.value || {};
   if (attributes.outsiderDelivery !== 'checking') return false;
