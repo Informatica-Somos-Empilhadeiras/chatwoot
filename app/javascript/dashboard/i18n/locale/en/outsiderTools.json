@@ -155,7 +155,7 @@
       },
       "STYLE_HINTS": {
         "list": "A “See options” button that opens the list on WhatsApp. Up to 10 options.",
-        "buttons": "Up to 3 buttons under the message. With more options it is sent as a list.",
+        "buttons": "Buttons under the message, picked with one tap. Up to 3 in one message; 4 to 6 go in two messages in a row. With more options it is sent as a list.",
         "text": "Numbered options in the text; the customer answers with the number or the name."
       },
       "TRIGGERS": {
@@ -218,7 +218,7 @@
       "WARNINGS": {
         "EMPTY_TEXT": "Write the text the bot will send.",
         "NO_OPTIONS": "Add at least one option.",
-        "TOO_MANY_BUTTONS": "WhatsApp accepts only 3 buttons: with more options it goes as a list.",
+        "TOO_MANY_BUTTONS": "Up to 6 options go as buttons (WhatsApp shows 3 per message, so two messages are sent): with more, it is sent as a list.",
         "BUTTON_TOO_LONG": "Buttons longer than 20 characters are cut on WhatsApp.",
         "NOT_CONNECTED": "No output connected: the flow stops here.",
         "NO_INPUT": "No arrow reaches this block."
@@ -285,7 +285,8 @@
         "DELETE": "Delete block"
       },
       "PREVIEW": {
-        "LIST_BUTTON": "See options"
+        "LIST_BUTTON": "See options",
+        "MORE_OPTIONS": "More options:"
       },
       "BUBBLE": {
         "MENU": "Bot menu",

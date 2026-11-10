@@ -2,6 +2,7 @@ en:
   # OUTSIDER: bot texts (Outsider::Bot::Runner and Outsider::Bot::Starter)
   outsider_bot:
     invalid_option: "Sorry, I didn't get that 🤔 Please pick one of the options below."
+    more_options: "More options:"
     attachment_answer: "[attachment]"
     starter:
       welcome: "Hi, {{contato.primeiro_nome}}! 👋 Welcome."

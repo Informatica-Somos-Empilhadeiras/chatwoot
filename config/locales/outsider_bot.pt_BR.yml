@@ -2,6 +2,7 @@ pt_BR:
   # OUTSIDER: textos do bot (Outsider::Bot::Runner e Outsider::Bot::Starter)
   outsider_bot:
     invalid_option: "Não entendi 🤔 Escolha uma das opções abaixo, por favor."
+    more_options: "Mais opções:"
     attachment_answer: "[anexo]"
     starter:
       welcome: "Olá, {{contato.primeiro_nome}}! 👋 Bem-vindo(a) à Somos Empilhadeiras."

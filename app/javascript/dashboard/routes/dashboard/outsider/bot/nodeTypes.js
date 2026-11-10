@@ -12,7 +12,9 @@ export const HEADER_HEIGHT = 40;
 export const BODY_HEIGHT = 66;
 export const PORT_HEIGHT = 28;
 export const MAX_OPTIONS = 10;
-export const MAX_BUTTONS = 3;
+// o WhatsApp mostra 3 botões por mensagem; até 6 opções vão como botões, em duas mensagens seguidas
+// (Outsider::Bot::Graph::MAX_DIRECT_BUTTONS no servidor)
+export const MAX_BUTTONS = 6;
 
 let counter = 0;
 export const newId = prefix => {

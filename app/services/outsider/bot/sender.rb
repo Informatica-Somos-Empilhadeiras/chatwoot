@@ -8,7 +8,9 @@
 #
 # Menu, conforme a caixa:
 #   - WhatsApp pela Evolution: lista (/message/sendList) ou botões (/message/sendButtons); se a
-#     Evolution falhar, vai como texto numerado
+#     Evolution falhar, vai como texto numerado. O WhatsApp mostra 3 botões por mensagem: de 4 a 6
+#     opções, os botões vão em duas mensagens seguidas (2 + 2, 3 + 2, 3 + 3), para o cliente escolher
+#     com um toque, sem abrir a lista; com mais de 6, vai como lista
 #   - WhatsApp oficial e chat do site: menu do próprio Chatwoot (input_select)
 #   - estilo texto e as outras caixas: texto com as opções numeradas
 class Outsider::Bot::Sender
@@ -87,9 +89,11 @@ class Outsider::Bot::Sender
     attach_blob(message, blob)
   end
 
-  def numbered_text(data, options)
+  # first: o número da primeira opção, menos 1 (a segunda mensagem de botões continua de onde a primeira parou)
+  def numbered_text(data, options, first = 0)
     lines = options.each_with_index.map do |option, index|
-      "#{NUMBERS[index] || "#{index + 1}."} #{option['label']}#{" — #{option['description']}" if option['description'].present?}"
+      number = first + index
+      "#{NUMBERS[number] || "#{number + 1}."} #{option['label']}#{" — #{option['description']}" if option['description'].present?}"
     end
     [heading(data), lines.join("\n"), data['footer'].presence].compact.join("\n\n")
   end
@@ -102,7 +106,7 @@ class Outsider::Bot::Sender
 
   def effective_style(style, options)
     return 'text' if options.empty?
-    return 'list' if style == 'buttons' && options.size > Outsider::Bot::Graph::MAX_BUTTONS
+    return 'list' if style == 'buttons' && options.size > Outsider::Bot::Graph::MAX_DIRECT_BUTTONS
 
     style
   end
@@ -124,12 +128,24 @@ class Outsider::Bot::Sender
   end
 
   def evolution_menu(data, options, style, attributes)
-    send_by_evolution(numbered_text(data, options), attributes) do
-      style == 'buttons' ? send_buttons(data, options) : send_list(data, options)
-    end
+    return button_messages(data, options, attributes) if style == 'buttons'
+
+    send_by_evolution(numbered_text(data, options), attributes) { evolution_menus.list(data, options) }
   rescue Outsider::EvolutionApi::Error => e
     Rails.logger.warn("[Outsider::Bot::Sender] menu pela Evolution falhou (#{e.code}), indo como texto")
     text(numbered_text(data, options), attributes.merge('style' => 'text'))
+  end
+
+  # Uma mensagem de botões para cada 3 opções. A primeira leva o título, o texto e o rodapé do menu; a seguinte,
+  # o texto "Mais opções". Cada uma aparece na conversa com os botões dela.
+  def button_messages(data, options, attributes)
+    groups = options.in_groups((options.size.to_f / Outsider::Bot::Graph::MAX_BUTTONS).ceil, false)
+    groups.map do |group|
+      part = group == groups.first ? data : { 'text' => I18n.t('outsider_bot.more_options') }
+      card = attributes.merge('text' => part['text'], 'title' => part['title'].presence, 'footer' => part['footer'].presence,
+                              'options' => group.map { |option| option.slice('id', 'label', 'description') }).compact
+      send_by_evolution(numbered_text(part, group, options.index(group.first)), card) { evolution_menus.buttons(part, group) }
+    end.last
   end
 
   # o bloco chama a Evolution; content é o texto do WhatsApp, que fica na conversa no markdown do Chatwoot
@@ -143,28 +159,6 @@ class Outsider::Bot::Sender
       "WAID:#{message_id}".tap { |id| Outsider::Bot::Echo.remember(id, content: content, attributes: attributes) }
     end
     store_echo(source_id, content, attributes)
-  end
-
-  def send_list(data, options)
-    evolution_api.send_list(
-      number: recipient, title: data['title'].to_s, description: data['text'].presence || data['title'].presence || data['button_label'],
-      footer_text: data['footer'].to_s, button_text: data['button_label'],
-      sections: [{ title: data['title'].presence || data['button_label'],
-                   rows: options.map { |option| list_row(option) } }]
-    )
-  end
-
-  def list_row(option)
-    { title: option['label'], description: option['description'].presence, rowId: option['id'] }.compact
-  end
-
-  def send_buttons(data, options)
-    title = data['title'].presence || data['text']
-    evolution_api.send_buttons(
-      number: recipient, title: title, description: (data['title'].present? ? data['text'] : nil),
-      footer: data['footer'].presence,
-      buttons: options.map { |option| { type: 'reply', displayText: option['label'], id: option['id'] } }
-    )
   end
 
   def native_menu(data, options, attributes)
@@ -240,6 +234,10 @@ class Outsider::Bot::Sender
 
   def evolution_api
     @evolution_api ||= Outsider::EvolutionApi.new(@conversation.inbox)
+  end
+
+  def evolution_menus
+    @evolution_menus ||= Outsider::Bot::EvolutionMenu.new(evolution_api, recipient)
   end
 
   # mesmo destino que a Evolution usa quando a mensagem sai do Chatwoot

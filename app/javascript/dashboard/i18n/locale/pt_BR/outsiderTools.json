@@ -155,7 +155,7 @@
       },
       "STYLE_HINTS": {
         "list": "Botão “Ver opções” que abre a lista no WhatsApp. Até 10 opções.",
-        "buttons": "Até 3 botões embaixo da mensagem. Com mais opções, vai como lista.",
+        "buttons": "Botões embaixo da mensagem, que o cliente escolhe com um toque. Até 3 numa mensagem; de 4 a 6, em duas mensagens seguidas. Com mais opções, vai como lista.",
         "text": "Opções numeradas no texto; o cliente responde com o número ou o nome."
       },
       "TRIGGERS": {
@@ -218,7 +218,7 @@
       "WARNINGS": {
         "EMPTY_TEXT": "Escreva o texto que o bot vai mandar.",
         "NO_OPTIONS": "Adicione pelo menos uma opção.",
-        "TOO_MANY_BUTTONS": "O WhatsApp aceita só 3 botões: com mais opções, vai como lista.",
+        "TOO_MANY_BUTTONS": "Como botões vão até 6 opções (o WhatsApp mostra 3 por mensagem, então saem duas mensagens): com mais, vai como lista.",
         "BUTTON_TOO_LONG": "Botão com mais de 20 letras é cortado no WhatsApp.",
         "NOT_CONNECTED": "Nenhuma saída ligada: o fluxo para aqui.",
         "NO_INPUT": "Nenhuma seta chega neste bloco."
@@ -285,7 +285,8 @@
         "DELETE": "Apagar bloco"
       },
       "PREVIEW": {
-        "LIST_BUTTON": "Ver opções"
+        "LIST_BUTTON": "Ver opções",
+        "MORE_OPTIONS": "Mais opções:"
       },
       "BUBBLE": {
         "MENU": "Menu do bot",

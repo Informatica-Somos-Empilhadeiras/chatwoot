@@ -24,7 +24,10 @@ class Outsider::Bot::Graph
   MAX_NODES = 200
   MAX_EDGES = 400
   MAX_OPTIONS = 10
+  # o WhatsApp mostra 3 botões por mensagem; com até MAX_DIRECT_BUTTONS opções os botões vão em duas mensagens
+  # seguidas (Outsider::Bot::Sender), e com mais que isso o menu vai como lista
   MAX_BUTTONS = 3
+  MAX_DIRECT_BUTTONS = 6
   TEXT_LIMIT = 4096
   ID = /\A[A-Za-z0-9_-]{1,40}\z/
   TIME = /\A([01]\d|2[0-3]):[0-5]\d\z/

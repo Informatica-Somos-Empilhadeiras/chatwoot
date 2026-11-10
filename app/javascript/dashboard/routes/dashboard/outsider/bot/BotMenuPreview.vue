@@ -1,11 +1,13 @@
 <script setup>
 // OUTSIDER: o menu do bot desenhado como o cliente vê no WhatsApp: botões embaixo da mensagem ou o
 // botão "☰ Ver opções" que abre a lista. Usado no Testar do editor (interactive) e na bolha da
-// conversa (só mostra).
+// conversa (só mostra). O WhatsApp mostra 3 botões por mensagem: de 4 a 6 opções, os botões vão em
+// duas mensagens seguidas (2 + 2, 3 + 2, 3 + 3), a segunda com o texto "Mais opções".
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
 import { whatsappHtml, NUMBERS } from './simulator';
+import { MAX_BUTTONS } from './nodeTypes';
 
 const props = defineProps({
   text: { type: String, default: '' },
@@ -21,13 +23,25 @@ const props = defineProps({
 
 const emit = defineEmits(['choose']);
 
+const BUTTONS_PER_MESSAGE = 3;
+
 const { t } = useI18n();
 const listOpen = ref(false);
 
 const style = computed(() => {
   if (!props.options.length) return 'text';
-  if (props.menuStyle === 'buttons' && props.options.length > 3) return 'list';
+  if (props.menuStyle === 'buttons' && props.options.length > MAX_BUTTONS)
+    return 'list';
   return props.menuStyle;
+});
+
+// os botões de cada mensagem, divididos por igual como o servidor faz (Outsider::Bot::Sender)
+const buttonGroups = computed(() => {
+  const messages = Math.ceil(props.options.length / BUTTONS_PER_MESSAGE);
+  const size = Math.ceil(props.options.length / messages);
+  return Array.from({ length: messages }, (_, index) =>
+    props.options.slice(index * size, (index + 1) * size)
+  );
 });
 
 const numbered = computed(() =>
@@ -75,20 +89,28 @@ const choose = option => {
       </button>
     </div>
     <template v-if="style === 'buttons'">
-      <button
-        v-for="option in options"
-        :key="option.id"
-        type="button"
-        class="flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium rounded-xl bg-n-solid-1 text-n-blue-11 shadow-sm"
-        :class="[
-          interactive && !disabled ? 'hover:opacity-80' : 'cursor-default',
-          chosenId === option.id ? 'ring-1 ring-n-blue-9' : '',
-        ]"
-        @click="choose(option)"
-      >
-        <Icon icon="i-lucide-reply" class="size-3.5" />
-        {{ option.label }}
-      </button>
+      <template v-for="(group, index) in buttonGroups" :key="index">
+        <span
+          v-if="index"
+          class="px-3 py-2 mt-1 text-sm rounded-xl rounded-tl-sm bg-n-solid-1 text-n-slate-12 shadow-sm"
+        >
+          {{ t('OUTSIDER_TOOLS.BOT.PREVIEW.MORE_OPTIONS') }}
+        </span>
+        <button
+          v-for="option in group"
+          :key="option.id"
+          type="button"
+          class="flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium rounded-xl bg-n-solid-1 text-n-blue-11 shadow-sm"
+          :class="[
+            interactive && !disabled ? 'hover:opacity-80' : 'cursor-default',
+            chosenId === option.id ? 'ring-1 ring-n-blue-9' : '',
+          ]"
+          @click="choose(option)"
+        >
+          <Icon icon="i-lucide-reply" class="size-3.5" />
+          {{ option.label }}
+        </button>
+      </template>
     </template>
     <div
       v-if="style === 'list' && (listOpen || (!interactive && chosenId))"
