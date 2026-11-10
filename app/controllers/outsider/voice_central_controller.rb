@@ -3,8 +3,8 @@
 # usuário: entra só com o token OUTSIDER_VOICE_TOKEN (o mesmo no Chatwoot e na central), no cabeçalho
 # X-Voice-Token ou no parâmetro token. As respostas são texto simples, lido pelo plano de discagem.
 #
-# Entrega 26: URA (ivr: o próximo passo; prompts e prompt: os áudios; voicemail: o recado gravado) e monitoria
-# (monitor: se a pessoa pode ouvir ou sussurrar na ligação de um ramal).
+# Entrega 26: URA (ivr: o próximo passo; ivr_missing: a central não tem um áudio dela; prompts e prompt: os áudios;
+# voicemail: o recado gravado) e monitoria (monitor: se a pessoa pode ouvir ou sussurrar na ligação de um ramal).
 class Outsider::VoiceCentralController < ActionController::API
   MIN_TOKEN = 32
   MAX_VOICEMAIL = 20.megabytes
@@ -53,8 +53,19 @@ class Outsider::VoiceCentralController < ActionController::API
     call = ::Outsider::Voice::Call.find_by(account_id: @settings.account.id, linkedid: params.require(:linkedid))
     return render plain: '' unless call
 
+    # primeiro passo: a central conferiu que tem todos os áudios da URA e entrou nela
+    Outsider::Voice::CentralStatus.new(@settings.account).ivr_audio_found! if params[:node].blank?
     render plain: ::Outsider::Voice::IvrRunner.new(@settings, call).step(node_id: params[:node], input: params[:input],
                                                                          dialstatus: params[:dialstatus])
+  end
+
+  # A central ainda não tem um áudio da URA (não conseguiu baixar ou gerar) e tocou para os vendedores em vez de
+  # atender com a URA muda. A ligação deixa de contar como da URA e a tela de Configurações avisa.
+  def ivr_missing
+    call = ::Outsider::Voice::Call.find_by(account_id: @settings.account.id, linkedid: params.require(:linkedid))
+    Outsider::Voice::CentralStatus.new(@settings.account).ivr_audio_missing!(call&.ivr_flow&.name)
+    call&.update!(ivr_flow: nil, ivr_data: {})
+    render plain: ''
   end
 
   # só a central da Entrega 26 em diante busca a lista: é o sinal de que ela já conhece a URA

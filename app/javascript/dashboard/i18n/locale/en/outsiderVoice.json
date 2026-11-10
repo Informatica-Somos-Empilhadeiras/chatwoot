@@ -154,6 +154,7 @@
         "TOKEN_MISSING": "OUTSIDER_VOICE_TOKEN is missing in the server .env (see the installation guide)",
         "CENTRAL_URL": "PBX VOICE_URL (same server):",
         "OUTDATED": "The phone server is running an old container. Listening, whispering and invites already work; for the IVR to speak, rebuild the phone server on the host:",
+        "IVR_AUDIO_MISSING": "The IVR \"{flow}\" did not take the call at {time}: the phone server did not have all its audio yet, so the call rang the sellers. After saving the IVR the phone server takes up to a minute to prepare the audio; if this notice stays, check the phone server log for the audio that failed:",
         "DIALPLAN_OK": "Dialplan (listening, whispering and IVR) fetched from this Chatwoot by the phone server at {time}",
         "DIALPLAN_MISSING": "The phone server reports to this Chatwoot but has not fetched the dialplan here for over 2 minutes: listening, whispering and IVR do not work. If its VOICE_URL goes through a proxy or cache (such as Cloudflare), serve /outsider/voice/central without cache and restart the phone server.",
         "VERSION": "Phone version in this Chatwoot: {version}",

@@ -59,6 +59,7 @@ Rails.application.routes.prepend do
     post :status
     # Entrega 26: URA e monitoria
     post :ivr
+    post :ivr_missing
     get :prompts
     get :prompt
     post :voicemail

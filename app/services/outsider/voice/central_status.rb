@@ -17,12 +17,16 @@
 #            é de lá que ela recebe o plano de discagem, o antigo
 #   waiting  este Chatwoot acabou de subir e a central ainda não voltou a buscar (ela busca a cada 30 s)
 #   missing  a central avisa este Chatwoot, mas não busca o plano aqui (proxy ou cache no caminho)
+#
+# Entrega 26f: ivr_audio_missing guarda a última ligação em que a URA não entrou porque a central ainda não tinha um
+# áudio dela (a ligação tocou para os vendedores); some quando uma ligação entra na URA ou depois de um dia.
 class Outsider::Voice::CentralStatus
   TTL = 5.minutes
+  AUDIO_MISSING_FOR = 1.day
   ONLINE_FOR = 90.seconds
   DIALPLAN_FRESH = 2.minutes
   # versão da telefonia neste código (Telefonia > Configurações): sobe a cada entrega que muda a central
-  TELEPHONY_VERSION = '26e'.freeze
+  TELEPHONY_VERSION = '26f'.freeze
   # aviso de antes deste processo subir (logo depois de atualizar) ainda pode ser do Chatwoot antigo
   LOADED_AT = Time.current
 
@@ -45,6 +49,14 @@ class Outsider::Voice::CentralStatus
     Redis::Alfred.setex(prompts_key, '1', TTL)
   end
 
+  def ivr_audio_missing!(flow_name)
+    Redis::Alfred.setex(audio_missing_key, { at: Time.current.to_i, flow: flow_name }.to_json, AUDIO_MISSING_FOR)
+  end
+
+  def ivr_audio_found!
+    Redis::Alfred.delete(audio_missing_key)
+  end
+
   # a central tem como falar os áudios da URA (contêiner recriado na Entrega 26 ou depois)
   def ivr_ready?
     to_h[:ivr_ready]
@@ -58,7 +70,8 @@ class Outsider::Voice::CentralStatus
       online: seen_at.present? && seen_at > ONLINE_FOR.ago, seen_at: seen_at,
       registration: data['registration'], extensions: Array(data['extensions']), version: data['version'],
       ivr_ready: data['audio'] == true || Redis::Alfred.exists?(prompts_key), dialplan_at: dialplan,
-      dialplan: dialplan_state(seen_at, data['chatwoot'], dialplan), chatwoot: data['chatwoot'], telephony_version: TELEPHONY_VERSION
+      dialplan: dialplan_state(seen_at, data['chatwoot'], dialplan), chatwoot: data['chatwoot'], telephony_version: TELEPHONY_VERSION,
+      ivr_audio_missing: audio_missing
     }
   end
 
@@ -86,5 +99,15 @@ class Outsider::Voice::CentralStatus
 
   def prompts_key
     "outsider_voice_prompts_seen:#{@account.id}"
+  end
+
+  # { at:, flow: } da última ligação em que a URA ficou de fora por falta de áudio na central, ou nil
+  def audio_missing
+    data = JSON.parse(Redis::Alfred.get(audio_missing_key) || 'null')
+    data && { at: Time.zone.at(data['at']), flow: data['flow'] }
+  end
+
+  def audio_missing_key
+    "outsider_voice_ivr_audio_missing:#{@account.id}"
   end
 end

@@ -59,6 +59,8 @@ const form = ref(null);
 const status = ref({});
 // comando para recriar a central no servidor (Entrega 26), mostrado no aviso de central desatualizada
 const REBUILD_COMMAND = 'docker compose up -d --build central';
+// onde ver por que a central não conseguiu preparar um áudio da URA (Entrega 26f)
+const AUDIO_LOG_COMMAND = 'docker compose logs --tail 200 central';
 // Entrega 26e: o estado do plano de discagem vem do servidor (Outsider::Voice::CentralStatus)
 const DIALPLAN_DOTS = {
   ok: 'bg-n-teal-9',
@@ -426,6 +428,27 @@ onMounted(load);
             <span class="flex flex-col gap-0.5">
               <span>{{ t('OUTSIDER_VOICE.SETTINGS.STATUS.OUTDATED') }}</span>
               <code class="text-xs">{{ REBUILD_COMMAND }}</code>
+            </span>
+          </li>
+          <!-- Entrega 26f: a central não tinha um áudio da URA e a ligação tocou para os vendedores -->
+          <li
+            v-if="status.ivr_audio_missing"
+            class="flex items-start gap-2 px-2 py-1.5 -mx-2 rounded-lg bg-n-amber-3 text-n-amber-11"
+            data-testid="voice-central-audio-missing"
+          >
+            <span class="rounded-full size-2 shrink-0 mt-1.5 bg-n-amber-9" />
+            <span class="flex flex-col gap-0.5">
+              <span>
+                {{
+                  t('OUTSIDER_VOICE.SETTINGS.STATUS.IVR_AUDIO_MISSING', {
+                    flow: status.ivr_audio_missing.flow,
+                    time: new Date(
+                      status.ivr_audio_missing.at
+                    ).toLocaleString(),
+                  })
+                }}
+              </span>
+              <code class="text-xs">{{ AUDIO_LOG_COMMAND }}</code>
             </span>
           </li>
           <li class="flex items-center gap-2">

@@ -42,7 +42,8 @@ RSpec.describe Outsider::Voice::IvrRunner do
   end
 
   it 'sends a number with an active IVR to it and walks the caller through the blocks' do
-    expect(router.inbound(linkedid: 'L1', did: '6232345678', from: '62999998888')).to eq('ivr')
+    audios = ['Olá', 'Digite 1 ou 2', 'Inválida', 'Digite o CPF', 'Deixe o recado', 'Tchau'].map { |text| sounds(text).delete_prefix('outsider/') }
+    expect(router.inbound(linkedid: 'L1', did: '6232345678', from: '62999998888')).to eq("ivr|#{audios.join('&')}|20|PJSIP/201")
 
     answers = [step, step('hello'), step('menu', input: '9'), step('menu', input: '2'), step('cpf', input: '12345678901'),
                step('ring', dialstatus: 'NOANSWER'), step('vm')]

@@ -8,6 +8,7 @@
 class Outsider::Voice::IvrPrompts
   NAME = /\A[a-f0-9]{20}\z/
   DEFAULT_VOICE = Outsider::Voice::IvrGraph::VOICES.first
+  MAX_CHECKED = 120
 
   def initialize(account)
     @account = account
@@ -18,6 +19,12 @@ class Outsider::Voice::IvrPrompts
   def sound(flow, prompt)
     name = name_for(flow, prompt)
     name && "outsider/#{name}"
+  end
+
+  # os nomes dos áudios de uma URA, para a central conferir se já tem todos antes de atender com ela. A resposta
+  # ao plano de discagem tem limite de tamanho: numa URA enorme, confere os primeiros MAX_CHECKED
+  def names(flow)
+    flow.graph_object.prompts.filter_map { |prompt| name_for(flow, prompt) }.uniq.first(MAX_CHECKED)
   end
 
   def manifest

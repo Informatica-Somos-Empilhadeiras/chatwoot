@@ -5,7 +5,8 @@
 class Outsider::Voice::Speech
   MODEL = 'gpt-4o-mini-tts'.freeze
   ENDPOINT = 'https://api.openai.com'.freeze
-  TIMEOUT = 25
+  # abaixo dos 15 s do rack-timeout da produção: passando disso o pedido da central era cortado no meio, sem resposta
+  TIMEOUT = 12
   INSTRUCTIONS = 'Fale em português do Brasil, com tom cordial, claro e pausado, como numa central de atendimento telefônico.'.freeze
 
   def initialize(account)

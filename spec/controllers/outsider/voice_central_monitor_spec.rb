@@ -64,9 +64,10 @@ RSpec.describe 'Outsider voice central: monitoring and IVR', type: :request do
   it 'gives the central the whole dialplan, so a new one needs no container rebuild' do
     get "#{base}/extensions", headers: headers
     expect(response.headers['Cache-Control']).to eq('no-store')
-    expect(Outsider::Voice::CentralStatus.new(account).to_h).to include(dialplan: 'ok', telephony_version: '26e')
-    expect(response.body).to include('telefonia 26e', 'ALL_AGENTS=PJSIP/201&PJSIP/202&PJSIP/203', '[from-agents]',
-                                     'exten => _*80[1-5]XX', 'exten => _*81[1-5]XX', '[outsider-ivr]', '(whisper|open)')
+    expect(Outsider::Voice::CentralStatus.new(account).to_h).to include(dialplan: 'ok', telephony_version: '26f')
+    expect(response.body).to include('telefonia 26f', 'ALL_AGENTS=PJSIP/201&PJSIP/202&PJSIP/203', '[from-agents]',
+                                     'exten => _*80[1-5]XX', 'exten => _*81[1-5]XX', '[outsider-ivr]', '(whisper|open)',
+                                     '/ivr_missing', 'STAT(e,/usr/share/asterisk/sounds/outsider/${AUDIO}.wav)')
   end
 
   it 'tells when the central talks to another Chatwoot or does not fetch the dialplan here' do
@@ -77,7 +78,7 @@ RSpec.describe 'Outsider voice central: monitoring and IVR', type: :request do
     expect(status.to_h).to include(online: true, dialplan: 'other', chatwoot: nil)
 
     post "#{base}/status", params: { registration: 'Registered', extensions: '201' }, headers: headers
-    expect(status.to_h).to include(dialplan: 'missing', chatwoot: '26e')
+    expect(status.to_h).to include(dialplan: 'missing', chatwoot: '26f')
 
     stub_const('Outsider::Voice::CentralStatus::LOADED_AT', 1.minute.ago)
     expect(status.to_h[:dialplan]).to eq('waiting')
@@ -91,7 +92,7 @@ RSpec.describe 'Outsider voice central: monitoring and IVR', type: :request do
 
     post "#{base}/status", params: { registration: 'Registered', extensions: '201', version: '26', audio: 'yes' }, headers: headers
     post "#{base}/inbound", params: { linkedid: 'NEW1', did: '6232345678', from: '62999998888' }, headers: headers
-    expect(response.body).to eq('ivr')
+    expect(response.body).to eq('ivr||20|PJSIP/201&PJSIP/202&PJSIP/203')
   end
 
   it 'trusts the first Entrega 26 central, which syncs the IVR audios without telling its version' do
@@ -100,7 +101,29 @@ RSpec.describe 'Outsider voice central: monitoring and IVR', type: :request do
     get "#{base}/prompts", headers: headers
 
     post "#{base}/inbound", params: { linkedid: 'IVR26', did: '6232345678', from: '62999998888' }, headers: headers
-    expect(response.body).to eq('ivr')
+    expect(response.body).to start_with('ivr||20|')
+  end
+
+  it 'takes the call out of the IVR and warns when the central has not got one of its audios' do
+    flow = Outsider::Voice::IvrFlow.create!(
+      account: account, name: 'URA', active: true,
+      graph: { 'nodes' => [{ 'id' => 'start', 'type' => 'start', 'data' => {} },
+                           { 'id' => 'hello', 'type' => 'say', 'data' => { 'prompt' => { 'text' => 'Olá' } } }],
+               'edges' => [{ 'from' => 'start', 'port' => 'next', 'to' => 'hello' }] }
+    )
+    status = Outsider::Voice::CentralStatus.new(account)
+    status.report(registration: 'Registered', extensions: [], version: 26, audio: true)
+    post "#{base}/inbound", params: { linkedid: 'MUDA1', did: '6232345678', from: '62999998888' }, headers: headers
+    expect(Outsider::Voice::Call.find_by!(linkedid: 'MUDA1').ivr_flow).to eq(flow)
+
+    post "#{base}/ivr_missing", params: { linkedid: 'MUDA1', audio: 'a' * 20 }, headers: headers
+    expect(Outsider::Voice::Call.find_by!(linkedid: 'MUDA1')).to have_attributes(ivr_flow: nil, ivr_data: {})
+    expect(status.to_h[:ivr_audio_missing]).to include(flow: 'URA', at: be_within(5.seconds).of(Time.current))
+
+    # a ligação seguinte entra na URA: a central já tem os áudios
+    post "#{base}/inbound", params: { linkedid: 'FALA1', did: '6232345678', from: '62999998888' }, headers: headers
+    post "#{base}/ivr", params: { linkedid: 'FALA1' }, headers: headers
+    expect(status.to_h[:ivr_audio_missing]).to be_nil
   end
 
   it 'answers the IVR steps, the audio list and keeps the voicemail on the call' do
@@ -112,10 +135,10 @@ RSpec.describe 'Outsider voice central: monitoring and IVR', type: :request do
     )
     Outsider::Voice::CentralStatus.new(account).report(registration: 'Registered', extensions: [], version: 26, audio: true)
     post "#{base}/inbound", params: { linkedid: 'IN1', did: '6232345678', from: '62999998888' }, headers: headers
-    expect(response.body).to eq('ivr')
+    name = response.body[/\Aivr\|(\h{20})\|20\|PJSIP/, 1]
+    expect(name).to be_present
 
     post "#{base}/ivr", params: { linkedid: 'IN1' }, headers: headers
-    name = response.body[%r{outsider/(\h{20})}, 1]
     expect(response.body).to eq("record|outsider/#{name}|120|vm")
 
     get "#{base}/prompts", headers: headers

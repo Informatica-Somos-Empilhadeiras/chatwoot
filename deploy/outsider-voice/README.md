@@ -175,9 +175,9 @@ docker compose up -d --build central
 | Liga, mas sem áudio | Confira as portas 10000-10099/udp e o IP público em Telefonia > Configurações. |
 | "A operadora recusou o usuário ou a senha" | Confira usuário, usuário de autenticação e senha com a operadora. |
 | Ligação da operadora não chega | Libere o IP da operadora na porta 5060 e confira os IPs em Telefonia > Configurações. |
-| URA muda (sem fala) | Confira no log "áudio da URA ... pronto". Sem `ffmpeg`/`espeak-ng`, recrie o contêiner (passo 7). |
+| A URA não entra e a ligação toca direto para os vendedores | A central ainda não tem todos os áudios da URA (Telefonia > Configurações mostra o aviso). Depois de salvar a URA ela leva até um minuto; se continuar, veja no log qual áudio falhou ("não consegui preparar o áudio ..."): com a voz da OpenAI, confira a chave e se o servidor alcança a OpenAI; sem `ffmpeg`/`espeak-ng`, recrie o contêiner (passo 7). |
 | Ouvir/sussurrar mostra "Número não permitido ou linha indisponível" | A central ainda está com o plano de discagem antigo: atualize o Chatwoot e espere 30 s (ela busca o plano novo sozinha). |
-| Com a URA ligada, a ligação cai na hora, sem tocar | Central sem o plano de discagem da URA. Com o Chatwoot atualizado (Entrega 26b em diante) a URA só entra quando a central está pronta; até lá, a ligação toca para os vendedores. Recrie a central para usar a URA (passo 7). |
+| Com a URA ligada, a ligação cai na hora, sem tocar | Atualize o Chatwoot e espere 30 s (a central busca o plano de discagem novo sozinha). Eram três causas: central sem o plano de discagem da URA (Entrega 26b: a URA só entra com a central pronta); central sem um áudio da URA, que atendia muda, não esperava a tecla do menu e corria até o fim do desenho (Entrega 26f: confere os áudios antes e, faltando algum, toca para os vendedores); e resposta de erro do Chatwoot lida como plano de toque (Entrega 26f: toca para todos os ramais). |
 | Ouvir/sussurrar não conecta | Só funciona com o atendente em ligação atendida e para o gestor da unidade dele ou o administrador. |
 
 Comandos úteis dentro da central:

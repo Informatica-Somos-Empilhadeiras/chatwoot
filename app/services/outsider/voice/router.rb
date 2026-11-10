@@ -7,8 +7,10 @@
 # Feita: só número nacional (ou 0800/0300/400X); sai com o número do estado do vendedor. A resposta é
 # "número de saída|número discado"; vazia recusa (internacional, 0900, ramal desligado).
 #
-# Entrega 26: número com URA ativa (Outsider::Voice::IvrFlow) responde "ivr" e a central passa a perguntar cada
-# passo a Outsider::Voice::IvrRunner, que também usa as etapas de toque daqui (ring_steps).
+# Entrega 26: número com URA ativa (Outsider::Voice::IvrFlow) responde "ivr|áudios da URA|plano de toque". A central
+# confere se já tem todos os áudios: tendo, entra na URA e passa a perguntar cada passo a Outsider::Voice::IvrRunner
+# (que também usa as etapas de toque daqui, ring_steps); faltando algum, toca pelo plano de toque e avisa
+# (Outsider::VoiceCentralController#ivr_missing), em vez de atender com a URA muda e derrubar a ligação.
 class Outsider::Voice::Router
   PhoneNumber = Outsider::Voice::PhoneNumber
 
@@ -27,9 +29,8 @@ class Outsider::Voice::Router
     create_call(linkedid, direction: :inbound, from_number: customer_number(from),
                           to_number: number&.dig('number'), did: did_number, state_code: number&.dig('state'), contact: contact,
                           opportunity: deal, ivr_flow: flow, ivr_data: flow ? { 'flow' => flow.name } : {})
-    return 'ivr' if flow
-
-    ([@settings.data['ring_seconds']] + ring_steps(deal&.owner_id, number&.dig('state'))).join('|')
+    plan = ([@settings.data['ring_seconds']] + ring_steps(deal&.owner_id, number&.dig('state'))).join('|')
+    flow ? "ivr|#{Outsider::Voice::IvrPrompts.new(@account).names(flow).join('&')}|#{plan}" : plan
   end
 
   # deal: o negócio de onde a pessoa ligou (Entrega 26), vindo do telefone; vale se ela enxerga o negócio no CRM
