@@ -1,0 +1,6 @@
+en:
+  # OUTSIDER: delivery check notices (Outsider::DeliveryCheck), shown on the message that failed
+  outsider_delivery:
+    unconfirmed: "WhatsApp did not confirm this message was sent. Check with the customer before sending it again."
+    partial: "Only part of this message's files went out to WhatsApp. Check with the customer before sending it again."
+    refused: "WhatsApp refused this message."

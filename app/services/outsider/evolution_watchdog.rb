@@ -14,6 +14,10 @@
 # Entre uma ação e outra na mesma instância passa pelo menos COOLDOWN, para não derrubar uma conexão
 # que está voltando (reiniciar seguido pode prender a instância em "conflict").
 #
+# Quem atende na caixa e os administradores recebem um aviso (push, Outsider::Push::ConnectionNotice), uma
+# vez por queda: fora do ar há STUCK_AFTER (presa, ou a Evolution sem responder), desconectada no celular
+# (precisa do QR code) e, quando a conexão abre de novo, que voltou e quanto tempo ficou fora.
+#
 # Liga sozinho na produção; OUTSIDER_EVOLUTION_WATCHDOG=false desliga e =true liga em outro ambiente.
 # No Dev Container fica desligado: o banco é uma cópia e ele mexeria nas instâncias da produção.
 class Outsider::EvolutionWatchdog
@@ -32,7 +36,7 @@ class Outsider::EvolutionWatchdog
   def perform
     return unless self.class.enabled?
 
-    evolution_inboxes.group_by { |inbox| Outsider::EvolutionApi.new(inbox).instance }.each_value do |inboxes|
+    Outsider::EvolutionApi.inboxes.group_by { |inbox| Outsider::EvolutionApi.new(inbox).instance }.each_value do |inboxes|
       check(Outsider::EvolutionApi.new(inboxes.first), inboxes)
     end
   end
@@ -44,29 +48,56 @@ class Outsider::EvolutionWatchdog
     return if state.blank?
 
     if state == 'open'
-      Redis::Alfred.delete(key(api, :not_open_since))
+      came_back(api, inboxes)
       restart_deaf(api, inboxes) if silence.positive?
     else
-      recover_stuck(api, state)
+      recover_stuck(api, state, inboxes)
     end
   rescue Outsider::EvolutionApi::Error => e
     Rails.logger.warn("[Outsider::EvolutionWatchdog] #{api.instance}: Evolution não respondeu (#{e.code}: #{e.message})")
+    notify_down(api, inboxes) if minutes_down(api) >= STUCK_AFTER.in_minutes
   end
 
-  def recover_stuck(api, state)
-    Redis::Alfred.set(key(api, :not_open_since), Time.current.to_i, nx: true, ex: 1.day)
-    return if Time.current.to_i - Redis::Alfred.get(key(api, :not_open_since)).to_i < STUCK_AFTER
-    return reopen(api) if state == 'close'
+  def recover_stuck(api, state, inboxes)
+    return if minutes_down(api) < STUCK_AFTER.in_minutes
+    return reopen(api, inboxes) if state == 'close'
 
+    notify_down(api, inboxes)
     api.restart if act(api, COOLDOWN, "presa em #{state}, reiniciando")
   end
 
-  def reopen(api)
+  def reopen(api, inboxes)
     code = api.instance_info&.dig('disconnectionReasonCode')
-    # sem ação: o aviso só se repete a cada COOLDOWN
-    return act(api, COOLDOWN, "desconectada no celular (#{code}), precisa ler o QR code") if LOGGED_OUT_CODES.include?(code)
+    if LOGGED_OUT_CODES.include?(code)
+      Outsider::Push::ConnectionNotice.new(inboxes).logged_out(code) if first_time?(api, :logged_out_notice)
+      # sem ação: a linha no log só se repete a cada COOLDOWN
+      return act(api, COOLDOWN, "desconectada no celular (#{code}), precisa ler o QR code")
+    end
 
+    notify_down(api, inboxes)
     api.connect if act(api, COOLDOWN, "fechada (#{code || 'sem código'}), abrindo de novo")
+  end
+
+  # há quantos minutos a instância está sem conexão; a contagem começa na primeira vez que o vigia vê a queda
+  def minutes_down(api)
+    Redis::Alfred.set(key(api, :not_open_since), Time.current.to_i, nx: true, ex: 1.day)
+    (Time.current.to_i - Redis::Alfred.get(key(api, :not_open_since)).to_i) / 60
+  end
+
+  def notify_down(api, inboxes)
+    Outsider::Push::ConnectionNotice.new(inboxes).down(minutes_down(api)) if first_time?(api, :down_notice)
+  end
+
+  def first_time?(api, name)
+    Redis::Alfred.set(key(api, name), 1, nx: true, ex: 1.day)
+  end
+
+  # a conexão abriu: quem foi avisado da queda fica sabendo que voltou
+  def came_back(api, inboxes)
+    since = Redis::Alfred.get(key(api, :not_open_since))
+    notified = [:down_notice, :logged_out_notice].sum { |name| Redis::Alfred.delete(key(api, name)).to_i }
+    Redis::Alfred.delete(key(api, :not_open_since))
+    Outsider::Push::ConnectionNotice.new(inboxes).back((Time.current.to_i - since.to_i) / 60) if since && notified.positive?
   end
 
   def restart_deaf(api, inboxes)
@@ -87,10 +118,6 @@ class Outsider::EvolutionWatchdog
 
     Rails.logger.warn("[Outsider::EvolutionWatchdog] #{api.instance}: #{reason}")
     true
-  end
-
-  def evolution_inboxes
-    Inbox.where(channel_type: 'Channel::Api').includes(:channel).select { |inbox| Outsider::EvolutionApi.evolution_inbox?(inbox) }
   end
 
   def silence

@@ -33,6 +33,21 @@ class Outsider::EvolutionApi
     inbox.api? && inbox.channel.webhook_url.to_s.match?(WEBHOOK_PATTERN)
   end
 
+  def self.inboxes
+    Inbox.where(channel_type: 'Channel::Api').includes(:channel).select { |inbox| evolution_inbox?(inbox) }
+  end
+
+  # O webhook de uma mensagem nova, como a Evolution precisa receber. Ela manda ao WhatsApp o que está em
+  # conversation.messages[0] (os anexos e quem enviou) e não manda nada se ali estiver uma mensagem vinda
+  # do WhatsApp. O Chatwoot põe ali a última mensagem da conversa na hora em que monta o webhook, que
+  # pode já ser outra (o cliente respondeu no mesmo instante, o agente mandou duas seguidas): a mensagem
+  # não saía, sem aviso nenhum, ou saía com o anexo da seguinte. Aqui vai sempre a própria mensagem.
+  def self.message_created_payload(message)
+    payload = message.webhook_data.merge(event: 'message_created')
+    payload[:conversation] = payload[:conversation].merge(messages: [message.webhook_push_event_data])
+    payload
+  end
+
   # o fim vai uma hora à frente para não perder mensagens de quem está com o relógio adiantado
   def self.timestamp_range(since)
     { gte: since.iso8601, lte: 1.hour.from_now.iso8601 }

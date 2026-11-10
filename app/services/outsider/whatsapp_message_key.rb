@@ -30,6 +30,21 @@ class Outsider::WhatsappMessageKey
            .gsub(/(?<!`)`((?!\s)([^`*]+?)(?<!\s))`(?!`)/, '```\1```')
   end
 
+  # O chat do contato: o identificador da Evolution (grupo, número@s.whatsapp.net ou o endereço novo do
+  # WhatsApp, @lid) ou o telefone. O WhatsApp pode mandar o chat com o endereço novo em remoteJid e o número
+  # em remoteJidAlt, e no Brasil o número pode estar sem o 9 da frente de um lado e com ele do outro.
+  def self.chat?(record, contact)
+    jids = record['key'].to_h.values_at('remoteJid', 'remoteJidAlt').compact_blank
+    return true if contact.identifier.present? && jids.include?(contact.identifier)
+
+    numbers = [contact.phone_number, contact.identifier.to_s[/\A(\d+)@s\.whatsapp\.net\z/, 1]].filter_map { |number| without_ninth_digit(number) }
+    jids.any? { |jid| numbers.include?(without_ninth_digit(jid.split('@').first)) }
+  end
+
+  def self.without_ninth_digit(number)
+    number.to_s.delete('^0-9').sub(/\A(55\d{2})9(\d{8})\z/, '\1\2').presence
+  end
+
   private
 
   def by_source_id
@@ -42,7 +57,8 @@ class Outsider::WhatsappMessageKey
     return unless @message.outgoing? && @message.content.present?
 
     text = self.class.whatsapp_text(@message.content)
-    found = sent_around_creation.find { |record| same_chat?(record) && self.class.text_of(record).end_with?(text) }
+    contact = @message.conversation.contact
+    found = sent_around_creation.find { |record| self.class.chat?(record, contact) && self.class.text_of(record).end_with?(text) }
     @message.update!(source_id: "WAID:#{found.dig('key', 'id')}") if found
     found
   end
@@ -50,17 +66,5 @@ class Outsider::WhatsappMessageKey
   def sent_around_creation
     range = { gte: (@message.created_at - 30.seconds).iso8601, lte: (@message.created_at + WINDOW).iso8601 }
     @api.find_messages({ key: { fromMe: true }, messageTimestamp: range }, page: 1, offset: PAGE_SIZE)['records']
-  end
-
-  # o chat do contato: o identificador da Evolution (grupo ou número@s.whatsapp.net) ou, sem ele, o telefone;
-  # no Brasil o WhatsApp pode ter o número sem o 9 da frente
-  def same_chat?(record)
-    jid = record.dig('key', 'remoteJid').to_s
-    contact = @message.conversation.contact
-    return true if contact.identifier.present? && jid == contact.identifier
-
-    digits = jid.split('@').first.to_s
-    phone = contact.phone_number.to_s.delete('^0-9')
-    phone.present? && (digits == phone || digits == phone.sub(/\A(55\d{2})9(\d{8})\z/, '\1\2'))
   end
 end

@@ -1,0 +1,6 @@
+pt_BR:
+  # OUTSIDER: avisos da conferência de entrega (Outsider::DeliveryCheck), mostrados na mensagem que falhou
+  outsider_delivery:
+    unconfirmed: "O WhatsApp não confirmou o envio desta mensagem. Confira com o cliente antes de mandar de novo."
+    partial: "Só parte dos arquivos desta mensagem saiu para o WhatsApp. Confira com o cliente antes de mandar de novo."
+    refused: "O WhatsApp recusou esta mensagem."
