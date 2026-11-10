@@ -18,4 +18,9 @@ class Outsider::TeamsThread < ApplicationRecord
   def channel?
     kind == 'channel'
   end
+
+  # a lista de pessoas da equipe (canal) vale 10 minutos
+  def members_refreshed_recently?
+    members_at.present? && members_at > 10.minutes.ago
+  end
 end

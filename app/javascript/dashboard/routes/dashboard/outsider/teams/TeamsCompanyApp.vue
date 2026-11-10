@@ -199,8 +199,24 @@ const canSave = computed(
           </span>
         </div>
       </div>
+      <div
+        v-if="info.consent_outdated"
+        class="flex flex-wrap items-center gap-2 p-2.5 mt-3 text-sm rounded-xl bg-n-amber-3 text-n-amber-11"
+        data-teams-consent-outdated
+      >
+        <Icon icon="i-lucide-key-round" class="size-4 shrink-0" />
+        <span class="flex-1 min-w-[200px]">{{ t('OUTSIDER_TEAMS_GRAPH.CONSENT_OUTDATED') }}</span>
+        <Button
+          sm
+          amber
+          icon="i-lucide-shield-check"
+          :label="t('OUTSIDER_TEAMS_GRAPH.CONSENT_AGAIN')"
+          :is-loading="isGoing"
+          @click="consent"
+        />
+      </div>
       <p
-        v-if="consentDate"
+        v-else-if="consentDate"
         class="flex items-center gap-1.5 px-2.5 py-1 mt-3 mb-0 text-xs font-semibold rounded-full w-max max-w-full bg-n-teal-3 text-n-teal-11"
       >
         <Icon icon="i-lucide-check" class="size-3.5" />

@@ -114,6 +114,33 @@ class TeamsGraphAPI extends ApiClient {
   mentions(id) {
     return axios.get(`${this.url}/teams_threads/${id}/mentions`);
   }
+
+  // quem está online: ids da Microsoft -> [{ id, availability, activity }]
+  presence(ids) {
+    return axios.post(`${this.url}/teams_threads/presence`, { ids });
+  }
+
+  // pessoas de todas as conversas, para convidar para uma reunião: [{ id, name, email }]
+  people() {
+    return axios.get(`${this.url}/teams_threads/people`);
+  }
+
+  // ---------- agenda ----------
+  // eventos entre duas datas (ISO), no fuso informado
+  calendar({ from, to, timeZone }) {
+    return axios.get(`${this.url}/teams_calendar`, {
+      params: { from, to, time_zone: timeZone },
+    });
+  }
+
+  // { subject, start, end, time_zone, attendees: [email], body, online: true/false, all_day }
+  createEvent(data) {
+    return axios.post(`${this.url}/teams_calendar`, data);
+  }
+
+  deleteEvent(id) {
+    return axios.delete(`${this.url}/teams_calendar/${encodeURIComponent(id)}`);
+  }
 }
 
 export default new TeamsGraphAPI();

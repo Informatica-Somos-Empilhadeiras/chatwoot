@@ -33,12 +33,13 @@ class Outsider::Teams::Graph::Client
     @link = link
   end
 
-  def get(path, beta: false)
-    request(:get, path, beta: beta)
+  # headers: cabeçalhos extras (ex.: Prefer com o fuso da agenda); nunca substituem o Authorization
+  def get(path, beta: false, headers: nil)
+    request(:get, path, beta: beta, extra: headers)
   end
 
-  def post(path, body, beta: false)
-    request(:post, path, body: body, beta: beta)
+  def post(path, body, beta: false, headers: nil)
+    request(:post, path, body: body, beta: beta, extra: headers)
   end
 
   def patch(path, body, beta: false)
@@ -100,18 +101,20 @@ class Outsider::Teams::Graph::Client
 
   private
 
-  def request(method, path, body: nil, beta: false, raw: nil, content_type: nil, retried: false)
+  def request(method, path, body: nil, beta: false, raw: nil, content_type: nil, extra: nil, retried: false)
     base = beta ? BETA : V1
     url = path.start_with?('https://') ? path : "#{base}#{path}"
     raise Error, 'host' unless self.class.graph_url?(url)
 
-    headers = { 'Authorization' => "Bearer #{token}", 'Accept' => 'application/json' }
+    headers = (extra || {}).transform_keys(&:to_s).except('Authorization')
+    headers['Authorization'] = "Bearer #{token}"
+    headers['Accept'] = 'application/json'
     headers['Content-Type'] = raw ? content_type : 'application/json' if body || raw
     response = HTTParty.send(method, url, headers: headers, body: raw || body&.to_json, timeout: raw ? 120 : TIMEOUT)
     if response.code == 401 && !retried
       @force = true
       refresh!
-      return request(method, path, body: body, beta: beta, raw: raw, content_type: content_type, retried: true)
+      return request(method, path, body: body, beta: beta, raw: raw, content_type: content_type, extra: extra, retried: true)
     end
     raise Error.new(error_message(response), response.code) unless response.success?
 

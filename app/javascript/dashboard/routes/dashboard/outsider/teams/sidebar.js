@@ -1,5 +1,5 @@
-// OUTSIDER: item Teams no menu lateral, logo abaixo de Conversas (seção Atendimento), com Chats e
-// Canais e as não lidas de cada um. Só aparece para quem conectou o próprio Teams.
+// OUTSIDER: item Teams no menu lateral, logo abaixo de Conversas (seção Atendimento), com Chats, Canais e
+// Agenda e as não lidas de cada um. Só aparece para quem conectou o próprio Teams.
 import { h } from 'vue';
 import TeamsLogo from './TeamsLogo.vue';
 import { teamsState, teamsVisible, TEAMS_ROUTE } from './teamsStore';
@@ -30,6 +30,13 @@ export const teamsSidebarItems = (t, accountScopedRoute) => {
           badgeCount: teamsState.unreadChannels,
           activeOn: [TEAMS_ROUTE],
           to: accountScopedRoute(TEAMS_ROUTE, { kind: 'channels' }),
+        },
+        {
+          name: 'OutsiderTeams-calendar',
+          label: t('OUTSIDER_TEAMS_AREA.TABS.CALENDAR'),
+          icon: 'i-lucide-calendar-days',
+          activeOn: [TEAMS_ROUTE],
+          to: accountScopedRoute(TEAMS_ROUTE, { kind: 'calendar' }),
         },
       ],
     },

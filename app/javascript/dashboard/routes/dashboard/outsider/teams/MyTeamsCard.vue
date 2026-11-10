@@ -296,6 +296,14 @@ onBeforeUnmount(() => clearTimeout(pollTimer));
         {{ t('OUTSIDER_TEAMS_GRAPH.RECONNECT_HELP') }}
       </p>
       <p
+        v-else-if="me.scope_outdated"
+        class="flex items-start gap-2 p-2.5 mt-3 mb-0 text-sm rounded-xl bg-n-amber-3 text-n-amber-11"
+        data-teams-scope-outdated
+      >
+        <Icon icon="i-lucide-key-round" class="size-4 mt-0.5 shrink-0" />
+        {{ t('OUTSIDER_TEAMS_GRAPH.SCOPE_OUTDATED') }}
+      </p>
+      <p
         v-else-if="problems.length"
         class="flex items-start gap-2 p-2.5 mt-3 mb-0 text-sm rounded-xl bg-n-amber-3 text-n-amber-11"
       >

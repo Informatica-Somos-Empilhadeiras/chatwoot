@@ -9,6 +9,8 @@
 #   preview: endereço da visualização do arquivo (OneDrive/SharePoint), só para ler, no visualizador do Chatwoot.
 #   members: quem dá para @mencionar (participantes do chat; no canal, quem já escreveu nele).
 #   read: zera as não lidas e as menções.
+#   presence: quem está online (ids da Microsoft), uma pergunta só para a Microsoft; people: pessoas de todas as
+#     conversas da pessoa (para convidar para uma reunião).
 #   react: reage a uma mensagem (ou tira a reação) em nome da pessoa, como no Teams.
 #   mentions: as mensagens que citaram a pessoa neste chat ou canal (últimos 60 dias), para ir de uma a outra.
 class Api::V1::Accounts::Outsider::TeamsThreadsController < Api::V1::Accounts::BaseController
@@ -21,7 +23,7 @@ class Api::V1::Accounts::Outsider::TeamsThreadsController < Api::V1::Accounts::B
   MAX_INLINE = 3.megabytes
   MAX_INLINE_TOTAL = 3.5.megabytes
 
-  before_action :find_thread, except: [:index, :summary]
+  before_action :find_thread, except: [:index, :summary, :presence, :people]
 
   def index
     return render(json: { payload: [] }) unless my_link
@@ -32,6 +34,30 @@ class Api::V1::Accounts::Outsider::TeamsThreadsController < Api::V1::Accounts::B
     render json: { payload: threads.map { |thread| json.thread(thread) } }
   end
 
+  # [{ id, availability, activity }]; unavailable: entrou com permissões antigas (sem Presence.Read.All)
+  def presence
+    link = my_link
+    return render json: { payload: [], unavailable: true } unless link&.status == 'active' &&
+                                                                  link.scope_version >= ::Outsider::Teams::Graph::Login::SCOPE_VERSION
+
+    ids = Array(params[:ids]).map(&:to_s).grep(/\A[0-9a-f-]{36}\z/i).uniq.first(650)
+    return render json: { payload: [] } if ids.empty?
+
+    data = ::Outsider::Teams::Graph::Client.new(link).post('/communications/getPresencesByUserId', { ids: ids })
+    render json: { payload: Array(data['value']).map { |item| item.slice('id', 'availability', 'activity') } }
+  rescue ::Outsider::Teams::Graph::Client::Error => e
+    render json: { payload: [], unavailable: e.status == 403 }
+  end
+
+  def people
+    return render json: { payload: [] } unless my_link
+
+    me = my_link.ms_user_id
+    people = my_link.threads.pluck(:members).flatten.select { |member| member['id'].present? && member['id'] != me }
+    people = people.uniq { |member| member['id'] }.sort_by { |member| member['name'].to_s.downcase }
+    render json: { payload: people.map { |member| member.slice('id', 'name', 'email') } }
+  end
+
   def summary
     link = my_link
     channels = link ? link.threads.channels.where(channel_id: link.channel_list.pluck('channel_id')) : nil
@@ -39,7 +65,8 @@ class Api::V1::Accounts::Outsider::TeamsThreadsController < Api::V1::Accounts::B
       connected: link.present? && link.status != 'disconnected', status: link&.status, channel_view: link&.channel_view,
       unread_chats: link ? link.threads.chats.sum(:unread_count) : 0, unread_channels: channels ? channels.sum(:unread_count) : 0,
       mentions: link ? link.threads.chats.sum(:mention_count) + channels.sum(:mention_count) : 0,
-      has_threads: link.present? && link.threads.exists?
+      has_threads: link.present? && link.threads.exists?,
+      scope_outdated: link.present? && link.scope_version < ::Outsider::Teams::Graph::Login::SCOPE_VERSION
     }
   end
 
@@ -92,7 +119,7 @@ class Api::V1::Accounts::Outsider::TeamsThreadsController < Api::V1::Accounts::B
   end
 
   def members
-    refresh_chat_members if @thread.kind == 'chat'
+    @thread.kind == 'chat' ? refresh_chat_members : refresh_team_members
     people = Array(@thread.members).select { |member| member['id'].present? && member['name'].present? && member['id'] != my_link.ms_user_id }
     render json: { payload: people.uniq { |member| member['id'] }.sort_by { |member| member['name'].downcase }.map { |m| m.slice('id', 'name') } }
   end
@@ -204,10 +231,33 @@ class Api::V1::Accounts::Outsider::TeamsThreadsController < Api::V1::Accounts::B
     return if @thread.updated_at > 10.minutes.ago && Array(@thread.members).any?
 
     data = ::Outsider::Teams::Graph::Client.new(my_link).get("/chats/#{::Outsider::Teams::Graph::Client.enc(@thread.chat_id)}/members")
-    members = Array(data['value']).map { |member| { 'id' => member['userId'], 'name' => member['displayName'] } }
+    members = graph_members(data)
     @thread.update!(members: members.first(200)) if members.any?
   rescue ::Outsider::Teams::Graph::Client::Error
     nil
+  end
+
+  # no canal: todo mundo da equipe (permissão da versão 2), somado a quem já escreveu no canal
+  def refresh_team_members
+    return if my_link.scope_version < ::Outsider::Teams::Graph::Login::SCOPE_VERSION
+    return if @thread.members_refreshed_recently?
+
+    data = ::Outsider::Teams::Graph::Client.new(my_link).get("/teams/#{::Outsider::Teams::Graph::Client.enc(@thread.team_id)}/members?$top=200")
+    members = graph_members(data)
+    return if members.empty?
+
+    known = Array(@thread.members).reject { |member| members.any? { |item| item['id'] == member['id'] } }
+    @thread.update!(members: (members + known).first(400), members_at: Time.current)
+  rescue ::Outsider::Teams::Graph::Client::Error
+    nil
+  end
+
+  def graph_members(data)
+    Array(data['value']).filter_map do |member|
+      next if member['userId'].blank?
+
+      { 'id' => member['userId'], 'name' => member['displayName'], 'email' => member['email'].presence }.compact
+    end
   end
 
   def render_chat

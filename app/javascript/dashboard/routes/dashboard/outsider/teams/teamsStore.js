@@ -18,6 +18,8 @@ export const teamsState = reactive({
   unreadChannels: 0,
   mentions: 0,
   channelView: 'conversa',
+  // entrou com permissões antigas: presença, agenda e mencionar todos pedem entrar de novo
+  scopeOutdated: false,
 });
 
 // o item do menu aparece para quem conectou ou já tem conversas recebidas
@@ -42,6 +44,7 @@ export const loadTeamsSummary = async accountId => {
       unreadChannels: data.unread_channels,
       mentions: data.mentions || 0,
       channelView: data.channel_view || 'conversa',
+      scopeOutdated: !!data.scope_outdated,
     });
   } catch {
     // sem o resumo o menu só não mostra o Teams; a área continua abrindo pelo endereço

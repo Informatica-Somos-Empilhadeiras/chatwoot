@@ -10,6 +10,8 @@ import Avatar from 'dashboard/components-next/avatar/Avatar.vue';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 import TeamsLogo from './TeamsLogo.vue';
+import PresenceDot from './PresenceDot.vue';
+import { presenceStyle, watchPresence } from './presenceStore';
 import { TEAMS_ROUTE } from './teamsStore';
 import { listTime } from './helpers';
 
@@ -72,6 +74,18 @@ const teams = computed(() => {
     }))
     .sort((a, b) => (b.mentions ? 1 : 0) - (a.mentions ? 1 : 0));
 });
+
+// presença das pessoas dos chats 1:1 que estão na lista
+let stopPresence = null;
+watch(
+  () => props.threads.map(thread => thread.peer_id).filter(Boolean).join(','),
+  () => {
+    stopPresence?.();
+    const ids = props.threads.map(thread => thread.peer_id).filter(Boolean);
+    stopPresence = ids.length ? watchPresence(ids) : null;
+  },
+  { immediate: true }
+);
 
 // ---------- equipes recolhidas (lembradas neste navegador, por conta) ----------
 const collapsedKey = computed(
@@ -170,6 +184,7 @@ const goTab = routeKind =>
         v-for="tab in [
           { key: 'chats', icon: 'i-lucide-message-circle', count: unreadChats },
           { key: 'channels', icon: 'i-lucide-hash', count: unreadChannels },
+          { key: 'calendar', icon: 'i-lucide-calendar-days', count: 0 },
         ]"
         :key="tab.key"
         type="button"
@@ -182,11 +197,7 @@ const goTab = routeKind =>
         @click="goTab(tab.key)"
       >
         <Icon :icon="tab.icon" class="size-4" />
-        {{
-          tab.key === 'chats'
-            ? t('OUTSIDER_TEAMS_AREA.TABS.CHATS')
-            : t('OUTSIDER_TEAMS_AREA.TABS.CHANNELS')
-        }}
+        {{ t(`OUTSIDER_TEAMS_AREA.TABS.${tab.key.toUpperCase()}`) }}
         <span
           v-if="tab.count"
           class="px-1.5 text-[11px] font-bold leading-[17px] rounded-full"
@@ -217,7 +228,14 @@ const goTab = routeKind =>
               :size="42"
               :rounded-full="thread.chat_type === 'oneOnOne'"
             />
+            <PresenceDot
+              v-if="thread.peer_id && presenceStyle(thread.peer_id)"
+              :user-id="thread.peer_id"
+              :size="12"
+              class="absolute -right-1 -bottom-1"
+            />
             <span
+              v-else
               class="absolute -right-1 -bottom-1 rounded-full bg-n-surface-1 p-px"
             >
               <TeamsLogo :size="15" />

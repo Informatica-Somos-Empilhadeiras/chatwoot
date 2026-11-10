@@ -7,6 +7,9 @@ import { useI18n } from 'vue-i18n';
 import Avatar from 'dashboard/components-next/avatar/Avatar.vue';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
 import TeamsLogo from './TeamsLogo.vue';
+import PresenceDot from './PresenceDot.vue';
+import { presenceOf, presenceStyle, watchPresence } from './presenceStore';
+import { onBeforeUnmount, watch } from 'vue';
 
 const props = defineProps({
   thread: { type: Object, required: true },
@@ -21,11 +24,36 @@ const VIEWS = [
 ];
 const { t } = useI18n();
 
+// no chat 1:1, a presença da pessoa (Disponível, Ocupado...) no lugar de "Chat no Teams"
+let stopPresence = null;
+watch(
+  () => props.thread.peer_id,
+  id => {
+    stopPresence?.();
+    stopPresence = id ? watchPresence([id]) : null;
+  },
+  { immediate: true }
+);
+onBeforeUnmount(() => stopPresence?.());
+
+const presenceText = computed(() => {
+  const style = presenceStyle(props.thread.peer_id);
+  if (!style) return '';
+  const info = presenceOf(props.thread.peer_id);
+  const base = t(`OUTSIDER_TEAMS_AREA.PRESENCE.${style.key}`);
+  if (info?.activity === 'InAMeeting')
+    return `${base} · ${t('OUTSIDER_TEAMS_AREA.PRESENCE.IN_MEETING')}`;
+  if (info?.activity === 'InACall')
+    return `${base} · ${t('OUTSIDER_TEAMS_AREA.PRESENCE.IN_CALL')}`;
+  return base;
+});
+
 const subtitle = computed(() => {
   const { thread } = props;
   if (thread.kind === 'channel')
     return t('OUTSIDER_TEAMS_AREA.CHANNEL_OF', { team: thread.team_name || '' });
-  if (thread.chat_type === 'oneOnOne') return t('OUTSIDER_TEAMS_AREA.CHAT_1_1');
+  if (thread.chat_type === 'oneOnOne')
+    return presenceText.value || t('OUTSIDER_TEAMS_AREA.CHAT_1_1');
   if (thread.chat_type === 'meeting') return t('OUTSIDER_TEAMS_AREA.CHAT_MEETING');
   return t('OUTSIDER_TEAMS_AREA.CHAT_GROUP', { count: thread.members_count });
 });
@@ -55,7 +83,16 @@ const subtitle = computed(() => {
         :size="40"
         :rounded-full="thread.chat_type === 'oneOnOne'"
       />
-      <span class="absolute -right-1 -bottom-1 rounded-full bg-n-surface-1 p-px">
+      <PresenceDot
+        v-if="thread.chat_type === 'oneOnOne' && presenceText"
+        :user-id="thread.peer_id"
+        :size="12"
+        class="absolute -right-1 -bottom-1"
+      />
+      <span
+        v-else
+        class="absolute -right-1 -bottom-1 rounded-full bg-n-surface-1 p-px"
+      >
         <TeamsLogo :size="15" />
       </span>
     </span>

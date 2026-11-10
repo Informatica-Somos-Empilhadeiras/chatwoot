@@ -17,6 +17,8 @@ class Api::V1::Accounts::Outsider::TeamsGraphController < Api::V1::Accounts::Bas
       consent_granted_at: graph_app&.consent_granted_at&.iso8601, redirect_uri: oauth.redirect_uri,
       notification_url: ::Outsider::Teams::Graph::Subscriptions.notification_url,
       public_https: ::Outsider::Teams::Graph::Subscriptions.public_https?, permissions: oauth::PERMISSIONS,
+      # permissões novas desde o consentimento: o administrador aprova de novo
+      consent_outdated: graph_app.present? && graph_app.consent_granted_at.present? && graph_app.consent_version < oauth::SCOPE_VERSION,
       app: administrator? && graph_app ? { client_id: graph_app.client_id, tenant_id: graph_app.tenant_id } : nil,
       me: ::Outsider::Teams::Graph::Json.link(my_link),
       links: administrator? ? links.includes(:user, :subscriptions).order(:created_at).map { |link| links_row(link) } : []
@@ -51,7 +53,9 @@ class Api::V1::Accounts::Outsider::TeamsGraphController < Api::V1::Accounts::Bas
     if state['k'] == 'consent'
       return render_error('forbidden', :forbidden) unless administrator?
 
-      graph_app.update!(consent_granted_at: Time.current) if params[:admin_consent].to_s.casecmp('true').zero?
+      if params[:admin_consent].to_s.casecmp('true').zero?
+        graph_app.update!(consent_granted_at: Time.current, consent_version: ::Outsider::Teams::Graph::Login::SCOPE_VERSION)
+      end
       return head :no_content
     end
 

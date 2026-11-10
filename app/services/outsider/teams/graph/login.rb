@@ -10,9 +10,14 @@ class Outsider::Teams::Graph::Login
   GRAPH = 'https://graph.microsoft.com'.freeze
   CALLBACK_PATH = '/outsider/teams/oauth/callback'.freeze
   # Graph: chats (ler, responder), equipes e canais (listar, ler, responder), o perfil da pessoa e os arquivos dela
-  # (ver e mandar arquivos pelo OneDrive/SharePoint, como o Teams faz)
+  # (ver e mandar arquivos pelo OneDrive/SharePoint, como o Teams faz).
+  # Versão 2: quem está na equipe/canal (para @mencionar quem ainda não escreveu), quem está online (presença) e a
+  # agenda (ver e marcar reunião do Teams). Mudou a lista: suba SCOPE_VERSION; o administrador aprova de novo e cada
+  # pessoa entra de novo (as telas avisam; o que já funcionava continua até lá).
+  SCOPE_VERSION = 2
   PERMISSIONS = %w[User.Read Chat.ReadWrite ChatMessage.Send Team.ReadBasic.All Channel.ReadBasic.All ChannelMessage.Read.All
-                   ChannelMessage.Send Files.ReadWrite.All].freeze
+                   ChannelMessage.Send Files.ReadWrite.All TeamMember.Read.All ChannelMember.Read.All Presence.Read.All
+                   Calendars.ReadWrite].freeze
   SCOPES = (%w[offline_access openid profile email] + PERMISSIONS).freeze
   STATE_PURPOSE = 'outsider_teams_oauth'.freeze
   TIMEOUT = 15

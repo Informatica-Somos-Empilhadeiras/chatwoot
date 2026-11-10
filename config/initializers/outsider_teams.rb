@@ -32,8 +32,14 @@ Rails.application.routes.prepend do
             patch 'teams_graph/me', to: 'teams_graph#update_me'
             delete 'teams_graph/me', to: 'teams_graph#disconnect'
             delete 'teams_graph/links/:link_id', to: 'teams_graph#destroy_link'
+            # agenda do Teams/Outlook da pessoa (ver e marcar reunião)
+            resources :teams_calendar, only: [:index, :create, :destroy]
             resources :teams_threads, only: [:index, :show] do
-              collection { get :summary }
+              collection do
+                get :summary
+                post :presence
+                get :people
+              end
               member do
                 get :messages
                 post :messages, action: :send_message

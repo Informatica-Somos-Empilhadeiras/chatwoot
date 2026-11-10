@@ -24,7 +24,7 @@ class Outsider::Teams::Graph::Connect
     link.assign_attributes(ms_user_id: me['id'], ms_tenant_id: @app.tenant_id, display_name: me['displayName'],
                            email: me['mail'].presence || me['userPrincipalName'], access_token: tokens[:access_token],
                            refresh_token: tokens[:refresh_token], token_expires_at: tokens[:expires_at], status: 'active',
-                           last_error: nil)
+                           last_error: nil, scope_version: Outsider::Teams::Graph::Login::SCOPE_VERSION)
     link.save!
     Outsider::Teams::Graph::Subscriptions.new(link).plan!
     Outsider::Teams::Graph::SyncJob.perform_later(link.id)

@@ -8,8 +8,16 @@ module Outsider::Teams::Graph::Json
       team_name: thread.team_name, channel_id: thread.channel_id, members_count: Array(thread.members).size,
       last_message_preview: thread.last_message_preview, last_message_at: thread.last_message_at&.iso8601,
       unread_count: thread.unread_count, mention_count: thread.mention_count, last_read_at: thread.last_read_at&.iso8601,
-      web_url: web_url(thread)
+      web_url: web_url(thread), peer_id: peer_id(thread)
     }
+  end
+
+  # no chat 1:1, a outra pessoa (para a bolinha de presença)
+  def peer_id(thread)
+    return nil unless thread.kind == 'chat' && thread.chat_type == 'oneOnOne'
+
+    me = thread.link&.ms_user_id
+    Array(thread.members).find { |member| member['id'].present? && member['id'] != me }&.dig('id')
   end
 
   def message(message)
@@ -67,6 +75,8 @@ module Outsider::Teams::Graph::Json
       status: link.status, last_error: link.last_error, sync_chats: link.sync_chats, channels: link.channel_list,
       all_channels: link.all_channels, hidden_channels: Array(link.hidden_channels), history_at: link.history_at&.iso8601,
       channel_view: link.channel_view,
+      # entrou com permissões antigas: as novidades (presença, agenda, mencionar todos) pedem entrar de novo
+      scope_outdated: link.scope_version < Outsider::Teams::Graph::Login::SCOPE_VERSION,
       last_activity_at: link.last_activity_at&.iso8601, created_at: link.created_at.iso8601,
       subscriptions: link.subscriptions.map do |subscription|
         { kind: subscription.kind, channel_id: subscription.channel_id, ok: subscription.subscription_id.present? &&

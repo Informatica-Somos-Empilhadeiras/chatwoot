@@ -56,7 +56,7 @@ export const routes = [
   },
   {
     path: frontendURL(
-      'accounts/:accountId/teams/:kind(chats|channels)?/:threadId?'
+      'accounts/:accountId/teams/:kind(chats|channels|calendar)?/:threadId?'
     ),
     name: 'outsider_teams',
     component: TeamsArea,

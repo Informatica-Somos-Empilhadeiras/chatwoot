@@ -51,7 +51,8 @@
     "TITLE": "Teams",
     "TABS": {
       "CHATS": "Chats",
-      "CHANNELS": "Channels"
+      "CHANNELS": "Channels",
+      "CALENDAR": "Calendar"
     },
     "CONNECTED": "Connected",
     "DISCONNECTED": "Disconnected",
@@ -136,7 +137,54 @@
     "COLLAPSE_ALL": "Collapse all",
     "EXPAND_ALL": "Expand all",
     "COLLAPSE_TEAM": "Collapse team",
-    "EXPAND_TEAM": "Expand team"
+    "EXPAND_TEAM": "Expand team",
+    "PRESENCE": {
+      "AVAILABLE": "Available",
+      "BUSY": "Busy",
+      "DND": "Do not disturb",
+      "AWAY": "Away",
+      "BRB": "Be right back",
+      "OFFLINE": "Offline",
+      "UNKNOWN": "Unknown",
+      "IN_MEETING": "in a meeting",
+      "IN_CALL": "in a call"
+    },
+    "VOICE": {
+      "RECORD": "Record audio",
+      "RECORDING": "Recording… goes to Teams as an audio file",
+      "PAUSED": "Paused. Resume or send",
+      "PAUSE": "Pause",
+      "RESUME": "Resume recording",
+      "DISCARD": "Discard",
+      "NO_MIC": "The browser did not allow the microphone.",
+      "FAILED": "Could not prepare the audio."
+    },
+    "CALENDAR": {
+      "TITLE": "Calendar",
+      "THIS_WEEK": "This week",
+      "NEW": "Schedule meeting",
+      "ADD": "Add",
+      "FREE": "Nothing scheduled",
+      "ALL_DAY": "All day",
+      "NO_SUBJECT": "(no subject)",
+      "JOIN": "Join meeting",
+      "OPEN": "Open in Outlook",
+      "CANCEL": "Cancel meeting",
+      "REMOVE": "Remove from my calendar",
+      "CONFIRM_CANCEL": "Cancel this meeting for every attendee?",
+      "CONFIRM_REMOVE": "Remove this event from your calendar?",
+      "ACCEPTED": "You accepted",
+      "TENTATIVE": "You marked as tentative",
+      "DECLINED": "You declined",
+      "SUBJECT": "Subject",
+      "INVITE": "Invite: type a name from your conversations or an e-mail and press Enter",
+      "NOTES": "Notes (optional)",
+      "ONLINE": "Teams meeting (creates the join link)",
+      "CLOSE": "Close",
+      "SAVE": "Schedule",
+      "CREATED": "Meeting scheduled. Attendees get the invitation by e-mail and in Teams.",
+      "NEEDS_SCOPE": "The calendar needs the new Teams permissions. Ask the administrator to approve again in Settings > Microsoft Teams, then click \"Sign in again\" there."
+    }
   },
   "OUTSIDER_TEAMS_GRAPH": {
     "TITLE": "Microsoft Teams",
@@ -221,6 +269,9 @@
     "AGO_NOW": "now",
     "AGO_MIN": "{n} min ago",
     "AGO_HOURS": "{n} h ago",
-    "AGO_DAYS": "{n} day ago | {n} days ago"
+    "AGO_DAYS": "{n} day ago | {n} days ago",
+    "CONSENT_OUTDATED": "There are new permissions (presence, calendar and mentioning anyone in the channel). Approve again for the company; then each person clicks \"Sign in again\".",
+    "CONSENT_AGAIN": "Approve again",
+    "SCOPE_OUTDATED": "Teams has new features (presence, calendar and mentioning anyone in the channel). Click \"Sign in again\" to enable them. What already worked keeps working until then."
   }
 }

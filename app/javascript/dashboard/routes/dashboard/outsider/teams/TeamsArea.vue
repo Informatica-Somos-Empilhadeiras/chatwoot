@@ -17,6 +17,7 @@ import TeamsLogo from './TeamsLogo.vue';
 import TeamsList from './TeamsList.vue';
 import TeamsChatView from './TeamsChatView.vue';
 import TeamsChannelView from './TeamsChannelView.vue';
+import TeamsCalendar from './TeamsCalendar.vue';
 import { teamsState, TEAMS_NOTICE, TEAMS_ROUTE } from './teamsStore';
 import { errorText } from './helpers';
 import './teams.css';
@@ -29,11 +30,14 @@ const threads = ref([]);
 const isLoading = ref(true);
 
 const routeKind = computed(() =>
-  route.params.kind === 'channels' ? 'channels' : 'chats'
+  ['channels', 'calendar'].includes(route.params.kind)
+    ? route.params.kind
+    : 'chats'
 );
 const kind = computed(() =>
   routeKind.value === 'channels' ? 'channel' : 'chat'
 );
+const isCalendar = computed(() => routeKind.value === 'calendar');
 const threadId = computed(() => Number(route.params.threadId) || null);
 const selected = computed(
   () => threads.value.find(thread => thread.id === threadId.value) || null
@@ -167,16 +171,17 @@ onBeforeUnmount(() => {
         :unread-chats="teamsState.unreadChats"
         :unread-channels="teamsState.unreadChannels"
         class="w-full md:w-[340px] shrink-0 border-r border-n-weak"
-        :class="threadId ? 'hidden md:flex' : 'flex'"
+        :class="threadId || isCalendar ? 'hidden md:flex' : 'flex'"
         @open="open"
         @settings="goSettings"
       />
       <div
         class="flex-1 min-w-0"
-        :class="threadId ? 'flex' : 'hidden md:flex'"
+        :class="threadId || isCalendar ? 'flex' : 'hidden md:flex'"
       >
+        <TeamsCalendar v-if="isCalendar" @back="back" />
         <TeamsChannelView
-          v-if="
+          v-else-if="
             selected &&
             selected.kind === 'channel' &&
             channelView === 'publicacoes'

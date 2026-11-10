@@ -2,10 +2,14 @@
 // OUTSIDER: caixa de escrever da área Teams. Avisa que a mensagem sai no Teams em nome da pessoa e mostra a
 // mensagem citada (responder). Enter manda; Shift+Enter quebra a linha; até 5 anexos (vão para o OneDrive ou
 // para os arquivos do canal, como no Teams). "@" abre a lista de pessoas do chat ou do canal para mencionar.
-// O botão de emoji abre o seletor do Chatwoot e põe o emoji onde está o cursor.
-import { computed, nextTick, ref } from 'vue';
+// O botão de emoji abre o seletor do Chatwoot e põe o emoji onde está o cursor. O microfone grava um áudio que vai
+// para o Teams como arquivo (TeamsVoiceRecorder). Na lista do "@" aparece a bolinha de presença de cada pessoa.
+import { computed, nextTick, ref, watch } from 'vue';
 import { onClickOutside } from '@vueuse/core';
 import EmojiPicker from 'shared/components/emoji/EmojiPicker.vue';
+import TeamsVoiceRecorder from './TeamsVoiceRecorder.vue';
+import PresenceDot from './PresenceDot.vue';
+import { watchPresence } from './presenceStore';
 import { useI18n } from 'vue-i18n';
 import { useAlert } from 'dashboard/composables';
 import Avatar from 'dashboard/components-next/avatar/Avatar.vue';
@@ -35,6 +39,16 @@ const input = ref(null);
 const fileInput = ref(null);
 const emojiBox = ref(null);
 const showEmoji = ref(false);
+const recording = ref(false);
+const canRecord =
+  typeof window !== 'undefined' &&
+  !!window.MediaRecorder &&
+  !!navigator.mediaDevices?.getUserMedia;
+
+const sendVoice = file => {
+  recording.value = false;
+  emit('send', { content: '', files: [file] });
+};
 onClickOutside(emojiBox, () => {
   showEmoji.value = false;
 });
@@ -77,6 +91,7 @@ const suggestions = computed(() => {
     .slice(0, 6);
 });
 
+let stopPresence = null;
 const ensureMembers = async () => {
   if (members.value || !props.loadMembers) return;
   members.value = [];
@@ -86,6 +101,13 @@ const ensureMembers = async () => {
     members.value = [];
   }
 };
+// presença só das pessoas que aparecem na lista do "@"
+watch(suggestions, list => {
+  stopPresence?.();
+  stopPresence = list.length
+    ? watchPresence(list.map(person => person.id))
+    : null;
+});
 
 // "@" no começo ou depois de espaço, sem espaço duplo até o cursor
 const findMention = () => {
@@ -263,7 +285,14 @@ defineExpose({ focus });
           @mousedown.prevent="pickMention(person)"
           @mouseenter="mentionIndex = index"
         >
-          <Avatar :name="person.name" :size="22" rounded-full />
+          <span class="relative shrink-0">
+            <Avatar :name="person.name" :size="22" rounded-full />
+            <PresenceDot
+              :user-id="person.id"
+              :size="8"
+              class="absolute -right-0.5 -bottom-0.5"
+            />
+          </span>
           <span class="truncate">{{ person.name }}</span>
         </li>
       </ul>
@@ -295,7 +324,13 @@ defineExpose({ focus });
       </span>
     </div>
 
-    <div class="flex items-center gap-3 text-n-slate-11">
+    <TeamsVoiceRecorder
+      v-if="recording"
+      :sender-name="senderName"
+      @send="sendVoice"
+      @close="recording = false"
+    />
+    <div v-else class="flex items-center gap-3 text-n-slate-11">
       <button
         type="button"
         class="hover:text-n-slate-12 disabled:opacity-40"
@@ -331,6 +366,17 @@ defineExpose({ focus });
         />
       </span>
       <slot name="tools" />
+      <button
+        v-if="canRecord"
+        type="button"
+        class="hover:text-n-slate-12 disabled:opacity-40"
+        :disabled="disabled"
+        :title="t('OUTSIDER_TEAMS_AREA.VOICE.RECORD')"
+        data-teams-mic
+        @click="recording = true"
+      >
+        <Icon icon="i-lucide-mic" class="size-5" />
+      </button>
       <button
         type="button"
         class="flex items-center justify-center ml-auto rounded-full size-10 tms-accent-bg disabled:opacity-40"

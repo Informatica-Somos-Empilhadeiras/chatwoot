@@ -468,4 +468,104 @@ RSpec.describe 'Outsider Conectar meu Teams (Microsoft Graph)', type: :request d
     expect(response.parsed_body['payload'].pluck('sender_name')).to eq(['Ricardo Mendes', 'Ricardo Mendes'])
     expect(response.parsed_body['payload'].map { |item| item['sent_at'] }).to eq(response.parsed_body['payload'].map { |item| item['sent_at'] }.sort)
   end
+
+  it 'asks for the version 2 permissions, shows who is online and lists the whole team to mention' do
+    api = "/api/v1/accounts/#{account.id}/outsider"
+    # quem entrou com as permissões antigas vê o aviso (e o administrador também, até aprovar de novo)
+    graph_app.update!(consent_granted_at: 1.day.ago)
+    link
+    get "#{api}/teams_graph", headers: agent.create_new_auth_token, as: :json
+    expect(response.parsed_body).to include('consent_outdated' => true)
+    expect(response.parsed_body['me']).to include('scope_outdated' => true)
+    expect(response.parsed_body['permissions']).to include('Presence.Read.All', 'Calendars.ReadWrite', 'TeamMember.Read.All')
+    get "#{api}/teams_threads/summary", headers: agent.create_new_auth_token, as: :json
+    expect(response.parsed_body).to include('scope_outdated' => true)
+
+    # sem a permissão nova, presença e agenda não quebram: avisam
+    post "#{api}/teams_threads/presence", params: { ids: ['11111111-2222-3333-4444-555555555555'] },
+                                          headers: agent.create_new_auth_token, as: :json
+    expect(response.parsed_body).to eq('payload' => [], 'unavailable' => true)
+    get "#{api}/teams_calendar", headers: agent.create_new_auth_token, as: :json
+    expect(response).to have_http_status(:unprocessable_entity)
+    expect(response.parsed_body['error']).to eq('scope_outdated')
+
+    # o administrador aprova de novo e a pessoa entra de novo: as versões sobem
+    post "#{api}/teams_graph/consent", headers: admin.create_new_auth_token, as: :json
+    state = Rack::Utils.parse_query(URI.parse(response.parsed_body['url']).query)['state']
+    post "#{api}/teams_graph/finish", params: { admin_consent: 'True', state: state }, headers: admin.create_new_auth_token, as: :json
+    expect(graph_app.reload.consent_version).to eq(2)
+    stub_request(:post, "https://login.microsoftonline.com/#{tenant}/oauth2/v2.0/token")
+      .to_return(graph_json(access_token: 'token-v2', refresh_token: 'refresh-v2', expires_in: 3600))
+    stub_request(:get, %r{graph.microsoft.com/v1.0/me\?}).to_return(graph_json(id: 'ms-agent', displayName: 'Agente Teams',
+                                                                               userPrincipalName: 'agente@empresa.com'))
+    stub_request(:post,
+                 'https://graph.microsoft.com/beta/subscriptions').to_return(graph_json(id: 'sub-x', expirationDateTime: 2.days.from_now.iso8601))
+    Outsider::Teams::Graph::Connect.new(graph_app, agent).perform('codigo-2')
+    expect(link.reload).to have_attributes(scope_version: 2, access_token: 'token-v2')
+
+    # presença: uma pergunta só para a Microsoft, só ids válidos
+    presence = stub_request(:post, 'https://graph.microsoft.com/v1.0/communications/getPresencesByUserId')
+               .with(body: { ids: ['11111111-2222-3333-4444-555555555555'] }.to_json)
+               .to_return(graph_json(value: [{ id: '11111111-2222-3333-4444-555555555555', availability: 'Busy', activity: 'InACall',
+                                               extra: 'x' }]))
+    post "#{api}/teams_threads/presence", params: { ids: ['11111111-2222-3333-4444-555555555555', 'nada; drop'] },
+                                          headers: agent.create_new_auth_token, as: :json
+    expect(presence).to have_been_requested
+    expect(response.parsed_body['payload']).to eq([{ 'id' => '11111111-2222-3333-4444-555555555555', 'availability' => 'Busy',
+                                                     'activity' => 'InACall' }])
+
+    # no canal, dá para mencionar toda a equipe (não só quem já escreveu); a lista vale 10 minutos
+    channel = link.threads.create!(kind: 'channel', team_id: 'team-1', team_name: 'Comercial', channel_id: '19:canal@thread.tacv2',
+                                   title: 'Propostas', members: [{ 'id' => 'ms-old', 'name' => 'Quem já escreveu' }])
+    team = stub_request(:get, 'https://graph.microsoft.com/v1.0/teams/team-1/members?$top=200')
+           .to_return(graph_json(value: [{ userId: 'ms-agent', displayName: 'Agente Teams', email: 'agente@empresa.com' },
+                                         { userId: 'ms-nova', displayName: 'Ana Nova', email: 'ana@empresa.com' },
+                                         { displayName: 'sem id' }]))
+    2.times { get "#{api}/teams_threads/#{channel.id}/members", headers: agent.create_new_auth_token, as: :json }
+    expect(team).to have_been_requested.once
+    expect(response.parsed_body['payload']).to eq([{ 'id' => 'ms-nova', 'name' => 'Ana Nova' }, { 'id' => 'ms-old', 'name' => 'Quem já escreveu' }])
+    expect(channel.reload.members_at).to be_present
+    get "#{api}/teams_threads/people", headers: agent.create_new_auth_token, as: :json
+    expect(response.parsed_body['payload']).to eq([{ 'id' => 'ms-nova', 'name' => 'Ana Nova', 'email' => 'ana@empresa.com' },
+                                                   { 'id' => 'ms-old', 'name' => 'Quem já escreveu' }])
+  end
+
+  it 'keeps the agenda in Microsoft: reads it in the person time zone, marks Teams meetings and cancels them' do
+    api = "/api/v1/accounts/#{account.id}/outsider"
+    link.update!(scope_version: 2, access_token: 'token-v2')
+    view = stub_request(:get, %r{graph.microsoft.com/v1.0/me/calendarView\?})
+           .with(headers: { 'Prefer' => 'outlook.timezone="America/Sao_Paulo"', 'Authorization' => 'Bearer token-v2' })
+           .to_return(graph_json(value: [{ id: 'ev-1', subject: 'Reunião de vendas', start: { dateTime: '2026-11-10T09:00:00.0000000' },
+                                           end: { dateTime: '2026-11-10T10:00:00.0000000' }, isOnlineMeeting: true,
+                                           onlineMeeting: { joinUrl: 'https://teams.microsoft.com/l/meetup-join/x' }, isOrganizer: false,
+                                           organizer: { emailAddress: { name: 'Paula' } }, responseStatus: { response: 'accepted' } }]))
+    get "#{api}/teams_calendar", params: { from: '2026-11-09', to: '2026-11-16', time_zone: 'Fuso/Invalido' },
+                                 headers: agent.create_new_auth_token, as: :json
+    expect(view).to have_been_requested
+    expect(response.parsed_body['time_zone']).to eq('America/Sao_Paulo')
+    expect(response.parsed_body['payload'].sole).to include('id' => 'ev-1', 'subject' => 'Reunião de vendas', 'online' => true,
+                                                            'join_url' => 'https://teams.microsoft.com/l/meetup-join/x', 'mine' => false,
+                                                            'organizer' => 'Paula', 'response' => 'accepted')
+
+    create_event = stub_request(:post, 'https://graph.microsoft.com/v1.0/me/events')
+                   .with(body: hash_including('subject' => 'Alinhamento', 'isOnlineMeeting' => true, 'onlineMeetingProvider' => 'teamsForBusiness',
+                                              'start' => { 'dateTime' => '2026-11-11T14:00:00', 'timeZone' => 'America/Sao_Paulo' },
+                                              'attendees' => [{ 'emailAddress' => { 'address' => 'ana@empresa.com' }, 'type' => 'required' }]))
+                   .to_return(graph_json(id: 'ev-2', subject: 'Alinhamento', isOrganizer: true, isOnlineMeeting: true,
+                                         start: { dateTime: '2026-11-11T14:00:00.0000000' }, end: { dateTime: '2026-11-11T14:30:00.0000000' }))
+    post "#{api}/teams_calendar", params: { subject: 'Alinhamento', start: '2026-11-11T14:00:00', end: '2026-11-11T14:30:00',
+                                            attendees: ['ana@empresa.com', 'não é e-mail'], time_zone: 'America/Sao_Paulo' },
+                                  headers: agent.create_new_auth_token, as: :json
+    expect(create_event).to have_been_requested
+    expect(response).to have_http_status(:created)
+    expect(response.parsed_body).to include('id' => 'ev-2', 'mine' => true)
+    post "#{api}/teams_calendar", params: { subject: '', start: '2026-11-11T14:00:00', end: '2026-11-11T14:30:00' },
+                                  headers: agent.create_new_auth_token, as: :json
+    expect(response).to have_http_status(:unprocessable_entity)
+
+    remove = stub_request(:delete, 'https://graph.microsoft.com/v1.0/me/events/ev-2').to_return(status: 204)
+    delete "#{api}/teams_calendar/ev-2", headers: agent.create_new_auth_token, as: :json
+    expect(remove).to have_been_requested
+    expect(response).to have_http_status(:no_content)
+  end
 end
