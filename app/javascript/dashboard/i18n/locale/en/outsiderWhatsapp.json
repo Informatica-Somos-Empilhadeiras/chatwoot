@@ -342,6 +342,33 @@
         "NO_ACCESS": "You do not have access to this file in Microsoft 365.",
         "LOAD": "Could not open the file right now. Try again or use Download."
       }
+    },
+    "TRANSCRIBE": {
+      "BUTTON": "Transcribe",
+      "AGAIN": "Transcribe again",
+      "MODEL": "Transcription model",
+      "PRIVACY": "Transcription runs on this computer; the audio never leaves the company. The model is downloaded once.",
+      "STATUS": {
+        "FILA": "Queued…",
+        "LENDO": "Reading the audio",
+        "BAIXANDO": "Downloading model",
+        "CARREGANDO": "Preparing",
+        "TRANSCREVENDO": "Transcribing"
+      },
+      "SIZES": {
+        "RAPIDO": "Fast",
+        "RAPIDO_HINT": "Smaller model (~60 MB): faster, less accurate.",
+        "PRECISO": "Accurate",
+        "PRECISO_HINT": "Bigger model (~190 MB): slower, understands better."
+      },
+      "ERRORS": {
+        "TOO_LONG": "Audio longer than 20 minutes",
+        "DOWNLOAD": "Could not read the audio",
+        "MODEL": "Could not download the model",
+        "WORKER": "Transcription failed in this browser",
+        "GENERIC": "Transcription failed",
+        "SAVE": "Could not save the transcription."
+      }
     }
   }
 }

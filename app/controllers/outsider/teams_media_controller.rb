@@ -22,6 +22,8 @@ class Outsider::TeamsMediaController < ActionController::API
 
   def respond_with(kind)
     return send_hosted(kind == 'download' ? 'attachment' : 'inline') if @attachment['hosted'].present?
+    # bytes=1: o áudio passa pelo Chatwoot (para a transcrição no navegador ler o arquivo sem bloqueio de origem)
+    return pass_through(@files.download_url(@attachment)) if kind == 'audio' && params[:bytes].present?
     return go(@files.download_url(@attachment)) if %w[download audio].include?(kind)
 
     go(@files.thumbnail_url(@attachment, kind == 'image' ? 'large' : 'medium'))
@@ -33,6 +35,24 @@ class Outsider::TeamsMediaController < ActionController::API
     response.headers['X-Content-Type-Options'] = 'nosniff'
     type = image[:content_type].start_with?('image/') ? image[:content_type] : 'application/octet-stream'
     send_data image[:body], type: type, disposition: disposition, filename: @attachment['name'].presence || 'imagem.png'
+  end
+
+  PASS_THROUGH_MAX = 40.megabytes
+
+  def pass_through(url)
+    return head(:not_found) unless Outsider::Teams::Graph::Files.microsoft_url?(url)
+
+    file = HTTParty.get(url, timeout: 60)
+    return head(:bad_gateway) unless file.success?
+    return head(:payload_too_large) if file.body.to_s.bytesize > PASS_THROUGH_MAX
+
+    response.headers['Cache-Control'] = 'private, max-age=600'
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    type = file.headers['content-type'].to_s.split(';').first.presence || 'application/octet-stream'
+    send_data file.body, type: type.start_with?('audio/', 'video/') ? type : 'application/octet-stream', disposition: 'inline',
+                         filename: @attachment['name'].presence || 'audio'
+  rescue HTTParty::Error, SocketError, Net::OpenTimeout, Net::ReadTimeout
+    head :bad_gateway
   end
 
   def go(url)

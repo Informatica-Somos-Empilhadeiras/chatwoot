@@ -342,6 +342,33 @@
         "NO_ACCESS": "Você não tem acesso a este arquivo na Microsoft.",
         "LOAD": "Não foi possível abrir o arquivo agora. Tente de novo ou use Baixar."
       }
+    },
+    "TRANSCRIBE": {
+      "BUTTON": "Transcrever",
+      "AGAIN": "Transcrever de novo",
+      "MODEL": "Modelo da transcrição",
+      "PRIVACY": "A transcrição roda neste computador; o áudio não sai da empresa. O modelo é baixado uma vez.",
+      "STATUS": {
+        "FILA": "Na fila…",
+        "LENDO": "Lendo o áudio",
+        "BAIXANDO": "Baixando o modelo",
+        "CARREGANDO": "Preparando",
+        "TRANSCREVENDO": "Transcrevendo"
+      },
+      "SIZES": {
+        "RAPIDO": "Rápido",
+        "RAPIDO_HINT": "Modelo menor (~60 MB): mais rápido, erra mais.",
+        "PRECISO": "Preciso",
+        "PRECISO_HINT": "Modelo maior (~190 MB): mais lento, entende melhor."
+      },
+      "ERRORS": {
+        "TOO_LONG": "Áudio acima de 20 minutos",
+        "DOWNLOAD": "Não consegui ler o áudio",
+        "MODEL": "Não consegui baixar o modelo",
+        "WORKER": "A transcrição falhou neste navegador",
+        "GENERIC": "A transcrição falhou",
+        "SAVE": "Não consegui guardar a transcrição."
+      }
     }
   }
 }

@@ -4,6 +4,8 @@
 // play/pausa, onda do áudio que vai sendo pintada (clique ou arraste para pular), tempo e o botão
 // de velocidade 1×/1,5×/2×, que fica no lugar da foto depois que o áudio começa, como no WhatsApp.
 // Recebido: foto à esquerda; enviado: à direita. Baixar e a transcrição continuam aqui.
+// transcriber: função (texto, dados) => Promise que guarda a transcrição feita no navegador; quando vem, aparece o
+// botão "Transcrever" (TranscribeControl.vue) e o texto fica embaixo do player, como no Chatwoot com o Captain.
 import {
   computed,
   getCurrentInstance,
@@ -16,6 +18,7 @@ import { useIntersectionObserver } from '@vueuse/core';
 import { downloadFile } from '@chatwoot/utils';
 import Avatar from 'dashboard/components-next/avatar/Avatar.vue';
 import Icon from 'next/icon/Icon.vue';
+import TranscribeControl from './TranscribeControl.vue';
 import { timeStampAppendedURL } from 'dashboard/helper/URLHelper';
 import { useEmitter } from 'dashboard/composables/emitter';
 import { emitter } from 'shared/helpers/mitt';
@@ -37,6 +40,9 @@ const props = defineProps({
   sender: { type: Object, default: null },
   orientation: { type: String, default: ORIENTATION.LEFT },
   header: { type: String, default: '' },
+  transcriber: { type: Function, default: null },
+  // endereço do arquivo para a transcrição ler (quando diferente do que toca)
+  transcribeUrl: { type: String, default: '' },
 });
 
 const { t } = useI18n();
@@ -54,6 +60,8 @@ const speed = ref(savedSpeed());
 const played = ref(wasPlayed(props.attachment.id));
 const bars = ref(placeholderWaveform(props.attachment.id));
 const showFullTranscript = ref(false);
+const localTranscript = ref('');
+const transcribeFailed = ref(false);
 
 const isOutgoing = computed(() => props.orientation === ORIENTATION.RIGHT);
 const source = computed(() => timeStampAppendedURL(props.attachment.dataUrl));
@@ -80,7 +88,26 @@ const micClass = computed(() => {
   return played.value ? 'bg-[#53bdeb]' : 'bg-[#25d366]';
 });
 
-const transcript = computed(() => props.attachment.transcribedText || '');
+const transcript = computed(
+  () => props.attachment.transcribedText || localTranscript.value || ''
+);
+const transcribeKey = computed(() => `voice-${props.attachment.id}`);
+
+// transcrição feita no navegador: guarda pela função de quem usa o player e já mostra
+const onTranscribed = async result => {
+  transcribeFailed.value = false;
+  if (!result?.text) {
+    transcribeFailed.value = true;
+    return;
+  }
+  try {
+    await props.transcriber(result.text, result);
+    localTranscript.value = result.text;
+    showFullTranscript.value = false;
+  } catch {
+    transcribeFailed.value = true;
+  }
+};
 const TRANSCRIPT_PREVIEW = 200;
 const shownTranscript = computed(() =>
   showFullTranscript.value || transcript.value.length <= TRANSCRIPT_PREVIEW
@@ -315,21 +342,39 @@ const barPlayed = index => (index + 0.5) / bars.value.length <= progress.value;
             class="flex items-center justify-between text-xs text-n-slate-11"
           >
             <span class="tabular-nums" data-voice-clock>{{ clock }}</span>
-            <button
-              type="button"
-              class="grid rounded-full size-5 place-content-center hover:text-n-slate-12"
-              :title="t('OUTSIDER_WHATSAPP.VOICE.DOWNLOAD')"
-              @click="download"
-            >
-              <Icon icon="i-lucide-download" class="size-3.5" />
-            </button>
+            <span class="flex items-center gap-1 min-w-0">
+              <TranscribeControl
+                v-if="transcriber"
+                :job-key="transcribeKey"
+                :url="transcribeUrl || attachment.dataUrl"
+                :has-text="!!transcript"
+                @done="onTranscribed"
+                @error="transcribeFailed = true"
+              />
+              <button
+                type="button"
+                class="grid rounded-full size-5 place-content-center hover:text-n-slate-12"
+                :title="t('OUTSIDER_WHATSAPP.VOICE.DOWNLOAD')"
+                @click="download"
+              >
+                <Icon icon="i-lucide-download" class="size-3.5" />
+              </button>
+            </span>
           </div>
         </div>
       </div>
     </div>
+    <p
+      v-if="transcribeFailed"
+      class="px-1 mb-0 text-xs text-n-ruby-11"
+      data-voice-transcribe-failed
+    >
+      {{ t('OUTSIDER_WHATSAPP.TRANSCRIBE.ERRORS.SAVE') }}
+    </p>
     <div
       v-if="transcript"
-      class="p-2 mt-1 text-sm break-words rounded-lg bg-n-alpha-1 text-n-slate-12"
+      class="p-2 mt-1 text-sm break-words whitespace-pre-line rounded-lg bg-n-alpha-1 text-n-slate-12"
+      data-voice-transcript
     >
       {{ shownTranscript }}
       <button

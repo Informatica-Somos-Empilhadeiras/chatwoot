@@ -45,7 +45,9 @@ module Outsider::Teams::Graph::Json
                    end,
         download_url: ready ? files.media_url(message, index, 'download') : nil,
         audio_url: ready && kind == 'audio' ? files.media_url(message, index, 'audio') : nil,
-        edit_url: edit_url(attachment)
+        edit_url: edit_url(attachment),
+        # transcrição feita no navegador (Outsider::Transcricao)
+        transcript: attachment['transcript'].presence, transcript_meta: attachment['transcript_meta']
       }
     end
   end

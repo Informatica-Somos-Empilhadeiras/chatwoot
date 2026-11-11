@@ -2,10 +2,12 @@
 // OUTSIDER: anexos de uma mensagem do Teams, sem nada gravado no Chatwoot. Imagens: a imagem vem da Microsoft na hora.
 // Arquivos (OneDrive/SharePoint): cartão como o do WhatsApp, com a miniatura da primeira página que a Microsoft gera,
 // o nome, o tipo e o botãozinho de baixar. Clicar abre o visualizador do Chatwoot (só para ler); "Editar no Office"
-// abre o arquivo no Office/OneDrive. Áudios (inclusive as mensagens de voz do Teams) tocam aqui, no player do WhatsApp.
+// abre o arquivo no Office/OneDrive. Áudios (inclusive as mensagens de voz do Teams) tocam aqui, no player do WhatsApp,
+// com "Transcrever" no navegador (o texto fica no anexo da mensagem, via api/outsider/transcriptions.js).
 import { computed, reactive } from 'vue';
 import { useI18n } from 'vue-i18n';
 import TeamsGraphAPI from 'dashboard/api/outsider/teamsGraph';
+import TranscriptionsAPI from 'dashboard/api/outsider/transcriptions';
 import { formatSize } from 'dashboard/components-next/outsider/mediaViewer/mediaHelpers';
 import { docColor } from 'dashboard/helper/outsider/documentFile';
 import { openFileViewerWith } from 'dashboard/components-next/outsider/fileViewer/fileViewerStore';
@@ -22,14 +24,28 @@ const audios = computed(() =>
   all.value.filter(item => item.kind === 'audio' && item.audio_url)
 );
 const files = computed(() =>
-  all.value.filter(item => item.kind !== 'image' && !audios.value.includes(item))
+  all.value.filter(
+    item => item.kind !== 'image' && !audios.value.includes(item)
+  )
 );
 // o player do WhatsApp: { id (para lembrar o que já foi ouvido), dataUrl }
 const audioAttachment = item => ({
   id: `teams-${props.message.id}-${item.index}`,
   // o player quer um endereço completo
   dataUrl: new URL(item.audio_url, window.location.origin).href,
+  transcribedText: item.transcript || '',
 });
+// a transcrição lê o arquivo passando pelo Chatwoot (a Microsoft não deixa o navegador ler direto)
+const transcribeUrl = item =>
+  `${new URL(item.audio_url, window.location.origin).href}&bytes=1`;
+const saveTranscript = item => (text, result) =>
+  TranscriptionsAPI.saveTeams(props.message.id, item.index, {
+    text,
+    engine: 'navegador',
+    model: result?.model || result?.size || '',
+    language: 'pt',
+    duration: result?.duration || 0,
+  });
 const audioSender = computed(() => ({ name: props.message.sender_name }));
 
 const meta = file =>
@@ -110,6 +126,8 @@ const open = item => {
         :attachment="audioAttachment(audio)"
         :sender="audioSender"
         :orientation="message.mine ? ORIENTATION.RIGHT : ORIENTATION.LEFT"
+        :transcriber="message.id ? saveTranscript(audio) : null"
+        :transcribe-url="transcribeUrl(audio)"
       />
     </div>
     <div
