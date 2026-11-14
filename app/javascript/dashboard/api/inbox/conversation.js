@@ -74,8 +74,12 @@ class ConversationApi extends ApiClient {
     return axios.post(`${this.url}/${conversationId}/assignments`, params);
   }
 
-  markMessageRead({ id }) {
-    return axios.post(`${this.url}/${id}/update_last_seen`);
+  markMessageRead({ id, ...params }) {
+    const url = `${this.url}/${id}/update_last_seen`;
+    // OUTSIDER: params extras (outsider_forcar) para Outsider::LeituraAdmin
+    return Object.keys(params).length
+      ? axios.post(url, params)
+      : axios.post(url);
   }
 
   markMessagesUnread({ id }) {

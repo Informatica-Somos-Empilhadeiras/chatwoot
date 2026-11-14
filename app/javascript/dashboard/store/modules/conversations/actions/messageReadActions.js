@@ -6,11 +6,16 @@ export default {
   markMessagesRead: async ({ commit }, data) => {
     try {
       const {
-        data: { id, agent_last_seen_at: lastSeen },
+        // OUTSIDER: o servidor pode manter a conversa não lida (Outsider::LeituraAdmin)
+        data: { id, agent_last_seen_at: lastSeen, unread_count: unreadCount },
       } = await ConversationApi.markMessageRead(data);
       setTimeout(
         () =>
-          commit(mutationTypes.UPDATE_MESSAGE_UNREAD_COUNT, { id, lastSeen }),
+          commit(mutationTypes.UPDATE_MESSAGE_UNREAD_COUNT, {
+            id,
+            lastSeen,
+            unreadCount,
+          }),
         4000
       );
     } catch (error) {

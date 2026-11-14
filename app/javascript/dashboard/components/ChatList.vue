@@ -718,6 +718,7 @@ async function markAsRead(conversationId) {
   try {
     await store.dispatch('markMessagesRead', {
       id: conversationId,
+      outsider_forcar: true, // OUTSIDER: pedido explícito vale também para admin
     });
   } catch (error) {
     // Ignore error

@@ -21,6 +21,7 @@ import BaseSettingsHeader from '../components/BaseSettingsHeader.vue';
 import AccessToken from './AccessToken.vue';
 import MfaSettingsCard from './MfaSettingsCard.vue';
 import ActiveSessions from './ActiveSessions.vue';
+import AdminReadSection from 'dashboard/routes/dashboard/outsider/profile/AdminReadSection.vue'; // OUTSIDER
 import Policy from 'dashboard/components/policy.vue';
 import RadioCard from 'dashboard/components-next/radioCard/RadioCard.vue';
 import {
@@ -44,6 +45,7 @@ export default {
     AccessToken,
     MfaSettingsCard,
     ActiveSessions,
+    AdminReadSection, // OUTSIDER
     BaseSettingsHeader,
   },
   setup() {
@@ -337,6 +339,7 @@ export default {
     >
       <ActiveSessions />
     </SectionLayout>
+    <AdminReadSection />
     <Policy :permissions="audioNotificationPermissions">
       <SectionLayout
         with-border

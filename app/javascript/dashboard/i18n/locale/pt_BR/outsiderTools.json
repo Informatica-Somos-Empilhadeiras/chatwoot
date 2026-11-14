@@ -1082,5 +1082,15 @@
       "NOT_ALLOWED": "O navegador não deu licença. Dá para liberar depois no cadeado ao lado do endereço.",
       "FAILED": "Não deu para ativar neste navegador."
     }
+  },
+  "OUTSIDER_LEITURA": {
+    "TITLE": "Leitura de conversas",
+    "NOTE": "Só administradores veem esta opção. Vale para as conversas que estão com outro agente ou sem agente.",
+    "LABEL": "Não marcar como lida uma conversa que não é minha",
+    "ON_HINT": "Ligado: você abre a conversa só para acompanhar e ela continua não lida para o agente responsável. Para marcar uma conversa específica, use “Marcar como lida” no menu da lista.",
+    "OFF_HINT": "Desligado: abrir a conversa marca como lida para toda a equipe, como no Chatwoot padrão.",
+    "ON": "Pronto: suas visitas não marcam mais as conversas dos outros como lidas.",
+    "OFF": "Pronto: abrir uma conversa volta a marcá-la como lida.",
+    "ERROR": "Não deu para salvar a opção. Tente de novo."
   }
 }

@@ -1082,5 +1082,15 @@
       "NOT_ALLOWED": "The browser did not allow it. You can allow it later from the lock next to the address.",
       "FAILED": "Could not activate in this browser."
     }
+  },
+  "OUTSIDER_LEITURA": {
+    "TITLE": "Reading conversations",
+    "NOTE": "Only administrators see this option. It applies to conversations assigned to another agent or to nobody.",
+    "LABEL": "Don't mark as read a conversation that isn't mine",
+    "ON_HINT": "On: you open the conversation just to follow it and it stays unread for the assigned agent. To mark a specific one, use “Mark as read” in the list menu.",
+    "OFF_HINT": "Off: opening the conversation marks it as read for the whole team, like stock Chatwoot.",
+    "ON": "Done: your visits no longer mark other people's conversations as read.",
+    "OFF": "Done: opening a conversation marks it as read again.",
+    "ERROR": "Could not save the option. Try again."
   }
 }
