@@ -138,6 +138,12 @@ class Outsider::EvolutionApi
                                                 buttons: buttons, delay: 1200 }.compact)
   end
 
+  # Envia uma figurinha (sticker: webp em base64 ou URL; a Evolution converte o que não for webp).
+  # Devolve a mensagem enviada, com key.id
+  def send_sticker(number:, sticker:)
+    post("/message/sendSticker/#{@instance}", { number: number, sticker: sticker, delay: 600 }, timeout: 60)
+  end
+
   # Envia uma localização (o pin de mapa do WhatsApp). Devolve a mensagem enviada, com key.id
   def send_location(number:, latitude:, longitude:, name: nil, address: nil)
     post("/message/sendLocation/#{@instance}", { number: number, latitude: latitude, longitude: longitude, name: name, address: address }.compact)

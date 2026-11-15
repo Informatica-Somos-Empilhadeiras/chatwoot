@@ -4,6 +4,7 @@
 // ReplyBox passa. Em volta dela:
 // - à esquerda, o clipe com o menu do WhatsApp (ComposerAttachMenu.vue); o clipe original fica
 //   escondido, mas é ele que recebe os arquivos (e o arrastar e soltar continua igual);
+// - ao lado do clipe, nas caixas de WhatsApp, o botão de figurinhas (StickerPicker.vue);
 // - os botões originais (emoji, assinatura, modelos...) ficam só com o ícone, redondos;
 // - à direita, microfone com a caixa vazia e o botão de enviar quando há texto, no lugar do
 //   "Enviar (CTRL + ↵)". Gravando, a barra some e o gravador (VoiceRecorder.vue) assume.
@@ -13,9 +14,9 @@ import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import ReplyBottomPanel from '../ReplyBottomPanel.vue';
 import ComposerAttachMenu from './ComposerAttachMenu.vue';
+import StickerPicker from './StickerPicker.vue';
+import { supportsStickers } from 'dashboard/helper/outsider/sticker';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
-
-defineOptions({ inheritAttrs: false });
 
 const props = defineProps({
   inbox: { type: Object, default: () => ({}) },
@@ -31,6 +32,8 @@ const props = defineProps({
   onSend: { type: Function, default: () => {} },
   sendButtonText: { type: String, default: '' },
 });
+
+defineOptions({ inheritAttrs: false });
 
 const EVOLUTION_WEBHOOK = /\/chatwoot\/webhook\//;
 const NO_AUDIO_CHANNELS = ['Channel::Line', 'Channel::Tiktok'];
@@ -48,6 +51,14 @@ const canShareWhatsapp = computed(
     !props.isOnPrivateNote &&
     !props.isEditorDisabled &&
     EVOLUTION_WEBHOOK.test(props.inbox?.webhook_url || '')
+);
+// figurinhas: só em caixas de WhatsApp (Evolution ou API oficial), fora da nota privada
+const canSticker = computed(
+  () =>
+    !props.isOnPrivateNote &&
+    !props.isEditorDisabled &&
+    !!props.conversationId &&
+    supportsStickers(props.inbox)
 );
 // mesma regra do microfone original (ReplyBottomPanel: showAudioRecorderButton)
 const canRecord = computed(
@@ -101,6 +112,7 @@ const openQuickReplies = () => {
       @pick-files="pickFiles"
       @quick-reply="openQuickReplies"
     />
+    <StickerPicker v-if="canSticker" :conversation-id="conversationId" />
     <ReplyBottomPanel
       ref="panelRef"
       v-bind="$attrs"

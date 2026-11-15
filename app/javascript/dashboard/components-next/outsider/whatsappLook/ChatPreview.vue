@@ -7,6 +7,7 @@ import { useI18n } from 'vue-i18n';
 import { useMessageFormatter } from 'shared/composables/useMessageFormatter';
 import { outsiderPreview } from 'dashboard/helper/outsider/messagePreview';
 import { splitSenderHeader } from 'dashboard/helper/outsider/mediaAlbum';
+import { isStickerAttachment } from 'dashboard/helper/outsider/sticker';
 
 const props = defineProps({
   message: { type: Object, default: null },
@@ -65,6 +66,12 @@ const senderName = computed(() => {
 const attachment = computed(() => {
   const list = props.message?.attachments || [];
   if (!list.length) return null;
+  if (list.length === 1 && isStickerAttachment(list[0])) {
+    return {
+      icon: 'i-lucide-sticker',
+      label: t('OUTSIDER_WHATSAPP.STICKERS.PREVIEW'),
+    };
+  }
   const type = list[0].file_type;
   const same = list.filter(item => item.file_type === type).length;
   const labelKey = `CHAT_LIST.ATTACHMENTS.${type}.CONTENT`;
@@ -87,9 +94,7 @@ const forwardHeader = computed(() => {
   );
   return new RegExp(`^\\*?${label}\\*?\\s*`);
 });
-const isForwarded = computed(() =>
-  forwardHeader.value.test(parts.value.body)
-);
+const isForwarded = computed(() => forwardHeader.value.test(parts.value.body));
 
 const text = computed(() => {
   const message = props.message;

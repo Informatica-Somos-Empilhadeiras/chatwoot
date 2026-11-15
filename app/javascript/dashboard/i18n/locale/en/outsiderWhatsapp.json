@@ -369,6 +369,65 @@
         "GENERIC": "Transcription failed",
         "SAVE": "Could not save the transcription."
       }
+    },
+    "STICKERS": {
+      "BUTTON": "Stickers",
+      "TITLE": "Stickers",
+      "PREVIEW": "Sticker",
+      "TABS": {
+        "RECENT": "Recent",
+        "FAVORITES": "Favorites",
+        "ALL": "All"
+      },
+      "ADD": "Add images (they become stickers)",
+      "EXISTED": "That sticker was already in your collection.",
+      "EMPTY": {
+        "RECENT": "Stickers you send will show up here.",
+        "FAVORITES": "Mark a sticker as favorite from its ⋯ menu.",
+        "ALL": "You have no stickers yet. Use + to add images or \"Save\" on a received sticker.",
+        "PACK": "This pack is empty. Add images with + or move stickers into it."
+      },
+      "LOADING": "Loading stickers…",
+      "LOAD_ERROR": "Could not load the stickers.",
+      "RETRY": "Try again",
+      "MENU": {
+        "OPTIONS": "Sticker options",
+        "FAVORITE": "Favorite",
+        "UNFAVORITE": "Remove from favorites",
+        "MOVE": "Move to pack",
+        "NO_PACK": "No pack",
+        "NEW_PACK": "New pack…",
+        "DELETE": "Delete",
+        "DELETE_CONFIRM": "Click again to delete"
+      },
+      "PACK": {
+        "NEW": "New pack",
+        "NAME": "Pack name",
+        "CREATE": "Create",
+        "SAVE": "Save",
+        "RENAME": "Rename pack",
+        "DELETE": "Delete pack (stickers are kept)",
+        "DELETE_CONFIRM": "Click again to delete the pack",
+        "CANCEL": "Cancel"
+      },
+      "SAVE": "Save",
+      "SAVE_HINT": "Save to my sticker collection",
+      "SAVED_SHORT": "Saved",
+      "SAVED": "Sticker saved to your collection.",
+      "SAVE_ERROR": "Could not save the sticker.",
+      "SEND_ERROR": "Could not send the sticker.",
+      "UPLOAD_ERROR": "Could not add “{name}”.",
+      "ERRORS": {
+        "file_type": "Only PNG, JPG, WEBP or GIF images can become stickers.",
+        "file_too_big": "Image too large (8 MB max).",
+        "too_many": "You reached the sticker limit. Delete some to add more.",
+        "too_many_packs": "You reached the pack limit.",
+        "not_supported": "This is not a WhatsApp conversation: stickers cannot be sent here.",
+        "no_recipient": "Could not find the contact number to send the sticker.",
+        "not_image": "That attachment is not an image.",
+        "invalid_name": "Give the pack a name (up to 40 characters).",
+        "no_file": "Choose an image."
+      }
     }
   }
 }

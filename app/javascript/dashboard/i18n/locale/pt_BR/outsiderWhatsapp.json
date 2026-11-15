@@ -369,6 +369,65 @@
         "GENERIC": "A transcrição falhou",
         "SAVE": "Não consegui guardar a transcrição."
       }
+    },
+    "STICKERS": {
+      "BUTTON": "Figurinhas",
+      "TITLE": "Figurinhas",
+      "PREVIEW": "Figurinha",
+      "TABS": {
+        "RECENT": "Recentes",
+        "FAVORITES": "Favoritas",
+        "ALL": "Todas"
+      },
+      "ADD": "Adicionar imagens (viram figurinhas)",
+      "EXISTED": "Essa figurinha já estava na sua coleção.",
+      "EMPTY": {
+        "RECENT": "As figurinhas que você enviar aparecem aqui.",
+        "FAVORITES": "Marque uma figurinha como favorita no menu ⋯ dela.",
+        "ALL": "Você ainda não tem figurinhas. Use o + para adicionar imagens ou \"Salvar\" numa figurinha recebida.",
+        "PACK": "Este grupo está vazio. Adicione imagens com o + ou mova figurinhas para ele."
+      },
+      "LOADING": "Carregando figurinhas…",
+      "LOAD_ERROR": "Não consegui carregar as figurinhas.",
+      "RETRY": "Tentar de novo",
+      "MENU": {
+        "OPTIONS": "Opções da figurinha",
+        "FAVORITE": "Favoritar",
+        "UNFAVORITE": "Tirar das favoritas",
+        "MOVE": "Mover para o grupo",
+        "NO_PACK": "Sem grupo",
+        "NEW_PACK": "Novo grupo…",
+        "DELETE": "Apagar",
+        "DELETE_CONFIRM": "Clique de novo para apagar"
+      },
+      "PACK": {
+        "NEW": "Novo grupo",
+        "NAME": "Nome do grupo",
+        "CREATE": "Criar",
+        "SAVE": "Salvar",
+        "RENAME": "Renomear grupo",
+        "DELETE": "Apagar grupo (as figurinhas ficam)",
+        "DELETE_CONFIRM": "Clique de novo para apagar o grupo",
+        "CANCEL": "Cancelar"
+      },
+      "SAVE": "Salvar",
+      "SAVE_HINT": "Salvar na minha coleção de figurinhas",
+      "SAVED_SHORT": "Salva",
+      "SAVED": "Figurinha salva na sua coleção.",
+      "SAVE_ERROR": "Não consegui salvar a figurinha.",
+      "SEND_ERROR": "Não consegui enviar a figurinha.",
+      "UPLOAD_ERROR": "Não consegui adicionar “{name}”.",
+      "ERRORS": {
+        "file_type": "Só imagens PNG, JPG, WEBP ou GIF viram figurinha.",
+        "file_too_big": "Imagem grande demais (máximo 8 MB).",
+        "too_many": "Você chegou ao limite de figurinhas. Apague algumas para adicionar outras.",
+        "too_many_packs": "Você chegou ao limite de grupos.",
+        "not_supported": "Esta conversa não é de WhatsApp: não dá para enviar figurinha aqui.",
+        "no_recipient": "Não achei o número do contato para enviar a figurinha.",
+        "not_image": "Esse anexo não é uma imagem.",
+        "invalid_name": "Dê um nome ao grupo (até 40 letras).",
+        "no_file": "Escolha uma imagem."
+      }
     }
   }
 }
