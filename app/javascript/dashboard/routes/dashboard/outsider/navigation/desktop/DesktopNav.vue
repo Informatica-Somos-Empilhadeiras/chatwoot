@@ -19,7 +19,7 @@
 //
 // Tema: o menu acompanha o tema do Chatwoot (claro ou escuro) e o botão do rodapé troca o tema da
 // tela inteira, igual a "Alterar tema" do menu do perfil.
-import { computed, nextTick, provide, ref, watch } from 'vue';
+import { computed, nextTick, onBeforeUnmount, provide, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useStore } from 'vuex';
 import { useI18n } from 'vue-i18n';
@@ -38,7 +38,6 @@ import NavProfile from './NavProfile.vue';
 import NavModule from './NavModule.vue';
 import NavChannels from './NavChannels.vue';
 import NavSettings from './NavSettings.vue';
-import NavPhone from './NavPhone.vue';
 import {
   makeAllowed,
   toModules,
@@ -179,6 +178,19 @@ const panelWidth = computed(() =>
 const shellWidth = computed(
   () => (isTablet.value ? COLLAPSED_WIDTH : panelWidth.value) + GUTTER
 );
+// largura do menu para o botão do telefone (voice/PhoneFab.vue) ficar fixo logo ao lado dele
+watch(
+  shellWidth,
+  width =>
+    document.documentElement.style.setProperty(
+      '--outsider-nav-width',
+      `${width}px`
+    ),
+  { immediate: true }
+);
+onBeforeUnmount(() =>
+  document.documentElement.style.removeProperty('--outsider-nav-width')
+);
 
 // ---------- tema (o do Chatwoot, para a tela inteira) ----------
 const isDark = ref(document.body.classList.contains('dark'));
@@ -246,8 +258,6 @@ const clickOutsideOptions = {
         @open-key-shortcut-modal="emit('openKeyShortcutModal')"
         @show-create-account-modal="emit('showCreateAccountModal')"
       />
-      <!-- ===== telefone em destaque, logo abaixo do nome ===== -->
-      <NavPhone :collapsed="collapsed" />
       <div class="onav-dv" />
 
       <!-- ===== buscar e nova conversa ===== -->
@@ -357,7 +367,9 @@ const clickOutsideOptions = {
             />
             <template v-else>{{ companyInitial }}</template>
           </span>
-          <span class="flex-1 min-w-0 truncate">{{ currentAccount?.name }}</span>
+          <span class="flex-1 min-w-0 truncate">{{
+            currentAccount?.name
+          }}</span>
         </template>
         <button
           v-tooltip.top="themeLabel"

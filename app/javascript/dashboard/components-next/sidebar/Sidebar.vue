@@ -24,7 +24,6 @@ import Logo from 'next/icon/Logo.vue';
 import { crmSidebarItems } from 'dashboard/routes/dashboard/outsider/crm/sidebar';
 import { voiceSidebarItems } from 'dashboard/routes/dashboard/outsider/voice/sidebar'; // OUTSIDER: Telefonia
 import { teamsSidebarItems } from 'dashboard/routes/dashboard/outsider/teams/sidebar'; // OUTSIDER: área Teams
-import OutsiderPhoneButton from 'dashboard/routes/dashboard/outsider/voice/PhoneButton.vue'; // OUTSIDER: telefonia
 import { outsiderSettingsItems } from 'dashboard/routes/dashboard/outsider/settings/sidebar'; // OUTSIDER: Aparência e bot
 import OutsiderMobileTabbar from 'dashboard/routes/dashboard/outsider/responsive/MobileTabbar.vue'; // OUTSIDER: barra de baixo no celular
 import OutsiderDesktopNav from 'dashboard/routes/dashboard/outsider/navigation/desktop/DesktopNav.vue'; // OUTSIDER: menu do computador
@@ -1086,8 +1085,6 @@ const menuItems = computed(() => {
           :is-collapsed="isEffectivelyCollapsed"
           @open-key-shortcut-modal="emit('openKeyShortcutModal')"
         />
-        <!-- OUTSIDER: telefone (some sem ramal) -->
-        <OutsiderPhoneButton />
       </div>
     </section>
     <!-- OUTSIDER: no celular, os mesmos itens do menu numa barra embaixo da tela -->

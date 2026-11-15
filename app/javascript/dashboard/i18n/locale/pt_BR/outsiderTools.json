@@ -990,7 +990,8 @@
         "failed": "Ramal recusado",
         "other_tab": "Em outra aba",
         "in_call": "Em ligação"
-      }
+      },
+      "PANELS": "Painéis da telefonia"
     },
     "SHOW_ALL": "Ver todos ({count})",
     "SHOW_LESS": "Ver menos",

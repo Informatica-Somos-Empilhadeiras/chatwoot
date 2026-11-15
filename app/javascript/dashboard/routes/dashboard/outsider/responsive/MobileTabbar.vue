@@ -6,6 +6,9 @@
 // Hierarquia pensada para chegar em qualquer tela com no máximo 3 toques:
 // - 4 módulos fixos (Conversas, CRM, Telefonia, Contatos; os que a pessoa não tem dão a vez aos
 //   próximos) e "Mais" com o resto (Caixa de entrada, Status, Relatórios, Configurações...).
+// - Com ramal ligado, o telefone é o botão redondo do meio da barra (voice/phoneMenu.js): o agente
+//   abre o teclado; o administrador vê "Ligar" e os painéis da Telefonia. Aí ficam 3 módulos fixos,
+//   dois de cada lado do telefone, e a Telefonia sai dos fixos (o agente a encontra em "Mais").
 // - Conversas abre a lista direto (1 toque). Já na lista, tocar de novo em Conversas abre, logo
 //   acima do botão, os filtros e os canais (2 toques para trocar de canal).
 // - Módulo com várias seções (CRM, Telefonia, Contatos) abre as seções logo acima do botão.
@@ -18,7 +21,13 @@ import { useI18n } from 'vue-i18n';
 import { useEventListener, useWindowSize } from '@vueuse/core';
 import { useStore } from 'vuex';
 import { useSidebarContext } from 'dashboard/components-next/sidebar/provider';
-import { phone, setPanelOpen } from '../voice/phone';
+import { phone } from '../voice/phone';
+import {
+  PHONE_DOT,
+  phoneState,
+  revealPhone,
+  usePhonePanels,
+} from '../voice/phoneMenu';
 import { SMALL_SCREEN, viewportState } from './screen';
 import {
   renderIcon,
@@ -35,6 +44,9 @@ const props = defineProps({
 
 const PRIMARY = ['Conversation', 'OutsiderCrm', 'OutsiderVoice', 'Contacts'];
 const PRIMARY_SLOTS = 4;
+const PRIMARY_SLOTS_WITH_PHONE = 3;
+const VOICE = 'OutsiderVoice';
+const PHONE = 'phone';
 const CONVERSATION = 'Conversation';
 // telas que são a conversa aberta ou janelas próprias: sem barra
 const HIDDEN_ROUTES = ['outsider_phone_window', 'inbox_view_conversation'];
@@ -47,18 +59,40 @@ const { isAllowed, resolvePath } = useSidebarContext();
 const { width } = useWindowSize();
 
 const allowed = makeAllowed(isAllowed);
+const { panels: phonePanels } = usePhonePanels();
 
-const modules = computed(() => toModules(props.menuItems, allowed));
+const phoneOn = computed(() => phone.status !== 'off');
+
+const modules = computed(() => {
+  const list = toModules(props.menuItems, allowed);
+  // o administrador já tem os painéis da Telefonia no botão do telefone
+  return phoneOn.value && phonePanels.value.length
+    ? list.filter(m => m.name !== VOICE)
+    : list;
+});
 
 const primaryModules = computed(() => {
-  const list = PRIMARY.map(name =>
-    modules.value.find(m => m.name === name)
-  ).filter(Boolean);
+  const slots = phoneOn.value ? PRIMARY_SLOTS_WITH_PHONE : PRIMARY_SLOTS;
+  const skip = m => phoneOn.value && m.name === VOICE;
+  const list = PRIMARY.map(name => modules.value.find(m => m.name === name))
+    .filter(m => m && !skip(m))
+    .slice(0, slots);
   modules.value.forEach(m => {
-    if (list.length < PRIMARY_SLOTS && !list.includes(m)) list.push(m);
+    if (list.length < slots && !list.includes(m) && !skip(m)) list.push(m);
   });
   return list;
 });
+// com o telefone no meio: metade dos módulos de cada lado dele
+const leftModules = computed(() =>
+  phoneOn.value
+    ? primaryModules.value.slice(0, Math.ceil(primaryModules.value.length / 2))
+    : primaryModules.value
+);
+const rightModules = computed(() =>
+  phoneOn.value
+    ? primaryModules.value.slice(Math.ceil(primaryModules.value.length / 2))
+    : []
+);
 const moreModules = computed(() =>
   modules.value.filter(m => !primaryModules.value.includes(m))
 );
@@ -112,23 +146,66 @@ const openSheet = value => {
 };
 
 const phoneAction = () =>
-  phone.status !== 'off'
+  phoneOn.value
     ? [
         {
-          key: 'phone',
+          key: PHONE,
           label: t('OUTSIDER_RESPONSIVE.OPEN_PHONE'),
           icon: 'i-lucide-phone-call',
-          run: () => setPanelOpen(true),
+          run: () => revealPhone(true),
         },
       ]
     : [];
+
+// ---------- o botão do telefone no meio da barra ----------
+const phoneStatus = computed(() => phoneState());
+const phoneInCall = computed(() => phoneStatus.value === 'in_call');
+const phoneDot = computed(
+  () => PHONE_DOT[phoneStatus.value] || PHONE_DOT.offline
+);
+const phoneTitle = computed(
+  () =>
+    `${t('OUTSIDER_NAV.PHONE.TITLE')} · ${t(`OUTSIDER_NAV.PHONE.STATUS.${phoneStatus.value}`)}`
+);
+
+const phoneSheet = () => ({
+  anchor: PHONE,
+  title: t('OUTSIDER_NAV.PHONE.TITLE'),
+  groups: [
+    {
+      name: 'voice',
+      label: t('OUTSIDER_NAV.PHONE.PANELS'),
+      items: phonePanels.value.map(item => ({
+        name: `phone-${item.key}`,
+        label: t(item.label),
+        icon: item.icon,
+        to: item.to,
+      })),
+    },
+  ],
+  back: null,
+  actions: phoneAction(),
+});
+
+const onPhone = () => {
+  if (sheet.value?.anchor === PHONE) {
+    closeSheet();
+    return;
+  }
+  if (!phonePanels.value.length) {
+    closeSheet();
+    revealPhone(true);
+    return;
+  }
+  openSheet(phoneSheet());
+};
 
 const moduleSheet = (module, anchor, back = null) => ({
   anchor,
   title: module.label,
   groups: module.groups,
   back,
-  actions: module.name === 'OutsiderVoice' ? phoneAction() : [],
+  actions: module.name === VOICE ? phoneAction() : [],
 });
 
 const go = to => {
@@ -153,10 +230,7 @@ const onTab = module => {
     return;
   }
   const items = itemsOf(module);
-  if (
-    items.length === 1 &&
-    !(module.name === 'OutsiderVoice' && phoneAction().length)
-  ) {
+  if (items.length === 1 && !(module.name === VOICE && phoneAction().length)) {
     go(items[0].to);
     return;
   }
@@ -264,7 +338,12 @@ const setButton = (name, el) => {
       <div
         v-if="sheet"
         ref="sheetRef"
-        class="fixed z-[46] w-[min(20rem,calc(100vw-1rem))] bottom-[calc(4.75rem+env(safe-area-inset-bottom))] flex flex-col max-h-[min(70vh,calc(var(--outsider-app-height,100dvh)-7rem))] rounded-2xl border border-n-weak bg-n-solid-1 shadow-2xl outsider-tabbar-sheet"
+        class="fixed z-[46] w-[min(20rem,calc(100vw-1rem))] flex flex-col max-h-[min(70vh,calc(var(--outsider-app-height,100dvh)-7rem))] rounded-2xl border border-n-weak bg-n-solid-1 shadow-2xl outsider-tabbar-sheet"
+        :class="
+          sheet.anchor === PHONE
+            ? 'bottom-[calc(5.75rem+env(safe-area-inset-bottom))]'
+            : 'bottom-[calc(4.75rem+env(safe-area-inset-bottom))]'
+        "
         :style="sheetStyle"
         role="menu"
         data-outsider-tabbar-sheet
@@ -372,15 +451,21 @@ const setButton = (name, el) => {
           class="flex items-center justify-around h-16 gap-1 px-1.5 mx-auto border shadow-lg pointer-events-auto max-w-md rounded-[1.375rem] border-n-weak bg-n-solid-1/95 backdrop-blur-md"
         >
           <button
-            v-for="module in primaryModules"
+            v-for="module in leftModules"
             :key="module.name"
             :ref="el => setButton(module.name, el)"
             type="button"
             class="relative flex items-center justify-center min-w-0 gap-1.5 rounded-full h-11 transition-all duration-200 ease-out"
             :class="
               highlighted === module.name
-                ? 'px-4 bg-n-brand/10 text-n-brand dark:bg-n-brand/30 dark:text-n-slate-12 flex-auto max-w-[11rem]'
-                : 'w-12 flex-none text-n-slate-11 active:bg-n-alpha-2'
+                ? [
+                    'bg-n-brand/10 text-n-brand dark:bg-n-brand/30 dark:text-n-slate-12 flex-auto max-w-[11rem]',
+                    phoneOn ? 'px-3' : 'px-4',
+                  ]
+                : [
+                    'flex-none text-n-slate-11 active:bg-n-alpha-2',
+                    phoneOn ? 'w-11' : 'w-12',
+                  ]
             "
             :aria-label="module.label"
             :aria-current="activeModule === module ? 'page' : undefined"
@@ -394,7 +479,80 @@ const setButton = (name, el) => {
             </span>
             <span
               v-if="highlighted === module.name"
-              class="text-[13px] font-semibold truncate"
+              class="font-semibold truncate"
+              :class="phoneOn ? 'text-xs' : 'text-[13px]'"
+            >
+              {{ module.label }}
+            </span>
+            <span
+              v-if="
+                module.name === 'Conversation' &&
+                activeModule === module &&
+                !sheet
+              "
+              class="i-lucide-chevron-up size-3.5 shrink-0 opacity-70"
+            />
+            <span
+              v-if="moduleCount(module) > 0"
+              class="absolute top-1 ltr:right-[calc(50%-1.1rem)] rtl:left-[calc(50%-1.1rem)] size-2.5 rounded-full ring-2 ring-n-solid-1 outsider-brand-dot"
+              :class="{ hidden: highlighted === module.name }"
+            />
+          </button>
+          <button
+            v-if="phoneOn"
+            :ref="el => setButton(PHONE, el)"
+            type="button"
+            class="relative grid shrink-0 place-items-center text-white transition rounded-full shadow-lg size-14 -translate-y-3 bg-n-brand shadow-black/25 ring-4 ring-n-solid-1 active:scale-95"
+            :class="{ 'brightness-110': highlighted === PHONE }"
+            :aria-label="phoneTitle"
+            :aria-expanded="sheet?.anchor === PHONE"
+            data-testid="outsider-phone-tab"
+            @click="onPhone"
+          >
+            <span
+              v-if="phoneInCall"
+              class="absolute inset-0 rounded-full ring-4 ring-n-teal-9/50 animate-ping"
+            />
+            <span
+              :class="phoneInCall ? 'i-lucide-phone-call' : 'i-lucide-phone'"
+              class="size-6"
+            />
+            <span
+              class="absolute bottom-0.5 ltr:right-0.5 rtl:left-0.5 size-3 rounded-full ring-2 ring-n-solid-1"
+              :class="phoneDot"
+            />
+          </button>
+          <button
+            v-for="module in rightModules"
+            :key="module.name"
+            :ref="el => setButton(module.name, el)"
+            type="button"
+            class="relative flex items-center justify-center min-w-0 gap-1.5 rounded-full h-11 transition-all duration-200 ease-out"
+            :class="
+              highlighted === module.name
+                ? [
+                    'bg-n-brand/10 text-n-brand dark:bg-n-brand/30 dark:text-n-slate-12 flex-auto max-w-[11rem]',
+                    phoneOn ? 'px-3' : 'px-4',
+                  ]
+                : [
+                    'flex-none text-n-slate-11 active:bg-n-alpha-2',
+                    phoneOn ? 'w-11' : 'w-12',
+                  ]
+            "
+            :aria-label="module.label"
+            :aria-current="activeModule === module ? 'page' : undefined"
+            :aria-expanded="sheet?.anchor === module.name"
+            @click="onTab(module)"
+          >
+            <span
+              class="grid shrink-0 size-6 place-content-center [&>span]:size-[22px] [&_svg]:size-[22px]"
+            >
+              <component :is="renderIcon(module.icon)" />
+            </span>
+            <span
+              v-if="highlighted === module.name"
+              class="font-semibold truncate"
+              :class="phoneOn ? 'text-xs' : 'text-[13px]'"
             >
               {{ module.label }}
             </span>

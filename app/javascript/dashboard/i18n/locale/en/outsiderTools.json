@@ -990,7 +990,8 @@
         "failed": "Extension refused",
         "other_tab": "In another tab",
         "in_call": "On a call"
-      }
+      },
+      "PANELS": "Telephony panels"
     },
     "SHOW_ALL": "Show all ({count})",
     "SHOW_LESS": "Show less",
