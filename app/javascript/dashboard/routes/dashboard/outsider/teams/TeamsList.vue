@@ -78,7 +78,11 @@ const teams = computed(() => {
 // presença das pessoas dos chats 1:1 que estão na lista
 let stopPresence = null;
 watch(
-  () => props.threads.map(thread => thread.peer_id).filter(Boolean).join(','),
+  () =>
+    props.threads
+      .map(thread => thread.peer_id)
+      .filter(Boolean)
+      .join(','),
   () => {
     stopPresence?.();
     const ids = props.threads.map(thread => thread.peer_id).filter(Boolean);
@@ -117,10 +121,14 @@ const toggleTeam = team => {
   saveCollapsed();
 };
 const allCollapsed = computed(
-  () => teams.value.length > 0 && teams.value.every(group => isCollapsed(group.team))
+  () =>
+    teams.value.length > 0 &&
+    teams.value.every(group => isCollapsed(group.team))
 );
 const toggleAll = () => {
-  collapsed.value = allCollapsed.value ? [] : teams.value.map(group => group.team);
+  collapsed.value = allCollapsed.value
+    ? []
+    : teams.value.map(group => group.team);
   saveCollapsed();
 };
 // buscando, tudo aberto (senão o resultado some dentro da equipe recolhida)
@@ -128,7 +136,8 @@ const showItems = group => search.value.trim() || !isCollapsed(group.team);
 
 const subtitle = thread => {
   if (thread.chat_type === 'oneOnOne') return t('OUTSIDER_TEAMS_AREA.CHAT_1_1');
-  if (thread.chat_type === 'meeting') return t('OUTSIDER_TEAMS_AREA.CHAT_MEETING');
+  if (thread.chat_type === 'meeting')
+    return t('OUTSIDER_TEAMS_AREA.CHAT_MEETING');
   return t('OUTSIDER_TEAMS_AREA.CHAT_GROUP', { count: thread.members_count });
 };
 
@@ -217,7 +226,9 @@ const goTab = routeKind =>
           type="button"
           class="flex items-start w-full gap-3 p-2.5 text-left rounded-2xl"
           :class="
-            thread.id === selectedId ? 'tms-soft !text-inherit' : 'hover:bg-n-alpha-1'
+            thread.id === selectedId
+              ? 'tms-soft !text-inherit'
+              : 'hover:bg-n-alpha-1'
           "
           data-testid="teams-thread"
           @click="emit('open', thread)"
@@ -225,6 +236,7 @@ const goTab = routeKind =>
           <span class="relative shrink-0">
             <Avatar
               :name="thread.title || '?'"
+              :src="thread.peer_photo || ''"
               :size="42"
               :rounded-full="thread.chat_type === 'oneOnOne'"
             />
@@ -250,7 +262,11 @@ const goTab = routeKind =>
               </span>
               <span
                 class="text-xs shrink-0"
-                :class="thread.unread_count ? 'tms-text font-semibold' : 'text-n-slate-10'"
+                :class="
+                  thread.unread_count
+                    ? 'tms-text font-semibold'
+                    : 'text-n-slate-10'
+                "
               >
                 {{ listTime(thread.last_message_at, t) }}
               </span>
@@ -258,7 +274,11 @@ const goTab = routeKind =>
             <span class="flex items-center gap-2 mt-0.5">
               <span
                 class="flex-1 text-sm truncate"
-                :class="thread.unread_count ? 'text-n-slate-12 font-medium' : 'text-n-slate-11'"
+                :class="
+                  thread.unread_count
+                    ? 'text-n-slate-12 font-medium'
+                    : 'text-n-slate-11'
+                "
               >
                 {{ thread.last_message_preview }}
               </span>
@@ -290,7 +310,11 @@ const goTab = routeKind =>
           @click="toggleAll"
         >
           <Icon
-            :icon="allCollapsed ? 'i-lucide-chevrons-up-down' : 'i-lucide-chevrons-down-up'"
+            :icon="
+              allCollapsed
+                ? 'i-lucide-chevrons-up-down'
+                : 'i-lucide-chevrons-down-up'
+            "
             class="size-3.5"
           />
           {{
@@ -320,7 +344,9 @@ const goTab = routeKind =>
               class="size-3.5 shrink-0"
             />
             <Avatar :name="group.team" :size="20" />
-            <span class="flex-1 min-w-0 text-left truncate">{{ group.team }}</span>
+            <span class="flex-1 min-w-0 text-left truncate">{{
+              group.team
+            }}</span>
             <template v-if="!showItems(group)">
               <span
                 v-if="group.mentions"
@@ -329,7 +355,9 @@ const goTab = routeKind =>
               >
                 @
               </span>
-              <span v-if="group.unread" class="tms-count">{{ group.unread }}</span>
+              <span v-if="group.unread" class="tms-count">{{
+                group.unread
+              }}</span>
             </template>
           </button>
           <button
@@ -338,19 +366,27 @@ const goTab = routeKind =>
             type="button"
             class="flex items-center w-full gap-2.5 px-2.5 py-2 text-left rounded-xl"
             :class="
-              thread.id === selectedId ? 'tms-soft !text-inherit' : 'hover:bg-n-alpha-1'
+              thread.id === selectedId
+                ? 'tms-soft !text-inherit'
+                : 'hover:bg-n-alpha-1'
             "
             data-testid="teams-thread"
             @click="emit('open', thread)"
           >
             <span
               class="flex items-center justify-center rounded-lg size-8 shrink-0"
-              :class="thread.id === selectedId ? 'tms-accent-bg' : 'bg-n-alpha-2 text-n-slate-11'"
+              :class="
+                thread.id === selectedId
+                  ? 'tms-accent-bg'
+                  : 'bg-n-alpha-2 text-n-slate-11'
+              "
             >
               <Icon icon="i-lucide-hash" class="size-4" />
             </span>
             <span class="flex-1 min-w-0">
-              <span class="block text-sm font-semibold truncate text-n-slate-12">
+              <span
+                class="block text-sm font-semibold truncate text-n-slate-12"
+              >
                 {{ thread.title }}
               </span>
               <span class="block text-xs truncate text-n-slate-11">

@@ -184,6 +184,31 @@
       "SAVE": "Marcar",
       "CREATED": "Reunião marcada. Os convidados recebem o convite por e-mail e no Teams.",
       "NEEDS_SCOPE": "A agenda precisa das permissões novas do Teams. Peça ao administrador para aprovar de novo em Configurações > Microsoft Teams e depois clique em \"Entrar de novo\" lá."
+    },
+    "ALBUM": {
+      "PHOTOS": "{count} foto | {count} fotos",
+      "VIDEOS": "{count} vídeo | {count} vídeos",
+      "DOWNLOAD_ALL": "Baixar tudo"
+    },
+    "ZIP_ERROR": "Não deu para preparar o download. Tente de novo.",
+    "SELECT": {
+      "BUTTON": "Selecionar mensagens",
+      "CANCEL": "Cancelar seleção",
+      "COUNT": "{count} selecionada | {count} selecionadas",
+      "DOWNLOAD": "Baixar arquivo | Baixar arquivos ({count})",
+      "ZIP_STARTED": "Preparando o download de {count} arquivo(s)…"
+    },
+    "FORWARD": {
+      "BUTTON": "Encaminhar",
+      "TITLE": "Encaminhar mensagem | Encaminhar {count} mensagens",
+      "SEARCH": "Buscar chat ou canal",
+      "HINT": "Escolha até {count} destinos.",
+      "COMMENT": "Comentário (opcional)",
+      "CHOSEN": "{count} destino | {count} destinos",
+      "CANCEL": "Cancelar",
+      "SEND": "Encaminhar",
+      "DONE": "Encaminhando para {count} destino… | Encaminhando para {count} destinos…",
+      "MAX": "No máximo {count} destinos."
     }
   },
   "OUTSIDER_TEAMS_GRAPH": {
@@ -270,8 +295,8 @@
     "AGO_MIN": "há {n} min",
     "AGO_HOURS": "há {n} h",
     "AGO_DAYS": "há {n} dia | há {n} dias",
-    "CONSENT_OUTDATED": "Tem permissões novas (quem está online, agenda e mencionar qualquer pessoa do canal). Aprove de novo pela empresa; depois cada pessoa clica em \"Entrar de novo\".",
+    "CONSENT_OUTDATED": "Tem permissões novas (quem está online, agenda, foto das pessoas e mencionar qualquer pessoa do canal). Aprove de novo pela empresa; depois cada pessoa clica em \"Entrar de novo\".",
     "CONSENT_AGAIN": "Aprovar de novo",
-    "SCOPE_OUTDATED": "Tem novidades no Teams (quem está online, agenda e mencionar qualquer pessoa do canal). Clique em \"Entrar de novo\" para liberar. O que já funcionava continua até lá."
+    "SCOPE_OUTDATED": "Tem novidades no Teams (quem está online, agenda, foto das pessoas e mencionar qualquer pessoa do canal). Clique em \"Entrar de novo\" para liberar. O que já funcionava continua até lá."
   }
 }

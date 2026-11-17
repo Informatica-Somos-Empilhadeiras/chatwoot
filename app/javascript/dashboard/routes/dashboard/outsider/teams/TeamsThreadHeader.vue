@@ -51,10 +51,13 @@ const presenceText = computed(() => {
 const subtitle = computed(() => {
   const { thread } = props;
   if (thread.kind === 'channel')
-    return t('OUTSIDER_TEAMS_AREA.CHANNEL_OF', { team: thread.team_name || '' });
+    return t('OUTSIDER_TEAMS_AREA.CHANNEL_OF', {
+      team: thread.team_name || '',
+    });
   if (thread.chat_type === 'oneOnOne')
     return presenceText.value || t('OUTSIDER_TEAMS_AREA.CHAT_1_1');
-  if (thread.chat_type === 'meeting') return t('OUTSIDER_TEAMS_AREA.CHAT_MEETING');
+  if (thread.chat_type === 'meeting')
+    return t('OUTSIDER_TEAMS_AREA.CHAT_MEETING');
   return t('OUTSIDER_TEAMS_AREA.CHAT_GROUP', { count: thread.members_count });
 });
 </script>
@@ -80,6 +83,7 @@ const subtitle = computed(() => {
     <span v-else class="relative shrink-0">
       <Avatar
         :name="thread.title || '?'"
+        :src="thread.peer_photo || ''"
         :size="40"
         :rounded-full="thread.chat_type === 'oneOnOne'"
       />
@@ -136,7 +140,9 @@ const subtitle = computed(() => {
       class="flex items-center gap-2 px-3 py-2 text-sm font-semibold border-[1.5px] rounded-xl tms-border tms-text hover:bg-n-alpha-1 shrink-0"
     >
       <TeamsLogo :size="16" />
-      <span class="hidden sm:inline">{{ t('OUTSIDER_TEAMS_AREA.OPEN_IN_TEAMS') }}</span>
+      <span class="hidden sm:inline">{{
+        t('OUTSIDER_TEAMS_AREA.OPEN_IN_TEAMS')
+      }}</span>
     </a>
   </header>
 </template>

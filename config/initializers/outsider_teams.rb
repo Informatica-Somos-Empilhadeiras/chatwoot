@@ -47,6 +47,8 @@ Rails.application.routes.prepend do
                 post 'messages/:message_id/attachments/:index/preview', action: :preview
                 post 'messages/:message_id/react', action: :react
                 get :mentions
+                post :zip
+                post :forward
                 get :members
                 post :read
               end
@@ -62,6 +64,9 @@ Rails.application.routes.prepend do
   post 'outsider/teams/graph/lifecycle', to: 'outsider/teams_graph_webhooks#lifecycle'
   get 'outsider/teams/oauth/callback', to: 'outsider/teams_graph_webhooks#callback'
   get 'outsider/teams/media', to: 'outsider/teams_media#show'
+  get 'outsider/teams/download', to: 'outsider/teams_downloads#file'
+  get 'outsider/teams/zip', to: 'outsider/teams_downloads#zip'
+  get 'outsider/teams/photo', to: 'outsider/teams_photos#show'
 end
 
 # OUTSIDER: "Conectar meu Teams": de hora em hora renova os avisos da Microsoft (valem até 3 dias). Job criado um a um

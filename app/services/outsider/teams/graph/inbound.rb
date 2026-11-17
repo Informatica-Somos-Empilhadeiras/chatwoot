@@ -11,8 +11,9 @@
 class Outsider::Teams::Graph::Inbound
   CHAT = %r{chats\('([^']+)'\)/messages\('([^']+)'\)}
   CHANNEL = %r{teams\('([^']+)'\)/channels\('([^']+)'\)/messages\('([^']+)'\)(?:/replies\('([^']+)'\))?}
-  MAX_IMAGES = 10
-  MAX_FILES = 20
+  # o pessoal manda dezenas de fotos de uma vez
+  MAX_IMAGES = 50
+  MAX_FILES = 60
   REPLY_QUOTE = %r{<blockquote[^>]*itemtype="http://schema\.skype\.com/Reply"[^>]*>.*?</blockquote>}im
 
   def self.parse(resource)
@@ -186,8 +187,12 @@ class Outsider::Teams::Graph::Inbound
     first = Array(list).first
     return '' unless first
 
+    files = Outsider::Teams::Graph::Files
+    photos = Array(list).count { |item| files.kind_of(item) == 'image' }
+    return "📷 #{photos} fotos" if photos > 1 && photos == Array(list).size
     return '🖼 Imagem' if first['kind'] == 'image' && first['hosted'].present?
     return '🎤 Áudio' if first['kind'] == 'audio'
+    return "🎬 #{first['name']}" if files.kind_of(first) == 'video'
 
     "📎 #{first['name']}"
   end
@@ -202,6 +207,7 @@ class Outsider::Teams::Graph::Inbound
       files = Outsider::Teams::Graph::Files
       kind = if files.image?(name) then 'image'
              elsif files.audio?(name) then 'audio'
+             elsif files.video?(name) then 'video'
              else
                'file'
              end

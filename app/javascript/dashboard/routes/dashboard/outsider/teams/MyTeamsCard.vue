@@ -246,7 +246,12 @@ onBeforeUnmount(() => clearTimeout(pollTimer));
       class="p-4 outline outline-1 -outline-offset-1 outline-n-container rounded-2xl bg-n-solid-2"
     >
       <div class="flex flex-wrap items-center gap-3.5">
-        <Avatar :name="me.display_name || '?'" :size="46" rounded-full />
+        <Avatar
+          :name="me.display_name || '?'"
+          :src="me.photo || ''"
+          :size="46"
+          rounded-full
+        />
         <div class="flex-1 min-w-[200px]">
           <h3
             class="flex flex-wrap items-center gap-2 mb-0 text-[15px] font-semibold text-n-slate-12"

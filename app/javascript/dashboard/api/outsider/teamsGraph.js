@@ -115,6 +115,20 @@ class TeamsGraphAPI extends ApiClient {
     return axios.get(`${this.url}/teams_threads/${id}/mentions`);
   }
 
+  // vários arquivos num .zip: items = [{ message_id, index }] -> { url, count }
+  zip(id, items) {
+    return axios.post(`${this.url}/teams_threads/${id}/zip`, { items });
+  }
+
+  // encaminhar mensagens deste chat/canal para até 5 chats/canais
+  forward(id, { messageIds, targetIds, comment }) {
+    return axios.post(`${this.url}/teams_threads/${id}/forward`, {
+      message_ids: messageIds,
+      target_ids: targetIds,
+      comment,
+    });
+  }
+
   // quem está online: ids da Microsoft -> [{ id, availability, activity }]
   presence(ids) {
     return axios.post(`${this.url}/teams_threads/presence`, { ids });

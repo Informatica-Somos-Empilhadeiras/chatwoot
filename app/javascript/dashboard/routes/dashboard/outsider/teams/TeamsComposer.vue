@@ -286,7 +286,12 @@ defineExpose({ focus });
           @mouseenter="mentionIndex = index"
         >
           <span class="relative shrink-0">
-            <Avatar :name="person.name" :size="22" rounded-full />
+            <Avatar
+              :name="person.name"
+              :src="person.photo || ''"
+              :size="22"
+              rounded-full
+            />
             <PresenceDot
               :user-id="person.id"
               :size="8"
@@ -296,18 +301,20 @@ defineExpose({ focus });
           <span class="truncate">{{ person.name }}</span>
         </li>
       </ul>
-    <textarea
-      ref="input"
-      v-model="text"
-      rows="1"
-      class="!m-0 !p-0 !py-1.5 !border-0 !bg-transparent !shadow-none !min-h-0 !h-auto !outline-0 !rounded-none w-full text-sm text-n-slate-12 resize-none"
-      :placeholder="disabled ? t('OUTSIDER_TEAMS_AREA.READ_ONLY') : placeholder"
-      :disabled="disabled"
-      @input="onInput"
-      @keydown="onKeydown"
-      @click="checkMention"
-      @blur="mention = null"
-    />
+      <textarea
+        ref="input"
+        v-model="text"
+        rows="1"
+        class="!m-0 !p-0 !py-1.5 !border-0 !bg-transparent !shadow-none !min-h-0 !h-auto !outline-0 !rounded-none w-full text-sm text-n-slate-12 resize-none"
+        :placeholder="
+          disabled ? t('OUTSIDER_TEAMS_AREA.READ_ONLY') : placeholder
+        "
+        :disabled="disabled"
+        @input="onInput"
+        @keydown="onKeydown"
+        @click="checkMention"
+        @blur="mention = null"
+      />
     </div>
 
     <div v-if="files.length" class="flex flex-wrap gap-1.5 mb-1.5">

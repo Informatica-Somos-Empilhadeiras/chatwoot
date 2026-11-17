@@ -14,10 +14,11 @@ class Outsider::Teams::Graph::Login
   # Versão 2: quem está na equipe/canal (para @mencionar quem ainda não escreveu), quem está online (presença) e a
   # agenda (ver e marcar reunião do Teams). Mudou a lista: suba SCOPE_VERSION; o administrador aprova de novo e cada
   # pessoa entra de novo (as telas avisam; o que já funcionava continua até lá).
-  SCOPE_VERSION = 2
+  # Versão 3: User.ReadBasic.All, para mostrar a foto do perfil das pessoas (Outsider::Teams::Graph::Photo).
+  SCOPE_VERSION = 3
   PERMISSIONS = %w[User.Read Chat.ReadWrite ChatMessage.Send Team.ReadBasic.All Channel.ReadBasic.All ChannelMessage.Read.All
                    ChannelMessage.Send Files.ReadWrite.All TeamMember.Read.All ChannelMember.Read.All Presence.Read.All
-                   Calendars.ReadWrite].freeze
+                   Calendars.ReadWrite User.ReadBasic.All].freeze
   SCOPES = (%w[offline_access openid profile email] + PERMISSIONS).freeze
   STATE_PURPOSE = 'outsider_teams_oauth'.freeze
   TIMEOUT = 15

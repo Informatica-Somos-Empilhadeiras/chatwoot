@@ -184,6 +184,31 @@
       "SAVE": "Schedule",
       "CREATED": "Meeting scheduled. Attendees get the invitation by e-mail and in Teams.",
       "NEEDS_SCOPE": "The calendar needs the new Teams permissions. Ask the administrator to approve again in Settings > Microsoft Teams, then click \"Sign in again\" there."
+    },
+    "ALBUM": {
+      "PHOTOS": "{count} photo | {count} photos",
+      "VIDEOS": "{count} video | {count} videos",
+      "DOWNLOAD_ALL": "Download all"
+    },
+    "ZIP_ERROR": "Could not prepare the download. Try again.",
+    "SELECT": {
+      "BUTTON": "Select messages",
+      "CANCEL": "Cancel selection",
+      "COUNT": "{count} selected | {count} selected",
+      "DOWNLOAD": "Download file | Download files ({count})",
+      "ZIP_STARTED": "Preparing the download of {count} file(s)…"
+    },
+    "FORWARD": {
+      "BUTTON": "Forward",
+      "TITLE": "Forward message | Forward {count} messages",
+      "SEARCH": "Search chat or channel",
+      "HINT": "Pick up to {count} destinations.",
+      "COMMENT": "Comment (optional)",
+      "CHOSEN": "{count} destination | {count} destinations",
+      "CANCEL": "Cancel",
+      "SEND": "Forward",
+      "DONE": "Forwarding to {count} destination… | Forwarding to {count} destinations…",
+      "MAX": "At most {count} destinations."
     }
   },
   "OUTSIDER_TEAMS_GRAPH": {
@@ -270,8 +295,8 @@
     "AGO_MIN": "{n} min ago",
     "AGO_HOURS": "{n} h ago",
     "AGO_DAYS": "{n} day ago | {n} days ago",
-    "CONSENT_OUTDATED": "There are new permissions (presence, calendar and mentioning anyone in the channel). Approve again for the company; then each person clicks \"Sign in again\".",
+    "CONSENT_OUTDATED": "There are new permissions (presence, calendar, profile photos and mentioning anyone in the channel). Approve again for the company; then each person clicks \"Sign in again\".",
     "CONSENT_AGAIN": "Approve again",
-    "SCOPE_OUTDATED": "Teams has new features (presence, calendar and mentioning anyone in the channel). Click \"Sign in again\" to enable them. What already worked keeps working until then."
+    "SCOPE_OUTDATED": "Teams has new features (presence, calendar, profile photos and mentioning anyone in the channel). Click \"Sign in again\" to enable them. What already worked keeps working until then."
   }
 }

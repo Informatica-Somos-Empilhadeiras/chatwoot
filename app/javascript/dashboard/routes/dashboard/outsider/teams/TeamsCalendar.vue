@@ -47,7 +47,8 @@ const weekEnd = computed(() => {
 const weekLabel = computed(() => {
   const end = new Date(weekEnd.value);
   end.setDate(end.getDate() - 1);
-  const fmt = d => d.toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' });
+  const fmt = d =>
+    d.toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' });
   return `${fmt(weekStart.value)} – ${fmt(end)}`;
 });
 
@@ -61,9 +62,13 @@ const days = computed(() => {
     list.push({
       key,
       today: key === today,
-      weekday: d.toLocaleDateString('pt-BR', { weekday: 'long' }).replace(/^\w/, c => c.toUpperCase()),
+      weekday: d
+        .toLocaleDateString('pt-BR', { weekday: 'long' })
+        .replace(/^\w/, c => c.toUpperCase()),
       date: d.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long' }),
-      items: events.value.filter(event => dayOf(event.start) === key && !event.cancelled),
+      items: events.value.filter(
+        event => dayOf(event.start) === key && !event.cancelled
+      ),
     });
   }
   return list;
@@ -80,7 +85,8 @@ const load = async () => {
     });
     events.value = data.payload;
   } catch (e) {
-    error.value = e?.response?.data?.error === 'scope_outdated' ? 'scope' : errorText(e, t);
+    error.value =
+      e?.response?.data?.error === 'scope_outdated' ? 'scope' : errorText(e, t);
   } finally {
     isLoading.value = false;
   }
@@ -163,7 +169,9 @@ const save = async () => {
       attendees: f.attendees.map(item => item.email),
       body: f.body,
     });
-    events.value = [...events.value, data].sort((a, b) => a.start.localeCompare(b.start));
+    events.value = [...events.value, data].sort((a, b) =>
+      a.start.localeCompare(b.start)
+    );
     showForm.value = false;
     useAlert(t('OUTSIDER_TEAMS_AREA.CALENDAR.CREATED'));
   } catch (e) {
@@ -175,7 +183,16 @@ const save = async () => {
 
 const remove = async event => {
   // eslint-disable-next-line no-alert
-  if (!window.confirm(t(event.mine ? 'OUTSIDER_TEAMS_AREA.CALENDAR.CONFIRM_CANCEL' : 'OUTSIDER_TEAMS_AREA.CALENDAR.CONFIRM_REMOVE'))) return;
+  if (
+    !window.confirm(
+      t(
+        event.mine
+          ? 'OUTSIDER_TEAMS_AREA.CALENDAR.CONFIRM_CANCEL'
+          : 'OUTSIDER_TEAMS_AREA.CALENDAR.CONFIRM_REMOVE'
+      )
+    )
+  )
+    return;
   try {
     await TeamsGraphAPI.deleteEvent(event.id);
     events.value = events.value.filter(item => item.id !== event.id);
@@ -207,7 +224,9 @@ onMounted(load);
       >
         <Icon icon="i-lucide-chevron-left" class="size-6" />
       </button>
-      <span class="flex items-center justify-center size-10 rounded-xl tms-soft shrink-0">
+      <span
+        class="flex items-center justify-center size-10 rounded-xl tms-soft shrink-0"
+      >
         <Icon icon="i-lucide-calendar-days" class="size-5" />
       </span>
       <div class="flex-1 min-w-0">
@@ -217,13 +236,25 @@ onMounted(load);
         <p class="mb-0 text-xs text-n-slate-11">{{ weekLabel }}</p>
       </div>
       <span class="flex items-center gap-1">
-        <button type="button" class="grid rounded-lg size-8 place-items-center hover:bg-n-alpha-2 text-n-slate-11" @click="move(-1)">
+        <button
+          type="button"
+          class="grid rounded-lg size-8 place-items-center hover:bg-n-alpha-2 text-n-slate-11"
+          @click="move(-1)"
+        >
           <Icon icon="i-lucide-chevron-left" class="size-5" />
         </button>
-        <button type="button" class="px-2.5 h-8 text-xs font-semibold rounded-lg hover:bg-n-alpha-2 text-n-slate-12" @click="thisWeek">
+        <button
+          type="button"
+          class="px-2.5 h-8 text-xs font-semibold rounded-lg hover:bg-n-alpha-2 text-n-slate-12"
+          @click="thisWeek"
+        >
           {{ t('OUTSIDER_TEAMS_AREA.CALENDAR.THIS_WEEK') }}
         </button>
-        <button type="button" class="grid rounded-lg size-8 place-items-center hover:bg-n-alpha-2 text-n-slate-11" @click="move(1)">
+        <button
+          type="button"
+          class="grid rounded-lg size-8 place-items-center hover:bg-n-alpha-2 text-n-slate-11"
+          @click="move(1)"
+        >
           <Icon icon="i-lucide-chevron-right" class="size-5" />
         </button>
       </span>
@@ -240,7 +271,9 @@ onMounted(load);
     </header>
 
     <div class="flex-1 min-h-0 px-4 py-4 overflow-y-auto md:px-6">
-      <div v-if="isLoading" class="flex justify-center py-10"><Spinner :size="20" /></div>
+      <div v-if="isLoading" class="flex justify-center py-10">
+        <Spinner :size="20" />
+      </div>
       <div
         v-else-if="error === 'scope'"
         class="flex flex-col items-center gap-2 p-6 text-sm text-center rounded-2xl bg-n-amber-3 text-n-amber-11"
@@ -248,7 +281,9 @@ onMounted(load);
         <Icon icon="i-lucide-key-round" class="size-6" />
         {{ t('OUTSIDER_TEAMS_AREA.CALENDAR.NEEDS_SCOPE') }}
       </div>
-      <p v-else-if="error" class="py-6 text-sm text-center text-n-ruby-11">{{ error }}</p>
+      <p v-else-if="error" class="py-6 text-sm text-center text-n-ruby-11">
+        {{ error }}
+      </p>
       <template v-else>
         <section
           v-for="day in days"
@@ -257,7 +292,10 @@ onMounted(load);
           :data-teams-day="day.key"
         >
           <div class="w-[88px] shrink-0 text-xs text-n-slate-11">
-            <b class="block text-sm" :class="day.today ? 'tms-text' : 'text-n-slate-12'">{{ day.weekday }}</b>
+            <b
+              class="block text-sm"
+              :class="day.today ? 'tms-text' : 'text-n-slate-12'"
+              >{{ day.weekday }}</b>
             {{ day.date }}
             <button
               type="button"
@@ -279,21 +317,41 @@ onMounted(load);
               data-teams-event
             >
               <div class="w-[72px] shrink-0 text-xs text-n-slate-11">
-                <template v-if="event.all_day">{{ t('OUTSIDER_TEAMS_AREA.CALENDAR.ALL_DAY') }}</template>
+                <template v-if="event.all_day">
+                  {{ t('OUTSIDER_TEAMS_AREA.CALENDAR.ALL_DAY') }}
+                </template>
                 <template v-else>
-                  <b class="block text-sm text-n-slate-12">{{ timeOf(event.start) }}</b>
+                  <b class="block text-sm text-n-slate-12">{{
+                    timeOf(event.start)
+                  }}</b>
                   {{ timeOf(event.end) }}
                 </template>
               </div>
               <div class="flex-1 min-w-0">
-                <h3 class="flex items-center gap-1.5 mb-0 text-sm font-semibold truncate text-n-slate-12">
-                  <Icon v-if="event.online" icon="i-lucide-video" class="size-4 tms-text shrink-0" />
-                  {{ event.subject || t('OUTSIDER_TEAMS_AREA.CALENDAR.NO_SUBJECT') }}
+                <h3
+                  class="flex items-center gap-1.5 mb-0 text-sm font-semibold truncate text-n-slate-12"
+                >
+                  <Icon
+                    v-if="event.online"
+                    icon="i-lucide-video"
+                    class="size-4 tms-text shrink-0"
+                  />
+                  {{
+                    event.subject ||
+                    t('OUTSIDER_TEAMS_AREA.CALENDAR.NO_SUBJECT')
+                  }}
                 </h3>
                 <p class="mb-0 text-xs truncate text-n-slate-11">
-                  {{ [event.organizer, event.location, responseText(event)].filter(Boolean).join(' · ') }}
+                  {{
+                    [event.organizer, event.location, responseText(event)]
+                      .filter(Boolean)
+                      .join(' · ')
+                  }}
                 </p>
-                <div v-if="event.attendees.length" class="flex items-center gap-1 mt-1.5">
+                <div
+                  v-if="event.attendees.length"
+                  class="flex items-center gap-1 mt-1.5"
+                >
                   <Avatar
                     v-for="person in event.attendees.slice(0, 6)"
                     :key="person.email"
@@ -302,7 +360,10 @@ onMounted(load);
                     rounded-full
                     :title="person.name || person.email"
                   />
-                  <span v-if="event.attendees.length > 6" class="text-[11px] text-n-slate-11">
+                  <span
+                    v-if="event.attendees.length > 6"
+                    class="text-[11px] text-n-slate-11"
+                  >
                     +{{ event.attendees.length - 6 }}
                   </span>
                 </div>
@@ -330,7 +391,13 @@ onMounted(load);
                 <button
                   type="button"
                   class="grid rounded-lg size-8 place-items-center text-n-slate-11 hover:bg-n-alpha-2 hover:text-n-ruby-11"
-                  :title="t(event.mine ? 'OUTSIDER_TEAMS_AREA.CALENDAR.CANCEL' : 'OUTSIDER_TEAMS_AREA.CALENDAR.REMOVE')"
+                  :title="
+                    t(
+                      event.mine
+                        ? 'OUTSIDER_TEAMS_AREA.CALENDAR.CANCEL'
+                        : 'OUTSIDER_TEAMS_AREA.CALENDAR.REMOVE'
+                    )
+                  "
                   @click="remove(event)"
                 >
                   <Icon icon="i-lucide-trash-2" class="size-4" />
@@ -365,9 +432,24 @@ onMounted(load);
           required
         />
         <div class="grid grid-cols-3 gap-2">
-          <input v-model="form.date" type="date" class="!mb-0 text-sm" required />
-          <input v-model="form.start" type="time" class="!mb-0 text-sm" required />
-          <input v-model="form.end" type="time" class="!mb-0 text-sm" required />
+          <input
+            v-model="form.date"
+            type="date"
+            class="!mb-0 text-sm"
+            required
+          />
+          <input
+            v-model="form.start"
+            type="time"
+            class="!mb-0 text-sm"
+            required
+          />
+          <input
+            v-model="form.end"
+            type="time"
+            class="!mb-0 text-sm"
+            required
+          />
         </div>
         <div class="relative">
           <div class="flex flex-wrap gap-1 mb-1">
@@ -377,7 +459,14 @@ onMounted(load);
               class="flex items-center gap-1 px-2 py-0.5 text-xs rounded-full tms-soft"
             >
               {{ person.name }}
-              <button type="button" @click="form.attendees = form.attendees.filter(item => item.email !== person.email)">
+              <button
+                type="button"
+                @click="
+                  form.attendees = form.attendees.filter(
+                    item => item.email !== person.email
+                  )
+                "
+              >
                 <Icon icon="i-lucide-x" class="size-3" />
               </button>
             </span>
@@ -387,7 +476,9 @@ onMounted(load);
             type="text"
             class="!mb-0 text-sm"
             :placeholder="t('OUTSIDER_TEAMS_AREA.CALENDAR.INVITE')"
-            @keydown.enter.prevent="suggestions.length ? addPerson(suggestions[0]) : addEmail()"
+            @keydown.enter.prevent="
+              suggestions.length ? addPerson(suggestions[0]) : addEmail()
+            "
           />
           <ul
             v-if="suggestions.length"
@@ -399,9 +490,16 @@ onMounted(load);
               class="flex items-center gap-2 px-2 py-1.5 text-sm rounded-lg cursor-pointer hover:bg-n-alpha-1 text-n-slate-12"
               @mousedown.prevent="addPerson(person)"
             >
-              <Avatar :name="person.name" :size="22" rounded-full />
+              <Avatar
+                :name="person.name"
+                :src="person.photo || ''"
+                :size="22"
+                rounded-full
+              />
               <span class="truncate">{{ person.name }}</span>
-              <span class="ml-auto text-xs truncate text-n-slate-10">{{ person.email }}</span>
+              <span class="ml-auto text-xs truncate text-n-slate-10">{{
+                person.email
+              }}</span>
             </li>
           </ul>
         </div>
@@ -416,7 +514,11 @@ onMounted(load);
           {{ t('OUTSIDER_TEAMS_AREA.CALENDAR.ONLINE') }}
         </label>
         <div class="flex justify-end gap-2 mt-1">
-          <button type="button" class="px-3 h-9 text-sm rounded-xl hover:bg-n-alpha-2 text-n-slate-11" @click="showForm = false">
+          <button
+            type="button"
+            class="px-3 h-9 text-sm rounded-xl hover:bg-n-alpha-2 text-n-slate-11"
+            @click="showForm = false"
+          >
             {{ t('OUTSIDER_TEAMS_AREA.CALENDAR.CLOSE') }}
           </button>
           <button

@@ -42,6 +42,13 @@ const mediaClass = computed(() =>
 );
 
 const isVideo = attachment => attachment.fileType === ATTACHMENT_TYPES.VIDEO;
+
+// o visualizador recebe as mídias da conversa e também as do álbum (com a data da mensagem): um álbum
+// antigo, fora dos últimos anexos carregados, fica inteiro na fila e na ordem certa
+const viewerAttachments = computed(() => [
+  ...filteredCurrentChatAttachments.value,
+  ...useSnakeCase(attachments.value),
+]);
 </script>
 
 <template>
@@ -100,7 +107,7 @@ const isVideo = attachment => attachment.fileType === ATTACHMENT_TYPES.VIDEO;
     v-if="selectedAttachment"
     show
     :attachment="useSnakeCase(selectedAttachment)"
-    :all-attachments="filteredCurrentChatAttachments"
+    :all-attachments="viewerAttachments"
     @update:show="selectedAttachment = null"
     @close="selectedAttachment = null"
   />

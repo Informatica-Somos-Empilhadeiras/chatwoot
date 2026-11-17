@@ -194,8 +194,9 @@ RSpec.describe 'Outsider Conectar meu Teams (Microsoft Graph)', type: :request d
                                     parentReference: { driveId: 'drive-1' }))
     stub_request(:post, 'https://graph.microsoft.com/v1.0/drives/drive-1/items/item-1/preview')
       .to_return(graph_json(getUrl: 'https://empresa.sharepoint.com/embed?token=1'))
-    stub_request(:get, %r{graph.microsoft.com/v1.0/drives/drive-1/items/item-1\?})
-      .to_return(graph_json('@microsoft.graph.downloadUrl' => 'https://empresa.sharepoint.com/download.aspx?tempauth=x'))
+    stub_request(:get, 'https://graph.microsoft.com/v1.0/drives/drive-1/items/item-1/content')
+      .to_return(status: 302, headers: { 'Location' => 'https://empresa.sharepoint.com/download.aspx?tempauth=x' })
+    stub_request(:get, 'https://empresa.sharepoint.com/download.aspx?tempauth=x').to_return(status: 200, body: 'docx-bytes')
     stub_request(:get, 'https://graph.microsoft.com/v1.0/chats/x/hostedContents/aa/$value')
       .with(headers: { 'Authorization' => 'Bearer token-agente' })
       .to_return(status: 200, body: 'png-bytes', headers: { 'Content-Type' => 'image/png' })
@@ -211,7 +212,8 @@ RSpec.describe 'Outsider Conectar meu Teams (Microsoft Graph)', type: :request d
     expect(message.reload.attachments.first).to include('drive_id' => 'drive-1', 'item_id' => 'item-1', 'size' => 2048)
 
     get file['download_url']
-    expect(response).to redirect_to('https://empresa.sharepoint.com/download.aspx?tempauth=x')
+    expect(response.body).to eq('docx-bytes')
+    expect(response.headers['Content-Disposition']).to include('attachment', 'Proposta.docx')
     get image['thumb_url']
     expect(response.body).to eq('png-bytes')
     expect(response.media_type).to eq('image/png')
@@ -477,7 +479,7 @@ RSpec.describe 'Outsider Conectar meu Teams (Microsoft Graph)', type: :request d
     get "#{api}/teams_graph", headers: agent.create_new_auth_token, as: :json
     expect(response.parsed_body).to include('consent_outdated' => true)
     expect(response.parsed_body['me']).to include('scope_outdated' => true)
-    expect(response.parsed_body['permissions']).to include('Presence.Read.All', 'Calendars.ReadWrite', 'TeamMember.Read.All')
+    expect(response.parsed_body['permissions']).to include('Presence.Read.All', 'Calendars.ReadWrite', 'TeamMember.Read.All', 'User.ReadBasic.All')
     get "#{api}/teams_threads/summary", headers: agent.create_new_auth_token, as: :json
     expect(response.parsed_body).to include('scope_outdated' => true)
 
@@ -493,7 +495,7 @@ RSpec.describe 'Outsider Conectar meu Teams (Microsoft Graph)', type: :request d
     post "#{api}/teams_graph/consent", headers: admin.create_new_auth_token, as: :json
     state = Rack::Utils.parse_query(URI.parse(response.parsed_body['url']).query)['state']
     post "#{api}/teams_graph/finish", params: { admin_consent: 'True', state: state }, headers: admin.create_new_auth_token, as: :json
-    expect(graph_app.reload.consent_version).to eq(2)
+    expect(graph_app.reload.consent_version).to eq(Outsider::Teams::Graph::Login::SCOPE_VERSION)
     stub_request(:post, "https://login.microsoftonline.com/#{tenant}/oauth2/v2.0/token")
       .to_return(graph_json(access_token: 'token-v2', refresh_token: 'refresh-v2', expires_in: 3600))
     stub_request(:get, %r{graph.microsoft.com/v1.0/me\?}).to_return(graph_json(id: 'ms-agent', displayName: 'Agente Teams',
@@ -501,7 +503,7 @@ RSpec.describe 'Outsider Conectar meu Teams (Microsoft Graph)', type: :request d
     stub_request(:post,
                  'https://graph.microsoft.com/beta/subscriptions').to_return(graph_json(id: 'sub-x', expirationDateTime: 2.days.from_now.iso8601))
     Outsider::Teams::Graph::Connect.new(graph_app, agent).perform('codigo-2')
-    expect(link.reload).to have_attributes(scope_version: 2, access_token: 'token-v2')
+    expect(link.reload).to have_attributes(scope_version: Outsider::Teams::Graph::Login::SCOPE_VERSION, access_token: 'token-v2')
 
     # presença: uma pergunta só para a Microsoft, só ids válidos
     presence = stub_request(:post, 'https://graph.microsoft.com/v1.0/communications/getPresencesByUserId')
@@ -532,7 +534,7 @@ RSpec.describe 'Outsider Conectar meu Teams (Microsoft Graph)', type: :request d
 
   it 'keeps the agenda in Microsoft: reads it in the person time zone, marks Teams meetings and cancels them' do
     api = "/api/v1/accounts/#{account.id}/outsider"
-    link.update!(scope_version: 2, access_token: 'token-v2')
+    link.update!(scope_version: Outsider::Teams::Graph::Login::SCOPE_VERSION, access_token: 'token-v2')
     view = stub_request(:get, %r{graph.microsoft.com/v1.0/me/calendarView\?})
            .with(headers: { 'Prefer' => 'outlook.timezone="America/Sao_Paulo"', 'Authorization' => 'Bearer token-v2' })
            .to_return(graph_json(value: [{ id: 'ev-1', subject: 'Reunião de vendas', start: { dateTime: '2026-11-10T09:00:00.0000000' },

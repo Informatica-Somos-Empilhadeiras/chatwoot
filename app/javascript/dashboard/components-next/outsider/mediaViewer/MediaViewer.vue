@@ -4,6 +4,8 @@
 // então todo lugar que abria a galeria (balões, álbum, arquivos do contato) abre este.
 // Mostra quem mandou e quando, a posição ("3 de 12"), a fila de miniaturas embaixo (a atual em
 // destaque), ir até a mensagem, encaminhar, baixar, zoom e girar. Setas do teclado e Esc.
+// A área Teams usa o mesmo visualizador com `actions` (baixar, encaminhar e ir até a mensagem do Teams) e
+// itens montados por ela (file_name, thumb_url e download_url próprios).
 import { ref, computed, watch, nextTick, useTemplateRef } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
@@ -23,6 +25,8 @@ const props = defineProps({
   attachment: { type: Object, required: true },
   allAttachments: { type: Array, required: true },
   autoPlay: { type: Boolean, default: false },
+  // fora das conversas do Chatwoot (área Teams): { download(item), forward(item), jump(item) }
+  actions: { type: Object, default: null },
 });
 
 const emit = defineEmits(['close']);
@@ -34,11 +38,34 @@ const currentUser = useMapGetter('getCurrentUser');
 const currentChat = useMapGetter('getSelectedChat');
 const accountId = useMapGetter('getCurrentAccountId');
 
+// anexo que chegou com a conversa aberta não traz a data (só os que vêm da lista de anexos trazem):
+// usa a data da mensagem; sem ela, vai para o fim (é o mais novo). Antes ia para o começo, e a foto
+// clicada de um álbum recém-chegado aparecia como a primeira da fila.
+const messageTimes = computed(() => {
+  const map = new Map();
+  (currentChat.value?.messages || []).forEach(message => {
+    if (message?.id) map.set(message.id, message.created_at);
+  });
+  return map;
+});
+const withTime = item =>
+  item.created_at
+    ? item
+    : {
+        ...item,
+        created_at:
+          messageTimes.value.get(item.message_id) || Number.MAX_SAFE_INTEGER,
+      };
+const keyOf = item => item?.id || item?.data_url;
+
 const items = computed(() => {
-  const list = props.allAttachments.filter(isViewable);
-  if (!list.some(item => item.id === props.attachment.id) && isViewable(props.attachment)) {
-    list.push(props.attachment);
-  }
+  const seen = new Set();
+  const list = [];
+  [...props.allAttachments, props.attachment].forEach(item => {
+    if (!isViewable(item) || seen.has(keyOf(item))) return;
+    seen.add(keyOf(item));
+    list.push(withTime(item));
+  });
   return list.sort(byOldest);
 });
 
@@ -53,11 +80,19 @@ const findStart = () => {
   ];
   const found = tries
     .map(test => items.value.findIndex(test))
-    .find(index => index >= 0);
+    .find(position => position >= 0);
   return found ?? 0;
 };
 
-const index = ref(findStart());
+// a posição segue o anexo aberto (e não o número): se a lista crescer ou mudar de ordem enquanto o
+// visualizador está aberto (anexos carregando, mensagem nova), continua na mesma foto
+const activeKey = ref(keyOf(items.value[findStart()] || props.attachment));
+const index = computed(() => {
+  const position = items.value.findIndex(
+    item => keyOf(item) === activeKey.value
+  );
+  return position >= 0 ? position : 0;
+});
 const active = computed(() => items.value[index.value] || props.attachment);
 const type = computed(() => active.value.file_type);
 const isImage = computed(() => type.value === 'image');
@@ -83,7 +118,9 @@ const sender = computed(() => {
   const data = active.value.sender || {};
   const isMe = data.type === 'user' && data.id === currentUser.value?.id;
   return {
-    name: isMe ? t('OUTSIDER_WHATSAPP.LOOK.YOU') : data.name || data.available_name || '',
+    name: isMe
+      ? t('OUTSIDER_WHATSAPP.LOOK.YOU')
+      : data.name || data.available_name || '',
     avatar: data.thumbnail || data.avatar_url || '',
   };
 });
@@ -97,7 +134,9 @@ const when = computed(() => {
   });
 });
 
-const fileName = computed(() => fileNameOf(active.value));
+const fileName = computed(
+  () => active.value.file_name || fileNameOf(active.value)
+);
 
 const close = () => {
   show.value = false;
@@ -106,7 +145,7 @@ const close = () => {
 
 const go = target => {
   if (target < 0 || target >= total.value || target === index.value) return;
-  index.value = target;
+  activeKey.value = keyOf(items.value[target]);
   resetZoomAndRotation();
 };
 
@@ -117,13 +156,19 @@ watch(
     await nextTick();
     stripRef.value
       ?.querySelectorAll('[data-thumb]')
-      [current]?.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' });
+      [
+        current
+      ]?.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' });
   },
   { immediate: true }
 );
 
 const isDownloading = ref(false);
 const download = async () => {
+  if (props.actions?.download) {
+    props.actions.download(active.value);
+    return;
+  }
   const { file_type: fileType, data_url: url, extension } = active.value;
   try {
     isDownloading.value = true;
@@ -136,8 +181,16 @@ const download = async () => {
 };
 
 // encaminhar sai pela caixa da conversa aberta (como o encaminhar da mensagem)
-const canForward = computed(() => !!currentChat.value?.id && !!active.value.id);
+const canForward = computed(() =>
+  props.actions
+    ? !!props.actions.forward
+    : !!currentChat.value?.id && !!active.value.id
+);
 const forward = () => {
+  if (props.actions?.forward) {
+    props.actions.forward(active.value);
+    return;
+  }
   emitter.emit('CMD_OPEN_CUSTOM_FORWARD', {
     content: '',
     attachments: [{ id: active.value.id }],
@@ -145,9 +198,18 @@ const forward = () => {
   });
 };
 
-const canJump = computed(() => !!active.value.message_id);
+const canJump = computed(() =>
+  props.actions ? !!props.actions.jump : !!active.value.message_id
+);
 const goToMessage = () => {
-  const { message_id: messageId, conversation_id: conversationId } = active.value;
+  if (props.actions?.jump) {
+    const target = active.value;
+    close();
+    props.actions.jump(target);
+    return;
+  }
+  const { message_id: messageId, conversation_id: conversationId } =
+    active.value;
   close();
   const chatId = currentChat.value?.id;
   if (!conversationId || conversationId === chatId) {
@@ -187,7 +249,9 @@ const thumbOf = item => item.thumb_url || item.data_url;
           rounded-full
         />
         <div class="flex flex-col min-w-0 shrink-0 max-w-[30%]">
-          <span class="text-[15px] font-medium truncate">{{ sender.name }}</span>
+          <span class="text-[15px] font-medium truncate">{{
+            sender.name
+          }}</span>
           <span class="text-xs text-white/60">{{ when }}</span>
         </div>
         <span
@@ -250,7 +314,11 @@ const thumbOf = item => item.thumb_url || item.data_url;
             @click="download"
           >
             <span
-              :class="isDownloading ? 'i-lucide-loader-circle animate-spin' : 'i-lucide-download'"
+              :class="
+                isDownloading
+                  ? 'i-lucide-loader-circle animate-spin'
+                  : 'i-lucide-download'
+              "
               class="size-5"
             />
           </button>
@@ -267,7 +335,10 @@ const thumbOf = item => item.thumb_url || item.data_url;
         </div>
       </header>
 
-      <main class="relative flex items-center flex-1 min-h-0" @click.self="close">
+      <main
+        class="relative flex items-center flex-1 min-h-0"
+        @click.self="close"
+      >
         <button
           v-if="total > 1"
           type="button"
@@ -275,7 +346,9 @@ const thumbOf = item => item.thumb_url || item.data_url;
           :disabled="index === 0"
           @click.stop="go(index - 1)"
         >
-          <span class="ltr:i-lucide-chevron-left rtl:i-lucide-chevron-right size-6" />
+          <span
+            class="ltr:i-lucide-chevron-left rtl:i-lucide-chevron-right size-6"
+          />
         </button>
 
         <div
@@ -340,7 +413,9 @@ const thumbOf = item => item.thumb_url || item.data_url;
           :disabled="index === total - 1"
           @click.stop="go(index + 1)"
         >
-          <span class="ltr:i-lucide-chevron-right rtl:i-lucide-chevron-left size-6" />
+          <span
+            class="ltr:i-lucide-chevron-right rtl:i-lucide-chevron-left size-6"
+          />
         </button>
 
         <span
@@ -348,7 +423,12 @@ const thumbOf = item => item.thumb_url || item.data_url;
           class="absolute px-3 py-1 text-xs font-medium -translate-x-1/2 rounded-full pointer-events-none bottom-3 left-1/2 bg-black/50 tabular-nums"
           data-viewer-position
         >
-          {{ t('OUTSIDER_WHATSAPP.VIEWER.POSITION', { current: index + 1, total }) }}
+          {{
+            t('OUTSIDER_WHATSAPP.VIEWER.POSITION', {
+              current: index + 1,
+              total,
+            })
+          }}
         </span>
       </main>
 
@@ -380,22 +460,28 @@ const thumbOf = item => item.thumb_url || item.data_url;
               class="object-cover size-full"
             />
             <template v-else-if="['video', 'ig_reel'].includes(item.file_type)">
+              <img
+                v-if="item.thumb_url"
+                :src="item.thumb_url"
+                loading="lazy"
+                class="object-cover size-full"
+              />
               <video
+                v-else
                 :src="item.data_url"
                 preload="metadata"
                 muted
                 class="object-cover size-full pointer-events-none"
               />
               <span class="absolute inset-0 grid place-items-center">
-                <span class="grid rounded-full size-7 place-items-center bg-black/50">
+                <span
+                  class="grid rounded-full size-7 place-items-center bg-black/50"
+                >
                   <span class="i-lucide-play size-4" />
                 </span>
               </span>
             </template>
-            <span
-              v-else
-              class="grid size-full place-items-center bg-[#F59E0B]"
-            >
+            <span v-else class="grid size-full place-items-center bg-[#F59E0B]">
               <span class="i-lucide-headphones size-6" />
             </span>
           </button>

@@ -13,6 +13,8 @@
 #     conversas da pessoa (para convidar para uma reunião).
 #   react: reage a uma mensagem (ou tira a reação) em nome da pessoa, como no Teams.
 #   mentions: as mensagens que citaram a pessoa neste chat ou canal (últimos 60 dias), para ir de uma a outra.
+#   zip: endereço para baixar vários arquivos num .zip (Outsider::TeamsDownloadsController).
+#   forward: encaminhar mensagens para outros chats/canais da pessoa (Outsider::Teams::Graph::Forward).
 class Api::V1::Accounts::Outsider::TeamsThreadsController < Api::V1::Accounts::BaseController
   CHAT_PAGE = 50
   MENTION_DAYS = 60
@@ -55,7 +57,7 @@ class Api::V1::Accounts::Outsider::TeamsThreadsController < Api::V1::Accounts::B
     me = my_link.ms_user_id
     people = my_link.threads.pluck(:members).flatten.select { |member| member['id'].present? && member['id'] != me }
     people = people.uniq { |member| member['id'] }.sort_by { |member| member['name'].to_s.downcase }
-    render json: { payload: people.map { |member| member.slice('id', 'name', 'email') } }
+    render json: { payload: people.map { |member| member.slice('id', 'name', 'email').merge('photo' => json.photo(my_link, member['id'])).compact } }
   end
 
   def summary
@@ -121,7 +123,8 @@ class Api::V1::Accounts::Outsider::TeamsThreadsController < Api::V1::Accounts::B
   def members
     @thread.kind == 'chat' ? refresh_chat_members : refresh_team_members
     people = Array(@thread.members).select { |member| member['id'].present? && member['name'].present? && member['id'] != my_link.ms_user_id }
-    render json: { payload: people.uniq { |member| member['id'] }.sort_by { |member| member['name'].downcase }.map { |m| m.slice('id', 'name') } }
+    render json: { payload: people.uniq { |member| member['id'] }.sort_by { |member| member['name'].downcase }
+                                  .map { |m| m.slice('id', 'name').merge('photo' => json.photo(my_link, m['id'])).compact } }
   end
 
   def react
@@ -135,6 +138,38 @@ class Api::V1::Accounts::Outsider::TeamsThreadsController < Api::V1::Accounts::B
     render json: json.message(message.reload)
   rescue ::Outsider::Teams::Graph::Client::Error => e
     render_error("reaction_failed:#{e.message}", :bad_gateway)
+  end
+
+  # vários arquivos num .zip (álbum ou mensagens selecionadas): devolve o endereço assinado que o navegador abre
+  def zip
+    pairs = Array(params[:items]).filter_map do |item|
+      item = item.respond_to?(:permit) ? item.permit(:message_id, :index) : item
+      [item[:message_id].to_i, item[:index].to_i] if item[:message_id].present?
+    end
+    messages = @thread.messages.where(id: pairs.map(&:first)).index_by(&:id)
+    pairs = pairs.select { |id, index| Array(messages[id]&.attachments)[index] && !messages[id].attachments[index]['pending'] }.uniq
+    return render_error('empty', :unprocessable_entity) if pairs.empty?
+
+    zone = Current.account.reporting_timezone.presence || 'America/Sao_Paulo'
+    stamp = Time.current.in_time_zone(ActiveSupport::TimeZone[zone] || 'America/Sao_Paulo').strftime('%Y-%m-%d %Hh%M')
+    name = "Teams - #{@thread.title.to_s.first(60)} - #{stamp}"
+    render json: { url: ::Outsider::Teams::Graph::Files.zip_url(my_link, pairs.first(200), name), count: pairs.size }
+  end
+
+  # encaminhar mensagens deste chat/canal para até 5 chats/canais da própria pessoa
+  def forward
+    return render_error('not_connected', :unprocessable_entity) unless my_link.status == 'active'
+
+    forward_class = ::Outsider::Teams::Graph::Forward
+    sources = @thread.messages.where(id: Array(params[:message_ids]).first(forward_class::MAX_MESSAGES), deleted_at: nil)
+                     .where(status: 'sent').order(:sent_at, :id).to_a
+    targets = my_link.threads.where(id: Array(params[:target_ids]).first(forward_class::MAX_TARGETS)).to_a
+    return render_error('empty', :unprocessable_entity) if sources.empty? || targets.empty?
+
+    created = forward_class.prepare(my_link, sources, targets, comment: params[:comment])
+    created.each { |message| ::Outsider::Teams::Graph::Notifier.message(my_link, message.thread, message, action: 'created') }
+    created.group_by(&:thread_id).each_value { |list| ::Outsider::Teams::Graph::ForwardJob.perform_later(list.map(&:id)) }
+    render json: { count: sources.size, targets: targets.map(&:id) }, status: :created
   end
 
   def mentions

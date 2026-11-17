@@ -176,11 +176,18 @@ const onSend = async ({ content, files }) => {
         :data-teams-message="post.id"
       >
         <div class="flex gap-3 px-4 pt-3 pb-2.5 group">
-          <Avatar :name="post.sender_name || '?'" :size="36" rounded-full />
+          <Avatar
+            :name="post.sender_name || '?'"
+            :src="post.sender_photo || ''"
+            :size="36"
+            rounded-full
+          />
           <div class="flex-1 min-w-0">
             <div class="text-xs text-n-slate-11">
               <b class="mr-1.5 text-sm font-semibold text-n-slate-12">
-                {{ post.mine ? t('OUTSIDER_TEAMS_AREA.YOU') : post.sender_name }}
+                {{
+                  post.mine ? t('OUTSIDER_TEAMS_AREA.YOU') : post.sender_name
+                }}
               </b>
               {{ listTime(post.sent_at, t) }} {{ timeOf(post.sent_at) }}
             </div>
@@ -223,7 +230,9 @@ const onSend = async ({ content, files }) => {
             <p
               v-if="post.status !== 'sent'"
               class="flex items-center gap-1 mt-1 mb-0 text-[11px]"
-              :class="post.status === 'failed' ? 'text-n-ruby-11' : 'text-n-slate-10'"
+              :class="
+                post.status === 'failed' ? 'text-n-ruby-11' : 'text-n-slate-10'
+              "
             >
               {{
                 post.status === 'failed'
@@ -252,10 +261,17 @@ const onSend = async ({ content, files }) => {
             class="flex gap-2.5 text-sm group"
             :data-teams-message="reply.id"
           >
-            <Avatar :name="reply.sender_name || '?'" :size="26" rounded-full />
+            <Avatar
+              :name="reply.sender_name || '?'"
+              :src="reply.sender_photo || ''"
+              :size="26"
+              rounded-full
+            />
             <div class="flex-1 min-w-0">
               <span class="font-semibold text-n-slate-12">
-                {{ reply.mine ? t('OUTSIDER_TEAMS_AREA.YOU') : reply.sender_name }}
+                {{
+                  reply.mine ? t('OUTSIDER_TEAMS_AREA.YOU') : reply.sender_name
+                }}
               </span>
               <span class="ml-1.5 text-xs text-n-slate-10">
                 {{ timeOf(reply.sent_at) }}
@@ -293,7 +309,11 @@ const onSend = async ({ content, files }) => {
               <span
                 v-if="reply.status !== 'sent'"
                 class="text-[11px]"
-                :class="reply.status === 'failed' ? 'text-n-ruby-11' : 'text-n-slate-10'"
+                :class="
+                  reply.status === 'failed'
+                    ? 'text-n-ruby-11'
+                    : 'text-n-slate-10'
+                "
               >
                 {{
                   reply.status === 'failed'

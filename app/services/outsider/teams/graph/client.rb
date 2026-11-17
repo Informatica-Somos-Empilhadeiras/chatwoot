@@ -50,6 +50,25 @@ class Outsider::Teams::Graph::Client
     request(:delete, path, beta: beta)
   end
 
+  # endereço para onde o Graph manda (ex.: /content de um arquivo responde 302 com o endereço temporário de download)
+  def location(path, retried: false)
+    url = "#{V1}#{path}"
+    raise Error, 'host' unless self.class.graph_url?(url)
+
+    response = HTTParty.get(url, headers: { 'Authorization' => "Bearer #{token}" }, timeout: TIMEOUT, follow_redirects: false)
+    if response.code == 401 && !retried
+      @force = true
+      refresh!
+      return location(path, retried: true)
+    end
+    return response.headers['location'].to_s if response.code.between?(300, 399)
+    raise Error.new(error_message(response), response.code) unless response.success?
+
+    nil
+  rescue HTTParty::Error, SocketError, Net::OpenTimeout, Net::ReadTimeout => e
+    raise Error, e.message.first(200)
+  end
+
   # arquivo enviado pelo Chatwoot (até 4 MB de uma vez; maiores vão por sessão de envio, ver Files#upload)
   def put_bytes(path, bytes, content_type)
     request(:put, path, raw: bytes, content_type: content_type.presence || 'application/octet-stream')

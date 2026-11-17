@@ -6,25 +6,36 @@
 class Outsider::TeamsMediaController < ActionController::API
   def show
     data = Outsider::Teams::Graph::Files.read_media(params[:t])
+    # Baixar de antes desta versão (endereço antigo ainda na tela): vai para o download pelo Chatwoot
+    return redirect_to("#{Outsider::Teams::Graph::Files::DOWNLOAD_PATH}?t=#{CGI.escape(params[:t].to_s)}") if data&.dig('k') == 'download'
+
     message = data && Outsider::TeamsMessage.includes(thread: :link).find_by(id: data['m'])
     @attachment = message && Array(message.attachments)[data['i'].to_i]
     @link = message&.thread&.link
-    return head(:not_found) unless @attachment && @link&.status == 'active'
+    return missing(data ? 'not_found' : 'token') unless @attachment
+    return missing("link_#{@link&.status}") unless @link&.status == 'active'
 
     @files = Outsider::Teams::Graph::Files.new(@link)
     @attachment = @files.resolve!(message, data['i'].to_i) if @attachment['hosted'].blank?
     respond_with(data['k'])
-  rescue Outsider::Teams::Graph::Client::Error
-    head :bad_gateway
+  rescue Outsider::Teams::Graph::Client::Error => e
+    Rails.logger.warn("[outsider_teams_media] #{data&.dig('k')} message=#{data&.dig('m')} graph: #{e.message}")
+    head(e.status.to_i.in?([403, 404]) ? :not_found : :bad_gateway)
   end
 
   private
 
+  def missing(reason)
+    Rails.logger.info("[outsider_teams_media] 404 #{reason}")
+    head :not_found
+  end
+
   def respond_with(kind)
     return send_hosted(kind == 'download' ? 'attachment' : 'inline') if @attachment['hosted'].present?
     # bytes=1: o áudio passa pelo Chatwoot (para a transcrição no navegador ler o arquivo sem bloqueio de origem)
-    return pass_through(@files.download_url(@attachment)) if kind == 'audio' && params[:bytes].present?
-    return go(@files.download_url(@attachment)) if %w[download audio].include?(kind)
+    return pass_through(@files.content_location(@attachment)) if kind == 'audio' && params[:bytes].present?
+    # áudio, vídeo e imagem inteira (visualizador): direto do endereço temporário da Microsoft (aceita pular no vídeo)
+    return go(@files.content_location(@attachment)) if %w[audio video full].include?(kind)
 
     go(@files.thumbnail_url(@attachment, kind == 'image' ? 'large' : 'medium'))
   end

@@ -114,6 +114,7 @@ const disconnect = async link => {
               <span class="flex items-center gap-2.5 min-w-0">
                 <Avatar
                   :name="link.user_name || link.display_name || '?'"
+                  :src="link.photo || ''"
                   :size="28"
                   rounded-full
                 />

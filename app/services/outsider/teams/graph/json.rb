@@ -8,7 +8,7 @@ module Outsider::Teams::Graph::Json
       team_name: thread.team_name, channel_id: thread.channel_id, members_count: Array(thread.members).size,
       last_message_preview: thread.last_message_preview, last_message_at: thread.last_message_at&.iso8601,
       unread_count: thread.unread_count, mention_count: thread.mention_count, last_read_at: thread.last_read_at&.iso8601,
-      web_url: web_url(thread), peer_id: peer_id(thread)
+      web_url: web_url(thread), peer_id: peer_id(thread), peer_photo: photo(thread.link, peer_id(thread))
     }
   end
 
@@ -20,10 +20,17 @@ module Outsider::Teams::Graph::Json
     Array(thread.members).find { |member| member['id'].present? && member['id'] != me }&.dig('id')
   end
 
+  # foto do perfil (Outsider::Teams::Graph::Photo): endereço assinado, nil sem id
+  def photo(link, ms_id)
+    Outsider::Teams::Graph::Photo.url(link, ms_id)
+  end
+
   def message(message)
     {
       id: message.id, thread_id: message.thread_id, graph_id: message.graph_id, reply_to_graph_id: message.reply_to_graph_id,
-      mine: message.mine, sender_name: message.sender_name, subject: message.subject, content: message.content,
+      mine: message.mine, sender_name: message.sender_name, sender_ms_id: message.sender_ms_id,
+      sender_photo: photo(message.thread&.link, message.sender_ms_id), subject: message.subject,
+      content: message.content,
       quote: message.quote, mentions_me: message.mentions_me, status: message.status, error: message.error,
       sent_at: message.sent_at.iso8601, edited_at: message.edited_at&.iso8601, deleted: message.deleted_at.present?,
       attachments: attachments(message), reactions: reactions(message)
@@ -39,7 +46,7 @@ module Outsider::Teams::Graph::Json
     end
   end
 
-  # miniatura e download por endereço assinado (vale 2 horas); visualizar pede o endereço na hora (preview)
+  # miniatura e download por endereço assinado (vale 12 horas); visualizar pede o endereço na hora (preview)
   def attachments(message)
     files = Outsider::Teams::Graph::Files
     Array(message.attachments).each_with_index.map do |attachment, index|
@@ -53,6 +60,11 @@ module Outsider::Teams::Graph::Json
                    end,
         download_url: ready ? files.media_url(message, index, 'download') : nil,
         audio_url: ready && kind == 'audio' ? files.media_url(message, index, 'audio') : nil,
+        # visualizador: o vídeo e a foto inteira (a miniatura 'image' da Microsoft tem no máximo 800 px)
+        video_url: ready && kind == 'video' ? files.media_url(message, index, 'video') : nil,
+        full_url: if ready && kind == 'image'
+                    files.media_url(message, index, attachment['hosted'].present? ? 'image' : 'full')
+                  end,
         edit_url: edit_url(attachment),
         # transcrição feita no navegador (Outsider::Transcricao)
         transcript: attachment['transcript'].presence, transcript_meta: attachment['transcript_meta']
@@ -71,7 +83,8 @@ module Outsider::Teams::Graph::Json
     return nil unless link
 
     {
-      id: link.id, user_id: link.user_id, user_name: link.user&.name, display_name: link.display_name, email: link.email,
+      id: link.id, user_id: link.user_id, photo: photo(link, link.ms_user_id), user_name: link.user&.name,
+      display_name: link.display_name, email: link.email,
       status: link.status, last_error: link.last_error, sync_chats: link.sync_chats, channels: link.channel_list,
       all_channels: link.all_channels, hidden_channels: Array(link.hidden_channels), history_at: link.history_at&.iso8601,
       channel_view: link.channel_view,
