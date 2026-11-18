@@ -1,0 +1,16 @@
+const env = process.env;
+
+export const config = {
+  port: Number(env.PORT || 4000),
+  erpBaseUrl: (env.ERP_BASE_URL || 'https://somos-backend.inntegra.com.br').replace(/\/$/, ''),
+  empresas: (env.ERP_EMPRESAS || 'somosemp').split(',').map(s => s.trim()).filter(Boolean),
+  deviceId: env.ERP_DEVICE_ID || '',
+  lookbackDays: Number(env.OS_LOOKBACK_DAYS || 180),
+  forwardDays: Number(env.OS_FORWARD_DAYS || 365),
+  tipoData: env.OS_TIPO_DATA || 'DataEntrada',
+  cacheTtlMs: Number(env.CACHE_TTL_SECONDS || 120) * 1000,
+  timeoutMs: Number(env.ERP_TIMEOUT_MS || 15000),
+  userAgent: env.ERP_USER_AGENT || 'somos-chatwoot-bridge/0.1',
+  mock: String(env.MOCK || 'false').toLowerCase() === 'true',
+  bridgeToken: env.BRIDGE_TOKEN || '',
+};

@@ -1,0 +1,33 @@
+// Mapeia um objeto cru do valoresDash para um shape limpo para a UI.
+export function normalizeOs(o) {
+  return {
+    codigo: o.CodigoOS,
+    situacao: o.Situacao,
+    statusKanban: o.StatusKanban,
+    subStatus: o.SubStatus,
+    cor: o.Cor,
+    tipoAtendimento: o.TipoAtendimento,
+    tipoOS: o.TipoOS,
+    empresa: o.Empresa,
+    codigoCliente: o.CodigoCliente,
+    cliente: o.Nome,
+    cidade: o.Cidade,
+    uf: o.UF,
+    maquina: o.DescricaoMaquina,
+    familiaMaquina: o.DescricaoFamiliaMaquina,
+    nSerie: o.NSerie,
+    codigoMaquina: o.CodigoMaquina,
+    tecnico: o.NomeTecnico,
+    vendedor: o.NomeVendedor,
+    atendente: o.NomeAtendente,
+    dataEntrada: o.DataEntrada,
+    dataPrevisao: o.DataPrevisao,
+    dataEntrega: o.DataEntrega,
+    diasAtraso: o.DiasAtraso,
+    qtdProduto: o.QtdProduto,
+    qtdServico: o.QtdServico,
+    observacoes: o.Observacoes,
+    defeitos: o.Defeitos,
+    statusMaquina: o.StatusMaquina,
+  };
+}
