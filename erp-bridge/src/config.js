@@ -13,4 +13,7 @@ export const config = {
   userAgent: env.ERP_USER_AGENT || 'somos-chatwoot-bridge/0.1',
   mock: String(env.MOCK || 'false').toLowerCase() === 'true',
   bridgeToken: env.BRIDGE_TOKEN || '',
+  // Escrita (OFF por padrao). So habilite apontando no ERP real com cuidado.
+  writeEnabled: String(env.WRITE_ENABLED || 'false').toLowerCase() === 'true',
+  idUsuario: env.ERP_ID_USUARIO || '0',
 };

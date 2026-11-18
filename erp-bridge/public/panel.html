@@ -67,6 +67,10 @@
             <div><span class="text-slate-400">Tecnico:</span> ${esc(o.tecnico || '-')} &nbsp; <span class="text-slate-400">Vendedor:</span> ${esc(o.vendedor || '-')}</div>
             ${o.observacoes ? `<div class="text-slate-500 pt-1 border-t border-slate-100 mt-1">${esc(o.observacoes)}</div>` : ''}
           </div>
+          <div class="flex gap-1 pt-2 mt-2 border-t border-slate-100">
+            <input class="ss-in flex-1 text-[11px] px-1.5 py-1 border border-slate-300 rounded" value="${esc(o.subStatus || '')}" data-cod="${esc(o.codigo)}" data-emp="${esc(o.empresa || '')}" data-old="${esc(o.subStatus || '')}" />
+            <button type="button" class="ss-save text-[11px] px-2 py-1 rounded bg-slate-800 text-white hover:bg-slate-700">Salvar substatus</button>
+          </div>
         </div>`;
     }
 
@@ -131,6 +135,25 @@
     });
     document.getElementById('search').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('searchBtn').click(); });
     document.getElementById('reload').addEventListener('click', recarregarPorContato);
+
+    // Salvar substatus de uma OS (escrita gated no backend por WRITE_ENABLED)
+    document.getElementById('list').addEventListener('click', async (e) => {
+      if (!e.target.classList.contains('ss-save')) return;
+      const inp = e.target.previousElementSibling;
+      const cod = inp.dataset.cod, emp = inp.dataset.emp, old = inp.dataset.old, novo = inp.value.trim();
+      if (!novo) return;
+      const btn = e.target; btn.disabled = true; const txt = btn.textContent; btn.textContent = 'Salvando...';
+      try {
+        const res = await fetch(`/api/os/${encodeURIComponent(cod)}/substatus`, {
+          method: 'PUT', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ subStatusNovo: novo, subStatusAntigo: old, empresa: emp }),
+        });
+        const d = await res.json().catch(() => ({}));
+        btn.textContent = res.ok ? (d.mock ? 'OK (mock)' : 'Salvo') : (d.error || 'Falhou');
+        if (res.ok) inp.dataset.old = novo;
+      } catch (_) { btn.textContent = 'Erro'; }
+      setTimeout(() => { btn.disabled = false; btn.textContent = txt; }, 2500);
+    });
 
     // Fallback para abrir fora do Chatwoot (dev): sem contexto, espera busca manual.
     document.getElementById('sub').textContent = 'Aguardando contexto do Chatwoot...';

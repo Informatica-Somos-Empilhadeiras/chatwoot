@@ -35,11 +35,25 @@ O `valoresDash` **não retorna CNPJ/telefone** — só `CodigoCliente` e `Nome`.
 - **Confiável:** grave o `CodigoCliente` do ERP no contato como atributo custom `erp_codigo_cliente`. O painel casa por ele.
 - **Reforço:** busca por nome (aproximada) e busca manual por nº de OS / nome.
 
+## Escrita de campos de OS (parcial, confirmada por captura)
+
+Endpoints reais capturados do app oficial (edição de OS existente). Habilite com `WRITE_ENABLED=true`.
+
+| Operação | Endpoint | Body |
+|---|---|---|
+| Trocar substatus | `PUT /KanbanOrdemServico/api/UpdateSubStatusOS/{CodigoOS}` + `PUT .../GravaHistoricoSubStatusOS/{CodigoOS}` | `{SubStatus, listaEmpresas, Empresa}` / `{SubStatusAntigo, SubStatusNovo, listaEmpresas, idUsuario, Empresa}` |
+| Atualizar defeitos | `PUT /KanbanOrdemServico/api/UpdateDefeitos/{CodigoOS}` | `{Defeitos, listaEmpresas, Empresa}` |
+
+Rotas do bridge (gated por `WRITE_ENABLED`):
+- `PUT /api/os/:codigo/substatus` → `{subStatusNovo, subStatusAntigo, empresa}` (faz o par Update + GravaHistorico)
+- `PUT /api/os/:codigo/campo/:campo` → `{valor, empresa}` (campos confirmados; hoje: `Defeitos`)
+
+> **Limite conhecido:** criar/editar a OS inteira e excluir OS **não** existem nesta API web — só no sistema desktop (que escreve direto no MySQL). Outros campos (`Observacoes`, `Previsao`, `Tecnico`…) têm cada um seu `Update<Campo>`; o nome exato precisa ser **confirmado por captura** antes de entrar em `src/erpWrite.js` (a nomenclatura varia: `UpdateSubStatusOS` vs `UpdateDefeitos`). **Teste sempre numa OS segura/homologação antes de produção.**
+
 ## Status e próximas fases
 
-- [x] **Fase 1 (esta):** espelho read-only de OS (API `valoresDash`), com cache e matching.
-- [ ] **Fase 2:** orçamentos — depende de **capturar o endpoint de orçamento** (não apareceu no HAR) ou leitura via banco on-prem.
-- [ ] **Fase 3:** escrita (criar/editar OS e orçamento) — depende de **endpoint de escrita sancionado pela Inntegra**. Ver `docs/`.
+- [x] **Fase 1:** espelho read-only de OS (`valoresDash`), com cache e matching.
+- [x] **Fase 3a:** escrita de campos de OS existente (substatus, defeitos) — confirmada por captura, gated.
+- [ ] **Fase 2:** orçamentos — endpoint encontrado: `cotacaoDesempenho/api/valoresDash` (`CodigoOrcamento`, `OrdemServico`, `Status`, `ValorTotal`).
+- [ ] **Fase 3b:** mais campos de update (confirmar cada endpoint por captura); criar/excluir OS depende do desktop ou de endpoint sancionado da Inntegra.
 - [ ] **Fase 4:** agendamento → Teams (Microsoft Graph) / Google Agenda + aviso aos envolvidos (cliente via Chatwoot/WhatsApp).
-
-> Este serviço só faz **GET** no ERP. Qualquer escrita será adicionada apenas sobre endpoint autorizado.
