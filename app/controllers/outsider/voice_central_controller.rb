@@ -29,7 +29,17 @@ class Outsider::VoiceCentralController < ActionController::API
 
   def outbound
     render plain: router.outbound(linkedid: params.require(:linkedid), extension: params[:extension], number: params[:number],
-                                  deal: params[:deal])
+                                  deal: params[:deal], line: params[:line].presence)
+  end
+
+  # OUTSIDER (técnicos): ramal sem telefone conectado. Manda o push de ligação e diz quantos segundos esperar (0: ninguém
+  # para acordar, a central segue como antes). wake_status: o que a pessoa fez no aviso (accept|segundos, decline ou wait).
+  def wake
+    render plain: wake_service.start(linkedid: params.require(:linkedid), extension: params[:extension], target: params[:target].to_s).to_s
+  end
+
+  def wake_status
+    render plain: wake_service.status(linkedid: params.require(:linkedid), target: params[:target].to_s)
   end
 
   def internal
@@ -39,6 +49,7 @@ class Outsider::VoiceCentralController < ActionController::API
 
   def answered
     events.answered(linkedid: params.require(:linkedid), endpoint: params[:endpoint])
+    wake_service.finish(linkedid: params[:linkedid], answered: true)
     render plain: ''
   end
 
@@ -46,6 +57,7 @@ class Outsider::VoiceCentralController < ActionController::API
     linkedid = params.require(:linkedid)
     events.hangup(linkedid: linkedid, dialstatus: params[:dialstatus], cause: params[:cause])
     monitor_access.finish(linkedid)
+    wake_service.finish(linkedid: linkedid, answered: params[:dialstatus] == 'ANSWER')
     render plain: ''
   end
 
@@ -124,6 +136,10 @@ class Outsider::VoiceCentralController < ActionController::API
 
   def monitor_access
     Outsider::Voice::MonitorAccess.new(@settings)
+  end
+
+  def wake_service
+    Outsider::Voice::Wake.new(@settings)
   end
 
   def ivr_prompts

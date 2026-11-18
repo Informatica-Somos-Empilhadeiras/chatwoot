@@ -12,6 +12,8 @@ import BotFlowEditor from '../bot/BotFlowEditor.vue';
 import TeamsSettings from '../teams/TeamsSettings.vue';
 import TeamsArea from '../teams/TeamsArea.vue';
 import PushSettings from '../push/PushSettings.vue';
+// perfis de acesso por tela (Administrador, Agente, Técnico e os criados) e o cadastro de pessoas com ramal
+import AccessSettings from '../access/AccessSettings.vue';
 
 const meta = { permissions: ['administrator'] };
 
@@ -25,6 +27,12 @@ export const routes = [
         path: 'appearance',
         name: 'outsider_branding_settings',
         component: BrandingSettings,
+        meta,
+      },
+      {
+        path: 'access',
+        name: 'outsider_access_settings',
+        component: AccessSettings,
         meta,
       },
       {

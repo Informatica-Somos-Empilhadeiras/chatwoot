@@ -26,7 +26,7 @@ class Outsider::Voice::CentralStatus
   ONLINE_FOR = 90.seconds
   DIALPLAN_FRESH = 2.minutes
   # versão da telefonia neste código (Telefonia > Configurações): sobe a cada entrega que muda a central
-  TELEPHONY_VERSION = '26f'.freeze
+  TELEPHONY_VERSION = '27'.freeze
   # aviso de antes deste processo subir (logo depois de atualizar) ainda pode ser do Chatwoot antigo
   LOADED_AT = Time.current
 

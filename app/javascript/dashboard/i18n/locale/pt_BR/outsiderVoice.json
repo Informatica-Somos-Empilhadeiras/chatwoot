@@ -30,7 +30,8 @@
         "OTHER_TAB": "O telefone está em outra aba. Ligue por lá ou traga para esta aba no botão do telefone, no menu lateral.",
         "POPUP_BLOCKED": "O navegador bloqueou a janela do telefone. Libere as janelas pop-up deste site e tente de novo.",
         "CONFERENCE_FULL": "A conferência já está cheia.",
-        "ALREADY_IN_CALL": "Essa pessoa já está na ligação."
+        "ALREADY_IN_CALL": "Essa pessoa já está na ligação.",
+        "NO_OUTBOUND": "Seu perfil liga só para ramais. Peça ao administrador para liberar ligações para fora."
       },
       "MINIMIZE": "Minimizar",
       "TABS": {
@@ -799,6 +800,140 @@
         "DELETE": "Apagar URA",
         "DELETE_CONFIRM": "Apagar a URA {name}? As ligações voltam a tocar direto para os vendedores.",
         "CENTRAL_OUTDATED": "A central ainda não está pronta para a URA: recrie o contêiner da central no servidor (docker compose up -d --build central). Até lá, as ligações tocam direto para os vendedores."
+      }
+    },
+    "TECH": {
+      "TITLE": "Meu telefone",
+      "OFF_TITLE": "Seu ramal ainda não está ligado",
+      "OFF_TEXT": "Peça ao administrador para ligar o seu ramal em Configurações > Perfis de acesso > Pessoas.",
+      "TABS": {
+        "KEYPAD": "Teclado",
+        "TEAM": "Ramais",
+        "RECENT": "Recentes",
+        "PROFILE": "Perfil",
+        "TEAMS": "Teams"
+      },
+      "KIND": {
+        "TECHNICIAN": "Técnico",
+        "ADMIN": "Administrador",
+        "AGENT": "Agente"
+      },
+      "EXTENSION": "ramal {extension}",
+      "STATUS": {
+        "ONLINE": "Disponível",
+        "BUSY": "Ocupado",
+        "OFFLINE": "Offline",
+        "CONNECTING": "Conectando…",
+        "DISCONNECTED": "Sem conexão",
+        "OTHER_TAB": "Em outra aba"
+      },
+      "LINE": "Sair com:",
+      "LINE_CHANGE": "trocar",
+      "ONLY_EXTENSIONS": "Seu perfil liga só para ramais.",
+      "LINE_TITLE": "Sair com qual número",
+      "LINE_HINT": "É o número da empresa que aparece para o cliente. Vale para este aparelho.",
+      "LINE_AUTO": "Automático (o da sua filial)",
+      "CALL": "Ligar",
+      "ERASE": "Apagar",
+      "NO_BRANCH": "Sem filial",
+      "SEARCH": "Buscar nome, ramal ou filial",
+      "ALL": "Todos",
+      "TEAM_EMPTY": "Ninguém encontrado.",
+      "LOADING": "Carregando…",
+      "PRESENCE": {
+        "ONLINE": "Disponível",
+        "IN_CALL": "Em ligação",
+        "BUSY": "Ocupado",
+        "PUSH": "App fechado, toca pelo aviso",
+        "OFFLINE": "Sem telefone conectado"
+      },
+      "CALL_TO": "Ligar para {name}",
+      "TODAY": "Hoje",
+      "YESTERDAY": "Ontem",
+      "CALL_KIND": {
+        "MISSED": "Perdida",
+        "RECEIVED": "Recebida",
+        "MADE": "Feita",
+        "NOT_ANSWERED": "Não atendida",
+        "DECLINED": "Recusada"
+      },
+      "ALL_CALLS": "Todas",
+      "MISSED_CALLS": "Perdidas ({count})",
+      "RECENT_EMPTY": "Nenhuma ligação nos últimos 30 dias.",
+      "CALL_BACK": "Ligar de volta",
+      "CUSTOMER": "cliente",
+      "PROFILE": {
+        "STATUS": "Situação",
+        "STATUS_HINT": "Ocupado e Offline aparecem para os colegas na lista de ramais.",
+        "LINE": "Telefone",
+        "USE_HERE": "Usar neste aparelho",
+        "RECONNECT": "Conectar de novo",
+        "TEST_AUDIO": "Testar o som",
+        "PUSH": "Aviso de ligação neste aparelho",
+        "APP": "App no celular",
+        "LOGOUT": "Sair"
+      },
+      "AVAILABILITY": {
+        "ONLINE": "Disponível",
+        "BUSY": "Ocupado",
+        "OFFLINE": "Offline"
+      },
+      "LINE_STATE": {
+        "READY": "Conectado à central · ramal {extension}",
+        "CONNECTING": "Conectando à central…",
+        "OFFLINE": "Sem conexão com a central.",
+        "FAILED": "A central recusou o ramal {extension}. Tente de novo em instantes.",
+        "OTHER_TAB": "O telefone está aberto em outra aba ou aparelho.",
+        "SLEEPING": "Em espera: as ligações chegam pelo aviso."
+      },
+      "PUSH": {
+        "ENABLED": "Pronto. As ligações vão chegar neste aparelho mesmo com o app fechado.",
+        "REFUSED": "O navegador não deu licença para os avisos.",
+        "FAILED": "Não deu para ativar o aviso agora. Tente de novo.",
+        "TEST_SENT": "Aviso de teste enviado.",
+        "INSTALL_FIRST": "No iPhone o aviso só funciona com o Chatwoot instalado na Tela de Início (veja abaixo).",
+        "UNSUPPORTED": "Este navegador não recebe avisos.",
+        "BLOCKED": "Os avisos estão bloqueados neste navegador.",
+        "ACTIVE": "Ativo. As ligações tocam neste aparelho mesmo com o app fechado.",
+        "OFF": "Desligado. Sem ele, as ligações só chegam com o app aberto.",
+        "ENABLE": "Ativar aviso de ligação",
+        "TEST": "Enviar aviso de teste",
+        "BLOCKED_HINT": "Libere nas configurações do site (cadeado ao lado do endereço) e abra o app de novo.",
+        "CHECKING": "Conferindo este aparelho…"
+      },
+      "INSTALL": {
+        "DONE": "Instalado. Abra sempre pelo ícone do Chatwoot.",
+        "WHY": "Instale o Chatwoot como app: abre em tela cheia e o aviso de ligação fica mais confiável.",
+        "BUTTON": "Instalar o app",
+        "IPHONE": "No Safari, toque em Compartilhar e depois em Adicionar à Tela de Início. Abra pelo ícone novo e ative o aviso aqui.",
+        "ANDROID": "No Chrome, toque no menu (três pontinhos) e em Instalar app ou Adicionar à tela inicial.",
+        "DESKTOP": "No Chrome ou no Edge, use o ícone de instalar na barra de endereço."
+      },
+      "CALL_SCREEN": {
+        "INCOMING": "Ligação de voz · tocando",
+        "ACTIVE": "Em ligação",
+        "ENDED": "Ligação encerrada",
+        "OUTGOING": "Chamando…",
+        "TRANSFER_TO": "Transferir para",
+        "INCLUDE_WHO": "Incluir na ligação",
+        "NOBODY_FREE": "Nenhum colega livre agora.",
+        "MUTE": "Mudo",
+        "KEYPAD": "Teclado",
+        "HOLD": "Espera",
+        "TRANSFER": "Transferir",
+        "INCLUDE": "Incluir",
+        "DECLINE": "Recusar",
+        "ANSWER": "Atender",
+        "CLOSE": "Fechar",
+        "BACK": "Voltar",
+        "HANG_UP": "Encerrar"
+      },
+      "NUDGE": {
+        "OFF": "Ative o aviso de ligação: sem ele, as ligações só tocam com o app aberto.",
+        "BLOCKED": "Os avisos estão bloqueados neste aparelho. Com o app fechado, as ligações não tocam.",
+        "INSTALL_FIRST": "No iPhone, instale o app na Tela de Início para as ligações tocarem com ele fechado.",
+        "ENABLE": "Ativar",
+        "HOW": "Ver como"
       }
     }
   }

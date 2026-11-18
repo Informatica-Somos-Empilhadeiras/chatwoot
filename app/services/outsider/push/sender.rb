@@ -9,20 +9,21 @@ class Outsider::Push::Sender
     @user.notification_subscriptions.browser_push
   end
 
-  def deliver(payload)
+  # ttl: por quanto tempo o serviço de push guarda o aviso para um aparelho desligado (a ligação tocando: segundos)
+  def deliver(payload, ttl: 6.hours.to_i)
     return 0 unless VapidService.public_key
 
     message = JSON.generate(payload)
-    subscriptions.count { |subscription| send_to(subscription, message) }
+    subscriptions.count { |subscription| send_to(subscription, message, ttl) }
   end
 
   private
 
-  def send_to(subscription, message)
+  def send_to(subscription, message, ttl)
     attributes = subscription.subscription_attributes
     WebPush.payload_send(
       message: message, endpoint: attributes['endpoint'], p256dh: attributes['p256dh'], auth: attributes['auth'],
-      ttl: 6.hours.to_i, urgency: 'high',
+      ttl: ttl, urgency: 'high',
       vapid: { subject: Outsider::Push.site.presence || 'mailto:suporte@localhost', public_key: VapidService.public_key,
                private_key: VapidService.private_key },
       ssl_timeout: 5, open_timeout: 5, read_timeout: 5

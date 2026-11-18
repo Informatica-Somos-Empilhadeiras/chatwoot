@@ -15,6 +15,8 @@ Rails.application.routes.prepend do
               # Entrega 26: ligação em andamento (contato e negócio) e avisos do sussurro
               patch :call, action: :update_call
               post :signal
+              # técnicos: ligações da própria pessoa (aba Recentes do telefone)
+              get :recent
             end
             namespace :crm do
               resource :voice_settings, only: [:show, :update]
@@ -64,7 +66,13 @@ Rails.application.routes.prepend do
     get :prompt
     post :voicemail
     post :monitor
+    # técnicos: acordar o celular (push de ligação) e o que a pessoa fez no aviso
+    post :wake
+    post :wake_status
   end
+
+  # técnicos: Atender e Recusar no aviso de ligação, com o Chatwoot fechado (token assinado, sem a sessão da pessoa)
+  post 'outsider/push/call', to: 'outsider/push_call#create'
 end
 # rubocop:enable Metrics/BlockLength
 

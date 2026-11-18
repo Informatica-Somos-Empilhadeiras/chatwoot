@@ -30,7 +30,8 @@
         "OTHER_TAB": "The phone is in another tab. Call from there or bring it to this tab with the phone button in the sidebar.",
         "POPUP_BLOCKED": "The browser blocked the phone window. Allow pop-ups for this site and try again.",
         "CONFERENCE_FULL": "The conference is already full.",
-        "ALREADY_IN_CALL": "This person is already on the call."
+        "ALREADY_IN_CALL": "This person is already on the call.",
+        "NO_OUTBOUND": "Your profile can only call extensions. Ask the administrator to allow outside calls."
       },
       "MINIMIZE": "Minimize",
       "TABS": {
@@ -799,6 +800,140 @@
         "DELETE": "Delete IVR",
         "DELETE_CONFIRM": "Delete the IVR {name}? Calls will ring the sales team directly again.",
         "CENTRAL_OUTDATED": "The phone server is not ready for the IVR yet: rebuild its container on the host (docker compose up -d --build central). Until then, calls ring the sales team directly."
+      }
+    },
+    "TECH": {
+      "TITLE": "My phone",
+      "OFF_TITLE": "Your extension is not on yet",
+      "OFF_TEXT": "Ask the administrator to turn on your extension in Settings > Access profiles > People.",
+      "TABS": {
+        "KEYPAD": "Keypad",
+        "TEAM": "Extensions",
+        "RECENT": "Recent",
+        "PROFILE": "Profile",
+        "TEAMS": "Teams"
+      },
+      "KIND": {
+        "TECHNICIAN": "Technician",
+        "ADMIN": "Administrator",
+        "AGENT": "Agent"
+      },
+      "EXTENSION": "extension {extension}",
+      "STATUS": {
+        "ONLINE": "Available",
+        "BUSY": "Busy",
+        "OFFLINE": "Offline",
+        "CONNECTING": "Connecting…",
+        "DISCONNECTED": "No connection",
+        "OTHER_TAB": "In another tab"
+      },
+      "LINE": "Call from:",
+      "LINE_CHANGE": "change",
+      "ONLY_EXTENSIONS": "Your profile can only call extensions.",
+      "LINE_TITLE": "Call from which number",
+      "LINE_HINT": "This is the company number the customer sees. It applies to this device.",
+      "LINE_AUTO": "Automatic (your branch number)",
+      "CALL": "Call",
+      "ERASE": "Erase",
+      "NO_BRANCH": "No branch",
+      "SEARCH": "Search name, extension or branch",
+      "ALL": "All",
+      "TEAM_EMPTY": "Nobody found.",
+      "LOADING": "Loading…",
+      "PRESENCE": {
+        "ONLINE": "Available",
+        "IN_CALL": "On a call",
+        "BUSY": "Busy",
+        "PUSH": "App closed, rings through the notice",
+        "OFFLINE": "No phone connected"
+      },
+      "CALL_TO": "Call {name}",
+      "TODAY": "Today",
+      "YESTERDAY": "Yesterday",
+      "CALL_KIND": {
+        "MISSED": "Missed",
+        "RECEIVED": "Received",
+        "MADE": "Made",
+        "NOT_ANSWERED": "Not answered",
+        "DECLINED": "Declined"
+      },
+      "ALL_CALLS": "All",
+      "MISSED_CALLS": "Missed ({count})",
+      "RECENT_EMPTY": "No calls in the last 30 days.",
+      "CALL_BACK": "Call back",
+      "CUSTOMER": "customer",
+      "PROFILE": {
+        "STATUS": "Status",
+        "STATUS_HINT": "Busy and Offline show to colleagues in the extensions list.",
+        "LINE": "Phone",
+        "USE_HERE": "Use on this device",
+        "RECONNECT": "Connect again",
+        "TEST_AUDIO": "Test sound",
+        "PUSH": "Call notice on this device",
+        "APP": "App on the phone",
+        "LOGOUT": "Log out"
+      },
+      "AVAILABILITY": {
+        "ONLINE": "Available",
+        "BUSY": "Busy",
+        "OFFLINE": "Offline"
+      },
+      "LINE_STATE": {
+        "READY": "Connected to the PBX · extension {extension}",
+        "CONNECTING": "Connecting to the PBX…",
+        "OFFLINE": "No connection to the PBX.",
+        "FAILED": "The PBX refused extension {extension}. Try again shortly.",
+        "OTHER_TAB": "The phone is open in another tab or device.",
+        "SLEEPING": "Standing by: calls arrive through the notice."
+      },
+      "PUSH": {
+        "ENABLED": "Done. Calls will reach this device even with the app closed.",
+        "REFUSED": "The browser did not allow notices.",
+        "FAILED": "Could not turn on the notice now. Try again.",
+        "TEST_SENT": "Test notice sent.",
+        "INSTALL_FIRST": "On iPhone the notice only works with Chatwoot added to the Home Screen (see below).",
+        "UNSUPPORTED": "This browser does not receive notices.",
+        "BLOCKED": "Notices are blocked in this browser.",
+        "ACTIVE": "On. Calls ring on this device even with the app closed.",
+        "OFF": "Off. Without it, calls only arrive with the app open.",
+        "ENABLE": "Turn on call notice",
+        "TEST": "Send test notice",
+        "BLOCKED_HINT": "Allow it in the site settings (lock next to the address) and open the app again.",
+        "CHECKING": "Checking this device…"
+      },
+      "INSTALL": {
+        "DONE": "Installed. Always open it from the Chatwoot icon.",
+        "WHY": "Install Chatwoot as an app: it opens full screen and the call notice is more reliable.",
+        "BUTTON": "Install the app",
+        "IPHONE": "In Safari, tap Share and then Add to Home Screen. Open it from the new icon and turn on the notice here.",
+        "ANDROID": "In Chrome, tap the menu (three dots) and Install app or Add to Home screen.",
+        "DESKTOP": "In Chrome or Edge, use the install icon in the address bar."
+      },
+      "CALL_SCREEN": {
+        "INCOMING": "Voice call · ringing",
+        "ACTIVE": "On a call",
+        "ENDED": "Call ended",
+        "OUTGOING": "Calling…",
+        "TRANSFER_TO": "Transfer to",
+        "INCLUDE_WHO": "Add to the call",
+        "NOBODY_FREE": "No colleague is free now.",
+        "MUTE": "Mute",
+        "KEYPAD": "Keypad",
+        "HOLD": "Hold",
+        "TRANSFER": "Transfer",
+        "INCLUDE": "Add",
+        "DECLINE": "Decline",
+        "ANSWER": "Answer",
+        "CLOSE": "Close",
+        "BACK": "Back",
+        "HANG_UP": "Hang up"
+      },
+      "NUDGE": {
+        "OFF": "Turn on the call notice: without it, calls only ring with the app open.",
+        "BLOCKED": "Notices are blocked on this device. With the app closed, calls do not ring.",
+        "INSTALL_FIRST": "On iPhone, add the app to the Home Screen so calls ring with it closed.",
+        "ENABLE": "Turn on",
+        "HOW": "Show me"
       }
     }
   }

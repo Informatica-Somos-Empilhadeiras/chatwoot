@@ -4,7 +4,9 @@
 // Entrega 24: com o telefone na janela própria, os atalhos de lá (negócio, conversa) abrem aqui.
 // Entrega 25: ligação chegando abre a janela grande de atender (IncomingCall).
 // Entrega 26: convite de colega para sussurrar na ligação dele (WhisperInvite).
-import { useRouter } from 'vue-router';
+// OUTSIDER (técnicos): no Meu telefone a ligação aparece em tela cheia lá (TechCallScreen); aqui fica só o ciclo de vida.
+import { computed } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import { useEventListener } from '@vueuse/core';
 import PhonePanel from './PhonePanel.vue';
 import CallMini from './CallMini.vue';
@@ -14,6 +16,8 @@ import { usePhoneLifecycle } from './usePhoneLifecycle';
 import { panel, phone } from './phone';
 
 const router = useRouter();
+const route = useRoute();
+const onMyPhone = computed(() => route.name === 'outsider_my_phone');
 
 usePhoneLifecycle();
 
@@ -26,8 +30,10 @@ useEventListener(window, 'message', ({ origin, data }) => {
 </script>
 
 <template>
-  <PhonePanel v-if="panel.open && phone.status !== 'off'" />
-  <CallMini v-else-if="phone.call" />
-  <IncomingCall v-if="phone.status !== 'off'" />
+  <template v-if="!onMyPhone">
+    <PhonePanel v-if="panel.open && phone.status !== 'off'" />
+    <CallMini v-else-if="phone.call" />
+    <IncomingCall v-if="phone.status !== 'off'" />
+  </template>
   <WhisperInvite v-if="phone.status !== 'off'" />
 </template>

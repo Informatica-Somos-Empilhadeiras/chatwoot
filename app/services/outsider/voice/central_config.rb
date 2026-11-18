@@ -19,7 +19,7 @@ class Outsider::Voice::CentralConfig
   end
 
   def extensions
-    agents = @settings.enabled_agents.values.map { |agent| "PJSIP/#{agent['extension']}" }
+    agents = @settings.inbound_agents.values.map { |agent| "PJSIP/#{agent['extension']}" }
     [header, '[globals]', "ALL_AGENTS=#{agents.join('&')}", "RING_SECONDS=#{@settings.data['ring_seconds']}", '', DIALPLAN.read].join("\n")
   end
 

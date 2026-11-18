@@ -34,13 +34,15 @@ class Outsider::Voice::Router
   end
 
   # deal: o negócio de onde a pessoa ligou (Entrega 26), vindo do telefone; vale se ela enxerga o negócio no CRM
-  def outbound(linkedid:, extension:, number:, deal: nil)
+  # OUTSIDER (técnicos): line é o número de saída escolhido no telefone (um dos números da empresa); sem ele, o
+  # escolhido para a pessoa ou o do estado dela. Perfil sem "Sair com número da empresa" não liga para fora.
+  def outbound(linkedid:, extension:, number:, deal: nil, line: nil)
     user_id = @settings.user_id_for_extension(extension)
     national = PhoneNumber.national(number)
-    return '' unless user_id && national
+    return '' unless user_id && national && outbound_allowed?(user_id)
 
-    state = @settings.agent_for(user_id)['state']
-    line = @settings.number_for_state(state)
+    agent = @settings.agent_for(user_id)
+    line = @settings.number_for(line) || @settings.line_for(agent)
     contact = PhoneNumber.find_contact(@account, national)
     opportunity = chosen_deal(user_id, deal) || open_deal(contact)
     create_call(linkedid, direction: :outbound, user_id: user_id, from_number: line&.dig('number'), to_number: PhoneNumber.e164(national) || national,
@@ -58,7 +60,7 @@ class Outsider::Voice::Router
   # para o dono" nas Configurações, começa pelos do estado (o dono do estado está entre eles). Cada etapa é
   # "PJSIP/201&PJSIP/202"
   def ring_steps(owner_id, state)
-    agents = @settings.enabled_agents
+    agents = @settings.inbound_agents
     owner = @settings.data['owner_first'] ? [agents.dig(owner_id, 'extension')].compact : []
     local = owner + agents.values.select { |agent| agent['state'] == state }.pluck('extension')
     steps = [owner, local, local + agents.values.pluck('extension')].map(&:uniq).reject(&:empty?).uniq
@@ -76,6 +78,11 @@ class Outsider::Voice::Router
   end
 
   private
+
+  def outbound_allowed?(user_id)
+    account_user = @account.account_users.find_by(user_id: user_id)
+    account_user.present? && Outsider::Access.for(account_user).allows?('phone_outbound', 'use')
+  end
 
   def customer_number(from)
     PhoneNumber.e164(from) || PhoneNumber.foreign(from) || PhoneNumber.digits(from)

@@ -19,7 +19,7 @@ import {
 } from './phoneMenu';
 
 // a janela própria do telefone já é o telefone
-const HIDDEN_ROUTES = ['outsider_phone_window'];
+const HIDDEN_ROUTES = ['outsider_phone_window', 'outsider_my_phone'];
 
 const { t } = useI18n();
 const route = useRoute();

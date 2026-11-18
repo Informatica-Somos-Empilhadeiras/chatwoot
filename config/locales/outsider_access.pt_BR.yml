@@ -1,0 +1,23 @@
+pt_BR:
+  outsider_access:
+    refused: "Seu perfil de acesso não permite isso. Fale com o administrador da conta."
+    screens:
+      phone: "Telefone (teclado, ramais, recentes)"
+      phone_outbound: "Sair com número da empresa"
+      voice_panel: "Painel e ligações da Telefonia"
+      voice_recordings: "Gravações"
+      voice_monitor: "Ouvir e sussurrar nas ligações"
+      voice_admin: "URA e configurações da central"
+      conversations: "Conversas"
+      contacts: "Contatos"
+      whatsapp_status: "Status do WhatsApp"
+      teams: "Teams"
+      crm: "Negócios e propostas (CRM)"
+    ceiling:
+      none: "Nenhuma"
+      hint: "Telas que só os administradores desta conta abrem. Os perfis de acesso não conseguem liberar estas telas para agentes e técnicos."
+  # Campo "Telas só para administradores" da conta no Super Admin (Outsider::Access::AccountDashboardField)
+  helpers:
+    label:
+      account:
+        outsider_access_admin_only: Telas só para administradores (Somos)

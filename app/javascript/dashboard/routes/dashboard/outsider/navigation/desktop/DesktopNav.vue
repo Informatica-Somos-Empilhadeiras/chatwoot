@@ -81,7 +81,7 @@ const { width: windowWidth } = useWindowSize();
 const currentAccount = useMapGetter('getCurrentAccount');
 
 // ---------- itens ----------
-const allowed = makeAllowed(isAllowed);
+const allowed = makeAllowed(isAllowed, resolvePath);
 const modules = computed(() => toModules(props.menuItems, allowed));
 const activeItem = computed(() =>
   findActiveItem(modules.value, route, resolvePath)

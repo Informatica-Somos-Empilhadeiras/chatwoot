@@ -1,0 +1,22 @@
+en:
+  outsider_access:
+    refused: "Your access profile does not allow this. Talk to the account administrator."
+    screens:
+      phone: "Phone (keypad, extensions, recents)"
+      phone_outbound: "Call out with the company number"
+      voice_panel: "Telephony panel and calls"
+      voice_recordings: "Recordings"
+      voice_monitor: "Listen and whisper on calls"
+      voice_admin: "IVR and phone system settings"
+      conversations: "Conversations"
+      contacts: "Contacts"
+      whatsapp_status: "WhatsApp Status"
+      teams: "Teams"
+      crm: "Deals and proposals (CRM)"
+    ceiling:
+      none: "None"
+      hint: "Screens that only administrators of this account open. Access profiles cannot open these screens to agents and technicians."
+  helpers:
+    label:
+      account:
+        outsider_access_admin_only: Admin-only screens (Somos)

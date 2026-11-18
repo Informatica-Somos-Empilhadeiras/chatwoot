@@ -10,6 +10,8 @@ import PushBanner from './push/PushBanner.vue';
 // botão do telefone no canto inferior esquerdo (computador e tablet; no celular fica na barra de baixo)
 import PhoneFab from './voice/PhoneFab.vue';
 import { useAccountBranding } from './branding/useAccountBranding';
+// perfis de acesso: o que o perfil não abre volta para a tela inicial dele (técnico: Meu telefone)
+import { useAccessGuard } from './access/useAccessGuard';
 // item Teams do menu e as não lidas (só para quem conectou o próprio Teams)
 import { watch } from 'vue';
 import { useMapGetter } from 'dashboard/composables/store';
@@ -24,6 +26,7 @@ import './responsive/brand.css';
 
 useAccountBranding();
 useOutsiderResponsive();
+useAccessGuard();
 
 const currentAccountId = useMapGetter('getCurrentAccountId');
 watch(currentAccountId, id => id && startTeamsUpdates(id), { immediate: true });

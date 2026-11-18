@@ -1,6 +1,13 @@
 // OUTSIDER: itens do Somos no grupo Configurações do menu lateral (só aparecem para administradores,
 // pelas permissões das rotas em ./routes.js)
 export const outsiderSettingsItems = (t, accountScopedRoute) => [
+  // perfis de acesso (o que cada perfil vê e usa) e o cadastro de técnicos com ramal
+  {
+    name: 'Settings Outsider Access',
+    label: t('OUTSIDER_ACCESS.SIDEBAR'),
+    icon: 'i-lucide-shield-check',
+    to: accountScopedRoute('outsider_access_settings'),
+  },
   {
     name: 'Settings Outsider Appearance',
     label: t('OUTSIDER_TOOLS.SETTINGS.APPEARANCE'),

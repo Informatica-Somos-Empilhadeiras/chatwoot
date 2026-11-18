@@ -17,6 +17,8 @@ import Dialog from 'dashboard/components-next/dialog/Dialog.vue';
 import Avatar from 'dashboard/components-next/avatar/Avatar.vue';
 import Button from 'dashboard/components-next/button/Button.vue';
 import { phone } from '../voice/phone';
+// OUTSIDER (perfis de acesso): quem não vê as conversas (técnico) não recebe o aviso
+import { allows, loadAccess } from '../access/accessStore';
 import {
   ALERT_AFTER,
   REMIND_EVERY,
@@ -106,6 +108,8 @@ const onClose = () => {
 
 const refresh = async () => {
   if (!isEnabled.value) return;
+  await loadAccess(accountId.value);
+  if (!allows('conversations', 'view')) return;
   try {
     const { data } = await ConversationAPI.get({
       assigneeType: 'unassigned',

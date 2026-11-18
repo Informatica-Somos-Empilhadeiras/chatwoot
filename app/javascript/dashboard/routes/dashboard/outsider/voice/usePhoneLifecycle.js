@@ -6,6 +6,10 @@
 // de ligação perdida liga por aqui.
 // Entrega 26: recebe os avisos do sussurro (convite, pedido para o cliente ouvir...) pelo canal ao vivo, também
 // na janela própria do telefone.
+// OUTSIDER (técnicos): Atender no aviso que acordou o celular (service worker, ou ?outsider_answer=id ao abrir) atende
+// a ligação quando ela chegar; ?outsider_ring=id só a mostra tocando. No celular com o push ativo neste aparelho, a
+// linha sai da central com o app escondido (logo no iPhone, que congela o app; uns segundos no Android) e volta ao
+// abrir: as ligações chegam pelo aviso.
 import { watch, onBeforeUnmount } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useEventListener } from '@vueuse/core';
@@ -18,13 +22,40 @@ import {
   CENTRAL_SYNC_WAIT,
   answer,
   dial,
+  expectCall,
   handleSignal,
   hangup,
   phone,
   restartPhone,
+  sleepLine,
   startPhone,
   stopPhone,
+  wakeLine,
 } from './phone';
+
+const SLEEP_AFTER = 20000;
+const isMobileDevice = () =>
+  /Android|iPhone|iPad|iPod/.test(navigator.userAgent) ||
+  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const isAppleDevice = () =>
+  /iPhone|iPad|iPod/.test(navigator.userAgent) ||
+  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+// este aparelho recebe o aviso de ligação (sem isso, dormir a linha faria a ligação não chegar)
+const hasPush = async () => {
+  if (
+    !('serviceWorker' in navigator) ||
+    !('Notification' in window) ||
+    Notification.permission !== 'granted'
+  )
+    return false;
+  try {
+    const registration = await navigator.serviceWorker.getRegistration();
+    return !!(await registration?.pushManager?.getSubscription());
+  } catch {
+    return false;
+  }
+};
 
 export const usePhoneLifecycle = ({ popout = false } = {}) => {
   const { t } = useI18n();
@@ -89,6 +120,12 @@ export const usePhoneLifecycle = ({ popout = false } = {}) => {
 
   const onWorkerMessage = event => {
     const data = event.data || {};
+    // OUTSIDER (técnicos): Atender (ou tocar) no aviso da ligação que acordou o celular
+    if (data.type === 'outsider:call-wake') {
+      expectCall(data.linkedid, { answer: !!data.answer });
+      wakeLine();
+      return;
+    }
     if (data.type === 'outsider:call') {
       if (data.action === 'answer') answer();
       else if (data.action === 'decline') hangup();
@@ -104,12 +141,57 @@ export const usePhoneLifecycle = ({ popout = false } = {}) => {
   if (!popout) {
     const url = new URL(window.location.href);
     const pending = url.searchParams.get('outsider_dial');
-    if (pending) {
-      url.searchParams.delete('outsider_dial');
+    // OUTSIDER (técnicos): Atender (outsider_answer) ou tocar (outsider_ring) no aviso com o Chatwoot fechado
+    const answerId = url.searchParams.get('outsider_answer');
+    const ringId = url.searchParams.get('outsider_ring');
+    ['outsider_dial', 'outsider_answer', 'outsider_ring'].forEach(key =>
+      url.searchParams.delete(key)
+    );
+    if (pending || answerId || ringId) {
       window.history.replaceState(window.history.state, '', url.toString());
-      startDial(pending);
+    }
+    if (pending) startDial(pending);
+    if (answerId || ringId) {
+      expectCall(answerId || ringId, { answer: !!answerId });
     }
   }
+
+  // OUTSIDER (técnicos): a linha dorme com o app escondido no celular (só com o push ativo aqui) e acorda ao abrir
+  let sleepTimer = null;
+  const cancelSleep = () => {
+    clearTimeout(sleepTimer);
+    sleepTimer = null;
+  };
+  const scheduleSleep = async () => {
+    cancelSleep();
+    if (popout || !isMobileDevice() || !document.hidden) return;
+    if (!(await hasPush()) || !document.hidden) return;
+    sleepTimer = setTimeout(
+      () => {
+        sleepTimer = null;
+        if (document.hidden) sleepLine();
+      },
+      isAppleDevice() ? 0 : SLEEP_AFTER
+    );
+  };
+  useEventListener(document, 'visibilitychange', () => {
+    if (document.hidden) scheduleSleep();
+    else {
+      cancelSleep();
+      wakeLine();
+    }
+  });
+  // o Android congela a aba depois de um tempo escondida: sai da central antes
+  useEventListener(document, 'freeze', () => {
+    if (isMobileDevice()) sleepLine();
+  });
+  // ligação acabou com o app escondido: agora pode dormir
+  watch(
+    () => phone.call?.state,
+    state => {
+      if (document.hidden && (!state || state === 'ended')) scheduleSleep();
+    }
+  );
 
   // convite de colega para entrar na ligação dele, com a aba escondida: aviso do navegador
   watch(
@@ -177,6 +259,7 @@ export const usePhoneLifecycle = ({ popout = false } = {}) => {
   });
 
   onBeforeUnmount(() => {
+    cancelSleep();
     stopSignals();
     stopFollowingSettings();
     clearTimeout(settingsTimer);

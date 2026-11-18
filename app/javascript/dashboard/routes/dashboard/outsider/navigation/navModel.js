@@ -6,6 +6,8 @@
 // novo que o Chatwoot criar numa atualização (ou um módulo nosso que se registra no menuItems)
 // aparece sozinho nos dois menus, sem mexer neles.
 import { h, isVNode } from 'vue';
+// perfis de acesso: o que o perfil da pessoa não abre some dos dois menus
+import { canOpenPath } from '../access/accessStore';
 
 export const renderIcon = icon => {
   if (!icon) return null;
@@ -13,9 +15,10 @@ export const renderIcon = icon => {
   return h('span', { class: icon });
 };
 
-export const makeAllowed = isAllowed => to => {
+export const makeAllowed = (isAllowed, resolvePath) => to => {
   try {
-    return !!to && isAllowed(to);
+    if (!to || !isAllowed(to)) return false;
+    return !resolvePath || canOpenPath(resolvePath(to));
   } catch {
     return false;
   }

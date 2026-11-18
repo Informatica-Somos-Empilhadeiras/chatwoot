@@ -6,19 +6,26 @@
 # Entrega 26: lookup traz também os negócios abertos do cliente e por onde ele passou na URA; call liga a
 # ligação em andamento a um contato (cadastro criado na hora) ou a um negócio; signal leva os avisos do sussurro
 # entre os telefones (Outsider::Voice::Signals); supervisor diz se a pessoa pode monitorar ligações.
+#
+# OUTSIDER (técnicos): o telefone segue o perfil de acesso (Configurações > Perfis de acesso): sem "Telefone", me volta
+# desligado e o resto recusa; me traz também os números de saída ("Sair com") e o tipo da pessoa; team diz a filial,
+# quem está em ligação e quem atende pelo aviso no celular; recent são as ligações da própria pessoa (aba Recentes).
 class Api::V1::Accounts::Outsider::VoiceController < Api::V1::Accounts::BaseController
   DEALS_LIMIT = 10
   IVR_RECENT = 15.minutes
+  RECENT_LIMIT = 60
+
+  before_action :check_phone_access, except: [:me]
 
   def me
-    agent = settings.enabled? && settings.agent_for(Current.user.id)
+    agent = settings.enabled? && phone_access? && settings.agent_for(Current.user.id)
     return render json: { enabled: false } unless agent && settings.data['ws_url'].present?
 
     render json: {
       enabled: true, ws_url: settings.data['ws_url'], extension: agent['extension'], name: Current.user.name, user_id: Current.user.id,
       password: settings.sip_password(Current.user.id, agent['extension']), echo_extension: ::Outsider::Voice::Settings::ECHO_EXTENSION,
-      supervisor: crm_access.enabled? && crm_access.manager?
-    }.merge(recording_flags)
+      supervisor: crm_access.enabled? && crm_access.manager? && access.allows?('voice_monitor', 'use')
+    }.merge(recording_flags).merge(line_info(agent))
   end
 
   def lookup
@@ -35,11 +42,24 @@ class Api::V1::Accounts::Outsider::VoiceController < Api::V1::Accounts::BaseCont
   def team
     agents = settings.enabled? ? settings.enabled_agents : {}
     online = ::Outsider::Voice::CentralStatus.new(Current.account).to_h[:extensions]
+    busy = busy_user_ids
+    wakeable = NotificationSubscription.browser_push.where(user_id: agents.keys).distinct.pluck(:user_id)
     render json: User.where(id: agents.keys).order(:name).map { |user|
-      extension = agents[user.id]['extension']
-      { id: user.id, name: user.name, thumbnail: user.avatar_url, extension: extension, state: agents[user.id]['state'],
-        online: online.include?(extension) }
+      agent = agents[user.id]
+      { id: user.id, name: user.name, thumbnail: user.avatar_url, extension: agent['extension'], state: agent['state'],
+        online: online.include?(agent['extension']), branch: settings.branch_for(user.id)&.dig('name'), in_call: busy.include?(user.id),
+        wakeable: wakeable.include?(user.id), availability: user.account_users.find { |au| au.account_id == Current.account.id }&.availability }
     }
+  end
+
+  # ligações da pessoa: as que ela fez ou atendeu com cliente e as internas de e para o ramal dela (perdidas inclusive)
+  def recent
+    extension = settings.agent_for(Current.user.id)&.dig('extension')
+    scope = ::Outsider::Voice::Call.where(account_id: Current.account.id, started_at: 30.days.ago..)
+    mine = scope.external.where(user_id: Current.user.id)
+    mine = mine.or(scope.internal.where(to_number: extension)).or(scope.internal.where(from_number: extension)) if extension
+    calls = mine.includes(:contact).order(started_at: :desc).limit(RECENT_LIMIT).to_a
+    render json: calls.map { |call| recent_row(call, extension) }
   end
 
   # gravação do telefone, no fim da ligação (Outsider::Voice::Recording)
@@ -78,6 +98,50 @@ class Api::V1::Accounts::Outsider::VoiceController < Api::V1::Accounts::BaseCont
   end
 
   private
+
+  def access
+    @access ||= ::Outsider::Access.for(Current.account_user)
+  end
+
+  def phone_access?
+    access.allows?('phone', 'use')
+  end
+
+  def check_phone_access
+    render json: { error: 'forbidden', outsider_access: 'phone' }, status: :forbidden unless phone_access?
+  end
+
+  # "Sair com": o número de saída de hoje e os que a pessoa pode escolher (todos os da empresa); sem "Sair com número
+  # da empresa" no perfil, o telefone só liga para ramais
+  def line_info(agent)
+    line = settings.line_for(agent)
+    outbound = access.allows?('phone_outbound', 'use')
+    { outbound: outbound, line: outbound ? line&.slice('number', 'state', 'label') : nil,
+      lines: outbound ? settings.numbers.map { |row| row.slice('number', 'state', 'label') } : [],
+      kind: access.kind, branch: settings.branch_for(Current.user.id)&.dig('name') }
+  end
+
+  # quem está numa ligação agora (tocando ou falando, começou nas últimas 4 horas)
+  def busy_user_ids
+    ::Outsider::Voice::Call.where(account_id: Current.account.id, ended_at: nil, started_at: 4.hours.ago..)
+                           .where.not(answered_at: nil).distinct.pluck(:user_id).compact
+  end
+
+  def recent_row(call, extension)
+    incoming = call.internal? ? call.to_number == extension : call.inbound?
+    number = incoming ? call.from_number : call.to_number
+    colleague = call.internal? ? colleague_for(number) : nil
+    { id: call.id, direction: incoming ? 'in' : 'out', internal: call.internal?, status: call.status, number: number,
+      name: colleague&.name || call.contact&.name, thumbnail: colleague&.avatar_url || call.contact&.avatar_url,
+      started_at: call.started_at, talk_seconds: call.talk_seconds,
+      missed: incoming && call.answered_at.nil? && call.ended_at.present? && !call.busy? }
+  end
+
+  def colleague_for(extension)
+    user_id = settings.user_id_for_extension(extension)
+    @colleagues ||= {}
+    @colleagues[user_id] ||= user_id && Current.account.users.find_by(id: user_id)
+  end
 
   # botão Gravar e gravação automática (Entregas 24 e 25)
   def recording_flags

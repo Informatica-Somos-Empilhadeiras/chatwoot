@@ -37,19 +37,30 @@ import {
   countOf as countOfItem,
   moduleCount as moduleCountOf,
 } from '../navigation/navModel';
+import { isTechnician } from '../access/accessStore';
 
 const props = defineProps({
   menuItems: { type: Array, default: () => [] },
 });
 
-const PRIMARY = ['Conversation', 'OutsiderCrm', 'OutsiderVoice', 'Contacts'];
+const PRIMARY = [
+  'OutsiderMyPhone',
+  'Conversation',
+  'OutsiderCrm',
+  'OutsiderVoice',
+  'Contacts',
+];
 const PRIMARY_SLOTS = 4;
 const PRIMARY_SLOTS_WITH_PHONE = 3;
 const VOICE = 'OutsiderVoice';
 const PHONE = 'phone';
 const CONVERSATION = 'Conversation';
 // telas que são a conversa aberta ou janelas próprias: sem barra
-const HIDDEN_ROUTES = ['outsider_phone_window', 'inbox_view_conversation'];
+const HIDDEN_ROUTES = [
+  'outsider_phone_window',
+  'inbox_view_conversation',
+  'outsider_my_phone',
+];
 
 const { t } = useI18n();
 const route = useRoute();
@@ -58,7 +69,7 @@ const store = useStore();
 const { isAllowed, resolvePath } = useSidebarContext();
 const { width } = useWindowSize();
 
-const allowed = makeAllowed(isAllowed);
+const allowed = makeAllowed(isAllowed, resolvePath);
 const { panels: phonePanels } = usePhonePanels();
 
 const phoneOn = computed(() => phone.status !== 'off');
@@ -188,6 +199,15 @@ const phoneSheet = () => ({
 });
 
 const onPhone = () => {
+  // OUTSIDER (técnicos): o botão do telefone abre o Meu telefone
+  if (isTechnician()) {
+    closeSheet();
+    router.push({
+      name: 'outsider_my_phone',
+      params: { accountId: route.params.accountId },
+    });
+    return;
+  }
   if (sheet.value?.anchor === PHONE) {
     closeSheet();
     return;

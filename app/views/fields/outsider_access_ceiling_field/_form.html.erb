@@ -1,0 +1,16 @@
+<%# OUTSIDER: telas que só administradores abrem nesta conta (os perfis de acesso não liberam para os demais) %>
+<div class="field-unit__label">
+  <%= f.label field.attribute %>
+</div>
+<div class="field-unit__field">
+  <%= hidden_field_tag "#{f.object_name}[#{field.attribute}][]", '' %>
+  <p class="text-sm text-n-slate-11 mb-2"><%= t('outsider_access.ceiling.hint') %></p>
+  <div class="grid grid-cols-2 gap-2">
+    <% field.screens.each do |screen| %>
+      <label class="flex items-center gap-2 font-normal">
+        <%= check_box_tag "#{f.object_name}[#{field.attribute}][]", screen, field.selected.include?(screen), id: "outsider_access_#{screen}" %>
+        <span><%= field.label(screen) %></span>
+      </label>
+    <% end %>
+  </div>
+</div>

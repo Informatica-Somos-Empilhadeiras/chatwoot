@@ -15,7 +15,7 @@ class Outsider::Push::MissedCall
   end
 
   def recipients
-    agents = @settings.enabled_agents
+    agents = @settings.inbound_agents
     owner = @call.opportunity&.owner_id
     ids = if owner && agents.key?(owner) then [owner]
           else

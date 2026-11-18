@@ -23,12 +23,19 @@ class Outsider::Voice::MonitorAccess
   end
 
   # supervisor pode monitorar este atendente?
+  # OUTSIDER (perfis de acesso): "Ouvir e sussurrar nas ligações" Não vê tira de todos; Gerencia libera qualquer ramal
   def supervisor_of?(user_id, target_user_id)
     return false if user_id.nil? || target_user_id.nil? || user_id == target_user_id
 
     account_user = @account.account_users.find_by(user_id: user_id)
-    access = account_user && Outsider::Crm::Access.new(account_user)
-    return false unless access&.enabled? && access.manager?
+    return false unless account_user
+
+    level = Outsider::Access.for(account_user).level('voice_monitor')
+    return false if level == 'none'
+    return true if level == 'manage'
+
+    access = Outsider::Crm::Access.new(account_user)
+    return false unless access.enabled? && access.manager?
     return true if access.administrator?
 
     Outsider::Crm::BusinessUnitMember.exists?(account_id: @account.id, business_unit_id: access.manager_unit_ids, user_id: target_user_id)

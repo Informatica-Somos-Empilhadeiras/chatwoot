@@ -16,6 +16,11 @@
 // (supervisor abre quando quer; convidado precisa da permissão do atendente). Os avisos entre os telefones
 // passam pelo Chatwoot (VoiceAPI.signal), que confere quem pode o quê.
 //
+// OUTSIDER (técnicos): "Sair com" escolhe o número da empresa que aparece para o cliente (X-Outsider-Line); quem não
+// tem "Ligar para fora" no perfil só liga para ramais. Ligação que acordou o celular pelo aviso (Atender) é atendida
+// sozinha quando chega (expectCall). No celular com o push ativo, a linha sai da central depois de um tempo com o
+// app escondido (sleepLine) e volta ao abrir (wakeLine): a ligação chega pelo aviso, como no WhatsApp.
+//
 // O estado fica em `phone` (reativo): as telas leem; para agir, chamam as funções exportadas.
 import { reactive, watch } from 'vue';
 import VoiceAPI from 'dashboard/api/outsider/voice';
@@ -71,6 +76,14 @@ export const phone = reactive({
   popout: false,
   notice: null,
   invite: null,
+  // OUTSIDER (técnicos): números de saída (line: o de hoje; chosenLine: o escolhido neste aparelho), tipo e filial
+  outbound: true,
+  line: null,
+  lines: [],
+  chosenLine: '',
+  kind: '',
+  branch: '',
+  sleeping: false,
 });
 
 // painel do telefone aberto (fixo na tela) ou minimizado e onde ele está (arrastado); guardado no navegador
@@ -626,6 +639,22 @@ const rememberDecline = id => {
   declinedCalls.set(central, Date.now());
 };
 
+// OUTSIDER (técnicos): Atender no aviso do celular abre o Chatwoot e a ligação chega uns segundos depois, quando a
+// linha conecta: atende sozinha a que tem o mesmo id da central. answer false (tocou no aviso): só mostra tocando.
+const EXPECT_WAIT = 60000;
+let expected = null;
+
+const takeExpected = central => {
+  if (!expected || Date.now() > expected.until) {
+    expected = null;
+    return null;
+  }
+  if (expected.central && expected.central !== central) return null;
+  const found = expected;
+  expected = null;
+  return found;
+};
+
 const onSession = ({ session: current, originator, request }) => {
   // ligação nova: o toque passa a ser dela (o do convite não pode mais parar o som dela)
   clearTimeout(inviteRingTimer);
@@ -696,6 +725,12 @@ const onSession = ({ session: current, originator, request }) => {
   ringingCentral = { id, central };
   setupLeg(id, current);
   lookup(id, number);
+  const awaited = takeExpected(central);
+  if (awaited?.answer) {
+    // eslint-disable-next-line no-use-before-define
+    answer();
+    return;
+  }
   startTone('incoming');
 };
 
@@ -720,6 +755,7 @@ const disconnect = () => {
   releaseLock = null;
   clearTimeout(endedTimer);
   phone.call = null;
+  phone.sleeping = false;
 };
 
 const connect = async () => {
@@ -911,6 +947,13 @@ export const startPhone = async (accountId, { popout = false } = {}) => {
   phone.userId = data.user_id;
   phone.recordingAllowed = !!data.recording;
   phone.autoRecord = !!data.auto_record;
+  phone.outbound = data.outbound !== false;
+  phone.line = data.line || null;
+  phone.lines = data.lines || [];
+  phone.kind = data.kind || '';
+  phone.branch = data.branch || '';
+  // eslint-disable-next-line no-use-before-define
+  phone.chosenLine = readChosenLine(accountId);
   openChannel(accountId);
   if (!popout) {
     requestLine(accountId, 'try');
@@ -982,6 +1025,8 @@ export const dial = (number, { deal = null } = {}) => {
   const blocked = canDial();
   if (blocked) return blocked;
   if (!target) return 'INVALID';
+  // OUTSIDER (técnicos): sem "Ligar para fora" no perfil, só ramais
+  if (isExternal(target) && !phone.outbound) return 'NO_OUTBOUND';
   if (!phone.holder) return remote('dial', target, { deal });
   const dealId = Number(deal?.id) || null;
   outgoing = {
@@ -993,9 +1038,86 @@ export const dial = (number, { deal = null } = {}) => {
   ua.call(`sip:${target}@${config.domain}`, {
     mediaConstraints: MEDIA,
     pcConfig: { iceServers: ICE_SERVERS },
-    extraHeaders: dealId ? [`X-Outsider-Deal: ${dealId}`] : [],
+    extraHeaders: [
+      ...(dealId ? [`X-Outsider-Deal: ${dealId}`] : []),
+      // OUTSIDER (técnicos): "Sair com" (a central confere se o número é da empresa)
+      ...(isExternal(target) && phone.chosenLine
+        ? [`X-Outsider-Line: ${digitsOf(phone.chosenLine)}`]
+        : []),
+    ],
   });
   return null;
+};
+
+// --- OUTSIDER (técnicos): "Sair com", atender pelo aviso e a linha dormindo no celular ---
+
+const LINE_KEY = 'outsider_phone_line';
+const readChosenLine = accountId => {
+  const saved = readStorage(LINE_KEY, {});
+  const number = saved && typeof saved === 'object' ? saved[accountId] : '';
+  return phone.lines.some(line => line.number === number) ? number : '';
+};
+
+// número de saída escolhido neste aparelho ('' volta para o de hoje, que vem da filial ou do estado)
+export const setLine = number => {
+  const value = phone.lines.some(line => line.number === number) ? number : '';
+  phone.chosenLine = value;
+  const saved = readStorage(LINE_KEY, {});
+  writeStorage(LINE_KEY, {
+    ...(saved && typeof saved === 'object' ? saved : {}),
+    [accountKey]: value,
+  });
+  if (!phone.holder) remote('setLine', value);
+};
+
+export const currentLine = () =>
+  phone.lines.find(line => line.number === phone.chosenLine) || phone.line;
+
+// central: o id da ligação na central (linkedid, vem no aviso); answer false só deixa tocando na tela
+export const expectCall = (central, { answer: autoAnswer = true } = {}) => {
+  // guarda aqui também: a aba que acabou de abrir pelo aviso ainda pode estar pegando a linha
+  expected = {
+    central: String(central || ''),
+    answer: autoAnswer,
+    until: Date.now() + EXPECT_WAIT,
+  };
+  if (!phone.holder) {
+    if (phone.status === 'other_tab') {
+      remote('expectCall', central, { answer: autoAnswer });
+    }
+    return null;
+  }
+  // já está tocando aqui (a linha estava conectada)
+  if (
+    phone.call?.state === 'ringing' &&
+    ringingCentral?.id === phone.call.id &&
+    takeExpected(ringingCentral.central)?.answer
+  ) {
+    // eslint-disable-next-line no-use-before-define
+    answer();
+  }
+  return null;
+};
+
+// app escondido no celular: a linha sai da central (a ligação passa a chegar pelo aviso). Nunca no meio de uma ligação.
+export const sleepLine = () => {
+  if (!phone.holder || !ua || phone.sleeping) return false;
+  if (phone.call && phone.call.state !== 'ended') return false;
+  generation += 1;
+  stopTone();
+  ua.stop();
+  ua = null;
+  phone.call = null;
+  phone.sleeping = true;
+  phone.status = 'offline';
+  return true;
+};
+
+export const wakeLine = () => {
+  if (!phone.sleeping || !phone.holder) return false;
+  phone.sleeping = false;
+  connect();
+  return true;
 };
 
 // monitoria (Entrega 26): mode listen (ouvir sem ninguém perceber) ou whisper (sussurrar). target: { extension,
@@ -1449,4 +1571,6 @@ const COMMANDS = {
   removeFromConference,
   toggleRecording,
   focusWindow,
+  setLine,
+  expectCall,
 };

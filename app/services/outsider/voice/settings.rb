@@ -80,6 +80,31 @@ class Outsider::Voice::Settings
     enabled_agents.find { |_id, agent| agent['extension'] == extension.to_s }&.first
   end
 
+  # OUTSIDER (técnicos): ramais que tocam nas ligações da empresa (dono, estado, todos). Técnico só recebe as feitas
+  # para o ramal dele (inbound false), as de clientes ficam com os vendedores.
+  def inbound_agents
+    enabled_agents.reject { |_id, agent| agent['inbound'] == false }
+  end
+
+  # número de saída do ramal: o escolhido para a pessoa (Perfis de acesso > Pessoas) ou o do estado dela
+  def line_for(agent)
+    number_for(agent['number']) || number_for_state(agent['state'])
+  end
+
+  # OUTSIDER (técnicos): grava o ramal de uma pessoa sem passar pela tela inteira de Configurações (cadastro de técnico
+  # em Perfis de acesso). Ramal vazio desliga; o estado vem do número de saída escolhido.
+  def put_agent(user_id, attributes)
+    attributes = attributes.to_h.stringify_keys
+    previous = data['agents'][user_id.to_s].to_h
+    agents = data['agents'].merge(user_id.to_s => previous.merge(attributes.slice('extension', 'branch', 'number', 'inbound', 'state', 'enabled')))
+    @errors = []
+    cleaned = clean_agents(agents)
+    raise Invalid, @errors if @errors.any?
+
+    store(data.merge('agents' => cleaned))
+    self
+  end
+
   def sip_password(user_id, extension)
     OpenSSL::HMAC.hexdigest('SHA256', key('outsider_voice_sip'), "#{@account.id}:#{user_id}:#{extension}")[0, 24]
   end
@@ -153,8 +178,17 @@ class Outsider::Voice::Settings
     @errors << "agents.#{user_id}.extension" unless extension.empty? || (extension.match?(EXTENSION) && extensions.exclude?(extension))
     @errors << "agents.#{user_id}.state" if agent['state'].present? && STATES.exclude?(agent['state'])
     extensions << extension
-    { 'extension' => extension, 'state' => agent['state'].presence, 'enabled' => boolean(agent['enabled']),
-      'branch' => clean_branch_id(agent['branch']) }
+    previous = data['agents'][user_id.to_i.to_s].to_h
+    { 'extension' => extension, 'state' => agent['state'].presence, 'enabled' => boolean(agent.fetch('enabled', previous['enabled'])),
+      'branch' => clean_branch_id(agent['branch']) }.merge(clean_agent_line(agent, previous))
+  end
+
+  # OUTSIDER (técnicos): número de saída escolhido e se toca nas ligações da empresa; tela que não manda os campos
+  # (Telefonia > Configurações) deixa o que está guardado
+  def clean_agent_line(agent, previous)
+    number = agent.key?('number') ? agent['number'] : previous['number']
+    inbound = agent.key?('inbound') ? boolean(agent['inbound']) : previous.fetch('inbound', true)
+    { 'number' => Outsider::Voice::PhoneNumber.national(number), 'inbound' => inbound }
   end
 
   def host(value)

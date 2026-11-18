@@ -8,6 +8,9 @@
 //   "Marcar como lida"; clicar no aviso abre a conversa na aba do Chatwoot que já está aberta.
 //   Telefone: ligação tocando com o Chatwoot em segundo plano (a página pede o aviso, botões Atender e Recusar) e
 //   "Ligação perdida" (push, botão "Ligar de volta").
+//   OUTSIDER (técnicos): ligação para quem está com o Chatwoot fechado no celular (push "wake", Outsider::Voice::Wake):
+//   aviso como o da ligação do WhatsApp (foto, nome, Atender e Recusar) que toca e vibra de novo a cada poucos segundos
+//   até atender, recusar, tirar o aviso ou a ligação acabar (push "stop"). Atender abre o Chatwoot já atendendo.
 // versão nova do aviso assume na hora (sem esperar a pessoa fechar todas as abas do Chatwoot)
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', event => event.waitUntil(clients.claim()));
@@ -152,6 +155,183 @@ self.outsiderPush = (() => {
     }
   };
 
+  // --- OUTSIDER (técnicos): ligação que acorda o celular ---
+
+  const WAKE_REPEAT = 4000;
+  // aviso que chegou atrasado (celular sem rede): a ligação já acabou
+  const WAKE_STALE = 40000;
+  const WAKE_VIBRATE = [600, 300, 600, 300, 600];
+  const wakeStops = new Map();
+
+  const pause = ms =>
+    new Promise(resolve => {
+      setTimeout(resolve, ms);
+    });
+
+  const stopWakeLoop = linkedid => {
+    const now = Date.now();
+    wakeStops.forEach((at, key) => {
+      if (now - at > 5 * 60 * 1000) wakeStops.delete(key);
+    });
+    wakeStops.set(String(linkedid), now);
+  };
+
+  const wakeShown = async linkedid =>
+    (await self.registration.getNotifications({ tag: CALL_TAG })).filter(
+      item => item.data && item.data.linkedid === linkedid
+    );
+
+  const showWake = (data, icon) =>
+    self.registration.showNotification(data.title, {
+      body: data.body || '',
+      icon,
+      badge: data.badge,
+      tag: CALL_TAG,
+      renotify: true,
+      requireInteraction: true,
+      vibrate: WAKE_VIBRATE,
+      timestamp: data.sent_at || Date.now(),
+      actions: [
+        { action: 'answer', title: data.answer_label || 'Atender' },
+        { action: 'decline', title: data.decline_label || 'Recusar' },
+      ],
+      data: {
+        outsider: 1,
+        call: 'wake',
+        linkedid: data.linkedid,
+        token: data.token,
+        url: data.url,
+      },
+    });
+
+  // o Safari do iPhone corta o push de quem recebe aviso sem mostrar nada: todo push da ligação mostra um aviso,
+  // quieto (sem som) quando ela já não toca
+  const quietNotice = (title, options) =>
+    self.registration.showNotification(title, {
+      silent: true,
+      renotify: false,
+      timestamp: Date.now(),
+      ...options,
+    });
+
+  const wake = async data => {
+    const linkedid = String(data.linkedid || '');
+    if (!linkedid || wakeStops.has(linkedid)) return null;
+    const sentAt = data.sent_at || Date.now();
+    // chegou atrasado (celular sem rede): a ligação já acabou
+    if (Date.now() - sentAt > WAKE_STALE) {
+      const tag = `call-wake-${linkedid}`;
+      if ((await self.registration.getNotifications({ tag })).length)
+        return null;
+      return quietNotice(data.title, {
+        body: data.body || '',
+        icon: data.icon,
+        badge: data.badge,
+        tag,
+        data: { outsider: 1, url: data.url },
+      });
+    }
+    const until = sentAt + (data.ring_seconds || 25) * 1000;
+    const icon =
+      (await avatar({
+        person: data.person,
+        title: data.title,
+        photo: data.photo,
+        icon: data.icon,
+      })) || data.icon;
+    const call = { ...data, linkedid };
+    await showWake(call, icon);
+    // toca e vibra de novo (o celular só faz barulho quando o aviso chega)
+    while (Date.now() + WAKE_REPEAT < until) {
+      // eslint-disable-next-line no-await-in-loop
+      await pause(WAKE_REPEAT);
+      if (wakeStops.has(linkedid)) return null;
+      // a pessoa tirou o aviso (arrastou para o lado): para de tocar
+      // eslint-disable-next-line no-await-in-loop
+      if (!(await wakeShown(linkedid)).length) return null;
+      // eslint-disable-next-line no-await-in-loop
+      await showWake(call, icon);
+    }
+    return null;
+  };
+
+  const stopWake = async linkedid => {
+    const id = String(linkedid || '');
+    if (!id) return;
+    stopWakeLoop(id);
+    (await wakeShown(id)).forEach(item => item.close());
+  };
+
+  // atendida ou recusada: no lugar do toque fica "Ligação atendida" quieto; com o app aberto na frente, some logo
+  const endWake = async data => {
+    await stopWake(data.linkedid);
+    await quietNotice(data.ended_title || 'Ligação', {
+      body: data.ended_body || '',
+      icon: data.icon,
+      badge: data.badge,
+      tag: CALL_TAG,
+      data: { outsider: 1, url: data.url, path: data.path, ended: 1 },
+    });
+    const visible = (await appWindows()).some(
+      client => client.visibilityState === 'visible'
+    );
+    if (!visible) return null;
+    await pause(1500);
+    (await self.registration.getNotifications({ tag: CALL_TAG })).forEach(
+      item => {
+        if (item.data && item.data.ended) item.close();
+      }
+    );
+    return null;
+  };
+
+  const answerCall = (data, action) =>
+    fetch('/outsider/push/call', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: data.token, call_action: action }),
+      credentials: 'omit',
+    }).catch(() => null);
+
+  // Atender: abre (ou traz para frente) o Chatwoot já atendendo; tocar no aviso abre a ligação tocando na tela
+  const openForCall = async (data, autoAnswer) => {
+    const open = await appWindows();
+    const target =
+      open.find(client => client.focused) ||
+      open.find(client => client.visibilityState === 'visible') ||
+      open[0];
+    if (target) {
+      target.postMessage({
+        type: 'outsider:call-wake',
+        linkedid: data.linkedid,
+        answer: autoAnswer,
+      });
+      return target.focus().catch(() => null);
+    }
+    if (!clients.openWindow || !data.url) return null;
+    const url = new URL(data.url);
+    url.searchParams.set(
+      autoAnswer ? 'outsider_answer' : 'outsider_ring',
+      data.linkedid
+    );
+    return clients.openWindow(url.toString());
+  };
+
+  // iPhone não mostra botões no aviso: tocar nele já atende
+  const hasActions = () =>
+    typeof Notification !== 'undefined' && Notification.maxActions > 0;
+
+  const wakeClick = (data, action) => {
+    stopWakeLoop(data.linkedid);
+    if (action === 'decline') return answerCall(data, 'decline');
+    const autoAnswer = action === 'answer' || (!action && !hasActions());
+    // abrir primeiro: o navegador só deixa abrir a janela logo depois do toque
+    return Promise.all([
+      openForCall(data, autoAnswer),
+      answerCall(data, 'accept'),
+    ]);
+  };
+
   // --- push que chega do servidor ---
 
   const actionsFor = data => {
@@ -177,6 +357,12 @@ self.outsiderPush = (() => {
   };
 
   const show = async data => {
+    if (data.call === 'wake') return wake(data);
+    if (data.call === 'stop') {
+      // "Ligação perdida" vem no mesmo push
+      if (!data.title) return endWake(data);
+      await stopWake(data.linkedid);
+    }
     const open = await windows();
     const watching = open.some(
       client =>
@@ -354,7 +540,8 @@ self.outsiderPush = (() => {
     if (!data.outsider) return false;
     notification.close();
     let work;
-    if (data.call === 'ring') work = callClick(event.action);
+    if (data.call === 'wake') work = wakeClick(data, event.action);
+    else if (data.call === 'ring') work = callClick(event.action);
     else if (event.action === 'read' && data.read) work = markRead(data.read);
     else if (event.action === 'reply' && data.reply && event.reply)
       work = quickReply(notification, data, event.reply);

@@ -17,6 +17,11 @@ class VoiceAPI extends ApiClient {
     return axios.get(`${this.url}/voice/team`);
   }
 
+  // OUTSIDER (técnicos): as ligações da pessoa (aba Recentes do Meu telefone)
+  recent() {
+    return axios.get(`${this.url}/voice/recent`);
+  }
+
   lookup(number) {
     return axios.get(`${this.url}/voice/lookup`, { params: { number } });
   }

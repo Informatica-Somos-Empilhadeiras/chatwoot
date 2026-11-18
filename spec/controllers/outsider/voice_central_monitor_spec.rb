@@ -64,8 +64,8 @@ RSpec.describe 'Outsider voice central: monitoring and IVR', type: :request do
   it 'gives the central the whole dialplan, so a new one needs no container rebuild' do
     get "#{base}/extensions", headers: headers
     expect(response.headers['Cache-Control']).to eq('no-store')
-    expect(Outsider::Voice::CentralStatus.new(account).to_h).to include(dialplan: 'ok', telephony_version: '26f')
-    expect(response.body).to include('telefonia 26f', 'ALL_AGENTS=PJSIP/201&PJSIP/202&PJSIP/203', '[from-agents]',
+    expect(Outsider::Voice::CentralStatus.new(account).to_h).to include(dialplan: 'ok', telephony_version: '27')
+    expect(response.body).to include('telefonia 27', 'ALL_AGENTS=PJSIP/201&PJSIP/202&PJSIP/203', '[from-agents]',
                                      'exten => _*80[1-5]XX', 'exten => _*81[1-5]XX', '[outsider-ivr]', '(whisper|open)',
                                      '/ivr_missing', 'STAT(e,/usr/share/asterisk/sounds/outsider/${AUDIO}.wav)')
   end
@@ -78,7 +78,7 @@ RSpec.describe 'Outsider voice central: monitoring and IVR', type: :request do
     expect(status.to_h).to include(online: true, dialplan: 'other', chatwoot: nil)
 
     post "#{base}/status", params: { registration: 'Registered', extensions: '201' }, headers: headers
-    expect(status.to_h).to include(dialplan: 'missing', chatwoot: '26f')
+    expect(status.to_h).to include(dialplan: 'missing', chatwoot: '27')
 
     stub_const('Outsider::Voice::CentralStatus::LOADED_AT', 1.minute.ago)
     expect(status.to_h[:dialplan]).to eq('waiting')

@@ -1093,5 +1093,169 @@
     "ON": "Done: your visits no longer mark other people's conversations as read.",
     "OFF": "Done: opening a conversation marks it as read again.",
     "ERROR": "Could not save the option. Try again."
+  },
+  "OUTSIDER_ACCESS": {
+    "SIDEBAR": "Access profiles",
+    "TITLE": "Access profiles",
+    "DESCRIPTION": "Choose what each profile sees and uses. New users get the default profile of their type, and you can change it later.",
+    "LOADING": "Loading…",
+    "TABS": {
+      "PROFILES": "Profiles",
+      "PEOPLE": "People"
+    },
+    "GROUPS": {
+      "TELEFONIA": "Telephony",
+      "ATENDIMENTO": "Service",
+      "VENDAS": "CRM"
+    },
+    "LEVELS": {
+      "NONE": "Hidden",
+      "VIEW": "View",
+      "USE": "Use",
+      "MANAGE": "Manage"
+    },
+    "TYPES": {
+      "ADMINISTRATOR": "Administrator",
+      "AGENT": "Agent",
+      "TECHNICIAN": "Technician",
+      "ADMINISTRATOR_PLURAL": "Administrators",
+      "AGENT_PLURAL": "Agents",
+      "TECHNICIAN_PLURAL": "Technicians",
+      "ADMINISTRATOR_HINT": "Everything",
+      "AGENT_HINT": "Handles conversations",
+      "TECHNICIAN_HINT": "Only makes and takes calls"
+    },
+    "SCREENS": {
+      "PHONE": {
+        "LABEL": "Phone (keypad, extensions, recent)",
+        "HINT": "Make and take calls. Technicians open straight on this screen."
+      },
+      "PHONE_OUTBOUND": {
+        "LABEL": "Outside calls (company number)",
+        "HINT": "Without it, only extensions."
+      },
+      "VOICE_PANEL": {
+        "LABEL": "Team dashboard and calls",
+        "HINT": "Telephony > Dashboard and Calls."
+      },
+      "VOICE_RECORDINGS": {
+        "LABEL": "Recordings",
+        "HINT": "Listen to and forward recordings."
+      },
+      "VOICE_MONITOR": {
+        "LABEL": "Listen and whisper on calls",
+        "HINT": "Use: manager in their units. Manage: any call."
+      },
+      "VOICE_ADMIN": {
+        "LABEL": "IVR and PBX settings",
+        "HINT": "Administrators only."
+      },
+      "CONVERSATIONS": {
+        "LABEL": "Conversations",
+        "HINT": "Inboxes and conversations. View: read without replying."
+      },
+      "CONTACTS": {
+        "LABEL": "Contacts",
+        "HINT": "View: shows who is calling."
+      },
+      "WHATSAPP_STATUS": {
+        "LABEL": "WhatsApp Status",
+        "HINT": ""
+      },
+      "TEAMS": {
+        "LABEL": "Teams",
+        "HINT": "Own Teams chats and channels."
+      },
+      "CRM": {
+        "LABEL": "Deals, tasks and proposals",
+        "HINT": "View: read only."
+      }
+    },
+    "PROFILES": {
+      "NEW": "+ New profile",
+      "NEW_NAME": "New profile",
+      "COPY_OF": "Copy of {name}",
+      "TAG_SYSTEM": "system default",
+      "TAG_DEFAULT": {
+        "AGENT": "default for agents",
+        "TECHNICIAN": "default for technicians"
+      },
+      "SUMMARY_ALL": "Everything",
+      "SUMMARY_PHONE": "Phone only",
+      "SUMMARY_SCREENS": "{count} screens",
+      "ONE_MEMBER": "1 person",
+      "MEMBERS": "{count} people",
+      "CEILING_HINT": "The super admin decides which screens stay administrator-only in each account. Profiles work within that.",
+      "NAME": "Profile name",
+      "DESCRIPTION": "Who this profile is for",
+      "DEFAULT_FOR": "Default for",
+      "DEFAULT_NONE": "nobody",
+      "DUPLICATE": "Duplicate",
+      "DELETE": "Delete",
+      "CONFIRM_DELETE": "Confirm: delete",
+      "SAVE": "Save",
+      "SAVED": "Profile saved.",
+      "DELETED": "Profile deleted. Its people went back to the default profile.",
+      "ADMIN_NOTE": "Account administrators see and use everything. To limit someone, keep them as an agent or technician.",
+      "SCREEN": "Screen",
+      "ACCESS": "Access",
+      "NOTE": "Note",
+      "ADMIN_ONLY": "administrator only",
+      "LOCKED_BY_SUPERADMIN": "Locked by the super admin"
+    },
+    "PEOPLE": {
+      "SEARCH": "Search name, email or extension",
+      "ALL": "All ({count})",
+      "NEW": "New user",
+      "VOICE_OFF": "Telephony is off in this account. The extension is kept and takes effect once it is turned on in Telephony > Settings.",
+      "NO_EXTENSION": "no extension",
+      "EXTENSION": "extension {extension}",
+      "PUSH_ON": "phone notice ({count})",
+      "PUSH_OFF": "no phone notice",
+      "INVITED": "invite sent",
+      "PROFILE": "Access profile",
+      "ADMIN_PROFILE": "Administrator (everything)",
+      "EDIT_LINE": "Extension",
+      "EMPTY": "Nobody found.",
+      "NEW_TITLE": "New user",
+      "NEW_HINT": "They get an email to create a password. Then they sign in on the phone and install the app.",
+      "EDIT_TITLE": "Profile and extension of {name}",
+      "NAME": "Name",
+      "EMAIL": "Email",
+      "TYPE": "User type",
+      "DEFAULT_MARK": "(default)",
+      "BRANCH": "Branch",
+      "NO_BRANCH": "No branch",
+      "EXTENSION_LABEL": "Extension",
+      "EXTENSION_PLACEHOLDER": "201 to 599",
+      "EXTENSION_SUGGESTED": "free, suggested",
+      "EXTENSION_HINT": "Empty turns the extension off.",
+      "NUMBER": "Outgoing number",
+      "NUMBER_AUTO": "Automatic (by the extension state)",
+      "INBOUND": "Rings for calls to the company",
+      "INBOUND_HINT": "Off: only rings when someone calls their extension.",
+      "TECHNICIAN_NOTE": "Technicians do not need an inbox. When they sign in on the phone, My phone asks them to install the app and turn on the call notice.",
+      "SAVE": "Save",
+      "CREATE": "Create and send invite",
+      "CREATED": "Created. The invite was sent by email.",
+      "UPDATED": "Saved.",
+      "ERRORS": {
+        "EMAIL": "Invalid email or already in this account.",
+        "EXTENSION": "Invalid extension (201 to 599) or already taken.",
+        "LINE": "Could not save the extension. Check the outgoing number.",
+        "PROFILE": "Pick a valid access profile.",
+        "TYPE": "Pick the user type.",
+        "LIMIT": "The account reached its user limit.",
+        "INVALID": "Could not save. Check the fields."
+      }
+    },
+    "ERRORS": {
+      "LOAD": "Could not load the access profiles.",
+      "SAVE": "Could not save the profile.",
+      "NAME": "A profile with this name already exists.",
+      "LIMIT": "The account reached its profile limit.",
+      "ADMINISTRATOR": "The Administrator profile does not change.",
+      "SYSTEM": "Built-in profiles cannot be deleted."
+    }
   }
 }

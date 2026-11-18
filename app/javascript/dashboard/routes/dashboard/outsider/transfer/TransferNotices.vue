@@ -8,6 +8,7 @@ import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import { useDocumentVisibility, useIntervalFn } from '@vueuse/core';
+import { allows, loadAccess } from '../access/accessStore';
 import { useMapGetter } from 'dashboard/composables/store';
 import { useAlert } from 'dashboard/composables';
 import { emitter } from 'shared/helpers/mitt';
@@ -55,6 +56,9 @@ const cardCount = computed(() => incoming.value.length + declined.value.length);
 
 const load = async () => {
   if (!accountId.value) return;
+  // perfis de acesso: quem não vê as conversas (técnico) não tem transferência para receber
+  await loadAccess(accountId.value);
+  if (!allows('conversations', 'view')) return;
   try {
     await fetchTransfers();
   } catch {

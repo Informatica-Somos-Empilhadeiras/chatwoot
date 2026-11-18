@@ -50,6 +50,8 @@ const mode = computed(() => {
   if (!pushState.loaded || !info?.enabled || !info.vapid) return null;
   if (!pushState.supported || closedToday.value) return null;
   if (!props.inline && route.name === SETTINGS_ROUTE) return null;
+  // OUTSIDER (técnicos): o Meu telefone tem o próprio aviso (no Teclado e no Perfil)
+  if (!props.inline && route.name === 'outsider_my_phone') return null;
   if (pushState.permission === 'default') return 'ask';
   // na página de notificações o cartão "Meus aparelhos" já explica o bloqueio
   if (pushState.permission === 'denied') return props.inline ? null : 'blocked';

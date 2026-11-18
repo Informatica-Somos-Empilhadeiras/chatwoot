@@ -1093,5 +1093,169 @@
     "ON": "Pronto: suas visitas não marcam mais as conversas dos outros como lidas.",
     "OFF": "Pronto: abrir uma conversa volta a marcá-la como lida.",
     "ERROR": "Não deu para salvar a opção. Tente de novo."
+  },
+  "OUTSIDER_ACCESS": {
+    "SIDEBAR": "Perfis de acesso",
+    "TITLE": "Perfis de acesso",
+    "DESCRIPTION": "Escolha o que cada perfil vê e usa. Quem for cadastrado recebe o perfil padrão do seu tipo, e você pode trocar depois.",
+    "LOADING": "Carregando…",
+    "TABS": {
+      "PROFILES": "Perfis",
+      "PEOPLE": "Pessoas"
+    },
+    "GROUPS": {
+      "TELEFONIA": "Telefonia",
+      "ATENDIMENTO": "Atendimento",
+      "VENDAS": "CRM"
+    },
+    "LEVELS": {
+      "NONE": "Não vê",
+      "VIEW": "Vê",
+      "USE": "Usa",
+      "MANAGE": "Gerencia"
+    },
+    "TYPES": {
+      "ADMINISTRATOR": "Administrador",
+      "AGENT": "Agente",
+      "TECHNICIAN": "Técnico",
+      "ADMINISTRATOR_PLURAL": "Administradores",
+      "AGENT_PLURAL": "Agentes",
+      "TECHNICIAN_PLURAL": "Técnicos",
+      "ADMINISTRATOR_HINT": "Tudo liberado",
+      "AGENT_HINT": "Atende conversas",
+      "TECHNICIAN_HINT": "Só faz e recebe ligações"
+    },
+    "SCREENS": {
+      "PHONE": {
+        "LABEL": "Telefone (teclado, ramais, recentes)",
+        "HINT": "Fazer e receber ligações. O técnico abre direto nesta tela."
+      },
+      "PHONE_OUTBOUND": {
+        "LABEL": "Ligar para fora (sair com número da empresa)",
+        "HINT": "Sem isto, liga só para ramais."
+      },
+      "VOICE_PANEL": {
+        "LABEL": "Painel e ligações da equipe",
+        "HINT": "Telefonia > Painel e Ligações."
+      },
+      "VOICE_RECORDINGS": {
+        "LABEL": "Gravações",
+        "HINT": "Ouvir e encaminhar gravações."
+      },
+      "VOICE_MONITOR": {
+        "LABEL": "Ouvir e sussurrar nas ligações",
+        "HINT": "Usa: gestor nas unidades dele. Gerencia: qualquer ligação."
+      },
+      "VOICE_ADMIN": {
+        "LABEL": "URA e configurações da central",
+        "HINT": "Só administradores."
+      },
+      "CONVERSATIONS": {
+        "LABEL": "Conversas",
+        "HINT": "Caixas de entrada e conversas. Vê: lê sem responder."
+      },
+      "CONTACTS": {
+        "LABEL": "Contatos",
+        "HINT": "Vê: mostra o nome de quem liga."
+      },
+      "WHATSAPP_STATUS": {
+        "LABEL": "Status do WhatsApp",
+        "HINT": ""
+      },
+      "TEAMS": {
+        "LABEL": "Teams",
+        "HINT": "Chats e canais do próprio Teams."
+      },
+      "CRM": {
+        "LABEL": "Negócios, tarefas e propostas",
+        "HINT": "Vê: consulta sem mudar nada."
+      }
+    },
+    "PROFILES": {
+      "NEW": "+ Novo perfil",
+      "NEW_NAME": "Novo perfil",
+      "COPY_OF": "Cópia de {name}",
+      "TAG_SYSTEM": "padrão do sistema",
+      "TAG_DEFAULT": {
+        "AGENT": "padrão p/ agentes",
+        "TECHNICIAN": "padrão p/ técnicos"
+      },
+      "SUMMARY_ALL": "Tudo liberado",
+      "SUMMARY_PHONE": "Só telefone",
+      "SUMMARY_SCREENS": "{count} telas",
+      "ONE_MEMBER": "1 pessoa",
+      "MEMBERS": "{count} pessoas",
+      "CEILING_HINT": "O superadministrador decide quais telas ficam só para administradores em cada conta. Os perfis valem dentro disso.",
+      "NAME": "Nome do perfil",
+      "DESCRIPTION": "Para quem é este perfil",
+      "DEFAULT_FOR": "Padrão para",
+      "DEFAULT_NONE": "ninguém",
+      "DUPLICATE": "Duplicar",
+      "DELETE": "Apagar",
+      "CONFIRM_DELETE": "Confirmar: apagar",
+      "SAVE": "Salvar",
+      "SAVED": "Perfil salvo.",
+      "DELETED": "Perfil apagado. Quem estava nele voltou para o perfil padrão.",
+      "ADMIN_NOTE": "Administradores da conta veem e usam tudo. Para limitar alguém, deixe a pessoa como agente ou técnico.",
+      "SCREEN": "Tela",
+      "ACCESS": "Acesso",
+      "NOTE": "Observação",
+      "ADMIN_ONLY": "só administrador",
+      "LOCKED_BY_SUPERADMIN": "Bloqueado pelo superadministrador"
+    },
+    "PEOPLE": {
+      "SEARCH": "Buscar nome, e-mail ou ramal",
+      "ALL": "Todos ({count})",
+      "NEW": "Novo usuário",
+      "VOICE_OFF": "A telefonia está desligada nesta conta. O ramal fica guardado e passa a valer quando ela for ligada em Telefonia > Configurações.",
+      "NO_EXTENSION": "sem ramal",
+      "EXTENSION": "ramal {extension}",
+      "PUSH_ON": "aviso no celular ({count})",
+      "PUSH_OFF": "sem aviso no celular",
+      "INVITED": "convite enviado",
+      "PROFILE": "Perfil de acesso",
+      "ADMIN_PROFILE": "Administrador (tudo)",
+      "EDIT_LINE": "Ramal",
+      "EMPTY": "Ninguém encontrado.",
+      "NEW_TITLE": "Novo usuário",
+      "NEW_HINT": "A pessoa recebe um e-mail para criar a senha. Depois é só entrar pelo celular e instalar o app.",
+      "EDIT_TITLE": "Perfil e ramal de {name}",
+      "NAME": "Nome",
+      "EMAIL": "E-mail",
+      "TYPE": "Tipo de usuário",
+      "DEFAULT_MARK": "(padrão)",
+      "BRANCH": "Filial",
+      "NO_BRANCH": "Sem filial",
+      "EXTENSION_LABEL": "Ramal",
+      "EXTENSION_PLACEHOLDER": "201 a 599",
+      "EXTENSION_SUGGESTED": "livre, sugerido",
+      "EXTENSION_HINT": "Vazio desliga o ramal.",
+      "NUMBER": "Número de saída",
+      "NUMBER_AUTO": "Automático (pelo estado do ramal)",
+      "INBOUND": "Toca nas ligações que chegam para a empresa",
+      "INBOUND_HINT": "Desligado: só toca quando alguém liga para o ramal dele.",
+      "TECHNICIAN_NOTE": "Técnico não precisa de caixa de entrada. Ao entrar pelo celular, a tela Meu telefone pede para instalar o app e ativar o aviso de ligação.",
+      "SAVE": "Salvar",
+      "CREATE": "Cadastrar e enviar convite",
+      "CREATED": "Cadastrado. O convite foi enviado por e-mail.",
+      "UPDATED": "Salvo.",
+      "ERRORS": {
+        "EMAIL": "E-mail inválido ou já cadastrado nesta conta.",
+        "EXTENSION": "Ramal inválido (201 a 599) ou já usado por outra pessoa.",
+        "LINE": "Não deu para guardar o ramal. Confira o número de saída.",
+        "PROFILE": "Escolha um perfil de acesso válido.",
+        "TYPE": "Escolha o tipo de usuário.",
+        "LIMIT": "A conta chegou ao limite de usuários.",
+        "INVALID": "Não deu para salvar. Confira os campos."
+      }
+    },
+    "ERRORS": {
+      "LOAD": "Não deu para carregar os perfis de acesso.",
+      "SAVE": "Não deu para salvar o perfil.",
+      "NAME": "Já existe um perfil com esse nome.",
+      "LIMIT": "A conta chegou ao limite de perfis.",
+      "ADMINISTRATOR": "O perfil Administrador não muda.",
+      "SYSTEM": "Os perfis prontos não podem ser apagados."
+    }
   }
 }
