@@ -102,3 +102,9 @@
   outline: 2px solid var(--tms-accent);
   outline-offset: 2px;
 }
+
+/* celular: com um chat/canal aberto, o botão redondo do menu do Chatwoot (canto de baixo) cobria o clipe da caixa de
+   escrever. Para voltar ao menu há a seta do topo (lista do Teams, com a barra de baixo). */
+body:has(.tms [data-teams-composer]) #mobile-sidebar-launcher {
+  display: none !important;
+}

@@ -301,6 +301,8 @@ const visible = computed(
     width.value < SMALL_SCREEN &&
     !route.params.conversation_id &&
     !HIDDEN_ROUTES.includes(route.name) &&
+    // chat/canal do Teams aberto: a barra cobria a caixa de escrever
+    !(route.name === 'outsider_teams' && route.params.threadId) &&
     !viewportState.keyboardOpen &&
     primaryModules.value.length > 0
 );

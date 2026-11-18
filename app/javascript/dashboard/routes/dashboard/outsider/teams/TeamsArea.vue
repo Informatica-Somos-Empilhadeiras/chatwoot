@@ -42,6 +42,13 @@ const threadId = computed(() => Number(route.params.threadId) || null);
 const selected = computed(
   () => threads.value.find(thread => thread.id === threadId.value) || null
 );
+// celular: mostra uma coisa de cada vez. Chat que não está na lista (saiu da lista, link antigo do aviso) volta para a
+// lista em vez de deixar a tela vazia sem saída
+const isOpen = computed(
+  () =>
+    isCalendar.value ||
+    (!!threadId.value && (!!selected.value || isLoading.value))
+);
 const canWrite = computed(() => teamsState.status === 'active');
 const channelView = computed(() =>
   teamsState.channelView === 'publicacoes' ? 'publicacoes' : 'conversa'
@@ -171,13 +178,13 @@ onBeforeUnmount(() => {
         :unread-chats="teamsState.unreadChats"
         :unread-channels="teamsState.unreadChannels"
         class="w-full md:w-[340px] shrink-0 border-r border-n-weak"
-        :class="threadId || isCalendar ? 'hidden md:flex' : 'flex'"
+        :class="isOpen ? 'hidden md:flex' : 'flex'"
         @open="open"
         @settings="goSettings"
       />
       <div
         class="flex-1 min-w-0"
-        :class="threadId || isCalendar ? 'flex' : 'hidden md:flex'"
+        :class="isOpen ? 'flex' : 'hidden md:flex'"
       >
         <TeamsCalendar v-if="isCalendar" @back="back" />
         <TeamsChannelView

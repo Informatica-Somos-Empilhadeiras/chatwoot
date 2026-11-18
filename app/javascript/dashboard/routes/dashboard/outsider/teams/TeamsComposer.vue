@@ -169,22 +169,72 @@ const resize = () => {
 
 const focus = () => nextTick(() => input.value?.focus());
 
-const pick = event => {
-  const chosen = Array.from(event.target.files || []);
-  event.target.value = '';
+// imagem colada (Ctrl+V / print) chega como "image.png": ganha nome com data e hora para não repetir no OneDrive
+const pad = n => String(n).padStart(2, '0');
+const pastedName = (file, index) => {
+  const now = new Date();
+  const ext = (file.type.split('/')[1] || 'png').replace('jpeg', 'jpg');
+  const stamp = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+  return `imagem-${stamp}${index ? `-${index + 1}` : ''}.${ext}`;
+};
+
+// anexar pelo clipe, colando (Ctrl+V) ou soltando arquivos na conversa (addFiles é chamado pela tela do chat/canal)
+const addFiles = list => {
+  if (props.disabled) return;
+  const chosen = Array.from(list || []).filter(Boolean);
+  if (!chosen.length) return;
   if (chosen.some(file => file.size > MAX_SIZE)) {
     useAlert(t('OUTSIDER_TEAMS_AREA.ERRORS.FILE_TOO_BIG'));
   }
-  files.value = [
-    ...files.value,
-    ...chosen.filter(file => file.size <= MAX_SIZE),
-  ].slice(0, MAX_FILES);
+  const fitting = chosen.filter(file => file.size <= MAX_SIZE);
+  if (files.value.length + fitting.length > MAX_FILES) {
+    useAlert(t('OUTSIDER_TEAMS_AREA.ERRORS.TOO_MANY_FILES', { n: MAX_FILES }));
+  }
+  files.value = [...files.value, ...fitting].slice(0, MAX_FILES);
+  focus();
+};
+
+const pick = event => {
+  addFiles(event.target.files);
+  event.target.value = '';
+};
+
+const onPaste = event => {
+  const pasted = Array.from(event.clipboardData?.items || [])
+    .filter(item => item.kind === 'file')
+    .map(item => item.getAsFile())
+    .filter(Boolean);
+  if (!pasted.length) return;
+  event.preventDefault();
+  addFiles(
+    pasted.map((file, index) =>
+      file.type.startsWith('image/') && /^image\.\w+$/i.test(file.name || 'image.png')
+        ? new File([file], pastedName(file, index), { type: file.type })
+        : file
+    )
+  );
+};
+
+// miniatura das imagens escolhidas/coladas antes de mandar
+const previews = new WeakMap();
+const previewOf = file => {
+  if (!file.type?.startsWith('image/')) return '';
+  if (!previews.has(file)) previews.set(file, URL.createObjectURL(file));
+  return previews.get(file);
+};
+const removeFile = index => {
+  const [file] = files.value.splice(index, 1);
+  const url = file && previews.get(file);
+  if (url) URL.revokeObjectURL(url);
 };
 
 const send = () => {
   if (!canSend.value) return;
   mention.value = null;
   emit('send', { content: text.value.trim(), files: files.value });
+  files.value.forEach(file => {
+    if (previews.has(file)) URL.revokeObjectURL(previews.get(file));
+  });
   text.value = '';
   files.value = [];
   nextTick(resize);
@@ -221,12 +271,13 @@ const onKeydown = event => {
   }
 };
 
-defineExpose({ focus });
+defineExpose({ focus, addFiles });
 </script>
 
 <template>
   <div
-    class="mx-4 mb-3.5 mt-2 border rounded-2xl border-n-weak bg-n-surface-1 px-3.5 py-2.5"
+    class="mx-2 md:mx-4 mb-2 md:mb-3.5 mt-2 border rounded-2xl border-n-weak bg-n-surface-1 px-3.5 py-2.5"
+    data-teams-composer
   >
     <div
       v-if="replyingTo"
@@ -313,19 +364,36 @@ defineExpose({ focus });
         @input="onInput"
         @keydown="onKeydown"
         @click="checkMention"
+        @paste="onPaste"
         @blur="mention = null"
       />
     </div>
 
-    <div v-if="files.length" class="flex flex-wrap gap-1.5 mb-1.5">
+    <div
+      v-if="files.length"
+      class="flex flex-wrap gap-1.5 mb-1.5"
+      data-teams-composer-files
+    >
       <span
         v-for="(file, index) in files"
         :key="`${file.name}-${index}`"
-        class="flex items-center gap-1.5 px-2 py-1 text-xs rounded-lg bg-n-alpha-2 text-n-slate-12"
+        class="flex items-center gap-1.5 py-1 text-xs rounded-lg bg-n-alpha-2 text-n-slate-12"
+        :class="previewOf(file) ? 'pl-1 pr-2' : 'px-2'"
       >
-        <Icon icon="i-lucide-paperclip" class="size-3" />
+        <img
+          v-if="previewOf(file)"
+          :src="previewOf(file)"
+          :alt="file.name"
+          class="object-cover rounded-md size-9"
+        />
+        <Icon v-else icon="i-lucide-paperclip" class="size-3" />
         <span class="max-w-[160px] truncate">{{ file.name }}</span>
-        <button type="button" @click="files.splice(index, 1)">
+        <button
+          type="button"
+          class="grid rounded-full size-6 place-items-center hover:bg-n-alpha-2"
+          :title="t('OUTSIDER_TEAMS_AREA.REMOVE_FILE')"
+          @click="removeFile(index)"
+        >
           <Icon icon="i-lucide-x" class="size-3" />
         </button>
       </span>

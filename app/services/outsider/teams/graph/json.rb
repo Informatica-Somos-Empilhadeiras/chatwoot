@@ -6,7 +6,7 @@ module Outsider::Teams::Graph::Json
     {
       id: thread.id, kind: thread.kind, chat_type: thread.chat_type, title: thread.title, team_id: thread.team_id,
       team_name: thread.team_name, channel_id: thread.channel_id, members_count: Array(thread.members).size,
-      last_message_preview: thread.last_message_preview, last_message_at: thread.last_message_at&.iso8601,
+      last_message_preview: clean(thread.last_message_preview), last_message_at: thread.last_message_at&.iso8601,
       unread_count: thread.unread_count, mention_count: thread.mention_count, last_read_at: thread.last_read_at&.iso8601,
       web_url: web_url(thread), peer_id: peer_id(thread), peer_photo: photo(thread.link, peer_id(thread))
     }
@@ -30,11 +30,16 @@ module Outsider::Teams::Graph::Json
       id: message.id, thread_id: message.thread_id, graph_id: message.graph_id, reply_to_graph_id: message.reply_to_graph_id,
       mine: message.mine, sender_name: message.sender_name, sender_ms_id: message.sender_ms_id,
       sender_photo: photo(message.thread&.link, message.sender_ms_id), subject: message.subject,
-      content: message.content,
+      content: clean(message.content),
       quote: message.quote, mentions_me: message.mentions_me, status: message.status, error: message.error,
       sent_at: message.sent_at.iso8601, edited_at: message.edited_at&.iso8601, deleted: message.deleted_at.present?,
       attachments: attachments(message), reactions: reactions(message)
     }
+  end
+
+  # mensagens que já entraram com o marcador <attachment id="..."> no texto (Teams do celular) aparecem sem ele
+  def clean(text)
+    Outsider::Teams::Graph::Inbound.without_attachment_tags(text)
   end
 
   # [{ emoji, count, mine, names }] na ordem em que apareceram

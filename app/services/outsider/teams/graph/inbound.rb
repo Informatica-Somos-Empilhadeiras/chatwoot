@@ -15,6 +15,15 @@ class Outsider::Teams::Graph::Inbound
   MAX_IMAGES = 50
   MAX_FILES = 60
   REPLY_QUOTE = %r{<blockquote[^>]*itemtype="http://schema\.skype\.com/Reply"[^>]*>.*?</blockquote>}im
+  # marcador de onde fica o arquivo no corpo da mensagem (<attachment id="..."></attachment>). O Teams do celular manda o
+  # corpo como texto puro, com o marcador escrito no meio do texto (às vezes escapado: &lt;attachment ...&gt;).
+  ATTACHMENT_TAG = %r{(?:<|&lt;)attachment\b[^>]*?(?:>|&gt;)\s*(?:(?:<|&lt;)/attachment(?:>|&gt;))?|(?:<|&lt;)/attachment(?:>|&gt;)}i
+
+  def self.without_attachment_tags(text)
+    return text if text.blank? || text.exclude?('attachment')
+
+    text.gsub(ATTACHMENT_TAG, '').gsub(/[ \t]+\n/, "\n").gsub(/\n{3,}/, "\n\n").strip
+  end
 
   def self.parse(resource)
     resource = resource.to_s
@@ -27,13 +36,14 @@ class Outsider::Teams::Graph::Inbound
 
   def self.text_of(body)
     content = body.to_h['content'].to_s
-    return content.strip if body.to_h['contentType'] == 'text'
+    return without_attachment_tags(content) if body.to_h['contentType'] == 'text'
 
-    html = content.gsub(REPLY_QUOTE, '')
+    html = content.gsub(REPLY_QUOTE, '').gsub(ATTACHMENT_TAG, '')
     html = html.gsub(%r{<emoji[^>]*\balt="([^"]*)"[^>]*>(?:\s*</emoji>)?}i) { Regexp.last_match(1) }
     html = html.gsub(%r{<at\b[^>]*>(.*?)</at>}im) { "@#{Regexp.last_match(1)}" }
     html = html.gsub(%r{<br\s*/?>|</p>|</div>|</li>|</h\d>}i, "\n")
-    CGI.unescapeHTML(ActionView::Base.full_sanitizer.sanitize(html)).tr("\u00A0", ' ').gsub(/[ \t]+\n/, "\n").gsub(/\n{3,}/, "\n\n").strip
+    text = CGI.unescapeHTML(ActionView::Base.full_sanitizer.sanitize(html)).tr("\u00A0", ' ')
+    without_attachment_tags(text.gsub(/[ \t]+\n/, "\n").gsub(/\n{3,}/, "\n\n").strip)
   end
 
   def initialize(link, ref, change_type = 'created', quiet: false)

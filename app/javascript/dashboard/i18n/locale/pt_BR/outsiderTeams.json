@@ -125,7 +125,8 @@
       "UPLOAD_FAILED": "Não deu para mandar o arquivo para o OneDrive. {name}",
       "NOT_FOUND": "Não encontrado.",
       "REACTION": "Não deu para reagir a esta mensagem.",
-      "REACTION_FAILED": "O Teams não aceitou a reação."
+      "REACTION_FAILED": "O Teams não aceitou a reação.",
+      "TOO_MANY_FILES": "Até {n} arquivos por mensagem. Os que passaram ficaram de fora."
     },
     "REACT": "Reagir",
     "MORE_EMOJIS": "Mais emojis",
@@ -209,6 +210,16 @@
       "SEND": "Encaminhar",
       "DONE": "Encaminhando para {count} destino… | Encaminhando para {count} destinos…",
       "MAX": "No máximo {count} destinos."
+    },
+    "REMOVE_FILE": "Tirar",
+    "DROP": {
+      "TITLE": "Solte para anexar",
+      "HINT": "Até 5 arquivos de 25 MB. Vão para o OneDrive, como no Teams."
+    },
+    "SHEET": {
+      "COPY": "Copiar texto",
+      "COPIED": "Texto copiado",
+      "CLOSE": "Fechar"
     }
   },
   "OUTSIDER_TEAMS_GRAPH": {

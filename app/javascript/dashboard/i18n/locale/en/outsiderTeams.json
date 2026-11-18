@@ -125,7 +125,8 @@
       "UPLOAD_FAILED": "Could not upload the file to OneDrive. {name}",
       "NOT_FOUND": "Not found.",
       "REACTION": "Could not react to this message.",
-      "REACTION_FAILED": "Teams did not accept the reaction."
+      "REACTION_FAILED": "Teams did not accept the reaction.",
+      "TOO_MANY_FILES": "Up to {n} files per message. The extra ones were left out."
     },
     "REACT": "React",
     "MORE_EMOJIS": "More emojis",
@@ -209,6 +210,16 @@
       "SEND": "Forward",
       "DONE": "Forwarding to {count} destination… | Forwarding to {count} destinations…",
       "MAX": "At most {count} destinations."
+    },
+    "REMOVE_FILE": "Remove",
+    "DROP": {
+      "TITLE": "Drop to attach",
+      "HINT": "Up to 5 files, 25 MB each. They go to OneDrive, like Teams."
+    },
+    "SHEET": {
+      "COPY": "Copy text",
+      "COPIED": "Text copied",
+      "CLOSE": "Close"
     }
   },
   "OUTSIDER_TEAMS_GRAPH": {

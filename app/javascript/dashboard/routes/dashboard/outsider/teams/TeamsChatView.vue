@@ -19,6 +19,10 @@ import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 import TeamsGraphAPI from 'dashboard/api/outsider/teamsGraph';
 import TeamsThreadHeader from './TeamsThreadHeader.vue';
 import TeamsComposer from './TeamsComposer.vue';
+import TeamsDropOverlay from './TeamsDropOverlay.vue';
+import TeamsMessageSheet from './TeamsMessageSheet.vue';
+import { useTeamsLongPress } from './useTeamsLongPress';
+import { useTeamsDrop } from './useTeamsDrop';
 import TeamsAttachments from './TeamsAttachments.vue';
 import TeamsReactions from './TeamsReactions.vue';
 import TeamsMentionBar from './TeamsMentionBar.vue';
@@ -331,10 +335,26 @@ const placeholder = computed(() => {
     ? t('OUTSIDER_TEAMS_AREA.WRITE_TO', { name: props.thread.title })
     : t('OUTSIDER_TEAMS_AREA.WRITE_GROUP');
 });
+
+// celular: segurar o dedo no balão abre o menu da mensagem (TeamsMessageSheet)
+const sheetFor = ref(null);
+const press = useTeamsLongPress(target => {
+  if (!selecting.value) sheetFor.value = target;
+});
+const sheetRow = computed(() =>
+  sheetFor.value ? rows.value.find(row => row.key === sheetFor.value) : null
+);
+
+// soltar arquivos em qualquer lugar da conversa anexa na caixa de escrever
+const { dragging, dropHandlers } = useTeamsDrop(
+  list => composer.value?.addFiles(list),
+  () => props.canWrite && !selecting.value
+);
 </script>
 
 <template>
-  <div class="flex flex-col flex-1 min-w-0">
+  <div class="relative flex flex-col flex-1 min-w-0" v-on="dropHandlers">
+    <TeamsDropOverlay v-if="dragging" />
     <TeamsThreadHeader
       :thread="thread"
       :view-mode="channelMode ? 'conversa' : 'publicacoes'"
@@ -416,12 +436,14 @@ const placeholder = computed(() => {
             <span v-if="isSelected(row)" class="i-lucide-check size-3" />
           </span>
           <div
-            class="flex gap-2.5 max-w-[80%] md:max-w-[70%] group"
+            class="flex gap-2.5 max-w-[85%] md:max-w-[70%] group select-none md:select-auto [-webkit-touch-callout:none]"
             :class="[
               row.message.mine ? 'self-end flex-row-reverse' : '',
               row.first ? 'mt-2' : '',
             ]"
             :data-teams-message="row.message.id"
+            v-on="press.handlers(row.key)"
+            @click.capture="press.swallowClick"
           >
             <span v-if="!row.message.mine" class="w-[30px] shrink-0">
               <Avatar
@@ -509,7 +531,7 @@ const placeholder = computed(() => {
                     canWrite && row.message.graph_id && !row.message.deleted
                   "
                   type="button"
-                  class="grid transition-opacity rounded-full opacity-0 size-7 place-items-center shrink-0 text-n-slate-11 hover:bg-n-alpha-2 group-hover:opacity-100 focus:opacity-100"
+                  class="grid transition-opacity rounded-full opacity-0 size-7 place-items-center shrink-0 text-n-slate-11 hover:bg-n-alpha-2 group-hover:opacity-100 focus:opacity-100 [@media(hover:none)]:hidden"
                   :title="t('OUTSIDER_TEAMS_AREA.REPLY')"
                   data-teams-reply
                   @click="answer(row.message)"
@@ -519,7 +541,7 @@ const placeholder = computed(() => {
                 <button
                   v-if="!selecting && canForward(row.message)"
                   type="button"
-                  class="grid transition-opacity rounded-full opacity-0 size-7 place-items-center shrink-0 text-n-slate-11 hover:bg-n-alpha-2 group-hover:opacity-100 focus:opacity-100"
+                  class="grid transition-opacity rounded-full opacity-0 size-7 place-items-center shrink-0 text-n-slate-11 hover:bg-n-alpha-2 group-hover:opacity-100 focus:opacity-100 [@media(hover:none)]:hidden"
                   :title="t('OUTSIDER_TEAMS_AREA.FORWARD.BUTTON')"
                   data-teams-forward-one
                   @click="openForward(groupIds(row))"
@@ -529,7 +551,7 @@ const placeholder = computed(() => {
                 <button
                   v-if="!selecting && canForward(row.message)"
                   type="button"
-                  class="grid transition-opacity rounded-full opacity-0 size-7 place-items-center shrink-0 text-n-slate-11 hover:bg-n-alpha-2 group-hover:opacity-100 focus:opacity-100"
+                  class="grid transition-opacity rounded-full opacity-0 size-7 place-items-center shrink-0 text-n-slate-11 hover:bg-n-alpha-2 group-hover:opacity-100 focus:opacity-100 [@media(hover:none)]:hidden"
                   :title="t('OUTSIDER_TEAMS_AREA.SELECT.BUTTON')"
                   data-teams-select
                   @click="startSelect(row)"
@@ -537,6 +559,7 @@ const placeholder = computed(() => {
                   <Icon icon="i-lucide-list-checks" class="size-4" />
                 </button>
                 <TeamsReactions
+                  class="[@media(hover:none)]:hidden"
                   :message="row.message"
                   :can-react="canWrite"
                   :align-end="row.message.mine"
@@ -636,6 +659,17 @@ const placeholder = computed(() => {
         {{ t('OUTSIDER_TEAMS_AREA.FORWARD.BUTTON') }}
       </button>
     </div>
+    <TeamsMessageSheet
+      v-if="sheetRow"
+      :message="sheetRow.message"
+      :can-write="canWrite"
+      :can-forward="canForward(sheetRow.message)"
+      @close="sheetFor = null"
+      @reply="answer(sheetRow.message)"
+      @forward="openForward(groupIds(sheetRow))"
+      @select="startSelect(sheetRow)"
+      @reacted="onReacted"
+    />
     <TeamsForwardDialog
       v-if="forwardIds"
       :thread-id="thread.id"

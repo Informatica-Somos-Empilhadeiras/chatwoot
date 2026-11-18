@@ -113,7 +113,7 @@ const who = item => item.names.join(', ');
     <span v-if="only !== 'chips' && enabled" class="relative inline-flex">
       <button
         type="button"
-        class="grid transition-opacity rounded-full opacity-0 size-7 place-items-center shrink-0 text-n-slate-11 hover:bg-n-alpha-2 group-hover:opacity-100 focus:opacity-100"
+        class="grid transition-opacity rounded-full opacity-0 size-7 place-items-center shrink-0 text-n-slate-11 hover:bg-n-alpha-2 group-hover:opacity-100 focus:opacity-100 [@media(hover:none)]:opacity-100"
         :class="open ? '!opacity-100 bg-n-alpha-2' : ''"
         :title="t('OUTSIDER_TEAMS_AREA.REACT')"
         data-teams-react

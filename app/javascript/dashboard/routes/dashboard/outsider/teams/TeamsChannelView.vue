@@ -12,6 +12,8 @@ import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 import TeamsGraphAPI from 'dashboard/api/outsider/teamsGraph';
 import TeamsThreadHeader from './TeamsThreadHeader.vue';
 import TeamsComposer from './TeamsComposer.vue';
+import TeamsDropOverlay from './TeamsDropOverlay.vue';
+import { useTeamsDrop } from './useTeamsDrop';
 import TeamsAttachments from './TeamsAttachments.vue';
 import TeamsReactions from './TeamsReactions.vue';
 import TeamsMentionBar from './TeamsMentionBar.vue';
@@ -129,10 +131,17 @@ const onSend = async ({ content, files }) => {
   else upsert(items.value, { replies: [], ...message });
   toBottom();
 };
+
+// soltar arquivos em qualquer lugar da conversa anexa na caixa de escrever
+const { dragging, dropHandlers } = useTeamsDrop(
+  list => composer.value?.addFiles(list),
+  () => props.canWrite
+);
 </script>
 
 <template>
-  <div class="flex flex-col flex-1 min-w-0">
+  <div class="relative flex flex-col flex-1 min-w-0" v-on="dropHandlers">
+    <TeamsDropOverlay v-if="dragging" />
     <TeamsThreadHeader
       :thread="thread"
       view-mode="publicacoes"
