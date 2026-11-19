@@ -5,7 +5,8 @@ module Outsider::Crm::ProposalSerializer
 
   def product(product)
     product.slice(:id, :kind, :name, :code, :brand, :description, :specs, :features, :sale_price_cents, :rental_price_cents,
-                  :available_quantity, :reserved_quantity, :active, :created_at, :updated_at).merge(image_url: file_path(product.image))
+                  :available_quantity, :reserved_quantity, :active, :erp_codigo_produto, :created_at, :updated_at)
+           .merge(image_url: file_path(product.image))
   end
 
   # content sai com os blocos e o papel timbrado efetivos (os do modelo ou os derivados dos textos antigos)
@@ -38,6 +39,7 @@ module Outsider::Crm::ProposalSerializer
   def proposal(proposal, access: nil)
     proposal_row(proposal, access: access).merge(
       proposal.slice(:customer, :conditions, :signer, :notes, :contact_id, :opportunity_id, :owner_id, :reserved_stock),
+      proposal.slice(:erp_company, :erp_quote_number, :erp_synced_at),
       items: proposal.items.map { |item| item(item) },
       created_by: Outsider::Crm::Serializer.user(proposal.created_by),
       sends: sends(proposal)
@@ -72,7 +74,7 @@ module Outsider::Crm::ProposalSerializer
 
   def item(item)
     item.slice(:id, :product_id, :position, :description, :unit_price_cents, :discount_cents, :total_cents, :show_details, :details)
-        .merge(quantity: item.quantity.to_f, image_url: file_path(item.image))
+        .merge(quantity: item.quantity.to_f, image_url: file_path(item.image), erp_codigo_produto: item.product&.erp_codigo_produto)
   end
 
   def opportunity_link(opportunity)

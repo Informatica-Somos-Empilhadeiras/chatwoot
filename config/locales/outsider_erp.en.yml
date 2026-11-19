@@ -3,5 +3,11 @@ en:
     note: "ERP: %{field} of service order %{os} (%{company}) changed from \"%{from}\" to \"%{to}\"."
     fields:
       SubStatus: "Sub-status"
+      Situacao: "Situation"
+      TipoAtendimento: "Service type"
+      NomeTecnico: "Technician"
       Defeitos: "Defects"
       Observacoes: "Notes"
+      Acessorios: "Accessories"
+      DataPrevisao: "Due date"
+      DataValidade: "Validity date"

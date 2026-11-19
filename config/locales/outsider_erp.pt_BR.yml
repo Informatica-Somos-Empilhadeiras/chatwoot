@@ -3,5 +3,11 @@ pt_BR:
     note: "ERP: %{field} da OS %{os} (%{company}) alterado de \"%{from}\" para \"%{to}\"."
     fields:
       SubStatus: "Substatus"
+      Situacao: "Situação"
+      TipoAtendimento: "Tipo de atendimento"
+      NomeTecnico: "Técnico"
       Defeitos: "Defeitos"
       Observacoes: "Observações"
+      Acessorios: "Acessórios"
+      DataPrevisao: "Data de previsão"
+      DataValidade: "Data de validade"

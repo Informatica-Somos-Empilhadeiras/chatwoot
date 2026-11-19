@@ -14,13 +14,14 @@ Rails.application.routes.prepend do
               resources :service_orders, only: [:index] do
                 collection do
                   get :board
-                  put :substatus
-                  put :field
+                  %i[substatus field status technician attendance_type].each { |action| put action }
                 end
               end
               resources :customers, only: [:index]
               resource :contact_link, only: [:create, :destroy]
-              resources :quotes, only: [:index]
+              resources :lists, only: [:index]
+              resources :catalog, only: [:index]
+              resources :quotes, only: [:index, :create]
             end
           end
         end

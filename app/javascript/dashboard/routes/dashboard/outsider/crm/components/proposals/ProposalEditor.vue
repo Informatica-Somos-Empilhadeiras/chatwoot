@@ -32,6 +32,7 @@ import ProposalPdfDialog from './ProposalPdfDialog.vue';
 import ProposalSendDialog from './ProposalSendDialog.vue';
 import ProposalSendHistory from './ProposalSendHistory.vue';
 import ConfirmDelete from '../ConfirmDelete.vue';
+import ErpQuoteButton from '../../../erp/components/ErpQuoteButton.vue';
 import {
   centsToInput,
   errorMessage,
@@ -481,6 +482,11 @@ const close = () => {
   emit('close');
 };
 
+// orçamento gerado no ERP: guarda o número na proposta aberta para mostrar o selo
+const onQuoteSynced = fields => {
+  if (proposal.value) proposal.value = { ...proposal.value, ...fields };
+};
+
 onMounted(async () => {
   if (props.access.proposals?.assign_owner && !agents.value.length) {
     store.dispatch('agents/get');
@@ -871,6 +877,11 @@ onMounted(async () => {
         {{ problem }}
       </span>
       <span v-else class="flex-1" />
+      <ErpQuoteButton
+        :proposal="proposal"
+        :dirty="isDirty"
+        @synced="onQuoteSynced"
+      />
       <Button
         size="sm"
         variant="faded"

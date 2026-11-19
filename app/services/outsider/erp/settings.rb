@@ -14,9 +14,15 @@ class Outsider::Erp::Settings
   FIELD = /\A[A-Z][A-Za-z0-9]{1,60}\z/
   ENDPOINT = /\AUpdate[A-Za-z0-9]{2,60}\z/
   DATE_TYPES = %w[DataEntrada DataPrevisao DataEntrega].freeze
-  # campo => endpoint confirmados por captura (OS 950). SubStatus tem fluxo próprio (com o histórico).
-  CONFIRMED_FIELDS = { 'Defeitos' => 'UpdateDefeitos' }.freeze
-  RESERVED_FIELDS = %w[SubStatus CodigoOS Empresa listaEmpresas].freeze
+  # campo => endpoint confirmados pelo painel do ERP (Update<Campo>/{OS}, corpo { <Campo>, listaEmpresas, Empresa }).
+  # SubStatus, Situacao (status) e Tecnico têm fluxo próprio (histórico/lista), fora daqui.
+  CONFIRMED_FIELDS = {
+    'Defeitos' => 'UpdateDefeitos', 'Observacoes' => 'UpdateObservacoes', 'Acessorios' => 'UpdateAcessorios',
+    'DataPrevisao' => 'UpdateDataPrevisao', 'DataValidade' => 'UpdateDataValidade'
+  }.freeze
+  # tipo de cada campo para a tela saber o controle (o resto é texto)
+  FIELD_KINDS = { 'DataPrevisao' => 'date', 'DataValidade' => 'date' }.freeze
+  RESERVED_FIELDS = %w[SubStatus Situacao CodigoOS Empresa listaEmpresas].freeze
   MAX_FIELDS = 20
   MAX_SUBSTATUS = 60
 
@@ -25,7 +31,9 @@ class Outsider::Erp::Settings
     'lookback_days' => 180, 'forward_days' => 365, 'date_type' => 'DataEntrada', 'cache_seconds' => 120,
     'quotes_enabled' => true, 'quotes_days' => 120, 'quotes_cache_seconds' => 600,
     'write_enabled' => false, 'note_on_change' => true, 'erp_user_id' => '0', 'user_erp_ids' => {},
-    'extra_fields' => [], 'substatus_options' => []
+    'extra_fields' => [], 'substatus_options' => [],
+    # criação de orçamento no ERP (desligada por padrão): usa as funções do ERP (ver Outsider::Erp::QuoteCreator)
+    'quote_write_enabled' => false, 'quote_forma_pagto' => 0, 'quote_tipo_frete' => 0, 'quote_genero_operacao' => 1
   }.freeze
 
   class Invalid < StandardError
@@ -50,6 +58,7 @@ class Outsider::Erp::Settings
   def enabled? = data['enabled'] == true && companies.any?
   def write_enabled? = enabled? && data['write_enabled'] == true
   def quotes_enabled? = enabled? && data['quotes_enabled'] == true
+  def quote_write_enabled? = enabled? && data['quote_write_enabled'] == true
   def companies = Array(data['companies'])
   def base_url = data['base_url']
   def device_id = data['device_id'].to_s
@@ -66,13 +75,14 @@ class Outsider::Erp::Settings
 
   def as_json(*)
     # o x-device-id não volta para a tela, só se existe
-    data.except('device_id').merge('device_id_set' => device_id.present?, 'confirmed_fields' => CONFIRMED_FIELDS)
+    data.except('device_id').merge('device_id_set' => device_id.present?, 'confirmed_fields' => CONFIRMED_FIELDS,
+                                   'field_kinds' => FIELD_KINDS, 'writable_fields' => writable_fields)
   end
 
   def update(params)
     params = params.to_h.deep_stringify_keys
     @errors = []
-    cleaned = data.merge(clean_connection(params)).merge(clean_cache(params)).merge(clean_write(params))
+    cleaned = data.merge(clean_connection(params)).merge(clean_cache(params)).merge(clean_write(params)).merge(clean_quote(params))
     raise Invalid, @errors if @errors.any?
 
     @account.with_lock do
@@ -109,6 +119,16 @@ class Outsider::Erp::Settings
       'user_erp_ids' => clean_user_ids(params.fetch('user_erp_ids', data['user_erp_ids'])),
       'extra_fields' => clean_fields(params.fetch('extra_fields', data['extra_fields'])),
       'substatus_options' => clean_substatus(params.fetch('substatus_options', data['substatus_options']))
+    }
+  end
+
+  # criação de orçamento: liga/desliga + padrões (forma de pagamento, tipo de frete, gênero da operação)
+  def clean_quote(params)
+    {
+      'quote_write_enabled' => flag(params, 'quote_write_enabled'),
+      'quote_forma_pagto' => clamp(params, 'quote_forma_pagto', 0, 999_999),
+      'quote_tipo_frete' => clamp(params, 'quote_tipo_frete', 0, 9),
+      'quote_genero_operacao' => clamp(params, 'quote_genero_operacao', 0, 999)
     }
   end
 

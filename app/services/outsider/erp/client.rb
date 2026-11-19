@@ -14,6 +14,8 @@ class Outsider::Erp::Client
   OS_PATH = '/KanbanOrdemServico/api/valoresDash'.freeze
   QUOTES_PATH = '/cotacaoDesempenho/api/valoresDash'.freeze
   UPDATE_PATH = '/KanbanOrdemServico/api/%<endpoint>s/%<code>d'.freeze
+  KANBAN_LIST_PATH = '/KanbanOrdemServico/api/%<endpoint>s'.freeze
+  QUERY_PATH = '/dashboard/api/query_execute'.freeze
 
   def initialize(settings)
     @settings = settings
@@ -50,6 +52,24 @@ class Outsider::Erp::Client
     raise Error, e.class.name
   end
 
+  # listas do Kanban sem código de OS: ListaStatusOS, ListaTecnicos, ListaTipoAtendimento (mesmos parâmetros do painel)
+  def kanban_list(endpoint, read_timeout: READ_TIMEOUT)
+    list(get(format(KANBAN_LIST_PATH, endpoint: endpoint), companies_query(@settings.companies), read_timeout))
+  end
+
+  # rota liberada pela Inntegra para a Somos: roda a SQL do lado do servidor (ver Outsider::Erp::Sql para a montagem
+  # segura, e Outsider::Erp::QuoteCreator para o uso). Só quem chama monta a SQL; aqui só transporta e devolve o JSON.
+  def query_execute(sql, read_timeout: WRITE_TIMEOUT)
+    response = HTTParty.put("#{@settings.base_url}#{QUERY_PATH}", body: { SQL_Execute: sql }.to_json,
+                                                                  open_timeout: OPEN_TIMEOUT, read_timeout: read_timeout,
+                                                                  headers: headers.merge('Content-Type' => 'application/json;charset=UTF-8'))
+    raise Error, "HTTP #{response.code}" unless response.code == 200
+
+    parse(response.body)
+  rescue HTTParty::Error, Net::OpenTimeout, Net::ReadTimeout, SocketError, SystemCallError, EOFError, OpenSSL::SSL::SSLError => e
+    raise Error, e.class.name
+  end
+
   private
 
   def companies_query(companies)
@@ -77,10 +97,14 @@ class Outsider::Erp::Client
   end
 
   def list(body)
-    data = JSON.parse(body)
+    data = parse(body)
     raise Error, 'resposta sem lista' unless data.is_a?(Array)
 
     data.grep(Hash)
+  end
+
+  def parse(body)
+    JSON.parse(body)
   rescue JSON::ParserError
     raise Error, 'resposta não é JSON'
   end

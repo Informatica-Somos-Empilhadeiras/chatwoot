@@ -25,6 +25,8 @@ class Outsider::Crm::Product < ApplicationRecord
   validates :sale_price_cents, :rental_price_cents, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
   validates :available_quantity, :reserved_quantity,
             numericality: { only_integer: true, greater_than_or_equal_to: 0, less_than: MAX_QUANTITY }, allow_nil: true
+  # CodigoProduto da unidade no ERP (em branco = item livre, não gera linha no orçamento do ERP)
+  validates :erp_codigo_produto, numericality: { only_integer: true, greater_than: 0 }, allow_nil: true
   validate :valid_specs
   validate :valid_features
   validate :valid_image

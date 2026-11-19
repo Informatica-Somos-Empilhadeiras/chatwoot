@@ -2,6 +2,7 @@
   "OUTSIDER_ERP": {
     "TITLE": "ERP Mais Prático",
     "SIDEBAR": "Service orders",
+    "CANCEL": "Cancel",
     "TABS": {
       "BOARD": "Service order board",
       "SETTINGS": "ERP settings"
@@ -15,6 +16,7 @@
       "UNAVAILABLE": "The ERP did not answer. Try again shortly.",
       "DISABLED": "The ERP integration is off.",
       "WRITE_DISABLED": "Writing to the ERP is off or your profile is read only.",
+      "QUOTE_WRITE_DISABLED": "Creating quotes in the ERP is off or your profile is read only.",
       "INVALID": "Could not save: check the chosen value.",
       "NO_PERMISSION": "Your access profile does not allow this.",
       "GENERIC": "Could not reach the ERP."
@@ -23,7 +25,9 @@
       "SUBSTATUS": "Sub-status",
       "DEFEITOS": "Defects",
       "OBSERVACOES": "Notes",
-      "ACESSORIOS": "Accessories"
+      "ACESSORIOS": "Accessories",
+      "DATAPREVISAO": "Due date",
+      "DATAVALIDADE": "Validity date"
     },
     "ORDER": {
       "CODE": "SO {code}",
@@ -37,6 +41,7 @@
       "SAVED": "Saved to the ERP.",
       "NOTE_HINT": "Each change is logged as a private note in this conversation.",
       "VIEW_ONLY": "Your profile can only view service orders.",
+      "NO_TECHNICIAN": "No technician",
       "DETAILS": {
         "SITUATION": "Situation",
         "SERVICE": "Service",
@@ -46,9 +51,37 @@
         "OWNERSHIP": "Ownership",
         "SELLER": "Seller",
         "ATTENDANT": "Attendant",
+        "TECHNICIAN": "Technician",
         "DELIVERY": "Delivery",
         "LAST_STATUS": "Last status",
         "ITEMS": "Items"
+      }
+    },
+    "PRODUCT_LINK": {
+      "TITLE": "ERP product",
+      "LINK": "Link to an ERP product",
+      "LINKED": "ERP product #{code}",
+      "CHANGE": "Change",
+      "UNLINK": "Unlink",
+      "SEARCH": "Search",
+      "SEARCH_PLACEHOLDER": "Product number or description",
+      "HINT": "Type at least 2 letters and search. Without a link, the item is left out of the ERP quote."
+    },
+    "QUOTE": {
+      "GENERATE": "Create ERP quote",
+      "SYNCED": "ERP quote #{number} · {company}",
+      "DONE": "Quote {number} created in the ERP.",
+      "ALREADY": "This proposal already has quote {number} in the ERP.",
+      "SKIPPED": "{count} item was left out (no ERP product). | {count} items were left out (no ERP product).",
+      "PICK_COMPANY": "Which company?",
+      "CONFIRM": "Create",
+      "SAVE_FIRST": "Save the proposal before creating the quote.",
+      "ERRORS": {
+        "FORMA_PAGTO": "Set the default payment method in ERP settings.",
+        "NO_CLIENT": "Link the contact to an ERP customer before creating the quote.",
+        "COMPANY_INVALID": "Invalid company for this contact.",
+        "NO_ITEMS": "No proposal item is linked to an ERP product.",
+        "GENERIC": "Could not create the quote in the ERP."
       }
     },
     "CONTACT": {
@@ -137,6 +170,15 @@
       "ERP_USER": "ERP user in the history",
       "ERP_USER_HINT": "idUsuario written to the sub-status history when the person has none (the ERP dashboard uses 0).",
       "PEOPLE": "ERP user of each person",
+      "QUOTE_WRITE": "Create quotes in the ERP",
+      "QUOTE_WRITE_HINT": "Lets you create a CRM proposal's quote in the ERP using Mais Prático's own functions (numbering, taxes and totals come from the ERP). Off by default. Link each catalog product to an ERP product.",
+      "QUOTE_WRITE_ENABLED": "Quote creation on",
+      "QUOTE_FORMA_PAGTO": "Default payment method",
+      "QUOTE_FORMA_PAGTO_HINT": "ERP payment method code. Required to create quotes.",
+      "QUOTE_TIPO_FRETE": "Freight type",
+      "QUOTE_TIPO_FRETE_HINT": "ERP freight type code (0 to 9).",
+      "QUOTE_GENERO": "Operation kind",
+      "QUOTE_GENERO_HINT": "ERP operation kind code.",
       "SAVE": "Save",
       "SAVED": "ERP settings saved.",
       "INVALID": "Check the fields marked in red."

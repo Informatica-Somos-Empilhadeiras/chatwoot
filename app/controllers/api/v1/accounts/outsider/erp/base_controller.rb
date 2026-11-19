@@ -31,6 +31,16 @@ class Api::V1::Accounts::Outsider::Erp::BaseController < Api::V1::Accounts::Base
   end
 
   def can_edit?
-    settings.write_enabled? && ::Outsider::Access.for(Current.account_user).allows?('erp', 'use')
+    settings.write_enabled? && can_use_erp?
+  end
+
+  # acesso de uso da integração (ver/editar), sem exigir a flag de escrita — para buscas de apoio (produtos, listas)
+  def can_use_erp?
+    ::Outsider::Access.for(Current.account_user).allows?('erp', 'use')
+  end
+
+  # criar orçamento no ERP: flag própria (desligada por padrão) + acesso de uso
+  def can_create_quote?
+    settings.quote_write_enabled? && can_use_erp?
   end
 end

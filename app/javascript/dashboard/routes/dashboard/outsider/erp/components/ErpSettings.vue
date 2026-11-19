@@ -428,6 +428,69 @@ const removeField = index => form.value.extra_fields.splice(index, 1);
       </details>
     </section>
 
+    <!-- orçamento (criação no ERP) -->
+    <section class="flex flex-col gap-4">
+      <div class="flex items-start justify-between gap-4">
+        <div class="flex flex-col gap-1">
+          <h3 class="text-base font-medium text-n-slate-12">
+            {{ t('OUTSIDER_ERP.SETTINGS.QUOTE_WRITE') }}
+          </h3>
+          <p class="mb-0 text-sm text-n-slate-11">
+            {{ t('OUTSIDER_ERP.SETTINGS.QUOTE_WRITE_HINT') }}
+          </p>
+        </div>
+        <label class="flex items-center gap-2 text-sm text-n-slate-12 shrink-0">
+          <Switch v-model="form.quote_write_enabled" />
+          {{ t('OUTSIDER_ERP.SETTINGS.QUOTE_WRITE_ENABLED') }}
+        </label>
+      </div>
+      <div class="grid gap-3 sm:grid-cols-3">
+        <label class="flex flex-col gap-1 text-sm">
+          <span class="text-n-slate-11">{{
+            t('OUTSIDER_ERP.SETTINGS.QUOTE_FORMA_PAGTO')
+          }}</span>
+          <input
+            v-model.number="form.quote_forma_pagto"
+            type="number"
+            min="0"
+            :class="INPUT"
+          />
+          <span class="text-xs text-n-slate-10">{{
+            t('OUTSIDER_ERP.SETTINGS.QUOTE_FORMA_PAGTO_HINT')
+          }}</span>
+        </label>
+        <label class="flex flex-col gap-1 text-sm">
+          <span class="text-n-slate-11">{{
+            t('OUTSIDER_ERP.SETTINGS.QUOTE_TIPO_FRETE')
+          }}</span>
+          <input
+            v-model.number="form.quote_tipo_frete"
+            type="number"
+            min="0"
+            max="9"
+            :class="INPUT"
+          />
+          <span class="text-xs text-n-slate-10">{{
+            t('OUTSIDER_ERP.SETTINGS.QUOTE_TIPO_FRETE_HINT')
+          }}</span>
+        </label>
+        <label class="flex flex-col gap-1 text-sm">
+          <span class="text-n-slate-11">{{
+            t('OUTSIDER_ERP.SETTINGS.QUOTE_GENERO')
+          }}</span>
+          <input
+            v-model.number="form.quote_genero_operacao"
+            type="number"
+            min="0"
+            :class="INPUT"
+          />
+          <span class="text-xs text-n-slate-10">{{
+            t('OUTSIDER_ERP.SETTINGS.QUOTE_GENERO_HINT')
+          }}</span>
+        </label>
+      </div>
+    </section>
+
     <div class="flex justify-end">
       <Button
         type="submit"

@@ -45,6 +45,33 @@ class ErpAPI extends ApiClient {
     return axios.put(`${this.url}/service_orders/field`, data);
   }
 
+  setStatus(data) {
+    return axios.put(`${this.url}/service_orders/status`, data);
+  }
+
+  setAttendanceType(data) {
+    return axios.put(`${this.url}/service_orders/attendance_type`, data);
+  }
+
+  setTechnician(data) {
+    return axios.put(`${this.url}/service_orders/technician`, data);
+  }
+
+  // listas de apoio (situações, técnicos, tipos de atendimento) para os seletores da edição da OS
+  lists() {
+    return axios.get(`${this.url}/lists`);
+  }
+
+  // busca de produtos do ERP numa unidade, para vincular a um item da proposta
+  catalog(company, q) {
+    return axios.get(`${this.url}/catalog`, { params: { company, q } });
+  }
+
+  // gera no ERP o orçamento de uma proposta do CRM (company opcional quando há mais de uma unidade)
+  generateQuote(data) {
+    return axios.post(`${this.url}/quotes`, data);
+  }
+
   customers(q) {
     return axios.get(`${this.url}/customers`, { params: { q } });
   }

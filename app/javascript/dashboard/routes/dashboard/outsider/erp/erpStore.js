@@ -12,8 +12,11 @@ export const erpState = reactive({
   canEdit: false,
   writeEnabled: false,
   quotesEnabled: false,
+  quoteWriteEnabled: false,
+  canCreateQuote: false,
   administrator: false,
   fields: [],
+  fieldKinds: {},
   companies: [],
 });
 
@@ -28,14 +31,48 @@ export const loadErpStatus = async accountId => {
       canEdit: data.can_edit,
       writeEnabled: data.write_enabled,
       quotesEnabled: data.quotes_enabled,
+      quoteWriteEnabled: data.quote_write_enabled,
+      canCreateQuote: data.can_create_quote,
       administrator: data.administrator,
       fields: data.fields || [],
+      fieldKinds: data.field_kinds || {},
       companies: data.companies || [],
     });
   } catch {
     // sem acesso pelo perfil (403) ou fora do ar: o ERP some da tela
     Object.assign(erpState, { loaded: true, accountId, enabled: false });
   }
+};
+
+// listas de apoio da edição da OS (situações, técnicos, tipos de atendimento). Buscadas uma vez por conta e
+// compartilhadas entre os cartões (o backend já guarda em cache por alguns minutos); uma falha deixa tentar de novo.
+export const erpLists = reactive({
+  loaded: false,
+  statuses: [],
+  technicians: [],
+  attendanceTypes: [],
+});
+
+let listsPromise = null;
+export const loadErpLists = () => {
+  if (erpLists.loaded) return Promise.resolve(erpLists);
+  if (!listsPromise) {
+    listsPromise = ErpAPI.lists()
+      .then(({ data }) => {
+        Object.assign(erpLists, {
+          loaded: true,
+          statuses: data.statuses || [],
+          technicians: data.technicians || [],
+          attendanceTypes: data.attendance_types || [],
+        });
+        return erpLists;
+      })
+      .catch(() => {
+        listsPromise = null;
+        return erpLists;
+      });
+  }
+  return listsPromise;
 };
 
 // a cópia do ERP ainda está chegando (202): tenta de novo algumas vezes
@@ -57,8 +94,22 @@ export const withLoadingRetry = async (
 
 export const orderKey = order => `${order.Empresa}:${order.CodigoOS}`;
 
+const PLAIN_DATE = /^(\d{4})-(\d{2})-(\d{2})$/;
+
+// valor para <input type="date"> (AAAA-MM-DD) no dia de Brasília. Data já gravada pela tela vem como
+// "2026-11-20" e fica como está (new Date leria meia-noite UTC = dia anterior em Brasília)
+export const toDateInput = value => {
+  if (!value) return '';
+  if (PLAIN_DATE.test(value)) return value;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  return date.toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+};
+
 export const formatDate = value => {
   if (!value) return '';
+  const plain = PLAIN_DATE.exec(value);
+  if (plain) return `${plain[3]}/${plain[2]}/${plain[1]}`;
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return '';
   // o ERP manda a data à meia-noite de Brasília em UTC (03:00Z)
@@ -107,6 +158,7 @@ export const erpErrorMessage = (t, error) => {
     erp_unavailable: 'UNAVAILABLE',
     erp_disabled: 'DISABLED',
     write_disabled: 'WRITE_DISABLED',
+    quote_write_disabled: 'QUOTE_WRITE_DISABLED',
     invalid: 'INVALID',
   };
   if (error?.response?.status === 403 && !known[code])

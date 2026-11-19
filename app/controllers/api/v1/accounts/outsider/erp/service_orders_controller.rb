@@ -23,6 +23,22 @@ class Api::V1::Accounts::Outsider::Erp::ServiceOrdersController < Api::V1::Accou
                                        value: params[:value].to_s, conversation: conversation) }
   end
 
+  def status
+    render json: { order: writer.status(company: params.require(:company), code: params.require(:code), value: params.require(:value),
+                                        conversation: conversation) }
+  end
+
+  def attendance_type
+    render json: { order: writer.attendance_type(company: params.require(:company), code: params.require(:code), value: params.require(:value),
+                                                 conversation: conversation) }
+  end
+
+  def technician
+    order = writer.technician(company: params.require(:company), code: params.require(:code), tecnico_id: params.require(:tecnico_id),
+                              tecnico_name: params[:tecnico_name], conversation: conversation)
+    render json: { order: order }
+  end
+
   private
 
   def contact_orders

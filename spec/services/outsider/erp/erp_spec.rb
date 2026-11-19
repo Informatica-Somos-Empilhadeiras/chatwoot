@@ -30,9 +30,21 @@ RSpec.describe 'Outsider ERP' do # rubocop:disable RSpec/DescribeClass
       expect { settings.update('base_url' => 'https://evil.example.com') }.to raise_error(Outsider::Erp::Settings::Invalid)
       expect { settings.update('extra_fields' => [{ 'field' => 'SubStatus', 'endpoint' => 'UpdateSubStatusOS' }]) }
         .to raise_error(Outsider::Erp::Settings::Invalid)
+      # já confirmado: não dá para recadastrar como campo extra
+      expect { settings.update('extra_fields' => [{ 'field' => 'Observacoes', 'endpoint' => 'UpdateObservacoes' }]) }
+        .to raise_error(Outsider::Erp::Settings::Invalid)
 
-      settings.update('extra_fields' => [{ 'field' => 'Observacoes', 'endpoint' => 'UpdateObservacoes' }])
-      expect(settings.writable_fields).to eq('Defeitos' => 'UpdateDefeitos', 'Observacoes' => 'UpdateObservacoes')
+      settings.update('extra_fields' => [{ 'field' => 'Problema', 'endpoint' => 'UpdateProblema' }])
+      expect(settings.writable_fields).to eq(Outsider::Erp::Settings::CONFIRMED_FIELDS.merge('Problema' => 'UpdateProblema'))
+    end
+
+    it 'cleans the quote defaults and starts quote writing off' do
+      expect(settings.quote_write_enabled?).to be(false)
+      settings.update('quote_write_enabled' => true, 'quote_forma_pagto' => '3', 'quote_tipo_frete' => 99, 'quote_genero_operacao' => 1)
+      fresh = described_class.new(account)
+      expect(fresh.quote_write_enabled?).to be(true)
+      expect(fresh.data['quote_forma_pagto']).to eq(3)
+      expect(fresh.data['quote_tipo_frete']).to eq(9) # 0..9
     end
 
     it 'never sends the device id back to the screen and keeps it when left blank' do
@@ -109,7 +121,8 @@ RSpec.describe 'Outsider ERP' do # rubocop:disable RSpec/DescribeClass
         expect { writer.substatus(company: 'somosgo', code: 907, value: '2-AGENDADO') }.to raise_error(Outsider::Erp::Writer::Invalid)
         expect { writer.substatus(company: 'somosemp', code: 907, value: '1-AGENDAR ATENDIMENTO (DF)') }
           .to raise_error(Outsider::Erp::Writer::Invalid)
-        expect { writer.field(company: 'somosemp', code: 907, field: 'Observacoes', value: 'x') }.to raise_error(Outsider::Erp::Writer::Invalid)
+        expect { writer.field(company: 'somosemp', code: 907, field: 'CampoDesconhecido', value: 'x') }
+          .to raise_error(Outsider::Erp::Writer::Invalid)
         expect(put_substatus).not_to have_been_made
       end
 
@@ -120,6 +133,60 @@ RSpec.describe 'Outsider ERP' do # rubocop:disable RSpec/DescribeClass
 
         writer.field(company: 'somosemp', code: 907, field: 'Defeitos', value: 'Vazamento')
         expect(put).to have_been_made
+      end
+
+      it 'changes the situation and writes the ERP status history, with the order company' do
+        put_status = stub_request(:put, "#{base}/KanbanOrdemServico/api/UpdateStatusOS/907").to_return(status: 200, body: '[]')
+        put_history = stub_request(:put, "#{base}/KanbanOrdemServico/api/GravaHistoricoStatusOS/907").to_return(status: 200, body: '[]')
+        stub_request(:get, %r{#{base}/KanbanOrdemServico/api/ListaStatusOS})
+          .to_return(status: 200, body: [{ 'Descricao' => 'FINALIZADO' }, { 'Descricao' => 'ABERTO' }].to_json)
+
+        expect { writer.status(company: 'somosemp', code: 907, value: 'INVENTADO') }.to raise_error(Outsider::Erp::Writer::Invalid)
+        expect(put_status).not_to have_been_made
+        order = writer.status(company: 'somosemp', code: 907, value: 'FINALIZADO')
+
+        expect(put_status.with(body: { 'Situacao' => 'FINALIZADO', 'listaEmpresas' => %w[somosemp somosfilial], 'Empresa' => 'somosemp' }))
+          .to have_been_made
+        expect(put_history.with(body: { 'Situacao' => 'FINALIZADO', 'listaEmpresas' => %w[somosemp somosfilial],
+                                        'idUsuario' => '55', 'Empresa' => 'somosemp' })).to have_been_made
+        expect(order['Situacao']).to eq('FINALIZADO')
+      end
+
+      it 'changes the service type only to a value from the ERP list' do
+        stub_request(:get, %r{#{base}/KanbanOrdemServico/api/ListaTipoAtendimento})
+          .to_return(status: 200, body: [{ 'TipoAtendimento' => 'CORRETIVA' }, { 'TipoAtendimento' => 'PREVENTIVA' }].to_json)
+        put = stub_request(:put, "#{base}/KanbanOrdemServico/api/UpdateTipoAtendimento/907")
+              .with(body: { 'TipoAtendimentoAtual' => 'PREVENTIVA', 'listaEmpresas' => %w[somosemp somosfilial], 'Empresa' => 'somosemp' })
+              .to_return(status: 200, body: '[]')
+
+        expect { writer.attendance_type(company: 'somosemp', code: 907, value: 'OUTRA') }.to raise_error(Outsider::Erp::Writer::Invalid)
+        expect(writer.attendance_type(company: 'somosemp', code: 907, value: 'PREVENTIVA')['TipoAtendimento']).to eq('PREVENTIVA')
+        expect(put).to have_been_made.once
+      end
+
+      it 'writes a date field only as YYYY-MM-DD and notes it as dd/mm/yyyy' do
+        conversation = create(:conversation, account: account)
+        put = stub_request(:put, "#{base}/KanbanOrdemServico/api/UpdateDataPrevisao/907")
+              .with(body: { 'DataPrevisao' => '2026-11-20', 'listaEmpresas' => %w[somosemp somosfilial], 'Empresa' => 'somosemp' })
+              .to_return(status: 200, body: '[]')
+
+        expect { writer.field(company: 'somosemp', code: 907, field: 'DataPrevisao', value: '20/11/2026') }
+          .to raise_error(Outsider::Erp::Writer::Invalid)
+        writer.field(company: 'somosemp', code: 907, field: 'DataPrevisao', value: '2026-11-20', conversation: conversation)
+
+        expect(put).to have_been_made.once
+        expect(conversation.messages.last.content).to include('Data de previsão').and include('20/11/2026')
+      end
+
+      it 'changes the technician by code and mirrors the name; refuses a non-numeric id' do
+        put_tec = stub_request(:put, "#{base}/KanbanOrdemServico/api/UpdateTecnico/907").to_return(status: 200, body: '[]')
+
+        order = writer.technician(company: 'somosemp', code: 907, tecnico_id: '12', tecnico_name: 'CARLOS')
+
+        expect(put_tec.with(body: { 'TecnicoAtual' => 12, 'listaEmpresas' => %w[somosemp somosfilial], 'Empresa' => 'somosemp' }))
+          .to have_been_made
+        expect(order['NomeTecnico']).to eq('CARLOS')
+        expect { writer.technician(company: 'somosemp', code: 907, tecnico_id: 'x') }.to raise_error(Outsider::Erp::Writer::Invalid)
       end
     end
   end

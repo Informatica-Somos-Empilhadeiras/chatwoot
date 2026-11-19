@@ -7,7 +7,7 @@ class Outsider::Erp::ServiceOrders
   FIELDS = %w[CodigoOS Empresa CodigoCliente Nome Cidade UF StatusKanban Situacao SubStatus Cor TipoAtendimento TipoOS Classe
               DescricaoMaquina DescricaoFamiliaMaquina NSerie CodigoMaquina PropriedadeMaquina StatusMaquina NomeTecnico NomeVendedor
               NomeAtendente DataEntrada DataPrevisao DataEntrega DtUltimoStatus DiasAtraso QtdProduto QtdServico Observacoes Defeitos
-              Acessorios EnviadoMobile].freeze
+              Acessorios DataValidade EnviadoMobile].freeze
   UNDEFINED = 'NÃO DEFINIDO'.freeze
   BOARD_LIMIT = 150
 

@@ -2,6 +2,7 @@
   "OUTSIDER_ERP": {
     "TITLE": "ERP Mais Prático",
     "SIDEBAR": "Ordens de serviço",
+    "CANCEL": "Cancelar",
     "TABS": {
       "BOARD": "Quadro de OS",
       "SETTINGS": "Configurações do ERP"
@@ -15,6 +16,7 @@
       "UNAVAILABLE": "O ERP não respondeu agora. Tente de novo em instantes.",
       "DISABLED": "A integração com o ERP está desligada.",
       "WRITE_DISABLED": "A gravação no ERP está desligada ou o seu perfil só permite consultar.",
+      "QUOTE_WRITE_DISABLED": "A criação de orçamento no ERP está desligada ou o seu perfil só permite consultar.",
       "INVALID": "Não foi possível gravar: confira o valor escolhido.",
       "NO_PERMISSION": "Seu perfil de acesso não permite isso.",
       "GENERIC": "Não foi possível falar com o ERP."
@@ -23,7 +25,9 @@
       "SUBSTATUS": "Substatus",
       "DEFEITOS": "Defeitos",
       "OBSERVACOES": "Observações",
-      "ACESSORIOS": "Acessórios"
+      "ACESSORIOS": "Acessórios",
+      "DATAPREVISAO": "Data de previsão",
+      "DATAVALIDADE": "Data de validade"
     },
     "ORDER": {
       "CODE": "OS {code}",
@@ -37,6 +41,7 @@
       "SAVED": "Gravado no ERP.",
       "NOTE_HINT": "Cada mudança fica numa nota privada desta conversa.",
       "VIEW_ONLY": "Seu perfil só permite consultar as OS.",
+      "NO_TECHNICIAN": "Sem técnico",
       "DETAILS": {
         "SITUATION": "Situação",
         "SERVICE": "Atendimento",
@@ -46,9 +51,37 @@
         "OWNERSHIP": "Propriedade",
         "SELLER": "Vendedor",
         "ATTENDANT": "Atendente",
+        "TECHNICIAN": "Técnico",
         "DELIVERY": "Entrega",
         "LAST_STATUS": "Último status",
         "ITEMS": "Itens"
+      }
+    },
+    "PRODUCT_LINK": {
+      "TITLE": "Produto no ERP",
+      "LINK": "Vincular a um produto do ERP",
+      "LINKED": "Produto do ERP #{code}",
+      "CHANGE": "Trocar",
+      "UNLINK": "Desvincular",
+      "SEARCH": "Buscar",
+      "SEARCH_PLACEHOLDER": "Número ou descrição do produto",
+      "HINT": "Digite ao menos 2 letras e busque. Sem vínculo, o item não entra no orçamento do ERP."
+    },
+    "QUOTE": {
+      "GENERATE": "Gerar orçamento no ERP",
+      "SYNCED": "Orçamento do ERP #{number} · {company}",
+      "DONE": "Orçamento {number} criado no ERP.",
+      "ALREADY": "Esta proposta já tem o orçamento {number} no ERP.",
+      "SKIPPED": "{count} item ficou de fora (sem produto do ERP). | {count} itens ficaram de fora (sem produto do ERP).",
+      "PICK_COMPANY": "Em qual unidade?",
+      "CONFIRM": "Gerar",
+      "SAVE_FIRST": "Salve a proposta antes de gerar o orçamento.",
+      "ERRORS": {
+        "FORMA_PAGTO": "Defina a forma de pagamento padrão nas Configurações do ERP.",
+        "NO_CLIENT": "Vincule o contato a um cliente do ERP antes de gerar o orçamento.",
+        "COMPANY_INVALID": "Unidade inválida para este contato.",
+        "NO_ITEMS": "Nenhum item da proposta está vinculado a um produto do ERP.",
+        "GENERIC": "Não foi possível criar o orçamento no ERP."
       }
     },
     "CONTACT": {
@@ -137,6 +170,15 @@
       "ERP_USER": "Usuário do ERP no histórico",
       "ERP_USER_HINT": "idUsuario gravado no histórico do substatus quando a pessoa não tem um próprio (o painel do ERP usa 0).",
       "PEOPLE": "Usuário do ERP de cada pessoa",
+      "QUOTE_WRITE": "Criar orçamento no ERP",
+      "QUOTE_WRITE_HINT": "Permite gerar no ERP o orçamento de uma proposta do CRM, usando as próprias funções do Mais Prático (numeração, impostos e totais saem do ERP). Começa desligado. Vincule cada produto do catálogo a um produto do ERP.",
+      "QUOTE_WRITE_ENABLED": "Criação de orçamento ligada",
+      "QUOTE_FORMA_PAGTO": "Forma de pagamento padrão",
+      "QUOTE_FORMA_PAGTO_HINT": "Código da forma de pagamento no ERP. Obrigatório para gerar orçamento.",
+      "QUOTE_TIPO_FRETE": "Tipo de frete",
+      "QUOTE_TIPO_FRETE_HINT": "Código do tipo de frete no ERP (0 a 9).",
+      "QUOTE_GENERO": "Gênero da operação",
+      "QUOTE_GENERO_HINT": "Código do gênero da operação no ERP.",
       "SAVE": "Salvar",
       "SAVED": "Configurações do ERP salvas.",
       "INVALID": "Confira os campos marcados em vermelho."

@@ -1,12 +1,14 @@
 # OUTSIDER: grava no ERP um campo de uma OS que já existe. Só com a escrita ligada nas Configurações, só nos endpoints
 # confirmados (Outsider::Erp::Settings#writable_fields) e só numa OS que está no espelho: a empresa da gravação é a da
-# própria OS, nunca a que veio da tela. O substatus faz o mesmo par de chamadas do painel do ERP (troca + histórico),
-# para o histórico de lá continuar certo. Criar ou apagar OS não existe na API web (só no sistema desktop).
+# própria OS, nunca a que veio da tela. Substatus e situação fazem o mesmo par de chamadas do painel do ERP (troca +
+# histórico), para o histórico de lá continuar certo; situação e tipo de atendimento só aceitam valores das listas do
+# próprio ERP (Outsider::Erp::Lists). Criar ou apagar OS não existe na API web (só no sistema desktop).
 class Outsider::Erp::Writer
   class Invalid < StandardError; end
   class Disabled < StandardError; end
 
   MAX_TEXT = 4000
+  DATE = /\A\d{4}-\d{2}-\d{2}\z/
 
   def initialize(account:, user:)
     @account = account
@@ -24,28 +26,59 @@ class Outsider::Erp::Writer
     previous = order['SubStatus'].to_s
     return order if previous == value
 
-    @client.update('UpdateSubStatusOS', order['CodigoOS'], { 'SubStatus' => value, 'listaEmpresas' => @settings.companies,
-                                                             'Empresa' => order['Empresa'] })
-    @client.update('GravaHistoricoSubStatusOS', order['CodigoOS'], {
-                     'SubStatusAntigo' => previous.presence || value, 'SubStatusNovo' => value, 'listaEmpresas' => @settings.companies,
-                     'idUsuario' => @settings.erp_user_id_for(@user), 'Empresa' => order['Empresa']
-                   })
+    @client.update('UpdateSubStatusOS', order['CodigoOS'], body(order, 'SubStatus' => value))
+    @client.update('GravaHistoricoSubStatusOS', order['CodigoOS'],
+                   body(order, 'SubStatusAntigo' => previous.presence || value, 'SubStatusNovo' => value, 'idUsuario' => erp_user))
     changed(order, 'SubStatus', previous, value, conversation)
   end
 
-  def field(company:, code:, field:, value:, conversation: nil)
+  # situação (status) da OS: troca + grava o histórico, igual ao painel (as opções vêm de ListaStatusOS)
+  def status(company:, code:, value:, conversation: nil)
     order = writable_order(company, code)
-    endpoint = @settings.writable_fields[field.to_s]
-    raise Invalid, 'field' unless endpoint
-
-    value = value.to_s.strip
-    raise Invalid, 'value' if value.length > MAX_TEXT
-
-    previous = order[field.to_s].to_s
+    value = listed(lists.statuses, value)
+    previous = order['Situacao'].to_s
     return order if previous == value
 
-    @client.update(endpoint, order['CodigoOS'], { field.to_s => value, 'listaEmpresas' => @settings.companies, 'Empresa' => order['Empresa'] })
-    changed(order, field.to_s, previous, value, conversation)
+    @client.update('UpdateStatusOS', order['CodigoOS'], body(order, 'Situacao' => value))
+    @client.update('GravaHistoricoStatusOS', order['CodigoOS'], body(order, 'Situacao' => value, 'idUsuario' => erp_user))
+    changed(order, 'Situacao', previous, value, conversation)
+  end
+
+  # tipo de atendimento da OS (as opções vêm de ListaTipoAtendimento)
+  def attendance_type(company:, code:, value:, conversation: nil)
+    order = writable_order(company, code)
+    value = listed(lists.attendance_types, value)
+    previous = order['TipoAtendimento'].to_s
+    return order if previous == value
+
+    @client.update('UpdateTipoAtendimento', order['CodigoOS'], body(order, 'TipoAtendimentoAtual' => value))
+    changed(order, 'TipoAtendimento', previous, value, conversation)
+  end
+
+  # técnico da OS: manda o código (as opções vêm de ListaTecnicos); o nome só alimenta o espelho
+  def technician(company:, code:, tecnico_id:, tecnico_name: nil, conversation: nil)
+    order = writable_order(company, code)
+    tecnico_id = Integer(tecnico_id)
+
+    @client.update('UpdateTecnico', order['CodigoOS'], body(order, 'TecnicoAtual' => tecnico_id))
+    changed(order, 'NomeTecnico', order['NomeTecnico'].to_s, tecnico_name.to_s.presence || tecnico_id.to_s, conversation)
+  rescue ArgumentError, TypeError
+    raise Invalid, 'tecnico'
+  end
+
+  # campos simples (texto ou data) liberados nas Configurações; data vai como AAAA-MM-DD
+  def field(company:, code:, field:, value:, conversation: nil)
+    order = writable_order(company, code)
+    field = field.to_s
+    endpoint = @settings.writable_fields[field]
+    raise Invalid, 'field' unless endpoint
+
+    value = clean_value(field, value)
+    previous = order[field].to_s
+    return order if previous == value
+
+    @client.update(endpoint, order['CodigoOS'], body(order, field => value))
+    changed(order, field, previous, value, conversation)
   end
 
   private
@@ -59,23 +92,36 @@ class Outsider::Erp::Writer
     order
   end
 
+  # corpo padrão das rotas do Kanban: o campo + as empresas do grupo + a empresa da própria OS
+  def body(order, fields)
+    fields.merge('listaEmpresas' => @settings.companies, 'Empresa' => order['Empresa'])
+  end
+
+  def lists = @lists ||= Outsider::Erp::Lists.new(@account)
+  def erp_user = @settings.erp_user_id_for(@user)
+
+  def listed(options, value)
+    value = value.to_s.squish
+    raise Invalid, 'value' unless value.present? && options.include?(value)
+
+    value
+  end
+
+  def clean_value(field, value)
+    value = value.to_s.strip
+    raise Invalid, 'value' if value.length > MAX_TEXT
+    raise Invalid, 'value' if Outsider::Erp::Settings::FIELD_KINDS[field] == 'date' && value.present? && !value.match?(DATE)
+
+    value
+  end
+
   def changed(order, field, previous, value, conversation)
     updated = order.merge(field => value)
     @orders.snapshot.patch { |item| updated if item['Empresa'] == order['Empresa'] && item['CodigoOS'] == order['CodigoOS'] }
-    note(order, field, previous, value, conversation) if conversation && @settings.data['note_on_change']
+    if conversation && @settings.data['note_on_change']
+      Outsider::Erp::ChangeNote.new(user: @user, conversation: conversation).post(order: order, field: field, from: previous, to: value)
+    end
     Rails.logger.info("[Outsider::Erp] conta #{@account.id} usuário #{@user.id} OS #{order['Empresa']}/#{order['CodigoOS']} #{field} alterado")
     updated
-  end
-
-  # nota privada na conversa: quem mudou o quê (fica no histórico do atendimento, não vai para o cliente)
-  def note(order, field, previous, value, conversation)
-    content = I18n.t('outsider_erp.note', os: order['CodigoOS'], company: order['Empresa'], field: field_label(field),
-                                          from: previous.presence&.truncate(300) || '—', to: value.presence&.truncate(300) || '—',
-                                          locale: :pt_BR)
-    Messages::MessageBuilder.new(@user, conversation, { content: content, private: true }).perform
-  end
-
-  def field_label(field)
-    I18n.t("outsider_erp.fields.#{field}", default: field, locale: :pt_BR)
   end
 end
