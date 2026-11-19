@@ -154,6 +154,7 @@
       "QUOTE_TIPO_FRETE": "Frete padrão",
       "QUOTE_GENERO": "Gênero da operação padrão",
       "SAVE": "Salvar",
+      "RELOAD": "Recarregar",
       "SAVED": "Configurações do ERP salvas.",
       "INVALID": "Confira os campos marcados em vermelho.",
       "QUOTE_FORMA_PAGTO_PICK": "Escolha a forma de pagamento",

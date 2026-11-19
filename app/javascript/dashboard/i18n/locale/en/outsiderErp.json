@@ -154,6 +154,7 @@
       "QUOTE_TIPO_FRETE": "Default freight",
       "QUOTE_GENERO": "Default operation type",
       "SAVE": "Save",
+      "RELOAD": "Reload",
       "SAVED": "ERP settings saved.",
       "INVALID": "Check the fields marked in red.",
       "QUOTE_FORMA_PAGTO_PICK": "Pick the payment term",

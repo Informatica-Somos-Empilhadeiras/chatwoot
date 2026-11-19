@@ -7,6 +7,7 @@ import { useI18n } from 'vue-i18n';
 import { useAlert } from 'dashboard/composables';
 import { useMapGetter } from 'dashboard/composables/store';
 import ErpAPI from 'dashboard/api/outsider/erp';
+import Icon from 'dashboard/components-next/icon/Icon.vue';
 import Button from 'dashboard/components-next/button/Button.vue';
 import Switch from 'dashboard/components-next/switch/Switch.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
@@ -25,6 +26,7 @@ const substatusText = ref('');
 const deviceId = ref('');
 const errors = ref([]);
 const testResult = ref(null);
+const loadError = ref('');
 // formas de pagamento do ERP (lista para escolher a padrão do orçamento; sem lista, o campo vira número)
 const paymentTerms = ref([]);
 // gêneros da operação e tipos de frete (listas fixas do servidor) para os padrões do orçamento
@@ -75,18 +77,23 @@ const paymentOptions = computed(() => {
   return [{ codigo: current, descricao: '' }, ...list];
 });
 
-onMounted(async () => {
+const load = async () => {
+  loading.value = true;
+  loadError.value = '';
   try {
     const { data } = await ErpAPI.settings();
     fill(data);
     if (data.settings.enabled && data.settings.companies?.length)
       loadPaymentTerms();
   } catch (error) {
-    useAlert(erpErrorMessage(t, error));
+    // sem isto a tela ficava em branco quando o /settings falhava (form nulo, sem v-else)
+    loadError.value = erpErrorMessage(t, error);
   } finally {
     loading.value = false;
   }
-});
+};
+
+onMounted(load);
 
 const hasError = key => errors.value.includes(key);
 
@@ -667,4 +674,20 @@ const removeField = index => form.value.extra_fields.splice(index, 1);
       />
     </div>
   </form>
+  <div
+    v-else
+    class="flex flex-col items-center gap-3 p-10 text-center rounded-xl bg-n-alpha-1"
+  >
+    <Icon icon="i-lucide-triangle-alert" class="size-8 text-n-ruby-9" />
+    <p class="max-w-md mb-0 text-sm text-n-slate-11">{{ loadError }}</p>
+    <Button
+      type="button"
+      size="sm"
+      variant="faded"
+      color="slate"
+      icon="i-lucide-refresh-cw"
+      :label="t('OUTSIDER_ERP.SETTINGS.RELOAD')"
+      @click="load"
+    />
+  </div>
 </template>
