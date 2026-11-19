@@ -452,6 +452,8 @@ defineExpose({ open, refresh, close });
             <ErpContactOrders
               v-if="erpOpen"
               :contact-id="opportunity.contact.id"
+              :conversation-id="opportunity.conversation_display_id"
+              :opportunity-id="opportunity.id"
             />
           </section>
 

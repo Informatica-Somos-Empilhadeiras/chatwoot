@@ -62,14 +62,80 @@ class ErpAPI extends ApiClient {
     return axios.get(`${this.url}/lists`);
   }
 
-  // busca de produtos do ERP numa unidade, para vincular a um item da proposta
+  // lista de peças e serviços do ERP numa unidade (abre pronta; q filtra por código ou nome)
   catalog(company, q) {
     return axios.get(`${this.url}/catalog`, { params: { company, q } });
   }
 
-  // gera no ERP o orçamento de uma proposta do CRM (company opcional quando há mais de uma unidade)
-  generateQuote(data) {
-    return axios.post(`${this.url}/quotes`, data);
+  // descrição técnica de um produto (aberta só quando pedida)
+  technical(company, code) {
+    return axios.get(`${this.url}/catalog/technical`, {
+      params: { company, code },
+    });
+  }
+
+  // orçamento de peças e serviços feito no chat (separado da proposta comercial do CRM)
+  budgets(contactId) {
+    return axios.get(`${this.url}/budgets`, {
+      params: { contact_id: contactId },
+    });
+  }
+
+  budget(id) {
+    return axios.get(`${this.url}/budgets/${id}`);
+  }
+
+  // rascunho novo: contact_id, conversation_id (número da conversa), opportunity_id
+  createBudget(data) {
+    return axios.post(`${this.url}/budgets`, data);
+  }
+
+  saveBudget(id, budget) {
+    return axios.patch(`${this.url}/budgets/${id}`, { budget });
+  }
+
+  deleteBudget(id) {
+    return axios.delete(`${this.url}/budgets/${id}`);
+  }
+
+  submitBudget(id) {
+    return axios.post(`${this.url}/budgets/${id}/submit`);
+  }
+
+  copyBudget(id, data) {
+    return axios.post(`${this.url}/budgets/${id}/copy`, data);
+  }
+
+  // orçamento feito no próprio Mais Prático: vira registro para PDF, envio e cópia
+  importBudget(data) {
+    return axios.post(`${this.url}/budgets/import`, data);
+  }
+
+  // PDF montado na hora (prévia do rascunho ou o oficial do ERP), como arquivo
+  budgetPdf(id) {
+    return axios.get(`${this.url}/budgets/${id}/pdf`, { responseType: 'blob' });
+  }
+
+  budgetDelivery(id) {
+    return axios.get(`${this.url}/budgets/${id}/delivery`);
+  }
+
+  budgetContacts(id, q) {
+    return axios.get(`${this.url}/budgets/${id}/contacts`, { params: { q } });
+  }
+
+  deliverBudget(id, data) {
+    return axios.post(`${this.url}/budgets/${id}/deliver`, data);
+  }
+
+  // desconto acima do limite: código e senha de quem libera no ERP (a senha não fica guardada em lugar nenhum)
+  approveDiscount(id, data) {
+    return axios.post(`${this.url}/budgets/${id}/approve_discount`, data);
+  }
+
+  // listas do formulário: formas de pagamento, vendedores, gêneros e fretes
+  budgetOptions(company) {
+    return axios.get(`${this.url}/budgets/options`, { params: { company } });
   }
 
   // clientes do ERP para vincular: sem q e com o contato, os parecidos com ele vêm primeiro

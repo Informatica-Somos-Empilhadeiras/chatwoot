@@ -84,7 +84,7 @@ RSpec.describe 'Outsider ERP lists to pick from' do # rubocop:disable RSpec/Desc
 
   it 'lists the products of a unit, ready before typing, and filters by number or words' do
     catalog = Outsider::Erp::Catalog.new(account)
-    expect(catalog.search('somosemp', '')).to eq([{ codigo: 1234, descricao: 'EMPILHADEIRA ELETRICA' }])
+    expect(catalog.search('somosemp', '')).to contain_exactly(include(codigo: 1234, descricao: 'EMPILHADEIRA ELETRICA', tipo: 0, ncm: nil))
     catalog.search('somosemp', 'empil elet')
     expect(a_request(:put, %r{/query_execute}).with do |req|
       req.body.include?("P.`Descricao` LIKE '%empil%' AND P.`Descricao` LIKE '%elet%'")

@@ -27,6 +27,20 @@ const errors = ref([]);
 const testResult = ref(null);
 // formas de pagamento do ERP (lista para escolher a padrão do orçamento; sem lista, o campo vira número)
 const paymentTerms = ref([]);
+// gêneros da operação e tipos de frete (listas fixas do servidor) para os padrões do orçamento
+const quoteLists = ref({});
+const QUOTE_SELECTS = [
+  {
+    key: 'quote_tipo_frete',
+    list: 'fretes',
+    label: 'OUTSIDER_ERP.SETTINGS.QUOTE_TIPO_FRETE',
+  },
+  {
+    key: 'quote_genero_operacao',
+    list: 'generos',
+    label: 'OUTSIDER_ERP.SETTINGS.QUOTE_GENERO',
+  },
+];
 
 const INPUT =
   '!mb-0 h-8 px-2 text-sm rounded-lg reset-base bg-n-solid-1 text-n-slate-12 outline outline-1 -outline-offset-1 outline-n-weak';
@@ -38,6 +52,7 @@ const fill = data => {
     user_erp_ids: { ...(data.settings.user_erp_ids || {}) },
   };
   people.value = data.people || [];
+  quoteLists.value = data.quote_lists || {};
   companiesText.value = (data.settings.companies || []).join(', ');
   substatusText.value = (data.settings.substatus_options || []).join('\n');
   deviceId.value = '';
@@ -464,7 +479,7 @@ const removeField = index => form.value.extra_fields.splice(index, 1);
       </details>
     </section>
 
-    <!-- orçamento (criação no ERP) -->
+    <!-- orçamento de peças e serviços: gravação no ERP, padrões do formulário, desconto e envio -->
     <section class="flex flex-col gap-4">
       <div class="flex items-start justify-between gap-4">
         <div class="flex flex-col gap-1">
@@ -512,36 +527,136 @@ const removeField = index => form.value.extra_fields.splice(index, 1);
             t('OUTSIDER_ERP.SETTINGS.QUOTE_FORMA_PAGTO_HINT')
           }}</span>
         </label>
-        <label class="flex flex-col gap-1 text-sm">
-          <span class="text-n-slate-11">{{
-            t('OUTSIDER_ERP.SETTINGS.QUOTE_TIPO_FRETE')
-          }}</span>
-          <input
-            v-model.number="form.quote_tipo_frete"
-            type="number"
-            min="0"
-            max="9"
-            :class="INPUT"
-          />
-          <span class="text-xs text-n-slate-10">{{
-            t('OUTSIDER_ERP.SETTINGS.QUOTE_TIPO_FRETE_HINT')
-          }}</span>
-        </label>
-        <label class="flex flex-col gap-1 text-sm">
-          <span class="text-n-slate-11">{{
-            t('OUTSIDER_ERP.SETTINGS.QUOTE_GENERO')
-          }}</span>
-          <input
-            v-model.number="form.quote_genero_operacao"
-            type="number"
-            min="0"
-            :class="INPUT"
-          />
-          <span class="text-xs text-n-slate-10">{{
-            t('OUTSIDER_ERP.SETTINGS.QUOTE_GENERO_HINT')
-          }}</span>
+        <label
+          v-for="field in QUOTE_SELECTS"
+          :key="field.key"
+          class="flex flex-col gap-1 text-sm"
+        >
+          <span class="text-n-slate-11">{{ t(field.label) }}</span>
+          <select v-model.number="form[field.key]" :class="INPUT">
+            <option
+              v-for="item in quoteLists[field.list] || []"
+              :key="item.codigo"
+              :value="item.codigo"
+            >
+              {{ item.codigo }} · {{ item.descricao }}
+            </option>
+          </select>
         </label>
       </div>
+      <div class="grid gap-3 sm:grid-cols-3">
+        <label
+          v-for="key in ['prazo_entrega', 'validade', 'garantia']"
+          :key="key"
+          class="flex flex-col gap-1 text-sm"
+        >
+          <span class="text-n-slate-11">{{
+            t(`OUTSIDER_ERP.BUDGET.TERMS.${key.toUpperCase()}`)
+          }}</span>
+          <input
+            v-model="form[`quote_${key}`]"
+            maxlength="255"
+            :placeholder="t('OUTSIDER_ERP.SETTINGS.QUOTE_DEFAULT_PLACEHOLDER')"
+            :class="INPUT"
+          />
+        </label>
+      </div>
+      <label class="flex items-start gap-2 text-sm text-n-slate-12">
+        <Switch v-model="form.quote_services_direct" class="mt-0.5" />
+        <span class="flex flex-col">
+          {{ t('OUTSIDER_ERP.SETTINGS.QUOTE_SERVICES_DIRECT') }}
+          <span class="text-xs text-n-slate-10">
+            {{ t('OUTSIDER_ERP.SETTINGS.QUOTE_SERVICES_DIRECT_HINT') }}
+          </span>
+        </span>
+      </label>
+
+      <div class="flex flex-col gap-3 p-3 rounded-lg bg-n-alpha-1">
+        <label class="flex items-start gap-2 text-sm text-n-slate-12">
+          <Switch v-model="form.quote_discount_approval" class="mt-0.5" />
+          <span class="flex flex-col">
+            {{ t('OUTSIDER_ERP.SETTINGS.QUOTE_DISCOUNT') }}
+            <span class="text-xs text-n-slate-10">
+              {{ t('OUTSIDER_ERP.SETTINGS.QUOTE_DISCOUNT_HINT') }}
+            </span>
+          </span>
+        </label>
+        <div
+          v-if="form.quote_discount_approval"
+          class="grid gap-3 sm:grid-cols-3"
+        >
+          <label
+            v-for="key in ['line', 'total']"
+            :key="key"
+            class="flex flex-col gap-1 text-sm"
+          >
+            <span class="text-n-slate-11">{{
+              t(`OUTSIDER_ERP.SETTINGS.QUOTE_DISCOUNT_${key.toUpperCase()}`)
+            }}</span>
+            <input
+              v-model.number="form[`quote_discount_${key}_max`]"
+              type="number"
+              min="0"
+              max="100"
+              :class="INPUT"
+            />
+          </label>
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-1">
+        <h4 class="mb-0 text-sm font-medium text-n-slate-12">
+          {{ t('OUTSIDER_ERP.SETTINGS.QUOTE_SEND') }}
+        </h4>
+        <p class="mb-0 text-xs text-n-slate-10">
+          {{ t('OUTSIDER_ERP.SETTINGS.QUOTE_PLACEHOLDERS') }}
+        </p>
+      </div>
+      <div class="grid gap-3 sm:grid-cols-2">
+        <label class="flex flex-col gap-1 text-sm">
+          <span class="text-n-slate-11">{{
+            t('OUTSIDER_ERP.SETTINGS.QUOTE_EMAIL_SUBJECT')
+          }}</span>
+          <input
+            v-model="form.quote_email_subject"
+            maxlength="200"
+            :class="INPUT"
+          />
+        </label>
+        <label class="flex flex-col gap-1 text-sm">
+          <span class="text-n-slate-11">{{
+            t('OUTSIDER_ERP.SETTINGS.QUOTE_REPLY_TO')
+          }}</span>
+          <input
+            v-model="form.quote_reply_to"
+            type="email"
+            :placeholder="t('OUTSIDER_ERP.SETTINGS.QUOTE_REPLY_TO_PLACEHOLDER')"
+            :class="[INPUT, hasError('quote_reply_to') && '!outline-n-ruby-9']"
+          />
+        </label>
+      </div>
+      <label class="flex flex-col gap-1 text-sm">
+        <span class="text-n-slate-11">{{
+          t('OUTSIDER_ERP.SETTINGS.QUOTE_EMAIL_BODY')
+        }}</span>
+        <textarea
+          v-model="form.quote_email_body"
+          rows="6"
+          maxlength="4000"
+          class="!mb-0 px-2 py-1.5 text-sm rounded-lg reset-base bg-n-solid-1 text-n-slate-12 outline outline-1 -outline-offset-1 outline-n-weak"
+        />
+      </label>
+      <label class="flex flex-col gap-1 text-sm">
+        <span class="text-n-slate-11">{{
+          t('OUTSIDER_ERP.SETTINGS.QUOTE_WHATSAPP_TEXT')
+        }}</span>
+        <textarea
+          v-model="form.quote_whatsapp_text"
+          rows="3"
+          maxlength="2000"
+          class="!mb-0 px-2 py-1.5 text-sm rounded-lg reset-base bg-n-solid-1 text-n-slate-12 outline outline-1 -outline-offset-1 outline-n-weak"
+        />
+      </label>
     </section>
 
     <div class="flex justify-end">

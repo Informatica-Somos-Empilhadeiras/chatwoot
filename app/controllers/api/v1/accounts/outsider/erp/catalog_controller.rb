@@ -1,5 +1,5 @@
-# OUTSIDER: busca de produtos do ERP (Outsider::Erp::Catalog) para vincular a um item da proposta, assim o item carrega
-# o CodigoProduto real e os impostos do orçamento saem certos. Só leitura, escopada numa unidade da Somos.
+# OUTSIDER: lista de peças e serviços do ERP (Outsider::Erp::Catalog) para o orçamento de peças e serviços: abre pronta e
+# filtra por código ou nome; "technical" traz a descrição técnica de um produto. Só leitura, escopada numa unidade da Somos.
 class Api::V1::Accounts::Outsider::Erp::CatalogController < Api::V1::Accounts::Outsider::Erp::BaseController
   before_action :ensure_erp_use
 
@@ -7,6 +7,10 @@ class Api::V1::Accounts::Outsider::Erp::CatalogController < Api::V1::Accounts::O
 
   def index
     render json: { products: catalog.search(params.require(:company), params[:q]) }
+  end
+
+  def technical
+    render json: { technical: catalog.technical(params.require(:company), Integer(params.require(:code).to_s)) }
   end
 
   private

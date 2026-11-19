@@ -1,117 +1,180 @@
-# OUTSIDER: cria no ERP o orçamento de uma proposta do CRM. Orquestra (não monta SQL nem fala HTTP direto): resolve o
-# cliente e o vendedor, pede as chamadas ao Outsider::Erp::QuoteBuilder e roda pelo Outsider::Erp::Client#query_execute,
-# na ordem cabeçalho -> itens -> finaliza. Guarda o número do orçamento na proposta.
+# OUTSIDER: grava no ERP um orçamento de peças e serviços feito no chat (Outsider::Erp::Budget). Orquestra (não monta SQL
+# nem fala HTTP direto): confere o cliente e os produtos na unidade, pede as chamadas ao Outsider::Erp::QuoteBuilder e
+# roda pelo Client#query_execute na ordem cabeçalho -> linhas -> finaliza -> Demais Condições -> conferência.
 #
-# Gates: só com a escrita de orçamento ligada nas Configurações (quote_write_enabled, desligada por padrão) e com a
-# forma de pagamento padrão definida. Idempotente: se a proposta já tem orçamento, devolve o existente; e os itens só
-# entram se o orçamento ainda não tiver nenhum (evita duplicar numa reexecução).
+# Gates: gravação de orçamento ligada nas Configurações (desligada por padrão), forma de pagamento e vendedor definidos,
+# desconto acima do limite liberado (Outsider::Erp::DiscountPolicy).
+# Retomável: o número do ERP fica salvo logo depois do cabeçalho e o avanço a cada linha; se o ERP cair no meio, rodar de
+# novo continua de onde parou (o cabeçalho é idempotente e linha que já entrou não entra de novo). Uma gravação por vez
+# por orçamento (trava no Redis).
 class Outsider::Erp::QuoteCreator
   class Disabled < StandardError; end
   class Invalid < StandardError; end
 
-  Result = Struct.new(:number, :company, :skipped, :already, keyword_init: true)
+  LOCK_SECONDS = 180
 
-  def initialize(account:, user:, proposal:, company: nil)
-    @account = account
+  def initialize(budget, user:)
+    @budget = budget
     @user = user
-    @proposal = proposal
-    @company = company.presence
-    @settings = Outsider::Erp::Settings.new(account)
+    @settings = Outsider::Erp::Settings.new(budget.account)
     @client = Outsider::Erp::Client.new(@settings)
-    @catalog = Outsider::Erp::Catalog.new(account)
+    @catalog = Outsider::Erp::Catalog.new(budget.account)
   end
 
   def call
     ensure_ready!
-    link = resolve_link
-    return existing(link) if @proposal.erp_quote_number.present?
+    return @budget if @budget.created?
 
-    builder = build(link)
-    # dos itens com produto do ERP, só entram os cujo CodigoProduto existe mesmo na unidade (a função do ERP
-    # ignora código inexistente em silêncio, o que baixaria o total). Os ausentes viram "deixados de fora".
-    present, absent = partition(link['empresa'], builder)
-    raise Invalid, 'sem_itens' if present.empty?
-
-    number = create(builder, present)
-    persist(number, link['empresa'])
-    Result.new(number: number, company: link['empresa'], skipped: labels(builder.skipped_items + absent + @lost.to_a), already: false)
+    with_lock do
+      customer = customer!
+      plan = plan_lines
+      number = @budget.erp_number || create_header(customer, plan)
+      insert_lines(number, plan)
+      @client.query_execute(builder(customer, plan).finalize_sql(number))
+      write_conditions(number, customer, plan)
+      finish(number, plan)
+    end
   end
 
   private
 
   def ensure_ready!
     raise Disabled unless @settings.quote_write_enabled?
-    raise Invalid, 'forma_pagto' if @settings.data['quote_forma_pagto'].to_i <= 0
+    raise Invalid, 'forma_pagto' unless @budget.terms['forma_pagto'].to_i.positive?
+    raise Invalid, 'vendedor' unless @budget.terms['vendedor'].to_i.positive?
+    raise Invalid, 'sem_cliente' unless @budget.customer_code.to_i.positive?
+    raise Invalid, 'empresa' unless @settings.companies.include?(@budget.company)
+    raise Invalid, 'sem_itens' if @budget.items.empty?
+
+    ensure_discount!
   end
 
-  # cliente do ERP ligado ao contato: o da unidade pedida, senão o único; clientes em mais de uma unidade sem a
-  # unidade escolhida => ambíguo (a tela pergunta). Dois códigos na mesma unidade: vale o primeiro vínculo.
-  def resolve_link
-    links = Outsider::Erp::ContactLink.new(@proposal.contact).links
-    raise Invalid, 'sem_cliente' if links.empty?
+  # desconto acima do limite precisa estar liberado (gravação que parou no meio já passou por aqui)
+  def ensure_discount!
+    return if @budget.erp_number.present?
 
-    scoped = scoped_links(links)
-    companies = scoped.pluck('empresa').uniq
-    raise Invalid, "ambiguo:#{companies.join(',')}" if companies.size > 1
-
-    scoped.first
+    raise Invalid, 'desconto_sem_liberacao' if Outsider::Erp::DiscountPolicy.new(@budget, @settings).blocked?
   end
 
-  def scoped_links(links)
-    return links unless @company
+  def with_lock
+    key = "outsider_erp:#{@budget.account_id}:budget_lock:#{@budget.id}"
+    raise Invalid, 'em_andamento' unless Redis::Alfred.set(key, '1', nx: true, ex: LOCK_SECONDS)
 
-    links.select { |link| link['empresa'] == @company }.presence || raise(Invalid, 'empresa_invalida')
+    begin
+      yield
+    ensure
+      Redis::Alfred.delete(key)
+    end
   end
 
-  def build(link)
-    Outsider::Erp::QuoteBuilder.new(
-      proposal: @proposal, settings: @settings, company: link['empresa'],
-      codigo_cliente: link['codigo'], vendedor_erp_id: vendedor_id
-    )
+  # o cliente precisa existir na unidade (a função grava qualquer código, mesmo inexistente)
+  def customer!
+    builder = Outsider::Erp::QuoteBuilder.new(@budget, document: nil, seller: nil)
+    row = @client.query_execute(builder.customer_sql).grep(Hash).first
+    raise Invalid, 'cliente_inexistente' unless row
+
+    row
   end
 
-  # separa os itens vendáveis em presentes/ausentes na unidade; se a conferência falhar, segue com todos
-  def partition(company, builder)
-    codes = @catalog.existing_codes(company, builder.sellable_items.map { |item| builder.erp_code(item) })
-    builder.sellable_items.partition { |item| codes.include?(builder.erp_code(item).to_i) }
-  rescue Outsider::Erp::Client::Error
-    [builder.sellable_items, []]
+  # cada item vira :part (função do ERP), :service (linha direta, se ligado) ou fica de fora com o motivo
+  def plan_lines
+    kinds = @catalog.kinds(@budget.company, @budget.items.pluck('codigo'))
+    plan = @budget.items.map { |item| plan_line(item, kinds[item['codigo'].to_i]) }
+    raise Invalid, 'sem_itens' if plan.none? { |line| line[:kind] != :skip }
+
+    plan
   end
 
-  def create(builder, items)
-    number = Integer(scalar(@client.query_execute(builder.header_sql)))
-    raise Invalid, 'sem_numero' if number <= 0
+  def plan_line(item, kind)
+    return { item: item, kind: :skip, reason: 'inexistente' } if kind.nil?
+    return { item: item, kind: :part } unless kind == 1
+    return { item: item, kind: :service } if @settings.data['quote_services_direct'] == true
 
-    insert_items(builder, number, items) if inserted_codes(builder.company, number).blank?
-    @client.query_execute(builder.finalize_sql(number))
+    { item: item, kind: :skip, reason: 'servico' }
+  end
+
+  def builder(customer, plan)
+    Outsider::Erp::QuoteBuilder.new(@budget, document: customer['documento'], seller: @budget.terms['vendedor'],
+                                             service_codes: plan.select { |line| line[:kind] == :service }.map { |line| line[:item]['codigo'].to_i })
+  end
+
+  def create_header(customer, plan)
+    number = Integer(scalar(@client.query_execute(builder(customer, plan).header_sql)).to_s, exception: false).to_i
+    raise Invalid, 'sem_numero' unless number.positive?
+
+    save(erp_number: number, erp_result: @budget.erp_result.merge('progress' => 0))
+    log("cabeçalho #{@budget.company}/#{number}")
     number
   end
 
-  # a função do item também ignora em silêncio o produto sem tributação (NCM) para a UF do cliente: confere o que
-  # entrou de fato e devolve o resto como "ficou de fora"
-  def insert_items(builder, number, items)
-    items.each { |item| @client.query_execute(builder.item_sql(number, item)) }
-    inserted = inserted_codes(builder.company, number)
-    @lost = items.reject { |item| inserted.include?(builder.erp_code(item).to_i) } unless inserted.nil?
+  # linhas na ordem do rascunho, a partir de onde parou; linha que já está no orçamento (gravada numa tentativa que
+  # caiu antes de salvar o avanço) não entra de novo
+  def insert_lines(number, plan)
+    sendable = plan.reject { |line| line[:kind] == :skip }
+    progress = @budget.erp_result['progress'].to_i
+    return if progress >= sendable.size
+
+    existing = current_codes(number).tally
+    sendable.each_with_index.drop(progress).each do |line, index|
+      insert_line(number, line) unless already_in?(existing, sendable, index)
+      save(erp_result: @budget.erp_result.merge('progress' => index + 1))
+    end
   end
 
-  # nº do orçamento quando a proposta já foi sincronizada (não regrava, não duplica itens)
-  def existing(link)
-    Result.new(number: @proposal.erp_quote_number, company: @proposal.erp_company || link['empresa'], skipped: [], already: true)
+  # a mesma peça pode vir em mais de uma linha: está no ERP se lá já há mais dela do que nas linhas anteriores a esta
+  def already_in?(existing, sendable, index)
+    code = sendable[index][:item]['codigo'].to_i
+    existing.fetch(code, 0) > sendable.first(index).count { |other| other[:item]['codigo'].to_i == code }
   end
 
-  # códigos de produto que já estão no orçamento; nil quando a conferência falha (aí segue como antes)
-  def inserted_codes(company, number)
-    sql = "SELECT CodigoProduto FROM #{Outsider::Erp::Sql.ident(company)}.detalheorcamento " \
-          "WHERE CodigoOrcamento = #{Outsider::Erp::Sql.int(number)}"
-    @client.query_execute(sql).grep(Hash).map { |row| row['CodigoProduto'].to_i }
-  rescue Outsider::Erp::Client::Error
-    nil
+  def insert_line(number, line)
+    sql_builder = Outsider::Erp::QuoteBuilder.new(@budget, document: nil, seller: nil)
+    sql = line[:kind] == :service ? sql_builder.service_sql(number, line[:item]) : sql_builder.item_sql(number, line[:item])
+    @client.query_execute(sql)
   end
 
-  def persist(number, company)
-    @proposal.update_columns(erp_company: company, erp_quote_number: number, erp_synced_at: Time.current) # rubocop:disable Rails/SkipsModelValidations
-    Rails.logger.info("[Outsider::Erp] conta #{@account.id} usuário #{@user.id} proposta #{@proposal.id} => orçamento #{company}/#{number}")
+  # Demais Condições e total de serviços: texto do orçamento que as funções não recebem. Falhar aqui não desfaz o
+  # orçamento (ele já está certo no ERP); fica o aviso.
+  def write_conditions(number, customer, plan)
+    columns = Outsider::Erp::Schema.new(@budget.account, client: @client).columns(@budget.company, 'orcamento')
+    sql = builder(customer, plan).conditions_sql(number, columns)
+    @client.query_execute(sql) if sql
+  rescue Outsider::Erp::Client::Error => e
+    @conditions_error = e.message
+  end
+
+  # o que ficou fora: código inexistente, serviço (se a gravação direta estiver desligada) e o que a função descartou
+  # em silêncio (peça sem NCM para a UF do cliente)
+  def finish(number, plan)
+    skipped = plan.select { |line| line[:kind] == :skip }.map { |line| label(line, line[:reason]) } +
+              lost_lines(number, plan).map { |line| label(line, 'ncm') }
+    save(status: :created, erp_created_at: Time.current,
+         erp_result: { 'skipped' => skipped, 'conditions_error' => @conditions_error }.compact)
+    log("gravado #{@budget.company}/#{number}, #{skipped.size} fora")
+    @budget
+  end
+
+  # linhas mandadas que não estão no orçamento do ERP (conta repetidas)
+  def lost_lines(number, plan)
+    kept = current_codes(number).tally
+    plan.reject { |line| line[:kind] == :skip }.reject do |line|
+      code = line[:item]['codigo'].to_i
+      kept[code].to_i.positive?.tap { kept[code] = kept[code].to_i - 1 }
+    end
+  end
+
+  def current_codes(number)
+    @client.query_execute(Outsider::Erp::QuoteBuilder.new(@budget, document: nil, seller: nil).lines_sql(number))
+           .grep(Hash).map { |row| row['CodigoProduto'].to_i }
+  end
+
+  def label(line, reason)
+    { 'codigo' => line[:item]['codigo'], 'descricao' => line[:item]['descricao'].to_s.truncate(60), 'motivo' => reason }
+  end
+
+  # fora de transação: o número e o avanço precisam ficar salvos mesmo se a próxima chamada ao ERP falhar
+  def save(attributes)
+    @budget.update_columns(attributes.merge(updated_at: Time.current)) # rubocop:disable Rails/SkipsModelValidations
   end
 
   # primeira coluna da primeira linha devolvida pelo query_execute (as funções voltam [{ "codigo" => N }])
@@ -120,12 +183,7 @@ class Outsider::Erp::QuoteCreator
     row.is_a?(Hash) ? row.values.first : row
   end
 
-  def vendedor_id
-    owner = @proposal.owner || @proposal.created_by || @user
-    @settings.erp_user_id_for(owner)
-  end
-
-  def labels(items)
-    items.map { |item| item.description.to_s.truncate(60) }
+  def log(text)
+    Rails.logger.info("[Outsider::Erp] conta #{@budget.account_id} usuário #{@user&.id} orçamento #{@budget.id}: #{text}")
   end
 end

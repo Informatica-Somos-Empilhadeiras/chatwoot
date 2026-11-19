@@ -1,5 +1,6 @@
 # OUTSIDER: rotas da integração com o ERP Mais Prático (ver app/services/outsider/erp/settings.rb e
 # app/controllers/api/v1/accounts/outsider/erp/). Mudou rota: reiniciar o Rails.
+# rubocop:disable Metrics/BlockLength
 Rails.application.routes.prepend do
   namespace :api, defaults: { format: 'json' } do
     namespace :v1 do
@@ -21,8 +22,26 @@ Rails.application.routes.prepend do
               resources :customers, only: [:index]
               resource :contact_link, only: [:create, :destroy]
               resources :lists, only: [:index]
-              resources :catalog, only: [:index]
-              resources :quotes, only: [:index, :create]
+              resources :catalog, only: [:index] do
+                get :technical, on: :collection
+              end
+              resources :quotes, only: [:index]
+              # orçamento de peças e serviços feito no chat (separado da proposta comercial do CRM)
+              resources :budgets, only: [:index, :show, :create, :update, :destroy] do
+                collection do
+                  post :import
+                  get :options
+                end
+                member do
+                  post :submit
+                  get :pdf
+                  post :copy
+                  get :delivery
+                  get :contacts
+                  post :deliver
+                  post :approve_discount
+                end
+              end
             end
           end
         end
@@ -30,3 +49,4 @@ Rails.application.routes.prepend do
     end
   end
 end
+# rubocop:enable Metrics/BlockLength

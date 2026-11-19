@@ -1,5 +1,5 @@
 <script setup>
-// OUTSIDER: as OS e os orçamentos do ERP de um contato (painel da conversa e negócio do CRM). O contato é ligado uma vez
+// OUTSIDER: as OS e os orçamentos de peças e serviços do ERP de um contato (painel da conversa e negócio do CRM). O contato é ligado uma vez
 // aos clientes do ERP (empresa + código): sem vínculo, a lista de clientes do ERP já abre, com os parecidos com o
 // contato (telefone ou nome) no topo, e filtra por nome, código ou CNPJ (ErpPicker).
 // Com "Mostrar ordens de serviço" desligado nas Configurações, o bloco fica só com o vínculo e os orçamentos.
@@ -10,7 +10,7 @@ import ErpAPI from 'dashboard/api/outsider/erp';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 import ErpOrderCard from './ErpOrderCard.vue';
-import ErpQuotes from './ErpQuotes.vue';
+import ErpBudgets from '../budgets/ErpBudgets.vue';
 import ErpPicker from './ErpPicker.vue';
 import {
   erpState,
@@ -23,6 +23,7 @@ import {
 const props = defineProps({
   contactId: { type: Number, required: true },
   conversationId: { type: [Number, String], default: null },
+  opportunityId: { type: Number, default: null },
 });
 
 const { t } = useI18n();
@@ -276,7 +277,12 @@ const lastUpdate = computed(() =>
             }}
           </button>
         </template>
-        <ErpQuotes v-else-if="erpState.quotesEnabled" :contact-id="contactId" />
+        <ErpBudgets
+          v-else-if="erpState.quotesEnabled"
+          :contact-id="contactId"
+          :conversation-id="conversationId"
+          :opportunity-id="opportunityId"
+        />
       </template>
 
       <span

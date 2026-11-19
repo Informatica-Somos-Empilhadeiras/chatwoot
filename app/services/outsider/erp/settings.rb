@@ -32,9 +32,22 @@ class Outsider::Erp::Settings
     'orders_enabled' => true, 'quotes_enabled' => true, 'quotes_days' => 120, 'quotes_cache_seconds' => 600,
     'write_enabled' => false, 'note_on_change' => true, 'erp_user_id' => '0', 'user_erp_ids' => {},
     'extra_fields' => [], 'substatus_options' => [],
-    # criação de orçamento no ERP (desligada por padrão): usa as funções do ERP (ver Outsider::Erp::QuoteCreator)
-    'quote_write_enabled' => false, 'quote_forma_pagto' => 0, 'quote_tipo_frete' => 0, 'quote_genero_operacao' => 1
+    # orçamento de peças e serviços (Outsider::Erp::Budget), gravado pelas funções do ERP (Outsider::Erp::QuoteCreator);
+    # a gravação começa desligada. Serviço (sem NCM, que a função do ERP descarta) é gravado direto por padrão
+    # (decisão do dono em 19/11/2026), até a Inntegra corrigir a função. Padrões do formulário e textos de envio
+    # ({numero}, {contato}, {cliente}, {total}, {pagamento}, {vendedor}). Desconto acima do limite (% por linha e no total)
+    # pede o código e a senha de quem tem a permissão de desconto do ERP (Outsider::Erp::DiscountPolicy); o ERP da Somos
+    # não tem limite preenchido, então ele fica aqui (0 = qualquer desconto pede liberação).
+    'quote_write_enabled' => false, 'quote_forma_pagto' => 0, 'quote_tipo_frete' => 0, 'quote_genero_operacao' => 0,
+    'quote_services_direct' => true, 'quote_discount_approval' => true, 'quote_discount_line_max' => 0, 'quote_discount_total_max' => 0,
+    'quote_prazo_entrega' => '', 'quote_validade' => '', 'quote_garantia' => '',
+    'quote_email_subject' => 'Orçamento Nº {numero}', 'quote_reply_to' => '',
+    'quote_email_body' => "Olá, {contato}!\n\nSegue em anexo o orçamento Nº {numero} de peças e serviços, no valor de {total}, " \
+                          "com pagamento em {pagamento}.\n\nQualquer dúvida, estou à disposição.\n{vendedor}",
+    'quote_whatsapp_text' => 'Olá, {contato}! Segue o orçamento Nº {numero}, no valor de {total}.'
   }.freeze
+  QUOTE_TEXTS = { 'quote_prazo_entrega' => 255, 'quote_validade' => 255, 'quote_garantia' => 255, 'quote_email_subject' => 200,
+                  'quote_email_body' => 4000, 'quote_whatsapp_text' => 2000 }.freeze
 
   class Invalid < StandardError
     attr_reader :errors
@@ -130,14 +143,26 @@ class Outsider::Erp::Settings
     }
   end
 
-  # criação de orçamento: liga/desliga + padrões (forma de pagamento, tipo de frete, gênero da operação)
+  # orçamento: liga/desliga, padrões do formulário (forma de pagamento, frete, gênero, prazos) e textos de envio
   def clean_quote(params)
     {
-      'quote_write_enabled' => flag(params, 'quote_write_enabled'),
+      'quote_write_enabled' => flag(params, 'quote_write_enabled'), 'quote_services_direct' => flag(params, 'quote_services_direct'),
       'quote_forma_pagto' => clamp(params, 'quote_forma_pagto', 0, 999_999),
       'quote_tipo_frete' => clamp(params, 'quote_tipo_frete', 0, 9),
-      'quote_genero_operacao' => clamp(params, 'quote_genero_operacao', 0, 999)
-    }
+      'quote_genero_operacao' => clamp(params, 'quote_genero_operacao', 0, 999),
+      'quote_discount_approval' => flag(params, 'quote_discount_approval'),
+      'quote_discount_line_max' => clamp(params, 'quote_discount_line_max', 0, 100),
+      'quote_discount_total_max' => clamp(params, 'quote_discount_total_max', 0, 100),
+      'quote_reply_to' => clean_reply_to(params.fetch('quote_reply_to', data['quote_reply_to']))
+    }.merge(QUOTE_TEXTS.to_h { |key, max| [key, params.fetch(key, data[key]).to_s.strip.first(max)] })
+  end
+
+  def clean_reply_to(value)
+    value = value.to_s.strip
+    return value if value.empty? || value.match?(URI::MailTo::EMAIL_REGEXP)
+
+    @errors << 'quote_reply_to'
+    data['quote_reply_to'].to_s
   end
 
   def clean_url(value)

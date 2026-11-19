@@ -3,7 +3,7 @@
 # o nome; se o ERP mudar de versão, a lista se ajusta. Fica em cache no Redis por um dia.
 class Outsider::Erp::Schema
   S = Outsider::Erp::Sql
-  TABLES = %w[clientes produtos formapagto].freeze
+  TABLES = %w[clientes produtos formapagto orcamento detalheorcamento empresa funcionarios ac_desconto].freeze
   TTL = 1.day
 
   def initialize(account, client: nil)
@@ -25,6 +25,15 @@ class Outsider::Erp::Schema
   def pick(company, table, candidates)
     existing = columns(company, table).index_by(&:downcase)
     candidates.lazy.filter_map { |name| existing[name.downcase] }.first
+  end
+
+  # lista do SELECT com as colunas que existem: { 'chave' => %w[Candidatas] } vira "A.`Coluna` AS chave" ou "NULL AS chave"
+  # quando nenhuma candidata existe nessa unidade (o relatório sai com o campo vazio em vez de quebrar)
+  def select_list(company, table, table_alias, mapping)
+    mapping.map do |key, candidates|
+      column = pick(company, table, Array(candidates))
+      column ? "#{table_alias}.#{S.column(column)} AS #{key}" : "NULL AS #{key}"
+    end.join(', ')
   end
 
   private

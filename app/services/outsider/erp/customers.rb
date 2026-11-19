@@ -15,11 +15,11 @@ class Outsider::Erp::Customers
   NAME_MATCH = 50
   # chave na resposta => colunas candidatas (vale a primeira que existir na unidade)
   COLUMNS = {
-    'codigo' => %w[CodigoCliente], 'nome' => %w[Nome RazaoSocial NomeCliente Razao], 'fantasia' => %w[Fantasia NomeFantasia],
+    'codigo' => %w[CodigoCliente], 'nome' => %w[Nome RazaoSocial NomeCliente Razao], 'fantasia' => %w[Fantasia NomeFantasia Apelido],
     'documento' => %w[CPF_CNPJ CNPJ_CPF CNPJ CPF], 'cidade' => %w[Cidade Municipio NomeCidade], 'uf' => %w[UF Estado]
   }.freeze
   REQUIRED = %w[codigo nome].freeze
-  PHONE = /fone|celular|whats/i
+  PHONE = /fone|celular|whats|\Atel/i
   MAX_PHONES = 4
   PUBLIC = %w[empresa codigo nome fantasia documento cidade uf].freeze
 

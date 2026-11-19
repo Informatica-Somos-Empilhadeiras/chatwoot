@@ -17,7 +17,6 @@ import ConfirmDelete from '../ConfirmDelete.vue';
 import SpecsEditor from './SpecsEditor.vue';
 import FeaturesEditor from './FeaturesEditor.vue';
 import ProductDetails from './ProductDetails.vue';
-import ErpProductLink from '../../../erp/components/ErpProductLink.vue';
 import { centsToInput, errorMessage, parseMoney } from '../../helpers';
 import {
   IMAGE_TYPES,
@@ -63,7 +62,6 @@ const emptyForm = kind => ({
   available: '',
   reserved: '',
   active: true,
-  erp_codigo_produto: null,
 });
 
 const salePrice = computed(() => parseMoney(form.value.sale));
@@ -138,7 +136,6 @@ const formFrom = item => ({
   available: item.available_quantity ?? '',
   reserved: item.reserved_quantity ?? '',
   active: item.active,
-  erp_codigo_produto: item.erp_codigo_produto ?? null,
 });
 
 // item = produto para editar ou consultar; sem item, cadastro novo do tipo kind
@@ -177,7 +174,6 @@ const payload = () => ({
   available_quantity: available.value,
   reserved_quantity: reserved.value,
   active: form.value.active,
-  erp_codigo_produto: form.value.erp_codigo_produto || null,
   specs: specs.value
     .filter(spec => spec.label.trim())
     .map(spec => ({
@@ -512,8 +508,6 @@ defineExpose({ open });
           </span>
         </span>
       </label>
-
-      <ErpProductLink v-model="form.erp_codigo_produto" />
 
       <SpecsEditor v-model="specs" />
       <FeaturesEditor v-model="features" />

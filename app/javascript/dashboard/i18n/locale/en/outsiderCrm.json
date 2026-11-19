@@ -1300,7 +1300,7 @@
         "EMPTY": "No proposals.",
         "NEW_SALE": "Sale",
         "NEW_RENTAL": "Rental",
-        "CONTACT_TITLE": "Contact proposals"
+        "CONTACT_TITLE": "Contact sales proposals"
       },
       "SEND": {
         "OPEN": "Send to customer",

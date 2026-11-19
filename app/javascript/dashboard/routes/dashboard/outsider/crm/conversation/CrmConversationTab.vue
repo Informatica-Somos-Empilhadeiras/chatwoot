@@ -23,6 +23,8 @@ import JourneyHistory from '../components/JourneyHistory.vue';
 import OpportunityActivity from '../activity/OpportunityActivity.vue';
 import ProposalMiniList from '../components/proposals/ProposalMiniList.vue';
 import StageProgress from './StageProgress.vue';
+import ErpBudgets from '../../erp/budgets/ErpBudgets.vue';
+import { erpState } from '../../erp/erpStore';
 import {
   crmState,
   findPipeline,
@@ -567,6 +569,26 @@ onMounted(async () => {
           <ProposalMiniList
             :contact-id="contact.id"
             :new-opportunity-id="primary?.status === 'open' ? primary.id : null"
+          />
+        </section>
+
+        <!-- OUTSIDER: orçamento de peças e serviços do ERP, separado da proposta comercial -->
+        <section
+          v-if="!summary.group && erpState.enabled && erpState.quotesEnabled"
+          class="flex flex-col gap-2 p-4 rounded-xl bg-n-solid-2 outline outline-1 -outline-offset-1 outline-n-container"
+        >
+          <span class="flex flex-col">
+            <span class="text-sm font-medium text-n-slate-12">
+              {{ t('OUTSIDER_ERP.BUDGET.BLOCK.TITLE') }}
+            </span>
+            <span class="text-xs text-n-slate-10">
+              {{ t('OUTSIDER_ERP.BUDGET.BLOCK.SUBTITLE') }}
+            </span>
+          </span>
+          <ErpBudgets
+            :contact-id="contact.id"
+            :conversation-id="chat.id"
+            :opportunity-id="primary?.status === 'open' ? primary.id : null"
           />
         </section>
 
