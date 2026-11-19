@@ -24,6 +24,7 @@ import Logo from 'next/icon/Logo.vue';
 import { crmSidebarItems } from 'dashboard/routes/dashboard/outsider/crm/sidebar';
 import { voiceSidebarItems } from 'dashboard/routes/dashboard/outsider/voice/sidebar'; // OUTSIDER: Telefonia
 import { teamsSidebarItems } from 'dashboard/routes/dashboard/outsider/teams/sidebar'; // OUTSIDER: área Teams
+import { erpSidebarItems } from 'dashboard/routes/dashboard/outsider/erp/sidebar'; // OUTSIDER: Ordens de serviço do ERP
 import { outsiderSettingsItems } from 'dashboard/routes/dashboard/outsider/settings/sidebar'; // OUTSIDER: Aparência e bot
 import OutsiderMobileTabbar from 'dashboard/routes/dashboard/outsider/responsive/MobileTabbar.vue'; // OUTSIDER: barra de baixo no celular
 import OutsiderDesktopNav from 'dashboard/routes/dashboard/outsider/navigation/desktop/DesktopNav.vue'; // OUTSIDER: menu do computador
@@ -493,6 +494,7 @@ const menuItems = computed(() => {
     },
     // OUTSIDER: área Teams (chats e canais de quem conectou o próprio Teams)
     ...teamsSidebarItems(t, accountScopedRoute),
+    ...erpSidebarItems(t, accountScopedRoute), // OUTSIDER: ordens de serviço do ERP
     // OUTSIDER: página Status do WhatsApp
     {
       name: 'WhatsappStatus',

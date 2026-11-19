@@ -13,6 +13,7 @@ pt_BR:
       whatsapp_status: "Status do WhatsApp"
       teams: "Teams"
       crm: "Negócios e propostas (CRM)"
+      erp: "Ordens de serviço e orçamentos (ERP)"
     ceiling:
       none: "Nenhuma"
       hint: "Telas que só os administradores desta conta abrem. Os perfis de acesso não conseguem liberar estas telas para agentes e técnicos."

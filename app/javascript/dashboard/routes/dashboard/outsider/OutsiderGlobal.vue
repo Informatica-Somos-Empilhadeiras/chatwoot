@@ -16,6 +16,8 @@ import { useAccessGuard } from './access/useAccessGuard';
 import { watch } from 'vue';
 import { useMapGetter } from 'dashboard/composables/store';
 import { startTeamsUpdates } from './teams/teamsStore';
+// o que a pessoa pode fazer com o ERP (menu Ordens de serviço e bloco ERP na conversa)
+import { loadErpStatus } from './erp/erpStore';
 // visual das conversas no estilo WhatsApp/Telegram (balões com rabinho, modo seleção)
 import 'dashboard/components-next/outsider/whatsappLook/whatsappLook.css';
 // celular e tablet: altura real da tela com o teclado, painel do contato e arrastar no toque
@@ -30,6 +32,7 @@ useAccessGuard();
 
 const currentAccountId = useMapGetter('getCurrentAccountId');
 watch(currentAccountId, id => id && startTeamsUpdates(id), { immediate: true });
+watch(currentAccountId, id => id && loadErpStatus(id), { immediate: true });
 </script>
 
 <template>

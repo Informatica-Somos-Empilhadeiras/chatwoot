@@ -9,7 +9,13 @@ export const NAV_SECTIONS = [
   {
     key: 'atendimento',
     label: 'OUTSIDER_NAV.SECTIONS.SERVICE',
-    items: ['Conversation', 'OutsiderTeams', 'Inbox', 'WhatsappStatus'],
+    items: [
+      'Conversation',
+      'OutsiderTeams',
+      'Inbox',
+      'WhatsappStatus',
+      'OutsiderErp',
+    ],
   },
   {
     key: 'vendas',

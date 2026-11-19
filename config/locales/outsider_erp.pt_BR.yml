@@ -1,0 +1,7 @@
+pt_BR:
+  outsider_erp:
+    note: "ERP: %{field} da OS %{os} (%{company}) alterado de \"%{from}\" para \"%{to}\"."
+    fields:
+      SubStatus: "Substatus"
+      Defeitos: "Defeitos"
+      Observacoes: "Observações"

@@ -4,6 +4,7 @@ import { useStore, useStoreGetters } from 'dashboard/composables/store';
 export const DEFAULT_CONVERSATION_SIDEBAR_ITEMS_ORDER = Object.freeze([
   { name: 'conversation_actions' },
   { name: 'outsider_crm' }, // OUTSIDER: bloco do CRM (routes/dashboard/outsider/crm)
+  { name: 'outsider_erp' }, // OUTSIDER: OS e orçamentos do ERP (routes/dashboard/outsider/erp)
   { name: 'macros' },
   { name: 'conversation_info' },
   { name: 'contact_attributes' },

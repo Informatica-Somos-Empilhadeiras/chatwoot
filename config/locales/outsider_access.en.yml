@@ -13,6 +13,7 @@ en:
       whatsapp_status: "WhatsApp Status"
       teams: "Teams"
       crm: "Deals and proposals (CRM)"
+      erp: "Service orders and quotes (ERP)"
     ceiling:
       none: "None"
       hint: "Screens that only administrators of this account open. Access profiles cannot open these screens to agents and technicians."

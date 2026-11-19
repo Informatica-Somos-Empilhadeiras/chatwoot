@@ -1169,6 +1169,10 @@
       "CRM": {
         "LABEL": "Deals, tasks and proposals",
         "HINT": "View: read only."
+      },
+      "ERP": {
+        "LABEL": "Service orders and quotes (ERP)",
+        "HINT": "View: read only. Use: change sub-status and order fields."
       }
     },
     "PROFILES": {

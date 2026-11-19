@@ -18,6 +18,9 @@ import JourneyHistory from './JourneyHistory.vue';
 import JourneyFlow from './JourneyFlow.vue';
 import ConfirmDelete from './ConfirmDelete.vue';
 import CallButton from '../../voice/CallButton.vue';
+// OUTSIDER (ERP): OS e orçamentos do ERP do contato do negócio
+import ErpContactOrders from '../../erp/components/ErpContactOrders.vue';
+import { erpState } from '../../erp/erpStore';
 import {
   claimOpportunity,
   crmState,
@@ -40,6 +43,7 @@ const props = defineProps({
 const emit = defineEmits(['edit', 'changed']);
 
 const { t } = useI18n();
+const erpOpen = ref(false);
 const { accountScopedRoute } = useAccount();
 
 const opportunity = ref(null);
@@ -420,6 +424,34 @@ defineExpose({ open, refresh, close });
               :max-attempts="history.max_forward_attempts"
               :opportunity-id="opportunity.id"
               @open="openOther"
+            />
+          </section>
+
+          <section
+            v-if="erpState.enabled && opportunity.contact?.id"
+            class="flex flex-col gap-2"
+          >
+            <button
+              type="button"
+              class="flex items-center gap-1.5 text-sm font-medium text-left text-n-slate-12"
+              :aria-expanded="erpOpen"
+              @click="erpOpen = !erpOpen"
+            >
+              <Icon
+                icon="i-lucide-clipboard-list"
+                class="size-4 text-n-slate-10"
+              />
+              {{ t('OUTSIDER_ERP.CONTACT.PANEL_TITLE') }}
+              <Icon
+                :icon="
+                  erpOpen ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'
+                "
+                class="size-4 text-n-slate-10"
+              />
+            </button>
+            <ErpContactOrders
+              v-if="erpOpen"
+              :contact-id="opportunity.contact.id"
             />
           </section>
 

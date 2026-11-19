@@ -25,6 +25,7 @@ import ContactHero from 'dashboard/components-next/outsider/contactProfile/Conta
 import LinearIssuesList from 'dashboard/components/widgets/conversation/linear/IssuesList.vue';
 import LinearSetupCTA from 'dashboard/components/widgets/conversation/linear/LinearSetupCTA.vue';
 import CrmContactPanelSection from 'dashboard/routes/dashboard/outsider/crm/conversation/CrmContactPanelSection.vue'; // OUTSIDER: bloco do CRM
+import ErpContactPanelSection from 'dashboard/routes/dashboard/outsider/erp/conversation/ErpContactPanelSection.vue'; // OUTSIDER: OS do ERP
 
 const props = defineProps({
   conversationId: {
@@ -320,6 +321,13 @@ onMounted(() => {
           <!-- OUTSIDER: bloco do CRM (some quando o agente não usa o CRM) -->
           <div v-else-if="element.name === 'outsider_crm'" class="empty:hidden">
             <CrmContactPanelSection
+              :contact-id="contactId"
+              :conversation-id="conversationId"
+            />
+          </div>
+          <!-- OUTSIDER: ordens de serviço e orçamentos do ERP (some com a integração desligada) -->
+          <div v-else-if="element.name === 'outsider_erp'" class="empty:hidden">
+            <ErpContactPanelSection
               :contact-id="contactId"
               :conversation-id="conversationId"
             />

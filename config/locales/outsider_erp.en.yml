@@ -1,0 +1,7 @@
+en:
+  outsider_erp:
+    note: "ERP: %{field} of service order %{os} (%{company}) changed from \"%{from}\" to \"%{to}\"."
+    fields:
+      SubStatus: "Sub-status"
+      Defeitos: "Defects"
+      Observacoes: "Notes"

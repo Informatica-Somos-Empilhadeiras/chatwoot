@@ -17,7 +17,9 @@ module Outsider::Access::Catalog
     { key: 'contacts', group: 'atendimento', levels: %w[none view use], agent: 'use', technician: 'view' },
     { key: 'whatsapp_status', group: 'atendimento', levels: %w[none view use], agent: 'use', technician: 'none' },
     { key: 'teams', group: 'atendimento', levels: %w[none use], agent: 'use', technician: 'use' },
-    { key: 'crm', group: 'vendas', levels: %w[none view use], agent: 'use', technician: 'none' }
+    { key: 'crm', group: 'vendas', levels: %w[none view use], agent: 'use', technician: 'none' },
+    # OUTSIDER (ERP): ordens de serviço e orçamentos do ERP Mais Prático. Vê: consulta; Usa: muda substatus e campos da OS
+    { key: 'erp', group: 'atendimento', levels: %w[none view use], agent: 'use', technician: 'none' }
   ].freeze
   BY_KEY = SCREENS.index_by { |screen| screen[:key] }.freeze
   KEYS = BY_KEY.keys.freeze
@@ -36,7 +38,8 @@ module Outsider::Access::Catalog
          contact_cards|locations|transfer_requests|stickers|sticker_packs)\z}x, 'conversations'],
     [%r{\Aapi/v1/accounts/(contacts|companies)(/|\z)}, 'contacts'],
     [%r{\Aapi/v1/accounts/outsider/whatsapp_statuses\z}, 'whatsapp_status'],
-    [%r{\Aapi/v1/accounts/outsider/teams_}, 'teams']
+    [%r{\Aapi/v1/accounts/outsider/teams_}, 'teams'],
+    [%r{\Aapi/v1/accounts/outsider/erp/}, 'erp']
   ].freeze
 
   # ações que não mudam nada para quem só vê (marcar como lida, avisar que está digitando)

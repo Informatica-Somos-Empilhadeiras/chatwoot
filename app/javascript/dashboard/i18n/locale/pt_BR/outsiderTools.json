@@ -1169,6 +1169,10 @@
       "CRM": {
         "LABEL": "Negócios, tarefas e propostas",
         "HINT": "Vê: consulta sem mudar nada."
+      },
+      "ERP": {
+        "LABEL": "Ordens de serviço e orçamentos (ERP)",
+        "HINT": "Vê: só consulta. Usa: muda o substatus e os campos da OS."
       }
     },
     "PROFILES": {

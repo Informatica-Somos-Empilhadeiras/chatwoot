@@ -19,6 +19,7 @@ export const SCREEN_PATHS = [
   ['whatsapp_status', path('whatsapp-status(/|$)')],
   ['teams', path('teams(/|$)')],
   ['crm', path('crm(/|$)')],
+  ['erp', path('ordens-servico(/|$)')],
 ];
 
 export const screenForPath = fullPath => {
