@@ -8,6 +8,8 @@ const __dir = dirname(fileURLToPath(import.meta.url));
 // Cache em memoria: 1 entrada por janela de consulta.
 // Objetivo "bom-cidadao": N aberturas de painel => no maximo 1 chamada ao ERP por TTL.
 const cache = new Map();
+// Single-flight: se varias requisicoes chegam com o cache frio, so UMA vai ao ERP.
+let inFlight = null;
 
 function ymd(d) { return d.toISOString().slice(0, 10); }
 
@@ -50,12 +52,7 @@ async function loadMock() {
   return JSON.parse(raw);
 }
 
-// Busca a lista completa de OS (todas empresas, janela de datas), cacheada.
-export async function fetchAllOs() {
-  const key = 'valoresDash';
-  const hit = cache.get(key);
-  if (hit && (Date.now() - hit.at) < config.cacheTtlMs) return hit.data;
-
+async function fetchFresh(stale) {
   let data;
   if (config.mock) {
     data = await loadMock();
@@ -69,12 +66,21 @@ export async function fetchAllOs() {
       try {
         data = await httpGetJson(url);
       } catch (err2) {
-        if (hit) return hit.data; // stale-while-error: nao derruba a UI por um soluco
+        if (stale) return stale.data; // stale-while-error: nao derruba a UI por um soluco
         throw err2;
       }
     }
   }
   if (!Array.isArray(data)) data = [];
-  cache.set(key, { at: Date.now(), data });
+  cache.set('valoresDash', { at: Date.now(), data });
   return data;
+}
+
+// Busca a lista completa de OS (todas empresas, janela de datas), cacheada + single-flight.
+export async function fetchAllOs() {
+  const hit = cache.get('valoresDash');
+  if (hit && (Date.now() - hit.at) < config.cacheTtlMs) return hit.data;
+  if (inFlight) return inFlight; // ja ha uma busca em andamento: aproveita a mesma
+  inFlight = fetchFresh(hit).finally(() => { inFlight = null; });
+  return inFlight;
 }

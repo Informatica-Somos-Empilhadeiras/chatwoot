@@ -4,7 +4,7 @@ Microserviço independente que mostra as **Ordens de Servico** do contato **dent
 
 Princípios de arquitetura (combinados com o time):
 - **Espelha, não guarda.** Nada é persistido no Chatwoot. O serviço busca ao vivo na API do ERP.
-- **Bom-cidadão com o ERP.** Cache curto em memória (TTL configurável): várias aberturas de painel = no máximo 1 chamada por TTL. Timeout + 1 retry com backoff + "stale-while-error". User-Agent identificável (`somos-chatwoot-bridge`) — **não mascaramos tráfego**.
+- **Bom-cidadão com o ERP.** Cache curto em memória (TTL configurável): várias aberturas de painel = no máximo 1 chamada por TTL. **Single-flight**: se N painéis abrem com o cache frio, só **1** requisição vai ao ERP (as demais aguardam a mesma). Timeout + 1 retry com backoff + "stale-while-error". User-Agent identificável (`somos-chatwoot-bridge`) — **não mascaramos tráfego**.
 - **Leve.** Postgres/Redis do Chatwoot não são tocados; o trabalho fica aqui.
 
 ## Rodar
@@ -48,7 +48,17 @@ Rotas do bridge (gated por `WRITE_ENABLED`):
 - `PUT /api/os/:codigo/substatus` → `{subStatusNovo, subStatusAntigo, empresa}` (faz o par Update + GravaHistorico)
 - `PUT /api/os/:codigo/campo/:campo` → `{valor, empresa}` (campos confirmados; hoje: `Defeitos`)
 
-> **Limite conhecido:** criar/editar a OS inteira e excluir OS **não** existem nesta API web — só no sistema desktop (que escreve direto no MySQL). Outros campos (`Observacoes`, `Previsao`, `Tecnico`…) têm cada um seu `Update<Campo>`; o nome exato precisa ser **confirmado por captura** antes de entrar em `src/erpWrite.js` (a nomenclatura varia: `UpdateSubStatusOS` vs `UpdateDefeitos`). **Teste sempre numa OS segura/homologação antes de produção.**
+### Adicionar mais campos sem probing (self-service)
+
+Cada campo tem seu próprio `Update<Campo>` e a nomenclatura varia (`UpdateSubStatusOS` vs `UpdateDefeitos`), então nada é chutado. Para ligar um campo novo:
+
+1. No app oficial, edite **aquele campo** de uma OS com o **DevTools → Network** aberto.
+2. Veja o nome do endpoint na requisição `PUT` (ex.: `UpdateObservacoes`).
+3. Adicione uma linha no `.env`: `ERP_UPDATE_FIELDS="Observacoes:UpdateObservacoes"` (vírgula separa vários).
+
+Pronto — `PUT /api/os/:cod/campo/Observacoes` passa a funcionar, sem mexer em código. Confira os campos ativos em `GET /healthz` (`camposUpdate`).
+
+> **Limite conhecido:** criar/editar a OS inteira e excluir OS **não** existem nesta API web — só no sistema desktop (que escreve direto no MySQL). **Teste sempre numa OS segura/homologação antes de produção.**
 
 ## Status e próximas fases
 

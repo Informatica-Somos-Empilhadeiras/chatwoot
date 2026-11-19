@@ -1,20 +1,13 @@
 import { config } from './config.js';
 
-// Endpoints de UPDATE de campo de OS existente, CONFIRMADOS por captura (HAR do app oficial).
-// Atencao: a nomenclatura nao e perfeitamente regular (UpdateSubStatusOS tem sufixo "OS",
-// UpdateDefeitos nao tem). Por isso cada campo novo deve ser CONFIRMADO por captura antes de entrar aqui.
-const ENDPOINTS = {
-  SubStatus: 'UpdateSubStatusOS', // tratado via updateSubStatus() (faz o par com GravaHistorico)
+// Campos de UPDATE de OS existente.
+// CONFIRMADOS por captura do app oficial + os que VOCE adicionar em ERP_UPDATE_FIELDS
+// (confirmando o nome do endpoint no seu proprio DevTools, sem probing).
+// SubStatus NAO entra aqui: tem fluxo proprio (updateSubStatus) com o par GravaHistorico.
+const CONFIRMADOS = {
   Defeitos: 'UpdateDefeitos',
-  // A CONFIRMAR por captura (nomes sao hipotese ate vermos no HAR):
-  // Observacoes: 'UpdateObservacoes',
-  // Previsao: 'UpdatePrevisao',
-  // Validade: 'UpdateValidade',
-  // Tecnico: 'UpdateTecnico',
-  // TipoAtendimento: 'UpdateTipoAtendimento',
-  // Acessorios: 'UpdateAcessorios',
-  // Status: 'UpdateStatusOS',
 };
+const ENDPOINTS = { ...CONFIRMADOS, ...config.updateFields };
 
 async function put(path, body) {
   if (config.mock) return { mock: true, path, body }; // em mock NAO chama o ERP
@@ -37,13 +30,17 @@ async function put(path, body) {
 }
 
 export function campoSuportado(campo) {
-  return Boolean(ENDPOINTS[campo]) && campo !== 'SubStatus';
+  return Boolean(ENDPOINTS[campo]);
+}
+
+export function camposDisponiveis() {
+  return Object.keys(ENDPOINTS);
 }
 
 // Atualiza um campo simples de uma OS existente (ex.: Defeitos).
 export async function updateCampo(codigoOS, campo, valor, empresa) {
   const ep = ENDPOINTS[campo];
-  if (!ep || campo === 'SubStatus') throw new Error(`campo nao suportado/confirmado: ${campo}`);
+  if (!ep) throw new Error(`campo nao mapeado: ${campo} (adicione em ERP_UPDATE_FIELDS)`);
   const body = { [campo]: valor, listaEmpresas: config.empresas, Empresa: empresa };
   return put(`/KanbanOrdemServico/api/${ep}/${codigoOS}`, body);
 }

@@ -5,7 +5,7 @@ import { config } from './src/config.js';
 import { fetchAllOs } from './src/erpClient.js';
 import { normalizeOs } from './src/normalize.js';
 import { matchOsForContact } from './src/match.js';
-import { updateCampo, updateSubStatus, campoSuportado } from './src/erpWrite.js';
+import { updateCampo, updateSubStatus, campoSuportado, camposDisponiveis } from './src/erpWrite.js';
 
 const __dir = dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -29,7 +29,12 @@ function requireWrite(req, res, next) {
   next();
 }
 
-app.get('/healthz', (req, res) => res.json({ ok: true, mock: config.mock, writeEnabled: config.writeEnabled }));
+app.get('/healthz', (req, res) => res.json({
+  ok: true,
+  mock: config.mock,
+  writeEnabled: config.writeEnabled,
+  camposUpdate: camposDisponiveis(),
+}));
 
 // ---- Leitura (espelho): busca ao vivo (cacheada) e filtra para o contato. Nada e gravado. ----
 app.get('/api/os', async (req, res) => {

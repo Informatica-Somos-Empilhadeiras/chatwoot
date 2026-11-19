@@ -1,5 +1,15 @@
 const env = process.env;
 
+// "Campo:Endpoint,Campo2:Endpoint2" -> { Campo: 'Endpoint', ... }
+function parseFields(raw) {
+  const out = {};
+  for (const pair of String(raw || '').split(',')) {
+    const [campo, ep] = pair.split(':').map(s => (s || '').trim());
+    if (campo && ep) out[campo] = ep;
+  }
+  return out;
+}
+
 export const config = {
   port: Number(env.PORT || 4000),
   erpBaseUrl: (env.ERP_BASE_URL || 'https://somos-backend.inntegra.com.br').replace(/\/$/, ''),
@@ -16,4 +26,7 @@ export const config = {
   // Escrita (OFF por padrao). So habilite apontando no ERP real com cuidado.
   writeEnabled: String(env.WRITE_ENABLED || 'false').toLowerCase() === 'true',
   idUsuario: env.ERP_ID_USUARIO || '0',
+  // Campos de update extras que VOCE confirma no proprio DevTools (sem probing/HAR).
+  // Ex.: ERP_UPDATE_FIELDS="Observacoes:UpdateObservacoes,Previsao:UpdatePrevisao"
+  updateFields: parseFields(env.ERP_UPDATE_FIELDS),
 };
