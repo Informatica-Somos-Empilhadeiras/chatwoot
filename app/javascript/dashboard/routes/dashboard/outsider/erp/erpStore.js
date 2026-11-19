@@ -11,6 +11,7 @@ export const erpState = reactive({
   enabled: false,
   canEdit: false,
   writeEnabled: false,
+  ordersEnabled: true,
   quotesEnabled: false,
   quoteWriteEnabled: false,
   canCreateQuote: false,
@@ -30,6 +31,8 @@ export const loadErpStatus = async accountId => {
       enabled: data.enabled,
       canEdit: data.can_edit,
       writeEnabled: data.write_enabled,
+      // backend antigo não manda o campo: as OS continuam aparecendo
+      ordersEnabled: data.orders_enabled !== false,
       quotesEnabled: data.quotes_enabled,
       quoteWriteEnabled: data.quote_write_enabled,
       canCreateQuote: data.can_create_quote,
@@ -92,6 +95,14 @@ export const withLoadingRetry = async (
   throw Object.assign(new Error('loading'), { code: 'loading' });
 };
 
+// título do bloco do ERP no contato/negócio: com as OS ocultas, fica só "orçamentos"
+export const erpPanelTitle = t =>
+  t(
+    erpState.ordersEnabled
+      ? 'OUTSIDER_ERP.CONTACT.PANEL_TITLE'
+      : 'OUTSIDER_ERP.CONTACT.PANEL_TITLE_QUOTES'
+  );
+
 export const orderKey = order => `${order.Empresa}:${order.CodigoOS}`;
 
 const PLAIN_DATE = /^(\d{4})-(\d{2})-(\d{2})$/;
@@ -152,16 +163,26 @@ export const quoteClass = status => {
 };
 
 export const erpErrorMessage = (t, error) => {
-  const code = error?.code || error?.response?.data?.error;
+  // o código do servidor vem antes: o axios põe o dele em error.code (ERR_BAD_REQUEST) e escondia o motivo real
+  const code = error?.response?.data?.error || error?.code;
   const known = {
     loading: 'LOADING',
     erp_unavailable: 'UNAVAILABLE',
     erp_disabled: 'DISABLED',
+    no_companies: 'NO_COMPANIES',
     write_disabled: 'WRITE_DISABLED',
     quote_write_disabled: 'QUOTE_WRITE_DISABLED',
     invalid: 'INVALID',
   };
   if (error?.response?.status === 403 && !known[code])
     return t('OUTSIDER_ERP.ERRORS.NO_PERMISSION');
-  return t(`OUTSIDER_ERP.ERRORS.${known[code] || 'GENERIC'}`);
+  const text = t(`OUTSIDER_ERP.ERRORS.${known[code] || 'GENERIC'}`);
+  // o motivo curto ajuda a achar o problema: o do ERP (HTTP 403, Net::ReadTimeout...) ou o status do próprio Chatwoot
+  const detail =
+    code === 'erp_unavailable'
+      ? String(error?.response?.data?.message || '').slice(0, 80)
+      : '';
+  const status = !known[code] && error?.response?.status;
+  if (detail) return `${text} (${detail})`;
+  return status ? `${text} (HTTP ${status})` : text;
 };

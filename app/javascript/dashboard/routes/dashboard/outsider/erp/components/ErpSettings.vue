@@ -80,9 +80,15 @@ const save = async (extra = {}) => {
   }
 };
 
+// testa o que está na tela: salva antes (o teste do servidor usa a configuração gravada)
 const test = async () => {
   testing.value = true;
   testResult.value = null;
+  await save();
+  if (errors.value.length) {
+    testing.value = false;
+    return;
+  }
   try {
     const { data } = await ErpAPI.test();
     testResult.value = data;
@@ -284,6 +290,15 @@ const removeField = index => form.value.extra_fields.splice(index, 1);
             :class="INPUT"
           />
         </label>
+      </div>
+      <div class="flex flex-col gap-1">
+        <label class="flex items-center gap-2 text-sm text-n-slate-12">
+          <Switch v-model="form.orders_enabled" />
+          {{ t('OUTSIDER_ERP.SETTINGS.ORDERS') }}
+        </label>
+        <p class="mb-0 text-xs text-n-slate-11">
+          {{ t('OUTSIDER_ERP.SETTINGS.ORDERS_HINT') }}
+        </p>
       </div>
       <div class="flex flex-wrap items-center gap-4">
         <label class="flex items-center gap-2 text-sm text-n-slate-12">

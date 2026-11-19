@@ -20,7 +20,7 @@ import ConfirmDelete from './ConfirmDelete.vue';
 import CallButton from '../../voice/CallButton.vue';
 // OUTSIDER (ERP): OS e orçamentos do ERP do contato do negócio
 import ErpContactOrders from '../../erp/components/ErpContactOrders.vue';
-import { erpState } from '../../erp/erpStore';
+import { erpState, erpPanelTitle } from '../../erp/erpStore';
 import {
   claimOpportunity,
   crmState,
@@ -441,7 +441,7 @@ defineExpose({ open, refresh, close });
                 icon="i-lucide-clipboard-list"
                 class="size-4 text-n-slate-10"
               />
-              {{ t('OUTSIDER_ERP.CONTACT.PANEL_TITLE') }}
+              {{ erpPanelTitle(t) }}
               <Icon
                 :icon="
                   erpOpen ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'

@@ -2,6 +2,7 @@
   "OUTSIDER_ERP": {
     "TITLE": "ERP Mais Prático",
     "SIDEBAR": "Ordens de serviço",
+    "SIDEBAR_QUOTES": "ERP",
     "CANCEL": "Cancelar",
     "TABS": {
       "BOARD": "Quadro de OS",
@@ -9,12 +10,14 @@
     },
     "STATES": {
       "OFF": "A integração com o ERP está desligada. Fale com o administrador da conta.",
-      "OFF_ADMIN": "A integração com o ERP está desligada. Abra as Configurações do ERP, informe as empresas e ligue a integração."
+      "OFF_ADMIN": "A integração com o ERP está desligada. Abra as Configurações do ERP, informe as empresas e ligue a integração.",
+      "ORDERS_OFF": "As ordens de serviço estão ocultas nas Configurações do ERP."
     },
     "ERRORS": {
       "LOADING": "O ERP está demorando para responder. Tente de novo em alguns segundos.",
       "UNAVAILABLE": "O ERP não respondeu agora. Tente de novo em instantes.",
       "DISABLED": "A integração com o ERP está desligada.",
+      "NO_COMPANIES": "Informe ao menos uma empresa (banco) do grupo.",
       "WRITE_DISABLED": "A gravação no ERP está desligada ou o seu perfil só permite consultar.",
       "QUOTE_WRITE_DISABLED": "A criação de orçamento no ERP está desligada ou o seu perfil só permite consultar.",
       "INVALID": "Não foi possível gravar: confira o valor escolhido.",
@@ -82,10 +85,13 @@
         "COMPANY_INVALID": "Unidade inválida para este contato.",
         "NO_ITEMS": "Nenhum item da proposta está vinculado a um produto do ERP.",
         "GENERIC": "Não foi possível criar o orçamento no ERP."
-      }
+      },
+      "OFF": "A criação de orçamento no ERP está desligada.",
+      "OFF_LINK": "Ligar nas Configurações do ERP"
     },
     "CONTACT": {
       "PANEL_TITLE": "ERP: OS e orçamentos",
+      "PANEL_TITLE_QUOTES": "ERP: orçamentos",
       "RETRY": "Tentar de novo",
       "LINK_TITLE": "Cliente {code} na empresa {company}",
       "UNLINK": "Desvincular",
@@ -140,7 +146,7 @@
       "DEVICE_ID_SET": "já informado (deixe vazio para manter)",
       "DEVICE_ID_HINT": "O valor do cabeçalho x-device-id de uma requisição do painel do ERP (DevTools > Rede). Não volta para a tela depois de salvo.",
       "TEST": "Testar agora",
-      "TEST_HINT": "Busca as OS no ERP e mostra quantas vieram.",
+      "TEST_HINT": "Salva o que está na tela, busca as OS no ERP e mostra quantas vieram.",
       "TEST_ORDERS": "{count} OS no período.",
       "TEST_SUBSTATUS": "Substatus encontrados:",
       "MIRROR": "Espelho das OS",
@@ -152,6 +158,8 @@
       "DATE_FORECAST": "Previsão",
       "DATE_DELIVERY": "Entrega",
       "CACHE": "Cache (segundos)",
+      "ORDERS": "Mostrar ordens de serviço",
+      "ORDERS_HINT": "Desligado: somem o quadro de OS, a lista de OS no contato e no negócio e a edição de OS. Ficam só os orçamentos. As OS continuam sendo lidas por trás só para achar o cliente do ERP ao vincular um contato.",
       "QUOTES": "Mostrar orçamentos",
       "QUOTES_DAYS": "Orçamentos dos últimos (dias)",
       "WRITE": "Gravar no ERP",

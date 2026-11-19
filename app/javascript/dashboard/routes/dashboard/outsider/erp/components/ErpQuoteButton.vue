@@ -1,14 +1,15 @@
 <script setup>
 // OUTSIDER: gera no ERP o orçamento de uma proposta do CRM (Outsider::Erp::QuoteCreator). Some com a integração
-// ou a escrita de orçamento desligadas, ou sem o perfil de uso. Idempotente: proposta já sincronizada mostra só o
-// número. Quando o contato está ligado a clientes de mais de uma unidade, pergunta em qual gerar.
+// desligada ou sem o perfil de uso. Com a criação de orçamento desligada, só o administrador vê o botão, que mostra
+// onde ligar. Idempotente: proposta já sincronizada mostra só o número. Quando o contato está ligado a clientes de mais
+// de uma unidade, pergunta em qual gerar. Proposta ainda não salva: o botão pede para salvar antes.
 import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useAlert } from 'dashboard/composables';
 import ErpAPI from 'dashboard/api/outsider/erp';
 import Button from 'dashboard/components-next/button/Button.vue';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
-import { erpState } from '../erpStore';
+import { erpState, ERP_ROUTE } from '../erpStore';
 
 const props = defineProps({
   proposal: { type: Object, default: null },
@@ -24,9 +25,18 @@ const generating = ref(false);
 const pickCompanies = ref([]);
 const chosenCompany = ref('');
 
-const available = computed(
-  () => erpState.enabled && erpState.canCreateQuote && props.proposal?.id
+const showOff = ref(false);
+
+const available = computed(() => erpState.enabled && erpState.canCreateQuote);
+// criação desligada: o administrador ainda vê o botão, para saber que existe e onde ligar
+const switchedOff = computed(
+  () =>
+    erpState.enabled &&
+    !erpState.quoteWriteEnabled &&
+    erpState.administrator &&
+    !available.value
 );
+const settingsRoute = { name: ERP_ROUTE, params: { tab: 'settings' } };
 const synced = computed(() => Boolean(props.proposal?.erp_quote_number));
 
 const errorMessage = error => {
@@ -46,7 +56,11 @@ const errorMessage = error => {
 };
 
 const generate = async company => {
-  if (props.dirty) {
+  if (switchedOff.value) {
+    showOff.value = !showOff.value;
+    return;
+  }
+  if (props.dirty || !props.proposal?.id) {
     useAlert(t('OUTSIDER_ERP.QUOTE.SAVE_FIRST'));
     return;
   }
@@ -95,7 +109,7 @@ const generate = async company => {
 </script>
 
 <template>
-  <div v-if="available" class="flex flex-col gap-1.5">
+  <div v-if="available || switchedOff" class="flex flex-col gap-1.5">
     <span
       v-if="synced"
       class="inline-flex items-center gap-1.5 px-2 py-1 text-xs rounded-lg bg-n-teal-3 text-n-teal-11"
@@ -121,6 +135,15 @@ const generate = async company => {
         :is-loading="generating"
         @click="generate()"
       />
+      <p
+        v-if="showOff"
+        class="flex flex-wrap items-center gap-1 mb-0 text-xs text-n-slate-11"
+      >
+        {{ t('OUTSIDER_ERP.QUOTE.OFF') }}
+        <router-link :to="settingsRoute" class="text-n-blue-11 hover:underline">
+          {{ t('OUTSIDER_ERP.QUOTE.OFF_LINK') }}
+        </router-link>
+      </p>
       <div
         v-else
         class="flex flex-wrap items-center gap-2 p-2 rounded-lg bg-n-alpha-1 outline outline-1 -outline-offset-1 outline-n-weak"

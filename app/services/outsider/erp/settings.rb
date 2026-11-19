@@ -29,7 +29,7 @@ class Outsider::Erp::Settings
   DEFAULTS = {
     'enabled' => false, 'base_url' => 'https://somos-backend.inntegra.com.br', 'companies' => [], 'device_id' => '',
     'lookback_days' => 180, 'forward_days' => 365, 'date_type' => 'DataEntrada', 'cache_seconds' => 120,
-    'quotes_enabled' => true, 'quotes_days' => 120, 'quotes_cache_seconds' => 600,
+    'orders_enabled' => true, 'quotes_enabled' => true, 'quotes_days' => 120, 'quotes_cache_seconds' => 600,
     'write_enabled' => false, 'note_on_change' => true, 'erp_user_id' => '0', 'user_erp_ids' => {},
     'extra_fields' => [], 'substatus_options' => [],
     # criação de orçamento no ERP (desligada por padrão): usa as funções do ERP (ver Outsider::Erp::QuoteCreator)
@@ -56,7 +56,10 @@ class Outsider::Erp::Settings
   end
 
   def enabled? = data['enabled'] == true && companies.any?
-  def write_enabled? = enabled? && data['write_enabled'] == true
+  # OS na tela (quadro, lista no contato, edição). Desligado, ficam só os orçamentos; o espelho das OS continua sendo
+  # lido por trás só para achar o cliente do ERP ao vincular um contato (Outsider::Erp::ServiceOrders#customers)
+  def orders_enabled? = enabled? && data['orders_enabled'] == true
+  def write_enabled? = orders_enabled? && data['write_enabled'] == true
   def quotes_enabled? = enabled? && data['quotes_enabled'] == true
   def quote_write_enabled? = enabled? && data['quote_write_enabled'] == true
   def companies = Array(data['companies'])
@@ -82,7 +85,7 @@ class Outsider::Erp::Settings
   def update(params)
     params = params.to_h.deep_stringify_keys
     @errors = []
-    cleaned = data.merge(clean_connection(params)).merge(clean_cache(params)).merge(clean_write(params)).merge(clean_quote(params))
+    cleaned = %i[clean_connection clean_display clean_cache clean_write clean_quote].reduce(data) { |out, part| out.merge(send(part, params)) }
     raise Invalid, @errors if @errors.any?
 
     @account.with_lock do
@@ -104,10 +107,15 @@ class Outsider::Erp::Settings
     }
   end
 
+  # o que aparece na tela: OS e/ou orçamentos
+  def clean_display(params)
+    { 'orders_enabled' => flag(params, 'orders_enabled'), 'quotes_enabled' => flag(params, 'quotes_enabled') }
+  end
+
   def clean_cache(params)
     {
       'lookback_days' => clamp(params, 'lookback_days', 1, 730), 'forward_days' => clamp(params, 'forward_days', 0, 730),
-      'cache_seconds' => clamp(params, 'cache_seconds', 30, 3600), 'quotes_enabled' => flag(params, 'quotes_enabled'),
+      'cache_seconds' => clamp(params, 'cache_seconds', 30, 3600),
       'quotes_days' => clamp(params, 'quotes_days', 7, 730), 'quotes_cache_seconds' => clamp(params, 'quotes_cache_seconds', 60, 7200)
     }
   end

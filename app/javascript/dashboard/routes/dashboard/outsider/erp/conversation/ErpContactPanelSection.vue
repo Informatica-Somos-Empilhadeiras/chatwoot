@@ -5,7 +5,7 @@ import { useI18n } from 'vue-i18n';
 import { useUISettings } from 'dashboard/composables/useUISettings';
 import AccordionItem from 'dashboard/components/Accordion/AccordionItem.vue';
 import ErpContactOrders from '../components/ErpContactOrders.vue';
-import { erpState } from '../erpStore';
+import { erpState, erpPanelTitle } from '../erpStore';
 
 defineProps({
   contactId: { type: Number, default: null },
@@ -19,7 +19,7 @@ const { isContactSidebarItemOpen, toggleSidebarUIState } = useUISettings();
 <template>
   <AccordionItem
     v-if="erpState.enabled && contactId"
-    :title="t('OUTSIDER_ERP.CONTACT.PANEL_TITLE')"
+    :title="erpPanelTitle(t)"
     :is-open="isContactSidebarItemOpen('is_outsider_erp_open')"
     compact
     @toggle="value => toggleSidebarUIState('is_outsider_erp_open', value)"

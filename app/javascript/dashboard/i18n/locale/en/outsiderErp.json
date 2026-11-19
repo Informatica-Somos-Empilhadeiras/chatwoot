@@ -2,6 +2,7 @@
   "OUTSIDER_ERP": {
     "TITLE": "ERP Mais Prático",
     "SIDEBAR": "Service orders",
+    "SIDEBAR_QUOTES": "ERP",
     "CANCEL": "Cancel",
     "TABS": {
       "BOARD": "Service order board",
@@ -9,12 +10,14 @@
     },
     "STATES": {
       "OFF": "The ERP integration is off. Talk to the account administrator.",
-      "OFF_ADMIN": "The ERP integration is off. Open ERP settings, fill in the companies and turn it on."
+      "OFF_ADMIN": "The ERP integration is off. Open ERP settings, fill in the companies and turn it on.",
+      "ORDERS_OFF": "Service orders are hidden in the ERP settings."
     },
     "ERRORS": {
       "LOADING": "The ERP is slow to answer. Try again in a few seconds.",
       "UNAVAILABLE": "The ERP did not answer. Try again shortly.",
       "DISABLED": "The ERP integration is off.",
+      "NO_COMPANIES": "Enter at least one company (database) of the group.",
       "WRITE_DISABLED": "Writing to the ERP is off or your profile is read only.",
       "QUOTE_WRITE_DISABLED": "Creating quotes in the ERP is off or your profile is read only.",
       "INVALID": "Could not save: check the chosen value.",
@@ -82,10 +85,13 @@
         "COMPANY_INVALID": "Invalid company for this contact.",
         "NO_ITEMS": "No proposal item is linked to an ERP product.",
         "GENERIC": "Could not create the quote in the ERP."
-      }
+      },
+      "OFF": "Creating quotes in the ERP is turned off.",
+      "OFF_LINK": "Turn it on in the ERP settings"
     },
     "CONTACT": {
       "PANEL_TITLE": "ERP: orders and quotes",
+      "PANEL_TITLE_QUOTES": "ERP: quotes",
       "RETRY": "Try again",
       "LINK_TITLE": "Customer {code} in company {company}",
       "UNLINK": "Unlink",
@@ -140,7 +146,7 @@
       "DEVICE_ID_SET": "already set (leave empty to keep)",
       "DEVICE_ID_HINT": "The x-device-id header of a request from the ERP dashboard (DevTools > Network). Never shown again after saving.",
       "TEST": "Test now",
-      "TEST_HINT": "Fetches the orders from the ERP and shows how many came.",
+      "TEST_HINT": "Saves what is on the screen, fetches the orders from the ERP and shows how many came.",
       "TEST_ORDERS": "{count} orders in the period.",
       "TEST_SUBSTATUS": "Sub-statuses found:",
       "MIRROR": "Order mirror",
@@ -152,6 +158,8 @@
       "DATE_FORECAST": "Due",
       "DATE_DELIVERY": "Delivered",
       "CACHE": "Cache (seconds)",
+      "ORDERS": "Show service orders",
+      "ORDERS_HINT": "Off: the service order board, the order list on contacts and deals, and order editing disappear. Only quotes stay. Orders are still read in the background only to find the ERP customer when linking a contact.",
       "QUOTES": "Show quotes",
       "QUOTES_DAYS": "Quotes from the last (days)",
       "WRITE": "Write to the ERP",

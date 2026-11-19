@@ -22,6 +22,11 @@ class Api::V1::Accounts::Outsider::Erp::BaseController < Api::V1::Accounts::Base
     render json: { error: 'erp_disabled' }, status: :forbidden unless settings.enabled?
   end
 
+  # quadro e busca de OS: somem com "Mostrar ordens de serviço" desligado (ficam só os orçamentos)
+  def ensure_orders_enabled
+    render json: { error: 'orders_disabled' }, status: :forbidden unless settings.orders_enabled?
+  end
+
   def ensure_erp_admin
     render json: { error: 'erp_admin_only' }, status: :forbidden unless Current.account_user.administrator?
   end

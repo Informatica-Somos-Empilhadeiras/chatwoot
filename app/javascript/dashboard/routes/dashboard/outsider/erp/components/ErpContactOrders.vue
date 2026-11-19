@@ -1,6 +1,7 @@
 <script setup>
 // OUTSIDER: as OS e os orçamentos do ERP de um contato (painel da conversa e negócio do CRM). O contato é ligado uma vez
 // aos clientes do ERP (empresa + código): sem vínculo, aparecem as sugestões pelo nome e a busca de clientes do ERP.
+// Com "Mostrar ordens de serviço" desligado nas Configurações, o bloco fica só com o vínculo e os orçamentos.
 import { ref, computed, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useAlert } from 'dashboard/composables';
@@ -42,6 +43,15 @@ const results = ref([]);
 const linking = ref('');
 
 const OPEN_LIMIT = 5;
+// aba que está na tela: sem OS, sempre orçamentos; sem orçamentos, sempre OS
+const activeTab = computed(() => {
+  if (!erpState.ordersEnabled) return 'quotes';
+  if (!erpState.quotesEnabled) return 'orders';
+  return tab.value;
+});
+const showTabs = computed(
+  () => erpState.ordersEnabled && erpState.quotesEnabled
+);
 const visibleOrders = computed(() =>
   showAll.value ? orders.value : orders.value.slice(0, OPEN_LIMIT)
 );
@@ -211,8 +221,12 @@ const lastUpdate = computed(() =>
               <template v-if="row.cidade">
                 · {{ row.cidade }}/{{ row.uf }}
               </template>
-              ·
-              {{ t('OUTSIDER_ERP.CONTACT.ORDERS_COUNT', { count: row.count }) }}
+              <template v-if="erpState.ordersEnabled">
+                ·
+                {{
+                  t('OUTSIDER_ERP.CONTACT.ORDERS_COUNT', { count: row.count })
+                }}
+              </template>
             </span>
           </div>
           <Button
@@ -256,8 +270,12 @@ const lastUpdate = computed(() =>
               <template v-if="row.cidade">
                 · {{ row.cidade }}/{{ row.uf }}
               </template>
-              ·
-              {{ t('OUTSIDER_ERP.CONTACT.ORDERS_COUNT', { count: row.count }) }}
+              <template v-if="erpState.ordersEnabled">
+                ·
+                {{
+                  t('OUTSIDER_ERP.CONTACT.ORDERS_COUNT', { count: row.count })
+                }}
+              </template>
             </span>
           </div>
           <Button
@@ -279,7 +297,7 @@ const lastUpdate = computed(() =>
 
       <template v-if="links.length">
         <div
-          v-if="erpState.quotesEnabled"
+          v-if="showTabs"
           class="flex gap-1 p-0.5 rounded-lg bg-n-alpha-1 self-start"
         >
           <button
@@ -299,7 +317,7 @@ const lastUpdate = computed(() =>
           </button>
         </div>
 
-        <template v-if="tab === 'orders'">
+        <template v-if="activeTab === 'orders'">
           <p v-if="!orders.length" class="mb-0 text-xs text-n-slate-10">
             {{ t('OUTSIDER_ERP.CONTACT.NO_ORDERS') }}
           </p>
@@ -324,7 +342,7 @@ const lastUpdate = computed(() =>
             }}
           </button>
         </template>
-        <ErpQuotes v-else :contact-id="contactId" />
+        <ErpQuotes v-else-if="erpState.quotesEnabled" :contact-id="contactId" />
       </template>
 
       <span

@@ -12,8 +12,13 @@ import { erpState } from '../erpStore';
 const { t } = useI18n();
 const route = useRoute();
 
+// com as OS ocultas não há quadro: o administrador cai nas Configurações
+const ordersHidden = computed(
+  () => erpState.loaded && erpState.enabled && !erpState.ordersEnabled
+);
 const tab = computed(() =>
-  route.params.tab === 'settings' && erpState.administrator
+  (route.params.tab === 'settings' || ordersHidden.value) &&
+  erpState.administrator
     ? 'settings'
     : 'board'
 );
@@ -58,6 +63,12 @@ const tab = computed(() =>
               {{ t('OUTSIDER_ERP.TABS.SETTINGS') }}
             </router-link>
           </div>
+          <p
+            v-else-if="ordersHidden"
+            class="p-10 mb-0 text-sm text-center rounded-xl bg-n-alpha-1 text-n-slate-11"
+          >
+            {{ t('OUTSIDER_ERP.STATES.ORDERS_OFF') }}
+          </p>
           <ErpBoard v-else-if="erpState.enabled" />
         </div>
       </main>
