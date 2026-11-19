@@ -5,6 +5,7 @@ module Outsider::Erp::Sql
   module_function
 
   IDENT = /\A[a-z0-9_]{2,40}\z/
+  COLUMN = /\A[A-Za-z][A-Za-z0-9_]{0,63}\z/
   # escapes exigidos pelo MySQL dentro de aspas simples
   ESCAPES = { '\\' => '\\\\', "'" => "\\'", "\n" => '\\n', "\r" => '\\r', "\u0000" => '\\0', "\u001A" => '\\Z' }.freeze
 
@@ -14,6 +15,14 @@ module Outsider::Erp::Sql
     raise ArgumentError, "identificador inválido: #{value}" unless value.match?(IDENT)
 
     value
+  end
+
+  # nome de coluna lido do information_schema (Outsider::Erp::Schema), entre crases; nada fora do formato passa
+  def column(value)
+    value = value.to_s
+    raise ArgumentError, "coluna inválida: #{value}" unless value.match?(COLUMN)
+
+    "`#{value}`"
   end
 
   # 'texto' escapado; nil/"" viram NULL

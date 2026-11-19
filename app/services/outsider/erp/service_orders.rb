@@ -1,5 +1,5 @@
 # OUTSIDER: as ordens de serviço do ERP (espelho, ver Outsider::Erp::Snapshot): as de um cliente, a busca por número ou
-# nome, os clientes para vincular a um contato e o quadro da página Ordens de serviço.
+# nome e o quadro da página Ordens de serviço (os clientes para vincular vêm do Outsider::Erp::Customers).
 #
 # Uma OS é a dupla empresa + número: cada empresa do grupo é um banco separado no ERP e os números se repetem entre
 # eles. O cliente também (CodigoCliente vale dentro da empresa).
@@ -47,21 +47,6 @@ class Outsider::Erp::ServiceOrders
 
     words = self.class.words(query)
     sort(items.select { |item| self.class.matches?(words, "#{item['Nome']} #{item['DescricaoMaquina']} #{item['NSerie']}") }).first(limit)
-  end
-
-  # clientes distintos (empresa + código) cujo nome tem as palavras buscadas, com quantas OS cada um tem no espelho
-  def customers(query, limit: 15)
-    words = self.class.words(query)
-    return [] if words.join.length < 3
-
-    grouped = items.select { |item| self.class.matches?(words, item['Nome']) }.group_by { |item| [item['Empresa'], item['CodigoCliente'].to_i] }
-    grouped.map { |(company, code), list| customer_row(company, code, list) }.sort_by { |row| [-row[:count], row[:nome]] }.first(limit)
-  end
-
-  # sugestões para um contato ainda sem vínculo: pelo nome da empresa do contato e pelo nome dele
-  def suggestions(contact)
-    names = [contact.additional_attributes.to_h['company_name'], contact.name].compact_blank
-    names.flat_map { |name| customers(name, limit: 5) }.uniq { |row| [row[:empresa], row[:codigo]] }.first(5)
   end
 
   # substatus que dá para escolher numa OS: os da lista das Configurações ou, sem lista, os que já aparecem nas OS da
@@ -116,11 +101,6 @@ class Outsider::Erp::ServiceOrders
 
   def column_for(item, group_by)
     group_by == 'status' ? item['StatusKanban'].presence || UNDEFINED : substatus_group(item['SubStatus'])
-  end
-
-  def customer_row(company, code, list)
-    latest = list.max_by { |item| item['DataEntrada'].to_s }
-    { empresa: company, codigo: code, nome: latest['Nome'], cidade: latest['Cidade'], uf: latest['UF'], count: list.size }
   end
 
   def sort(list)

@@ -1,17 +1,17 @@
 <script setup>
 // OUTSIDER: as OS e os orçamentos do ERP de um contato (painel da conversa e negócio do CRM). O contato é ligado uma vez
-// aos clientes do ERP (empresa + código): sem vínculo, aparecem as sugestões pelo nome e a busca de clientes do ERP.
+// aos clientes do ERP (empresa + código): sem vínculo, a lista de clientes do ERP já abre, com os parecidos com o
+// contato (telefone ou nome) no topo, e filtra por nome, código ou CNPJ (ErpPicker).
 // Com "Mostrar ordens de serviço" desligado nas Configurações, o bloco fica só com o vínculo e os orçamentos.
 import { ref, computed, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useAlert } from 'dashboard/composables';
-import { debounce } from '@chatwoot/utils';
 import ErpAPI from 'dashboard/api/outsider/erp';
-import Button from 'dashboard/components-next/button/Button.vue';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 import ErpOrderCard from './ErpOrderCard.vue';
 import ErpQuotes from './ErpQuotes.vue';
+import ErpPicker from './ErpPicker.vue';
 import {
   erpState,
   orderKey,
@@ -31,15 +31,12 @@ const loading = ref(false);
 const failure = ref('');
 const links = ref([]);
 const orders = ref([]);
-const suggestions = ref([]);
 const options = ref({});
 const fetchedAt = ref(null);
 const stale = ref(false);
 const tab = ref('orders');
 const showAll = ref(false);
 const searching = ref(false);
-const query = ref('');
-const results = ref([]);
 const linking = ref('');
 
 const OPEN_LIMIT = 5;
@@ -66,7 +63,6 @@ const load = async () => {
     );
     links.value = data.links || [];
     orders.value = data.orders || [];
-    suggestions.value = data.suggestions || [];
     options.value = data.options || {};
     fetchedAt.value = data.fetched_at;
     stale.value = data.stale;
@@ -83,23 +79,25 @@ watch(
   { immediate: true }
 );
 
-const runSearch = debounce(async () => {
-  if (query.value.trim().length < 3) {
-    results.value = [];
-    return;
-  }
-  try {
-    const { data } = await withLoadingRetry(() =>
-      ErpAPI.customers(query.value.trim())
-    );
-    results.value = data.customers || [];
-  } catch (error) {
-    useAlert(erpErrorMessage(t, error));
-  }
-}, 400);
-watch(query, runSearch);
+// sem filtro, o servidor põe primeiro os clientes parecidos com este contato
+const searchCustomers = async q => {
+  const { data } = await withLoadingRetry(() =>
+    ErpAPI.customers(q, q ? null : props.contactId)
+  );
+  return data.customers || [];
+};
 
 const customerKey = row => `${row.empresa}:${row.codigo}`;
+// "somosemp #716 · GDS · GOIÂNIA/GO · 12.345.678/0001-90"
+const customerDetails = row =>
+  [
+    `${row.empresa} #${row.codigo}`,
+    row.fantasia,
+    row.cidade && [row.cidade, row.uf].filter(Boolean).join('/'),
+    row.documento,
+  ]
+    .filter(Boolean)
+    .join(' · ');
 
 const link = async row => {
   linking.value = customerKey(row);
@@ -111,7 +109,6 @@ const link = async row => {
       name: row.nome,
     });
     searching.value = false;
-    query.value = '';
     await load();
   } catch (error) {
     useAlert(erpErrorMessage(t, error));
@@ -198,102 +195,39 @@ const lastUpdate = computed(() =>
         </button>
       </div>
 
-      <!-- sem vínculo: sugestões pelo nome -->
-      <div v-else class="flex flex-col gap-2">
-        <p class="mb-0 text-xs text-n-slate-11">
-          {{
-            suggestions.length
-              ? t('OUTSIDER_ERP.CONTACT.SUGGESTIONS')
-              : t('OUTSIDER_ERP.CONTACT.NO_LINK')
-          }}
-        </p>
-        <div
-          v-for="row in suggestions"
-          :key="customerKey(row)"
-          class="flex items-center justify-between gap-2 p-2 rounded-lg bg-n-alpha-1"
-        >
-          <div class="flex flex-col min-w-0">
-            <span class="text-xs font-medium truncate text-n-slate-12">{{
-              row.nome
-            }}</span>
-            <span class="text-xs text-n-slate-10">
-              {{ row.empresa }} #{{ row.codigo }}
-              <template v-if="row.cidade">
-                · {{ row.cidade }}/{{ row.uf }}
-              </template>
-              <template v-if="erpState.ordersEnabled">
-                ·
-                {{
-                  t('OUTSIDER_ERP.CONTACT.ORDERS_COUNT', { count: row.count })
-                }}
-              </template>
-            </span>
-          </div>
-          <Button
-            type="button"
-            size="xs"
-            class="shrink-0"
-            :label="t('OUTSIDER_ERP.CONTACT.LINK')"
-            :is-loading="linking === customerKey(row)"
-            @click="link(row)"
-          />
-        </div>
-        <button
-          v-if="!searching"
-          type="button"
-          class="self-start text-xs text-n-blue-11 hover:underline"
-          @click="searching = true"
-        >
-          {{ t('OUTSIDER_ERP.CONTACT.SEARCH_CUSTOMER') }}
-        </button>
-      </div>
+      <!-- sem vínculo: a lista de clientes do ERP já aberta -->
+      <p v-else class="mb-0 text-xs text-n-slate-11">
+        {{ t('OUTSIDER_ERP.CONTACT.PICK_CUSTOMER') }}
+      </p>
 
-      <!-- busca de clientes do ERP pelo nome -->
-      <div v-if="searching" class="flex flex-col gap-2">
-        <input
-          v-model="query"
-          type="text"
-          class="!mb-0 h-8 px-2 text-sm rounded-lg reset-base bg-n-solid-1 text-n-slate-12 outline outline-1 -outline-offset-1 outline-n-weak"
-          :placeholder="t('OUTSIDER_ERP.CONTACT.SEARCH_PLACEHOLDER')"
-        />
-        <div
-          v-for="row in results"
-          :key="customerKey(row)"
-          class="flex items-center justify-between gap-2 p-2 rounded-lg bg-n-alpha-1"
-        >
-          <div class="flex flex-col min-w-0">
-            <span class="text-xs font-medium truncate text-n-slate-12">{{
-              row.nome
-            }}</span>
-            <span class="text-xs text-n-slate-10">
-              {{ row.empresa }} #{{ row.codigo }}
-              <template v-if="row.cidade">
-                · {{ row.cidade }}/{{ row.uf }}
-              </template>
-              <template v-if="erpState.ordersEnabled">
-                ·
-                {{
-                  t('OUTSIDER_ERP.CONTACT.ORDERS_COUNT', { count: row.count })
-                }}
-              </template>
-            </span>
-          </div>
-          <Button
-            type="button"
-            size="xs"
-            class="shrink-0"
-            :label="t('OUTSIDER_ERP.CONTACT.LINK')"
-            :is-loading="linking === customerKey(row)"
-            @click="link(row)"
-          />
-        </div>
-        <p
-          v-if="query.trim().length >= 3 && !results.length"
-          class="mb-0 text-xs text-n-slate-10"
-        >
-          {{ t('OUTSIDER_ERP.CONTACT.NO_RESULTS') }}
-        </p>
-      </div>
+      <ErpPicker
+        v-if="!links.length || searching"
+        :search="searchCustomers"
+        :row-key="customerKey"
+        :busy="linking"
+        :placeholder="t('OUTSIDER_ERP.CONTACT.FILTER_PLACEHOLDER')"
+        :empty-text="t('OUTSIDER_ERP.CONTACT.NO_RESULTS')"
+        @select="link"
+      >
+        <template #row="{ row }">
+          <span class="text-xs font-medium truncate text-n-slate-12">
+            {{ row.nome }}
+          </span>
+          <span class="text-xs truncate text-n-slate-10">
+            {{ customerDetails(row) }}
+          </span>
+          <span
+            v-if="row.motivo"
+            class="self-start px-1.5 mt-0.5 text-[11px] rounded bg-n-teal-3 text-n-teal-11"
+          >
+            {{
+              row.motivo === 'telefone'
+                ? t('OUTSIDER_ERP.CONTACT.MATCH_PHONE')
+                : t('OUTSIDER_ERP.CONTACT.MATCH_NAME')
+            }}
+          </span>
+        </template>
+      </ErpPicker>
 
       <template v-if="links.length">
         <div

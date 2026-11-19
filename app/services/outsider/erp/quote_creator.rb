@@ -34,7 +34,7 @@ class Outsider::Erp::QuoteCreator
 
     number = create(builder, present)
     persist(number, link['empresa'])
-    Result.new(number: number, company: link['empresa'], skipped: labels(builder.skipped_items + absent), already: false)
+    Result.new(number: number, company: link['empresa'], skipped: labels(builder.skipped_items + absent + @lost.to_a), already: false)
   end
 
   private
@@ -82,9 +82,17 @@ class Outsider::Erp::QuoteCreator
     number = Integer(scalar(@client.query_execute(builder.header_sql)))
     raise Invalid, 'sem_numero' if number <= 0
 
-    items.each { |item| @client.query_execute(builder.item_sql(number, item)) } if items_count(builder.company, number).zero?
+    insert_items(builder, number, items) if inserted_codes(builder.company, number).blank?
     @client.query_execute(builder.finalize_sql(number))
     number
+  end
+
+  # a função do item também ignora em silêncio o produto sem tributação (NCM) para a UF do cliente: confere o que
+  # entrou de fato e devolve o resto como "ficou de fora"
+  def insert_items(builder, number, items)
+    items.each { |item| @client.query_execute(builder.item_sql(number, item)) }
+    inserted = inserted_codes(builder.company, number)
+    @lost = items.reject { |item| inserted.include?(builder.erp_code(item).to_i) } unless inserted.nil?
   end
 
   # nº do orçamento quando a proposta já foi sincronizada (não regrava, não duplica itens)
@@ -92,12 +100,13 @@ class Outsider::Erp::QuoteCreator
     Result.new(number: @proposal.erp_quote_number, company: @proposal.erp_company || link['empresa'], skipped: [], already: true)
   end
 
-  def items_count(company, number)
-    sql = "SELECT COUNT(*) AS n FROM #{Outsider::Erp::Sql.ident(company)}.detalheorcamento " \
+  # códigos de produto que já estão no orçamento; nil quando a conferência falha (aí segue como antes)
+  def inserted_codes(company, number)
+    sql = "SELECT CodigoProduto FROM #{Outsider::Erp::Sql.ident(company)}.detalheorcamento " \
           "WHERE CodigoOrcamento = #{Outsider::Erp::Sql.int(number)}"
-    scalar(@client.query_execute(sql)).to_i
+    @client.query_execute(sql).grep(Hash).map { |row| row['CodigoProduto'].to_i }
   rescue Outsider::Erp::Client::Error
-    0
+    nil
   end
 
   def persist(number, company)

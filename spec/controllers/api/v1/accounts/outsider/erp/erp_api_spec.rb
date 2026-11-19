@@ -22,9 +22,9 @@ RSpec.describe 'Outsider ERP API', type: :request do
     Outsider::AccessMember.create!(account: account, user: viewer, profile: profile)
   end
 
-  it 'suggests ERP customers for an unlinked contact, then lists the orders once linked' do
+  it 'lists the orders of a contact once it is linked to an ERP customer' do
     get "#{url}/service_orders", params: { contact_id: contact.id }, headers: agent.create_new_auth_token
-    expect(response.parsed_body['suggestions']).to contain_exactly(include('empresa' => 'somosemp', 'codigo' => 716))
+    expect(response.parsed_body).to include('links' => [], 'orders' => [])
 
     post "#{url}/contact_link", params: { contact_id: contact.id, company: 'somosemp', code: 716, name: 'GDS' },
                                 headers: agent.create_new_auth_token, as: :json

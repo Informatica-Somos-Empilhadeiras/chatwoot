@@ -9,6 +9,7 @@ Rails.application.routes.prepend do
             namespace :erp do
               resource :settings, only: [:show, :update] do
                 post :test
+                get :payment_terms
               end
               resource :status, only: [:show]
               resources :service_orders, only: [:index] do

@@ -4,9 +4,8 @@ class Api::V1::Accounts::Outsider::Erp::ServiceOrdersController < Api::V1::Accou
   rescue_from(::Outsider::Erp::Writer::Invalid) { |error| render json: { error: 'invalid', field: error.message }, status: :unprocessable_entity }
   before_action :ensure_orders_enabled, only: :board
 
-  # contact_id: as OS dos clientes vinculados (sem vínculo, as sugestões); q: busca por número, cliente, máquina.
-  # Com as OS ocultas, o contato ainda recebe os vínculos e as sugestões (para o orçamento), sem as OS; o espelho só é
-  # lido para sugerir o cliente de quem ainda não tem vínculo.
+  # contact_id: os vínculos do contato e as OS desses clientes; q: busca por número, cliente, máquina. Com as OS ocultas,
+  # só os vínculos (o orçamento precisa deles). O cliente para vincular vem da lista de clientes (CustomersController).
   def index
     render json: params[:contact_id].present? ? contact_orders : search_orders
   end
@@ -46,11 +45,10 @@ class Api::V1::Accounts::Outsider::Erp::ServiceOrdersController < Api::V1::Accou
 
   def contact_orders
     links = ::Outsider::Erp::ContactLink.new(contact).links
-    return { links: links, orders: [], suggestions: [], options: {} } if links.any? && !settings.orders_enabled?
+    data = { links: links, orders: [], options: {} }
+    return data unless settings.orders_enabled? && links.any?
 
-    shown = settings.orders_enabled? ? orders.for_clients(links) : []
-    orders.meta.merge(links: links, orders: shown, suggestions: links.empty? ? orders.suggestions(contact) : [],
-                      options: shown.any? ? options_for(links) : {})
+    orders.meta.merge(data).merge(orders: orders.for_clients(links), options: options_for(links))
   end
 
   def search_orders

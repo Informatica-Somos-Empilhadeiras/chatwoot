@@ -66,16 +66,16 @@
       "LINKED": "Produto do ERP #{code}",
       "CHANGE": "Trocar",
       "UNLINK": "Desvincular",
-      "SEARCH": "Buscar",
-      "SEARCH_PLACEHOLDER": "Número ou descrição do produto",
-      "HINT": "Digite ao menos 2 letras e busque. Sem vínculo, o item não entra no orçamento do ERP."
+      "SEARCH_PLACEHOLDER": "Filtrar por número ou descrição",
+      "HINT": "Clique no produto para vincular. Sem vínculo, o item não entra no orçamento do ERP.",
+      "EMPTY": "Nenhum produto encontrado nesta unidade."
     },
     "QUOTE": {
       "GENERATE": "Gerar orçamento no ERP",
       "SYNCED": "Orçamento do ERP #{number} · {company}",
       "DONE": "Orçamento {number} criado no ERP.",
       "ALREADY": "Esta proposta já tem o orçamento {number} no ERP.",
-      "SKIPPED": "{count} item ficou de fora (sem produto do ERP). | {count} itens ficaram de fora (sem produto do ERP).",
+      "SKIPPED": "{count} item ficou de fora do orçamento: {items}. Confira o produto do ERP e a tributação (NCM) para a UF do cliente. | {count} itens ficaram de fora do orçamento: {items}. Confira o produto do ERP e a tributação (NCM) para a UF do cliente.",
       "PICK_COMPANY": "Em qual unidade?",
       "CONFIRM": "Gerar",
       "SAVE_FIRST": "Salve a proposta antes de gerar o orçamento.",
@@ -96,12 +96,7 @@
       "LINK_TITLE": "Cliente {code} na empresa {company}",
       "UNLINK": "Desvincular",
       "ADD_LINK": "+ outro cliente",
-      "SUGGESTIONS": "Este contato ainda não está ligado a um cliente do ERP. Parece ser:",
-      "NO_LINK": "Este contato ainda não está ligado a um cliente do ERP.",
-      "ORDERS_COUNT": "{count} OS",
       "LINK": "Vincular",
-      "SEARCH_CUSTOMER": "Buscar cliente no ERP",
-      "SEARCH_PLACEHOLDER": "Nome do cliente no ERP",
       "NO_RESULTS": "Nenhum cliente com OS no período configurado.",
       "TABS": {
         "ORDERS": "OS",
@@ -112,7 +107,11 @@
       "SHOW_LESS": "Ver menos",
       "UPDATED": "Atualizado às {time}",
       "STALE": "Cópia das {time}, atualizando",
-      "RELOAD": "recarregar"
+      "RELOAD": "recarregar",
+      "PICK_CUSTOMER": "Escolha o cliente do ERP deste contato. Os parecidos com ele aparecem primeiro.",
+      "FILTER_PLACEHOLDER": "Filtrar por nome, código ou CNPJ",
+      "MATCH_PHONE": "mesmo telefone",
+      "MATCH_NAME": "nome parecido"
     },
     "QUOTES": {
       "LOADING": "Buscando os orçamentos no ERP…",
@@ -182,14 +181,15 @@
       "QUOTE_WRITE_HINT": "Permite gerar no ERP o orçamento de uma proposta do CRM, usando as próprias funções do Mais Prático (numeração, impostos e totais saem do ERP). Começa desligado. Vincule cada produto do catálogo a um produto do ERP.",
       "QUOTE_WRITE_ENABLED": "Criação de orçamento ligada",
       "QUOTE_FORMA_PAGTO": "Forma de pagamento padrão",
-      "QUOTE_FORMA_PAGTO_HINT": "Código da forma de pagamento no ERP. Obrigatório para gerar orçamento.",
+      "QUOTE_FORMA_PAGTO_HINT": "Lista do próprio ERP. Obrigatória para gerar orçamento.",
       "QUOTE_TIPO_FRETE": "Tipo de frete",
       "QUOTE_TIPO_FRETE_HINT": "Código do tipo de frete no ERP (0 a 9).",
       "QUOTE_GENERO": "Gênero da operação",
       "QUOTE_GENERO_HINT": "Código do gênero da operação no ERP.",
       "SAVE": "Salvar",
       "SAVED": "Configurações do ERP salvas.",
-      "INVALID": "Confira os campos marcados em vermelho."
+      "INVALID": "Confira os campos marcados em vermelho.",
+      "QUOTE_FORMA_PAGTO_PICK": "Escolha a forma de pagamento"
     }
   }
 }

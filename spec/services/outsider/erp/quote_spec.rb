@@ -18,21 +18,25 @@ RSpec.describe 'Outsider ERP quotes' do # rubocop:disable RSpec/DescribeClass
     )
   end
 
-  # responde o query_execute conforme a SQL (números fixos para conferir o resultado)
-  def stub_query(present_codes: [1234], number: 5001, items_count: 0)
+  # responde o query_execute conforme a SQL (números fixos para conferir o resultado). inserted: o que o ERP de fato
+  # gravou depois das chamadas de item (a função ignora em silêncio produto sem tributação para a UF)
+  def stub_query(present_codes: [1234], number: 5001, inserted: [1234])
+    items_sent = false
     stub_request(:put, "#{base}/dashboard/api/query_execute").to_return do |request|
       sql = JSON.parse(request.body)['SQL_Execute']
-      body =
-        if sql.include?('sp_CadastraOrcamento') then [{ 'codigo' => number }]
-        elsif sql.include?('sp_CadastraItemOrcamento') then [{ 'codigo' => 1 }]
-        elsif sql.include?('sp_FinalizaOrcamento') then [{ 'resultado' => 'OK' }]
-        elsif sql.include?('detalheorcamento') then [{ 'n' => items_count }]
-        elsif sql.include?('CodigoProduto IN') then present_codes.map { |code| { 'CodigoProduto' => code } }
-        else
-          []
-        end
+      items_sent ||= sql.include?('sp_CadastraItemOrcamento')
+      body = erp_answer(sql, number: number, present_codes: present_codes, inserted: items_sent ? inserted : [])
       { status: 200, body: body.to_json }
     end
+  end
+
+  def erp_answer(sql, number:, present_codes:, inserted:)
+    answers = {
+      'sp_CadastraOrcamento' => [{ 'codigo' => number }], 'sp_CadastraItemOrcamento' => [{ 'codigo' => 1 }],
+      'sp_FinalizaOrcamento' => [{ 'resultado' => 'OK' }], 'detalheorcamento' => inserted.map { |code| { 'CodigoProduto' => code } },
+      'CodigoProduto IN' => present_codes.map { |code| { 'CodigoProduto' => code } }
+    }
+    answers.find { |marker, _| sql.include?(marker) }&.last || []
   end
 
   before do
@@ -77,13 +81,6 @@ RSpec.describe 'Outsider ERP quotes' do # rubocop:disable RSpec/DescribeClass
   describe Outsider::Erp::Catalog do
     subject(:catalog) { described_class.new(account) }
 
-    it 'searches products scoped to a configured company' do
-      stub_request(:put, "#{base}/dashboard/api/query_execute")
-        .to_return(status: 200, body: [{ 'CodigoProduto' => 1234, 'Descricao' => 'EMPILHADEIRA' }].to_json)
-      expect(catalog.search('somosemp', 'empil')).to eq([{ codigo: 1234, descricao: 'EMPILHADEIRA' }])
-      expect { catalog.search('outra', 'empil') }.to raise_error(ArgumentError)
-    end
-
     it 'reports which codes exist in the bank' do
       stub_query(present_codes: [1234])
       expect(catalog.existing_codes('somosemp', [1234, 9999])).to eq([1234])
@@ -100,6 +97,11 @@ RSpec.describe 'Outsider ERP quotes' do # rubocop:disable RSpec/DescribeClass
       expect(result).to have_attributes(number: 5001, company: 'somosemp', skipped: ['Frete'], already: false)
       expect(proposal.reload).to have_attributes(erp_quote_number: 5001, erp_company: 'somosemp')
       expect(proposal.erp_synced_at).to be_present
+    end
+
+    it 'reports an item the ERP did not record (no tax setup for the customer state) as left out' do
+      stub_query(inserted: [])
+      expect(creator.call.skipped).to eq(%w[Frete Empilhadeira])
     end
 
     it 'is idempotent: a synced proposal returns the existing number without calling the ERP' do

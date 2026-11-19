@@ -1,24 +1,25 @@
-# OUTSIDER: busca de produtos do ERP (tabela Produtos de uma unidade), para vincular a um item da proposta — assim o
+# OUTSIDER: lista de produtos do ERP (tabela produtos de uma unidade), para vincular a um item da proposta — assim o
 # item carrega o CodigoProduto real e os impostos do orçamento saem certos. Só leitura, via query_execute, sempre
-# escopada numa unidade da Somos (o banco é validado contra a lista das Configurações).
+# escopada numa unidade da Somos (o banco é validado contra a lista das Configurações). A lista já abre com os primeiros
+# em ordem alfabética; o filtro é por número ou por palavras da descrição (a coluna vem do Outsider::Erp::Schema).
 class Outsider::Erp::Catalog
   S = Outsider::Erp::Sql
-  LIMIT = 30
-  MIN = 2
+  LIMIT = 50
+  MAX_WORDS = 5
+  DESCRIPTION = %w[Descricao DescricaoProduto Nome].freeze
 
   def initialize(account)
+    @account = account
     @settings = Outsider::Erp::Settings.new(account)
     @client = Outsider::Erp::Client.new(@settings)
   end
 
-  # company: banco da unidade (precisa estar nas Configurações); query: número do produto ou parte da descrição
+  # company: banco da unidade (precisa estar nas Configurações); query: vazio, número do produto ou palavras da descrição
   def search(company, query)
     company = scoped_company(company)
-    query = query.to_s.strip
-    return [] if query.length < MIN
-
-    @client.query_execute(sql(company, query)).grep(Hash).map do |row|
-      { codigo: row['CodigoProduto'], descricao: row['Descricao'] }
+    column = description_column(company)
+    @client.query_execute(sql(company, column, query.to_s.squish)).grep(Hash).map do |row|
+      { codigo: row['codigo'], descricao: row['descricao'].to_s.squish }
     end
   end
 
@@ -43,9 +44,23 @@ class Outsider::Erp::Catalog
     company
   end
 
-  def sql(company, query)
-    where = query.match?(/\A\d+\z/) ? "P.CodigoProduto = #{S.int(query)}" : "P.Descricao LIKE #{S.str("%#{query}%")}"
-    "SELECT P.CodigoProduto, P.Descricao FROM #{S.ident(company)}.produtos P " \
-      "WHERE #{where} ORDER BY P.Descricao LIMIT #{LIMIT}"
+  def description_column(company)
+    column = Outsider::Erp::Schema.new(@account, client: @client).pick(company, 'produtos', DESCRIPTION)
+    raise Outsider::Erp::Client::Error, 'produtos sem coluna de descrição' unless column
+
+    "P.#{S.column(column)}"
+  end
+
+  def sql(company, column, query)
+    "SELECT P.CodigoProduto AS codigo, #{column} AS descricao FROM #{S.ident(company)}.produtos P" \
+      "#{filter(column, query)} ORDER BY #{column} LIMIT #{LIMIT}"
+  end
+
+  # número: o código ou a descrição com ele; texto: todas as palavras na descrição
+  def filter(column, query)
+    return '' if query.empty?
+    return " WHERE (P.CodigoProduto = #{S.int(query)} OR #{column} LIKE #{S.str("%#{query}%")})" if query.match?(/\A\d{1,9}\z/)
+
+    " WHERE #{query.split.first(MAX_WORDS).map { |word| "#{column} LIKE #{S.str("%#{word}%")}" }.join(' AND ')}"
   end
 end

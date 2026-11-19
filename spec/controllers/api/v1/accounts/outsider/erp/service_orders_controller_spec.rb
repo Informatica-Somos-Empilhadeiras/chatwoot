@@ -59,6 +59,20 @@ RSpec.describe 'Outsider ERP service orders', type: :request do
     expect(response.parsed_body['orders'].pluck('CodigoOS')).to eq([907])
   end
 
+  it 'lists the ERP customers to link: 202 while the first copy loads, then filtered by name' do
+    stub_request(:put, %r{/dashboard/api/query_execute}).to_return do |request|
+      sql = JSON.parse(request.body)['SQL_Execute']
+      columns = %w[CodigoCliente Nome].map { |name| { 'COLUMN_NAME' => name } }
+      { status: 200, body: (sql.include?('information_schema') ? columns : [{ 'codigo' => 716, 'nome' => 'GDS' }]).to_json }
+    end
+    call(:get, 'customers', contact_id: contact.id)
+    expect(response).to have_http_status(:accepted)
+
+    Outsider::Erp::Customers.new(account).snapshot.refresh!
+    call(:get, 'customers', q: 'gds')
+    expect(response.parsed_body['customers'].map { |row| row.values_at('empresa', 'codigo', 'nome') }).to eq([['somosemp', 716, 'GDS']])
+  end
+
   describe 'settings test' do
     it 'counts the orders the ERP sent' do
       call(:post, 'settings/test')

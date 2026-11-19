@@ -73,8 +73,7 @@ RSpec.describe 'Outsider ERP' do # rubocop:disable RSpec/DescribeClass
       expect(list.pluck('Empresa').uniq).to eq(['somosemp'])
     end
 
-    it 'finds customers by name and groups the board by sub-status without the branch suffix' do
-      expect(orders.customers('supermercado alvorada')).to contain_exactly(include(empresa: 'somosemp', codigo: 716, count: 2))
+    it 'groups the board by sub-status without the branch suffix' do
       names = orders.board[:columns].pluck(:name)
       expect(names).to eq(['1-AGENDAR ATENDIMENTO', '2-AGENDADO'])
     end

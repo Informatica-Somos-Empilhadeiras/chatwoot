@@ -25,6 +25,8 @@ const substatusText = ref('');
 const deviceId = ref('');
 const errors = ref([]);
 const testResult = ref(null);
+// formas de pagamento do ERP (lista para escolher a padrão do orçamento; sem lista, o campo vira número)
+const paymentTerms = ref([]);
 
 const INPUT =
   '!mb-0 h-8 px-2 text-sm rounded-lg reset-base bg-n-solid-1 text-n-slate-12 outline outline-1 -outline-offset-1 outline-n-weak';
@@ -41,10 +43,29 @@ const fill = data => {
   deviceId.value = '';
 };
 
+const loadPaymentTerms = async () => {
+  try {
+    const { data } = await ErpAPI.paymentTerms();
+    paymentTerms.value = data.payment_terms || [];
+  } catch {
+    paymentTerms.value = [];
+  }
+};
+
+// a forma de pagamento gravada entra na lista mesmo se o ERP não a devolver
+const paymentOptions = computed(() => {
+  const current = Number(form.value?.quote_forma_pagto || 0);
+  const list = paymentTerms.value;
+  if (!current || list.some(item => item.codigo === current)) return list;
+  return [{ codigo: current, descricao: '' }, ...list];
+});
+
 onMounted(async () => {
   try {
     const { data } = await ErpAPI.settings();
     fill(data);
+    if (data.settings.enabled && data.settings.companies?.length)
+      loadPaymentTerms();
   } catch (error) {
     useAlert(erpErrorMessage(t, error));
   } finally {
@@ -464,7 +485,24 @@ const removeField = index => form.value.extra_fields.splice(index, 1);
           <span class="text-n-slate-11">{{
             t('OUTSIDER_ERP.SETTINGS.QUOTE_FORMA_PAGTO')
           }}</span>
+          <select
+            v-if="paymentTerms.length"
+            v-model.number="form.quote_forma_pagto"
+            :class="INPUT"
+          >
+            <option :value="0">
+              {{ t('OUTSIDER_ERP.SETTINGS.QUOTE_FORMA_PAGTO_PICK') }}
+            </option>
+            <option
+              v-for="item in paymentOptions"
+              :key="item.codigo"
+              :value="item.codigo"
+            >
+              {{ item.codigo }} · {{ item.descricao }}
+            </option>
+          </select>
           <input
+            v-else
             v-model.number="form.quote_forma_pagto"
             type="number"
             min="0"

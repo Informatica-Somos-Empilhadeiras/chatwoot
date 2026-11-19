@@ -72,8 +72,16 @@ class ErpAPI extends ApiClient {
     return axios.post(`${this.url}/quotes`, data);
   }
 
-  customers(q) {
-    return axios.get(`${this.url}/customers`, { params: { q } });
+  // clientes do ERP para vincular: sem q e com o contato, os parecidos com ele vêm primeiro
+  customers(q, contactId) {
+    return axios.get(`${this.url}/customers`, {
+      params: { q, contact_id: contactId || undefined },
+    });
+  }
+
+  // formas de pagamento do ERP (Configurações > Criar orçamento)
+  paymentTerms() {
+    return axios.get(`${this.url}/settings/payment_terms`);
   }
 
   link(data) {

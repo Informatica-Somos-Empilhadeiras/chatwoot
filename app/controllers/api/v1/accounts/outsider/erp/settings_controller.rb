@@ -16,9 +16,13 @@ class Api::V1::Accounts::Outsider::Erp::SettingsController < Api::V1::Accounts::
 
   def update
     settings.update(params.require(:settings).to_unsafe_h)
-    orders.snapshot.clear
-    ::Outsider::Erp::Quotes.new(Current.account).snapshot.clear
+    [orders, ::Outsider::Erp::Quotes.new(Current.account), ::Outsider::Erp::Customers.new(Current.account)].each { |source| source.snapshot.clear }
     render json: payload
+  end
+
+  # formas de pagamento do ERP para escolher a padrão do orçamento numa lista
+  def payment_terms
+    render json: { payment_terms: ::Outsider::Erp::PaymentTerms.new(Current.account).list }
   end
 
   def test

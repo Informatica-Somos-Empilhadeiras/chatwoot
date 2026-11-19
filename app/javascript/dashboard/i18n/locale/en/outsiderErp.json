@@ -66,16 +66,16 @@
       "LINKED": "ERP product #{code}",
       "CHANGE": "Change",
       "UNLINK": "Unlink",
-      "SEARCH": "Search",
-      "SEARCH_PLACEHOLDER": "Product number or description",
-      "HINT": "Type at least 2 letters and search. Without a link, the item is left out of the ERP quote."
+      "SEARCH_PLACEHOLDER": "Filter by number or description",
+      "HINT": "Click a product to link it. Without a link, the item does not go into the ERP quote.",
+      "EMPTY": "No product found in this unit."
     },
     "QUOTE": {
       "GENERATE": "Create ERP quote",
       "SYNCED": "ERP quote #{number} · {company}",
       "DONE": "Quote {number} created in the ERP.",
       "ALREADY": "This proposal already has quote {number} in the ERP.",
-      "SKIPPED": "{count} item was left out (no ERP product). | {count} items were left out (no ERP product).",
+      "SKIPPED": "{count} item was left out of the quote: {items}. Check the ERP product and the tax setup (NCM) for the customer state. | {count} items were left out of the quote: {items}. Check the ERP product and the tax setup (NCM) for the customer state.",
       "PICK_COMPANY": "Which company?",
       "CONFIRM": "Create",
       "SAVE_FIRST": "Save the proposal before creating the quote.",
@@ -96,12 +96,7 @@
       "LINK_TITLE": "Customer {code} in company {company}",
       "UNLINK": "Unlink",
       "ADD_LINK": "+ another customer",
-      "SUGGESTIONS": "This contact is not linked to an ERP customer yet. It looks like:",
-      "NO_LINK": "This contact is not linked to an ERP customer yet.",
-      "ORDERS_COUNT": "{count} orders",
       "LINK": "Link",
-      "SEARCH_CUSTOMER": "Search ERP customer",
-      "SEARCH_PLACEHOLDER": "Customer name in the ERP",
       "NO_RESULTS": "No customer with orders in the configured period.",
       "TABS": {
         "ORDERS": "Orders",
@@ -112,7 +107,11 @@
       "SHOW_LESS": "Show less",
       "UPDATED": "Updated at {time}",
       "STALE": "Copy from {time}, refreshing",
-      "RELOAD": "reload"
+      "RELOAD": "reload",
+      "PICK_CUSTOMER": "Pick the ERP customer for this contact. The most similar ones come first.",
+      "FILTER_PLACEHOLDER": "Filter by name, code or tax ID",
+      "MATCH_PHONE": "same phone",
+      "MATCH_NAME": "similar name"
     },
     "QUOTES": {
       "LOADING": "Fetching quotes from the ERP…",
@@ -182,14 +181,15 @@
       "QUOTE_WRITE_HINT": "Lets you create a CRM proposal's quote in the ERP using Mais Prático's own functions (numbering, taxes and totals come from the ERP). Off by default. Link each catalog product to an ERP product.",
       "QUOTE_WRITE_ENABLED": "Quote creation on",
       "QUOTE_FORMA_PAGTO": "Default payment method",
-      "QUOTE_FORMA_PAGTO_HINT": "ERP payment method code. Required to create quotes.",
+      "QUOTE_FORMA_PAGTO_HINT": "List from the ERP itself. Required to create a quote.",
       "QUOTE_TIPO_FRETE": "Freight type",
       "QUOTE_TIPO_FRETE_HINT": "ERP freight type code (0 to 9).",
       "QUOTE_GENERO": "Operation kind",
       "QUOTE_GENERO_HINT": "ERP operation kind code.",
       "SAVE": "Save",
       "SAVED": "ERP settings saved.",
-      "INVALID": "Check the fields marked in red."
+      "INVALID": "Check the fields marked in red.",
+      "QUOTE_FORMA_PAGTO_PICK": "Pick the payment term"
     }
   }
 }

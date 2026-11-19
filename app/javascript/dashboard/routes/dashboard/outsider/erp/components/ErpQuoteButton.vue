@@ -85,7 +85,7 @@ const generate = async company => {
       useAlert(
         t(
           'OUTSIDER_ERP.QUOTE.SKIPPED',
-          { count: data.skipped.length },
+          { count: data.skipped.length, items: data.skipped.join(', ') },
           data.skipped.length
         )
       );
