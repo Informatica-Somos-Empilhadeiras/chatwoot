@@ -26,6 +26,7 @@ Rails.application.routes.prepend do
                 get :technical, on: :collection
               end
               resources :quotes, only: [:index]
+              resources :sales_orders, only: [:index]
               # orçamento de peças e serviços feito no chat (separado da proposta comercial do CRM)
               resources :budgets, only: [:index, :show, :create, :update, :destroy] do
                 collection do
