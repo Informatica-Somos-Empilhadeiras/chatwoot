@@ -19,6 +19,7 @@ export const erpState = reactive({
   fields: [],
   fieldKinds: {},
   companies: [],
+  lockedStatuses: [],
 });
 
 export const loadErpStatus = async accountId => {
@@ -40,12 +41,17 @@ export const loadErpStatus = async accountId => {
       fields: data.fields || [],
       fieldKinds: data.field_kinds || {},
       companies: data.companies || [],
+      lockedStatuses: data.locked_statuses || [],
     });
   } catch {
     // sem acesso pelo perfil (403) ou fora do ar: o ERP some da tela
     Object.assign(erpState, { loaded: true, accountId, enabled: false });
   }
 };
+
+// OS em status terminal (FECHADA/CANCELADA/PERDIDA): so leitura; reabrir e no desktop do ERP
+export const isOrderLocked = order =>
+  erpState.lockedStatuses.includes(String(order?.Situacao || '').trim().toUpperCase());
 
 // listas de apoio da edição da OS (situações, técnicos, tipos de atendimento). Buscadas uma vez por conta e
 // compartilhadas entre os cartões (o backend já guarda em cache por alguns minutos); uma falha deixa tentar de novo.

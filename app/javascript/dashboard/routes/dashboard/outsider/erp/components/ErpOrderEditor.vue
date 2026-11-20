@@ -7,6 +7,7 @@ import { ref, computed, watch, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useAlert } from 'dashboard/composables';
 import ErpAPI from 'dashboard/api/outsider/erp';
+import Icon from 'dashboard/components-next/icon/Icon.vue';
 import Button from 'dashboard/components-next/button/Button.vue';
 import {
   erpState,
@@ -14,6 +15,7 @@ import {
   loadErpLists,
   erpErrorMessage,
   toDateInput,
+  isOrderLocked,
 } from '../erpStore';
 
 const props = defineProps({
@@ -31,6 +33,7 @@ const atendimento = ref(props.order.TipoAtendimento || '');
 const tecnico = ref(String(props.order.TecnicoAtual || ''));
 const drafts = ref({});
 const saving = ref('');
+const locked = computed(() => isOrderLocked(props.order));
 
 const isDate = field => erpState.fieldKinds[field] === 'date';
 // valor atual do campo como o controle mostra (data em AAAA-MM-DD, no dia de Brasília)
@@ -128,6 +131,14 @@ const selectClass =
 
 <template>
   <div class="flex flex-col gap-3">
+    <div
+      v-if="locked"
+      class="flex items-center gap-2 p-3 text-sm rounded-lg bg-n-alpha-1 text-n-slate-11"
+    >
+      <Icon icon="i-lucide-lock" class="size-4 text-n-slate-10" />
+      {{ t('OUTSIDER_ERP.ORDER.LOCKED') }}
+    </div>
+    <template v-else>
     <!-- Substatus -->
     <div class="flex flex-col gap-1">
       <label class="text-xs text-n-slate-10" :for="id('sub')">
@@ -274,5 +285,6 @@ const selectClass =
     <p v-if="conversationId" class="mb-0 text-xs text-n-slate-10">
       {{ t('OUTSIDER_ERP.ORDER.NOTE_HINT') }}
     </p>
+    </template>
   </div>
 </template>

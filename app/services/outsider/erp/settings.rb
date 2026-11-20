@@ -31,7 +31,7 @@ class Outsider::Erp::Settings
     'lookback_days' => 180, 'forward_days' => 365, 'date_type' => 'DataEntrada', 'cache_seconds' => 120,
     'orders_enabled' => true, 'quotes_enabled' => true, 'quotes_days' => 120, 'quotes_cache_seconds' => 600,
     'write_enabled' => false, 'note_on_change' => true, 'erp_user_id' => '0', 'user_erp_ids' => {},
-    'extra_fields' => [], 'substatus_options' => [],
+    'extra_fields' => [], 'substatus_options' => [], 'locked_statuses' => %w[FECHADA CANCELADA PERDIDA],
     # orçamento de peças e serviços (Outsider::Erp::Budget), gravado pelas funções do ERP (Outsider::Erp::QuoteCreator);
     # a gravação começa desligada. Serviço (sem NCM, que a função do ERP descarta) é gravado direto por padrão
     # (decisão do dono em 19/11/2026), até a Inntegra corrigir a função. Padrões do formulário e textos de envio
@@ -78,6 +78,8 @@ class Outsider::Erp::Settings
   def companies = Array(data['companies'])
   def base_url = data['base_url']
   def device_id = data['device_id'].to_s
+  # situacoes terminais da OS (dados: FECHADA/CANCELADA/PERDIDA): gravar numa OS nesses status fica bloqueado
+  def locked_statuses = Array(data['locked_statuses']).map { |s| s.to_s.strip.upcase }
 
   # campo do ERP => endpoint de gravação (os confirmados e os cadastrados pelo administrador)
   def writable_fields

@@ -2,6 +2,7 @@
 class Api::V1::Accounts::Outsider::Erp::ServiceOrdersController < Api::V1::Accounts::Outsider::Erp::BaseController
   rescue_from(::Outsider::Erp::Writer::Disabled) { render json: { error: 'write_disabled' }, status: :forbidden }
   rescue_from(::Outsider::Erp::Writer::Invalid) { |error| render json: { error: 'invalid', field: error.message }, status: :unprocessable_entity }
+  rescue_from(::Outsider::Erp::Writer::Locked) { |error| render json: { error: 'os_locked', status: error.message }, status: :forbidden }
   before_action :ensure_orders_enabled, only: :board
 
   # contact_id: os vínculos do contato e as OS desses clientes; q: busca por número, cliente, máquina. Com as OS ocultas,

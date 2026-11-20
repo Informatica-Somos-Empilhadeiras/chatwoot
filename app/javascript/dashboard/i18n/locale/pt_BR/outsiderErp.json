@@ -42,6 +42,7 @@
       "ITEMS_VALUE": "{products} produtos · {services} serviços",
       "SAVE": "Salvar no ERP",
       "SAVED": "Gravado no ERP.",
+      "LOCKED": "OS fechada — somente leitura.",
       "NOTE_HINT": "Cada mudança fica numa nota privada desta conversa.",
       "VIEW_ONLY": "Seu perfil só permite consultar as OS.",
       "NO_TECHNICIAN": "Sem técnico",

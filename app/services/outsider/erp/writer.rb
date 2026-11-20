@@ -6,6 +6,7 @@
 class Outsider::Erp::Writer
   class Invalid < StandardError; end
   class Disabled < StandardError; end
+  class Locked < StandardError; end
 
   MAX_TEXT = 4000
   DATE = /\A\d{4}-\d{2}-\d{2}\z/
@@ -88,6 +89,7 @@ class Outsider::Erp::Writer
 
     order = @orders.find(company.to_s, code)
     raise Invalid, 'order' unless order && @settings.companies.include?(order['Empresa'])
+    raise Locked, order['Situacao'].to_s if @settings.locked_statuses.include?(order['Situacao'].to_s.strip.upcase)
 
     order
   end

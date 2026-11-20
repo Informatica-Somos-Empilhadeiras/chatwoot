@@ -42,6 +42,7 @@
       "ITEMS_VALUE": "{products} products · {services} services",
       "SAVE": "Save to ERP",
       "SAVED": "Saved to the ERP.",
+      "LOCKED": "Closed service order — read only.",
       "NOTE_HINT": "Each change is logged as a private note in this conversation.",
       "VIEW_ONLY": "Your profile can only view service orders.",
       "NO_TECHNICIAN": "No technician",
