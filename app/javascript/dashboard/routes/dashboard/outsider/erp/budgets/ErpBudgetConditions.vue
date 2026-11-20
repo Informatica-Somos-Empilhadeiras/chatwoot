@@ -69,7 +69,7 @@ const SELECTS = computed(() => [
 ]);
 
 const INPUT =
-  '!mb-0 w-full h-9 px-2.5 text-sm rounded-lg reset-base bg-n-solid-1 text-n-slate-12 outline outline-1 -outline-offset-1 outline-n-weak focus:outline-n-brand disabled:opacity-70';
+  '!mb-0 w-full h-9 px-2.5 text-sm rounded-lg reset-base bg-n-solid-1 text-n-slate-12 outline outline-1 -outline-offset-1 outline-n-slate-6 focus:outline-n-brand disabled:opacity-70';
 const LABEL =
   'flex flex-col gap-1 text-[11px] font-medium tracking-wide uppercase text-n-slate-10';
 </script>
@@ -178,7 +178,7 @@ const LABEL =
           rows="2"
           maxlength="2000"
           :disabled="readOnly"
-          class="!mb-0 w-full px-2.5 py-2 text-sm normal-case rounded-lg reset-base bg-n-solid-1 text-n-slate-12 outline outline-1 -outline-offset-1 outline-n-weak focus:outline-n-brand disabled:opacity-70"
+          class="!mb-0 w-full px-2.5 py-2 text-sm normal-case rounded-lg reset-base bg-n-solid-1 text-n-slate-12 outline outline-1 -outline-offset-1 outline-n-slate-6 focus:outline-n-brand disabled:opacity-70"
           @input="set('observacoes', $event.target.value)"
         />
       </label>

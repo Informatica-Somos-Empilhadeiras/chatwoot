@@ -158,7 +158,7 @@ const stockText = product => {
 };
 
 const INPUT =
-  '!mb-0 h-8 px-2 text-sm text-right rounded-lg reset-base bg-n-solid-1 text-n-slate-12 outline outline-1 -outline-offset-1 outline-n-weak focus:outline-n-brand';
+  '!mb-0 h-8 px-2 text-sm text-right rounded-lg reset-base bg-n-solid-1 text-n-slate-12 outline outline-1 -outline-offset-1 outline-n-slate-6 focus:outline-n-brand';
 
 defineExpose({ focus: () => searchRef.value?.focus() });
 </script>
@@ -176,7 +176,7 @@ defineExpose({ focus: () => searchRef.value?.focus() });
         type="text"
         :disabled="disabled"
         :placeholder="t('OUTSIDER_ERP.BUDGET.ITEMS.SEARCH')"
-        class="!mb-0 w-full h-10 pl-9 pr-9 text-sm rounded-xl reset-base bg-n-solid-1 text-n-slate-12 outline outline-1 -outline-offset-1 outline-n-weak focus:outline-2 focus:outline-n-brand disabled:opacity-60"
+        class="!mb-0 w-full h-10 pl-9 pr-9 text-sm rounded-xl reset-base bg-n-solid-1 text-n-slate-12 outline outline-1 -outline-offset-1 outline-n-slate-6 focus:outline-2 focus:outline-n-brand disabled:opacity-60"
         @focus="show"
         @click="show"
         @keydown.down.prevent="move(1)"

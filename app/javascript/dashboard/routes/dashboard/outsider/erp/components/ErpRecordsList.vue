@@ -72,7 +72,7 @@ const activeFilters = ref(
 const pages = computed(() => Math.max(1, Math.ceil(total.value / per.value)));
 
 const SELECT =
-  '!mb-0 !w-auto h-8 px-2 py-0 text-sm rounded-lg reset-base bg-n-solid-1 text-n-slate-12 outline outline-1 -outline-offset-1 outline-n-weak';
+  '!mb-0 !w-auto h-8 px-2 py-0 text-sm rounded-lg reset-base bg-n-solid-1 text-n-slate-12 outline outline-1 -outline-offset-1 outline-n-slate-6';
 
 const load = async () => {
   loading.value = true;

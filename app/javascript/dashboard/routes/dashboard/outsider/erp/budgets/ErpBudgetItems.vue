@@ -59,7 +59,7 @@ const shown = (item, field) => {
 };
 
 const INPUT =
-  '!mb-0 h-8 px-2 text-sm text-right rounded-lg reset-base bg-n-solid-1 text-n-slate-12 outline outline-1 -outline-offset-1 outline-n-weak focus:outline-n-brand disabled:opacity-70';
+  '!mb-0 h-8 px-2 text-sm text-right rounded-lg reset-base bg-n-solid-1 text-n-slate-12 outline outline-1 -outline-offset-1 outline-n-slate-6 focus:outline-n-brand disabled:opacity-70';
 const ROW =
   'flex flex-wrap items-center gap-2 sm:grid sm:grid-cols-[2rem_3.5rem_minmax(0,1fr)_4.5rem_6.5rem_4.5rem_6rem_1.75rem] sm:gap-3';
 

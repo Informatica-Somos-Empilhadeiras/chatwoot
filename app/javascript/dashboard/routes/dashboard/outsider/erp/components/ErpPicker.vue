@@ -64,7 +64,7 @@ onMounted(run);
         v-model="query"
         type="text"
         :placeholder="placeholder"
-        class="!mb-0 w-full h-8 pl-7 pr-2 text-sm rounded-lg reset-base bg-n-solid-1 text-n-slate-12 outline outline-1 -outline-offset-1 outline-n-weak"
+        class="!mb-0 w-full h-8 pl-7 pr-2 text-sm rounded-lg reset-base bg-n-solid-1 text-n-slate-12 outline outline-1 -outline-offset-1 outline-n-slate-6"
       />
       <Spinner
         v-if="loading && rows.length"
@@ -72,7 +72,7 @@ onMounted(run);
       />
     </div>
     <div
-      class="flex flex-col overflow-y-auto max-h-64 rounded-lg bg-n-alpha-1 outline outline-1 -outline-offset-1 outline-n-weak"
+      class="flex flex-col overflow-y-auto max-h-64 rounded-lg bg-n-alpha-1 outline outline-1 -outline-offset-1 outline-n-slate-6"
     >
       <div v-if="loading && !rows.length" class="flex justify-center p-3">
         <Spinner class="text-n-slate-10" />

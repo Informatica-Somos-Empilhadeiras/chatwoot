@@ -45,7 +45,7 @@ const QUOTE_SELECTS = [
 ];
 
 const INPUT =
-  '!mb-0 h-8 px-2 text-sm rounded-lg reset-base bg-n-solid-1 text-n-slate-12 outline outline-1 -outline-offset-1 outline-n-weak';
+  '!mb-0 h-8 px-2 text-sm rounded-lg reset-base bg-n-solid-1 text-n-slate-12 outline outline-1 -outline-offset-1 outline-n-slate-6';
 
 const fill = data => {
   form.value = {
@@ -442,7 +442,7 @@ const removeField = index => form.value.extra_fields.splice(index, 1);
         <textarea
           v-model="substatusText"
           rows="4"
-          class="!mb-0 px-2 py-1.5 text-sm rounded-lg reset-base bg-n-solid-1 text-n-slate-12 outline outline-1 -outline-offset-1 outline-n-weak"
+          class="!mb-0 px-2 py-1.5 text-sm rounded-lg reset-base bg-n-solid-1 text-n-slate-12 outline outline-1 -outline-offset-1 outline-n-slate-6"
         />
         <span class="text-xs text-n-slate-10">{{
           t('OUTSIDER_ERP.SETTINGS.SUBSTATUS_HINT')
@@ -650,7 +650,7 @@ const removeField = index => form.value.extra_fields.splice(index, 1);
           v-model="form.quote_email_body"
           rows="6"
           maxlength="4000"
-          class="!mb-0 px-2 py-1.5 text-sm rounded-lg reset-base bg-n-solid-1 text-n-slate-12 outline outline-1 -outline-offset-1 outline-n-weak"
+          class="!mb-0 px-2 py-1.5 text-sm rounded-lg reset-base bg-n-solid-1 text-n-slate-12 outline outline-1 -outline-offset-1 outline-n-slate-6"
         />
       </label>
       <label class="flex flex-col gap-1 text-sm">
@@ -661,7 +661,7 @@ const removeField = index => form.value.extra_fields.splice(index, 1);
           v-model="form.quote_whatsapp_text"
           rows="3"
           maxlength="2000"
-          class="!mb-0 px-2 py-1.5 text-sm rounded-lg reset-base bg-n-solid-1 text-n-slate-12 outline outline-1 -outline-offset-1 outline-n-weak"
+          class="!mb-0 px-2 py-1.5 text-sm rounded-lg reset-base bg-n-solid-1 text-n-slate-12 outline outline-1 -outline-offset-1 outline-n-slate-6"
         />
       </label>
     </section>

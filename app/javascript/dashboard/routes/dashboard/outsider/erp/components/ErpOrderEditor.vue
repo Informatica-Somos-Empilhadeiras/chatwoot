@@ -126,7 +126,7 @@ const saveField = field =>
   );
 
 const selectClass =
-  '!mb-0 h-8 flex-1 min-w-0 px-2 py-0 text-sm rounded-lg reset-base bg-n-solid-1 text-n-slate-12 outline outline-1 -outline-offset-1 outline-n-weak';
+  '!mb-0 h-8 flex-1 min-w-0 px-2 py-0 text-sm rounded-lg reset-base bg-n-solid-1 text-n-slate-12 outline outline-1 -outline-offset-1 outline-n-slate-6';
 </script>
 
 <template>
@@ -266,7 +266,7 @@ const selectClass =
         v-model="drafts[field]"
         rows="2"
         maxlength="4000"
-        class="!mb-0 px-2 py-1.5 text-sm rounded-lg reset-base bg-n-solid-1 text-n-slate-12 outline outline-1 -outline-offset-1 outline-n-weak"
+        class="!mb-0 px-2 py-1.5 text-sm rounded-lg reset-base bg-n-solid-1 text-n-slate-12 outline outline-1 -outline-offset-1 outline-n-slate-6"
       />
       <div class="flex justify-end">
         <Button

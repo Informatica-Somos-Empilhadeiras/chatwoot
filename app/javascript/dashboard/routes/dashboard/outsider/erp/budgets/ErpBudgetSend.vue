@@ -178,11 +178,11 @@ const sendStatusClass = status =>
   })[status] || 'text-n-slate-10';
 
 const INPUT =
-  '!mb-0 w-full h-9 px-2.5 text-sm rounded-lg reset-base bg-n-solid-1 text-n-slate-12 outline outline-1 -outline-offset-1 outline-n-weak focus:outline-n-brand';
+  '!mb-0 w-full h-9 px-2.5 text-sm rounded-lg reset-base bg-n-solid-1 text-n-slate-12 outline outline-1 -outline-offset-1 outline-n-slate-6 focus:outline-n-brand';
 const LABEL =
   'flex flex-col gap-1 text-[11px] font-medium tracking-wide uppercase text-n-slate-10';
 const TEXTAREA =
-  '!mb-0 w-full px-2.5 py-2 text-sm normal-case rounded-lg reset-base bg-n-solid-1 text-n-slate-12 outline outline-1 -outline-offset-1 outline-n-weak focus:outline-n-brand';
+  '!mb-0 w-full px-2.5 py-2 text-sm normal-case rounded-lg reset-base bg-n-solid-1 text-n-slate-12 outline outline-1 -outline-offset-1 outline-n-slate-6 focus:outline-n-brand';
 </script>
 
 <template>
@@ -263,7 +263,7 @@ const TEXTAREA =
         <div :class="LABEL">
           {{ t('OUTSIDER_ERP.BUDGET.SEND.TO') }}
           <div
-            class="flex flex-wrap items-center gap-1.5 p-1.5 rounded-lg bg-n-solid-1 outline outline-1 -outline-offset-1 outline-n-weak focus-within:outline-n-brand"
+            class="flex flex-wrap items-center gap-1.5 p-1.5 rounded-lg bg-n-solid-1 outline outline-1 -outline-offset-1 outline-n-slate-6 focus-within:outline-n-brand"
           >
             <span
               v-for="(address, index) in emails"
