@@ -16,6 +16,7 @@ Rails.application.routes.prepend do
               resources :service_orders, only: [:index] do
                 collection do
                   get :board
+                  get :list
                   %i[substatus field status technician attendance_type].each { |action| put action }
                 end
               end
@@ -25,7 +26,9 @@ Rails.application.routes.prepend do
               resources :catalog, only: [:index] do
                 get :technical, on: :collection
               end
-              resources :quotes, only: [:index]
+              resources :quotes, only: [:index] do
+                get :list, on: :collection
+              end
               resources :sales_orders, only: [:index]
               # orçamento de peças e serviços feito no chat (separado da proposta comercial do CRM)
               resources :budgets, only: [:index, :show, :create, :update, :destroy] do
