@@ -5,7 +5,8 @@ module Outsider::Access::Catalog
   LEVELS = %w[none view use manage].freeze
   RANK = LEVELS.each_with_index.to_h.freeze
 
-  # group: telefonia, atendimento, vendas; admin_only: só administrador (o perfil não libera)
+  # group: telefonia, atendimento, vendas, erp; admin_only: só administrador (o perfil não libera); parent: tela mãe (a
+  # filha sem escolha no perfil segue a mãe e nunca passa dela)
   SCREENS = [
     { key: 'phone', group: 'telefonia', levels: %w[none use], agent: 'use', technician: 'use' },
     { key: 'phone_outbound', group: 'telefonia', levels: %w[none use], agent: 'use', technician: 'use' },
@@ -18,8 +19,12 @@ module Outsider::Access::Catalog
     { key: 'whatsapp_status', group: 'atendimento', levels: %w[none view use], agent: 'use', technician: 'none' },
     { key: 'teams', group: 'atendimento', levels: %w[none use], agent: 'use', technician: 'use' },
     { key: 'crm', group: 'vendas', levels: %w[none view use], agent: 'use', technician: 'none' },
-    # OUTSIDER (ERP): ordens de serviço e orçamentos do ERP Mais Prático. Vê: consulta; Usa: muda substatus e campos da OS
-    { key: 'erp', group: 'atendimento', levels: %w[none view use], agent: 'use', technician: 'none' }
+    # OUTSIDER (ERP): a seção ERP Mais Prático (menu e API) e uma linha por aba. Orçamentos: Usa cria, edita e envia;
+    # OS: Usa muda substatus e campos; Pedidos: só consulta por enquanto
+    { key: 'erp', group: 'erp', levels: %w[none view use], agent: 'use', technician: 'none' },
+    { key: 'erp_quotes', group: 'erp', levels: %w[none view use], agent: 'use', technician: 'none', parent: 'erp' },
+    { key: 'erp_orders', group: 'erp', levels: %w[none view use], agent: 'use', technician: 'none', parent: 'erp' },
+    { key: 'erp_sales', group: 'erp', levels: %w[none view], agent: 'view', technician: 'none', parent: 'erp' }
   ].freeze
   BY_KEY = SCREENS.index_by { |screen| screen[:key] }.freeze
   KEYS = BY_KEY.keys.freeze
@@ -49,6 +54,10 @@ module Outsider::Access::Catalog
 
   def levels(screen)
     BY_KEY.dig(screen.to_s, :levels) || []
+  end
+
+  def parent(screen)
+    BY_KEY.dig(screen.to_s, :parent)
   end
 
   def admin_only?(screen)
@@ -86,6 +95,6 @@ module Outsider::Access::Catalog
   def rank(level) = RANK.fetch(level.to_s, 0)
 
   def as_json
-    SCREENS.map { |screen| screen.slice(:key, :group, :levels, :admin_only).merge(defaults: screen.slice(:agent, :technician)) }
+    SCREENS.map { |screen| screen.slice(:key, :group, :levels, :admin_only, :parent).merge(defaults: screen.slice(:agent, :technician)) }
   end
 end

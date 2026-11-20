@@ -2,6 +2,8 @@
 # o espelho dos orçamentos do ERP, Outsider::Erp::Quotes). Rascunho -> "Gravar no ERP" (Outsider::Erp::QuoteCreator)
 # -> número oficial do Mais Prático. "imported" é o registro de um orçamento feito no próprio ERP, criado só para
 # guardar os envios dele pelo chat. "submitting": a gravação está rodando (Outsider::Erp::BudgetSubmitJob).
+# "revising": um orçamento já gravado sendo editado pelo chat (Outsider::Erp::QuoteRevision); erp_result['revision']
+# guarda quem abriu a edição, o status de antes e os itens/condições de antes (para descartar).
 #
 # terms: condições (forma de pagamento, gênero, frete, vendedor, prazos, observações...), ver Outsider::Erp::BudgetForm.
 # items: [{ codigo, descricao, unidade, tipo (0 peça, 1 serviço), ncm, quantidade, preco, desconto (%) }].
@@ -17,7 +19,7 @@ class Outsider::Erp::Budget < ApplicationRecord
   belongs_to :user, optional: true
   has_many :sends, class_name: 'Outsider::Erp::BudgetSend', dependent: :destroy, inverse_of: :budget
 
-  enum :status, { draft: 0, created: 1, imported: 2, submitting: 3 }, validate: true
+  enum :status, { draft: 0, created: 1, imported: 2, submitting: 3, revising: 4 }, validate: true
 
   validates :company, presence: true, format: { with: Outsider::Erp::Sql::IDENT }
   validate :same_account
@@ -25,6 +27,8 @@ class Outsider::Erp::Budget < ApplicationRecord
   scope :for_contact, ->(contact) { where(contact_id: contact.id) }
 
   def mobile_key = "#{MOBILE_PREFIX}#{id}"
+  # edição de um orçamento gravado em andamento (revising, ou submitting durante a gravação dela)
+  def revision = erp_result.to_h['revision'].presence
   def in_erp? = erp_number.present?
   def services = items.select { |item| item['tipo'].to_i == 1 }
   def parts = items.reject { |item| item['tipo'].to_i == 1 }

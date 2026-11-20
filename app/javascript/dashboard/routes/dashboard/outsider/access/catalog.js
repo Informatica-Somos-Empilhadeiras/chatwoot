@@ -41,4 +41,4 @@ export const HOME_ROUTES = {
   contacts: 'contacts_dashboard_index',
 };
 
-export const GROUPS = ['telefonia', 'atendimento', 'vendas'];
+export const GROUPS = ['telefonia', 'atendimento', 'vendas', 'erp'];

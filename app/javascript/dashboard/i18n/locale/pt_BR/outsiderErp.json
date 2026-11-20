@@ -102,7 +102,10 @@
       "PICK_CUSTOMER": "Escolha o cliente do ERP deste contato. Os parecidos com ele aparecem primeiro.",
       "FILTER_PLACEHOLDER": "Filtrar por nome, código ou CNPJ",
       "MATCH_PHONE": "mesmo telefone",
-      "MATCH_NAME": "nome parecido"
+      "MATCH_NAME": "nome parecido",
+      "ALL_QUOTES": "Ver todos os orçamentos no ERP",
+      "ORDERS_IN_ERP": "Ver as OS deste cliente no ERP",
+      "ORDERS_IN_ERP_COUNT": "Ver as OS deste cliente no ERP ({count} recentes)"
     },
     "QUOTES": {
       "LOADING": "Buscando os orçamentos no ERP…",
@@ -226,7 +229,11 @@
         "HALF_DONE": "A gravação parou no meio: o orçamento Nº {number} já existe no Mais Prático. Clique em \"Gravar de novo\" para terminar sem duplicar.",
         "SKIPPED": "Ficaram fora do orçamento: {items}. Confira o produto no Mais Prático (NCM para a UF do cliente).",
         "CONDITIONS_ERROR": "O orçamento foi gravado, mas as Demais Condições (prazos, garantia) não entraram. Confira no Mais Prático.",
-        "FOOTER": "{count} itens · rascunho salvo sozinho"
+        "FOOTER": "{count} itens · rascunho salvo sozinho",
+        "REVISING": "Editando o orçamento Nº {number}",
+        "REVISING_HINT": "Você está mudando o orçamento Nº {number} que já está no Mais Prático. Ao salvar, os itens e as condições são trocados lá. Cliente, pagamento e frete ficam como estão.",
+        "REVISING_OTHER": "{user} está editando este orçamento.",
+        "REVISED_DONE": "Orçamento Nº {number} atualizado no Mais Prático."
       },
       "SAVE": {
         "SAVED": "Rascunho salvo",
@@ -242,7 +249,9 @@
         "DELETE": "Excluir",
         "CONFIRM_DELETE": "Clique de novo para excluir",
         "SUBMIT": "Gravar no ERP",
-        "SUBMIT_AGAIN": "Gravar de novo"
+        "SUBMIT_AGAIN": "Gravar de novo",
+        "DISCARD": "Descartar edição",
+        "SAVE_REVISION": "Salvar no ERP"
       },
       "CUSTOMER": {
         "NONE": "Escolha o cliente do ERP",
@@ -271,7 +280,8 @@
         "NO_TECHNICAL": "Este produto não tem descrição técnica no ERP.",
         "ADD": "Adicionar",
         "EMPTY": "Nenhum item.",
-        "NCM": "NCM {ncm}"
+        "NCM": "NCM {ncm}",
+        "ADDED": "Adicionado"
       },
       "TERMS": {
         "TITLE": "Condições",
@@ -389,8 +399,159 @@
         "SENHA_INVALIDA": "Código ou senha do ERP não conferem.",
         "SEM_PERMISSAO": "Esta pessoa não tem permissão de desconto no Mais Prático.",
         "SEM_CADASTRO": "O cadastro de funcionários desta unidade não pôde ser lido no ERP.",
-        "ERP": "O ERP respondeu: {detail}"
+        "ERP": "O ERP respondeu: {detail}",
+        "EM_USO": "O orçamento foi aberto no Mais Prático ou mudou de situação. Feche lá e tente de novo.",
+        "STATUS": "Só dá para editar orçamento em NEGOCIAÇÃO.",
+        "EM_EDICAO": "Outra pessoa já está editando este orçamento.",
+        "NOT_REVISING": "Este orçamento não está em edição."
       }
+    },
+    "RECORDS": {
+      "NUMBER": "Número",
+      "CLIENT": "Cliente",
+      "STATUS": "Situação",
+      "TOTAL": "Total",
+      "UNIT": "Unidade",
+      "ALL_UNITS": "Todas as unidades",
+      "PERIOD": "Período",
+      "FROM": "De",
+      "TO": "Até",
+      "PERIODS": {
+        "ALL": "Todo o período",
+        "MONTH": "Este mês",
+        "30": "Últimos 30 dias",
+        "90": "Últimos 90 dias",
+        "YEAR": "Este ano",
+        "LAST_YEAR": "Ano passado",
+        "CUSTOM": "Escolher datas"
+      },
+      "CONTACT_SCOPE": "Só de {name}",
+      "CLEAR_CONTACT": "Mostrar de todos os clientes",
+      "LIVE": "Direto do Mais Prático, todo o histórico",
+      "RANGE": "{first}–{last} de {total}",
+      "PER_PAGE": "por página",
+      "SERIES": "Série",
+      "INVOICE": "NF {number}",
+      "LATE": "Atrasada",
+      "TODAY": "hoje",
+      "YESTERDAY": "ontem",
+      "DAYS_AGO": "há {n} dias",
+      "NOT_FOUND": "Não achei este registro no Mais Prático.",
+      "NO_ITEMS": "Sem itens.",
+      "ITEMS": "Itens ({count})",
+      "SERVICE": "SERVIÇO",
+      "OPEN_CHAT": "Abrir conversa",
+      "OPEN_CONTACT": "Abrir contato",
+      "QUOTES": {
+        "ONE": "Orçamento {number}",
+        "NEW": "Novo orçamento",
+        "SEARCH": "Buscar por número, cliente ou CNPJ",
+        "PERSON": "Vendedor",
+        "ALL_PEOPLE": "Todos os vendedores",
+        "DATE": "Data",
+        "EMPTY": "Nenhum orçamento com esses filtros.",
+        "SUMMARY": "{count} orçamentos · {sum}",
+        "VIEWS": {
+          "ALL": "Todos",
+          "NEGOTIATION": "Em negociação",
+          "CLOSED": "Fechados",
+          "LOST": "Perdidos",
+          "MINE": "Meus"
+        }
+      },
+      "ORDERS": {
+        "ONE": "OS {number}",
+        "SEARCH": "Buscar por número, cliente, CNPJ ou série",
+        "PERSON": "Técnico",
+        "ALL_PEOPLE": "Todos os técnicos",
+        "DATE": "Previsão",
+        "EMPTY": "Nenhuma OS com esses filtros.",
+        "SUMMARY": "{count} OS · {sum}",
+        "VIEWS": {
+          "OPEN": "Abertas",
+          "LATE": "Atrasadas",
+          "CLOSED": "Fechadas",
+          "CANCELED": "Canceladas",
+          "ALL": "Todas",
+          "MINE": "Minhas"
+        },
+        "EDIT": "Editar OS",
+        "LOCKED": "OS {status}: não dá mais para mudar por aqui.",
+        "LATE_SINCE": "Previsão vencida em {date}.",
+        "BOARD": "Quadro",
+        "TABLE": "Lista"
+      },
+      "SALES": {
+        "ONE": "Pedido {number}",
+        "SEARCH": "Buscar por número, cliente ou CNPJ",
+        "PERSON": "Vendedor",
+        "ALL_PEOPLE": "Todos os vendedores",
+        "DATE": "Data",
+        "EMPTY": "Nenhum pedido com esses filtros.",
+        "SUMMARY": "{count} pedidos · {sum}",
+        "VIEWS": {
+          "ALL": "Todos"
+        }
+      },
+      "CHAIN": {
+        "TITLE": "Orçamento, OS e pedido",
+        "QUOTES": "Orçamento",
+        "ORDERS": "OS",
+        "SALES": "Pedido",
+        "INVOICE": "NF",
+        "OPEN": "Abrir"
+      },
+      "TIMELINE": {
+        "TITLE": "Linha do tempo",
+        "CREATED": "Criação: {record}",
+        "STATUS": "{record}: {status}",
+        "AUTHORIZED": "Autorização de {name}",
+        "DELIVERED": "Entrega: {record}",
+        "INVOICED": "Faturamento: {record}, NF {nota}",
+        "CHAT_CREATED": "{name} criou pelo chat",
+        "CHAT_APPROVED": "Desconto liberado por {name}",
+        "CHAT_EDITED": "{name} editou pelo chat",
+        "SENT": "{name} enviou por {channel} para {to}",
+        "SENT_NO_TO": "{name} enviou por {channel}",
+        "CHANNEL_WHATSAPP": "WhatsApp",
+        "CHANNEL_EMAIL": "e-mail",
+        "FAILED": "não chegou"
+      },
+      "FIELDS": {
+        "SELLER": "Vendedor",
+        "STARTED_BY": "Iniciado por",
+        "CREATED": "Criado em",
+        "VALIDITY": "Validade",
+        "PAYMENT": "Pagamento",
+        "DELIVERY_TIME": "Prazo de entrega",
+        "WARRANTY": "Garantia",
+        "ATTENTION": "A/C",
+        "AUTHORIZED_BY": "Autorizado por",
+        "TECHNICIAN": "Técnico",
+        "ENTRY": "Entrada",
+        "FORECAST": "Previsão",
+        "DELIVERED": "Entrega",
+        "ATTENDANCE": "Atendimento",
+        "SUBSTATUS": "Substatus",
+        "EQUIPMENT": "Equipamento",
+        "SERIES": "Série",
+        "HOURMETER": "Horímetro",
+        "INVOICE_NUMBER": "Nota fiscal",
+        "CHAT": "No chat",
+        "DEFECTS": "Defeitos",
+        "ACCESSORIES": "Acessórios",
+        "NOTES": "Observações"
+      },
+      "EDIT": {
+        "BUTTON": "Editar",
+        "WRITE_OFF": "Para editar, ligue \"Criar orçamentos no ERP\" nas Configurações do ERP.",
+        "IN_USE": "Aberto no Mais Prático por {name}. Feche lá para editar aqui.",
+        "STATUS": "Só dá para editar orçamento em NEGOCIAÇÃO (este está {status}).",
+        "NO_ACCESS": "Seu perfil de acesso só deixa ver os orçamentos."
+      },
+      "ERROR": "Esta tela deu erro: {message}",
+      "TOMORROW": "amanhã",
+      "IN_DAYS": "em {n} dias"
     }
   }
 }

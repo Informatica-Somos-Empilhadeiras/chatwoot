@@ -1,7 +1,8 @@
 <script setup>
 // OUTSIDER: formulário do rascunho do orçamento de peças e serviços: cliente do ERP (vem do vínculo do contato; "trocar"
 // abre a lista de clientes), A/C e pedido do cliente, peças e serviços, condições e totais. Quem salva é a gaveta
-// (ErpBudgetDrawer), sozinha, a cada mudança.
+// (ErpBudgetDrawer), sozinha, a cada mudança. "locked": o que não muda (edição de um orçamento já gravado: cliente,
+// pedido do cliente e as condições que só a função de criar do ERP recebe).
 import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import ErpAPI from 'dashboard/api/outsider/erp';
@@ -16,6 +17,7 @@ const props = defineProps({
   options: { type: Object, default: () => ({}) },
   contactId: { type: Number, default: null },
   readOnly: { type: Boolean, default: false },
+  locked: { type: Array, default: () => [] },
 });
 
 const emit = defineEmits(['customer']);
@@ -25,7 +27,7 @@ const items = defineModel('items', { type: Array, default: () => [] });
 
 const { t } = useI18n();
 const itemsRef = ref(null);
-const picking = ref(!props.budget.customer_code && !props.readOnly);
+const picking = ref(!props.budget.customer_code && !props.readOnly && !props.locked.includes('customer'));
 // cliente de outra unidade com itens já escolhidos: confirma antes (os códigos de produto são de cada unidade)
 const pending = ref(null);
 
@@ -104,7 +106,7 @@ defineExpose({ focusSearch: () => itemsRef.value?.focusSearch() });
           </span>
         </div>
         <button
-          v-if="!readOnly"
+          v-if="!readOnly && !locked.includes('customer')"
           type="button"
           class="text-sm font-medium shrink-0 text-n-brand hover:underline"
           @click="picking = !picking"
@@ -128,7 +130,7 @@ defineExpose({ focusSearch: () => itemsRef.value?.focusSearch() });
         <input
           :value="terms.pedido_cliente"
           maxlength="20"
-          :disabled="readOnly"
+          :disabled="readOnly || locked.includes('pedido_cliente')"
           :placeholder="t('OUTSIDER_ERP.BUDGET.TERMS.OPTIONAL')"
           :class="INPUT"
           class="normal-case"
@@ -213,6 +215,7 @@ defineExpose({ focusSearch: () => itemsRef.value?.focusSearch() });
       :items="items"
       :options="options"
       :read-only="readOnly"
+      :locked="locked"
     />
   </div>
 </template>

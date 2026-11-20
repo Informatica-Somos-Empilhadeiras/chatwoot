@@ -1,6 +1,7 @@
 <script setup>
 // OUTSIDER: condições do orçamento (pagamento, gênero, frete, vendedor, prazos e observações) e o quadro de totais. Já
-// vêm com o padrão das Configurações; "Mais condições" abre o resto das "Demais Condições" do Mais Prático.
+// vêm com o padrão das Configurações; "Mais condições" abre o resto das "Demais Condições" do Mais Prático. "locked":
+// campos que não mudam (na edição de um orçamento já gravado: pagamento, gênero, frete e valor do frete ficam como no ERP).
 import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
@@ -11,6 +12,7 @@ const props = defineProps({
   items: { type: Array, default: () => [] },
   options: { type: Object, default: () => ({}) },
   readOnly: { type: Boolean, default: false },
+  locked: { type: Array, default: () => [] },
 });
 
 const terms = defineModel({ type: Object, default: () => ({}) });
@@ -89,7 +91,7 @@ const LABEL =
           <select
             v-if="field.list.length"
             :value="terms[field.key] ?? (field.pick ? 0 : '')"
-            :disabled="readOnly"
+            :disabled="readOnly || locked.includes(field.key)"
             :class="INPUT"
             class="normal-case !pr-7 bg-[right_-1.25rem_center]"
             @change="set(field.key, Number($event.target.value))"
@@ -110,7 +112,7 @@ const LABEL =
             :value="terms[field.key]"
             type="number"
             min="0"
-            :disabled="readOnly"
+            :disabled="readOnly || locked.includes(field.key)"
             :placeholder="t('OUTSIDER_ERP.BUDGET.TERMS.CODE_PLACEHOLDER')"
             :class="INPUT"
             class="normal-case"
@@ -163,7 +165,7 @@ const LABEL =
           <input
             :value="terms.frete_valor"
             inputmode="decimal"
-            :disabled="readOnly"
+            :disabled="readOnly || locked.includes('frete_valor')"
             :class="INPUT"
             class="text-right normal-case"
             @input="set('frete_valor', $event.target.value)"

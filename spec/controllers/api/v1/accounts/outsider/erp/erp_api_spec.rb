@@ -18,6 +18,8 @@ RSpec.describe 'Outsider ERP API', type: :request do
     %w[os os:lock quotes quotes:lock].each { |name| Redis::Alfred.delete("outsider_erp:#{account.id}:#{name}") }
     Outsider::Erp::Settings.new(account).update('enabled' => true, 'companies' => ['somosemp'], 'write_enabled' => true)
     stub_request(:get, %r{/KanbanOrdemServico/api/valoresDash}).to_return(status: 200, body: orders_json)
+    # sem resposta do banco do ERP, a gravação da OS confere pelo espelho
+    stub_request(:put, %r{/dashboard/api/query_execute}).to_return(status: 503)
     profile = Outsider::AccessProfile.create!(account: account, name: 'Só vê ERP', kind: 'custom', permissions: { 'erp' => 'view' })
     Outsider::AccessMember.create!(account: account, user: viewer, profile: profile)
   end
@@ -58,6 +60,36 @@ RSpec.describe 'Outsider ERP API', type: :request do
     get "#{url}/quotes", params: { contact_id: contact.id }, headers: agent.create_new_auth_token
     expect(response).to have_http_status(:accepted)
     expect(Outsider::Erp::RefreshJob).to have_been_enqueued.with(account.id, 'quotes')
+  end
+
+  it 'follows the access profile line of each ERP tab, never above the ERP screen' do
+    tabs = Outsider::AccessProfile.create!(account: account, name: 'Abas', kind: 'custom',
+                                           permissions: { 'erp' => 'use', 'erp_orders' => 'view', 'erp_sales' => 'none' })
+    seller = create(:user, account: account, role: :agent)
+    Outsider::AccessMember.create!(account: account, user: seller, profile: tabs)
+
+    get "#{url}/status", headers: seller.create_new_auth_token
+    expect(response.parsed_body['can_edit']).to be(false)
+    put "#{url}/service_orders/substatus", params: { company: 'somosemp', code: 907, value: '3-CONCLUÍDO' },
+                                           headers: seller.create_new_auth_token, as: :json
+    expect(response).to have_http_status(:forbidden)
+
+    get "#{url}/records/sales", headers: seller.create_new_auth_token
+    expect(response.parsed_body['error']).to eq('erp_forbidden')
+    get "#{url}/records/orders", headers: seller.create_new_auth_token
+    expect(response).to have_http_status(:service_unavailable)
+
+    # perfil antigo (só a tela "erp" = Vê): as abas seguem a tela e não gravam
+    resolver = Outsider::Access.for(account.account_users.find_by(user: viewer))
+    expect(resolver.screens.slice('erp_quotes', 'erp_orders', 'erp_sales').values).to eq(%w[view view view])
+    post "#{url}/budgets", params: { contact_id: contact.id }, headers: viewer.create_new_auth_token, as: :json
+    expect(response).to have_http_status(:forbidden)
+  end
+
+  it 'refuses the quote PDF of a unit that is not in the settings' do
+    Outsider::Erp::Settings.new(account).update('quotes_enabled' => true)
+    get "#{url}/records/quotes/outrobanco/10/pdf", headers: agent.create_new_auth_token
+    expect(response).to have_http_status(:unprocessable_entity)
   end
 
   it 'answers disabled when the integration is off' do

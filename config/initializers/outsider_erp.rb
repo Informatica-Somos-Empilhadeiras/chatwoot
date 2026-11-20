@@ -16,7 +16,6 @@ Rails.application.routes.prepend do
               resources :service_orders, only: [:index] do
                 collection do
                   get :board
-                  get :list
                   %i[substatus field status technician attendance_type].each { |action| put action }
                 end
               end
@@ -26,14 +25,18 @@ Rails.application.routes.prepend do
               resources :catalog, only: [:index] do
                 get :technical, on: :collection
               end
-              resources :quotes, only: [:index] do
-                get :list, on: :collection
-              end
-              resources :sales_orders, only: [:index]
+              resources :quotes, only: [:index]
+              # seção ERP: listas com todo o histórico e o detalhe (kind: quotes, orders, sales)
+              get 'records/:kind', to: 'records#index', constraints: { kind: /quotes|orders|sales/ }
+              get 'records/:kind/:company/:number', to: 'records#show',
+                                                    constraints: { kind: /quotes|orders|sales/, company: /[a-z0-9_]+/, number: /\d+/ }
+              get 'records/quotes/:company/:number/pdf', to: 'records#pdf', defaults: { kind: 'quotes' },
+                                                         constraints: { company: /[a-z0-9_]+/, number: /\d+/ }
               # orçamento de peças e serviços feito no chat (separado da proposta comercial do CRM)
               resources :budgets, only: [:index, :show, :create, :update, :destroy] do
                 collection do
                   post :import
+                  post :revise
                   get :options
                 end
                 member do
@@ -44,6 +47,7 @@ Rails.application.routes.prepend do
                   get :contacts
                   post :deliver
                   post :approve_discount
+                  post :cancel_revision
                 end
               end
             end

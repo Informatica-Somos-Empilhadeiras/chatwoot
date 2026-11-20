@@ -13,7 +13,6 @@ class Outsider::Erp::Client
   MAX_BYTES = 40.megabytes
   OS_PATH = '/KanbanOrdemServico/api/valoresDash'.freeze
   QUOTES_PATH = '/cotacaoDesempenho/api/valoresDash'.freeze
-  SALES_PATH = '/PedidoVenda/api/valoresDash'.freeze
   UPDATE_PATH = '/KanbanOrdemServico/api/%<endpoint>s/%<code>d'.freeze
   KANBAN_LIST_PATH = '/KanbanOrdemServico/api/%<endpoint>s'.freeze
   QUERY_PATH = '/dashboard/api/query_execute'.freeze
@@ -40,15 +39,6 @@ class Outsider::Erp::Client
              ['dataCadastroFim', (today + 1.day).iso8601]] + companies_query([company]) +
             [%w[idUsuario 0], %w[respeitarRegrasHierarquia 0]]
     list(get(QUOTES_PATH, query, read_timeout))
-  end
-
-  # pedidos de venda: mesma janela dos orcamentos; a resposta traz o CNPJ, nao o nome do banco (tagueado no servico)
-  def sales_orders(company, read_timeout: READ_TIMEOUT)
-    today = Time.zone.today
-    query = [%w[tipoData PedidoData], ['dataCadastroInicio', (today - @settings.data['quotes_days'].days).iso8601],
-             ['dataCadastroFim', (today + 1.day).iso8601]] + companies_query([company]) +
-            [%w[idUsuario 0], %w[respeitarRegrasHierarquia 0]]
-    list(get(SALES_PATH, query, read_timeout))
   end
 
   def update(endpoint, code, body)

@@ -17,6 +17,9 @@ class Outsider::Erp::BudgetCopy
     base.merge(from_erp(budget.company, budget.erp_number))
   end
 
+  # itens e condições como estão agora no ERP (também para abrir a edição de um orçamento gravado)
+  def current(company, number) = from_erp(company, number)
+
   private
 
   def from_erp(company, number)

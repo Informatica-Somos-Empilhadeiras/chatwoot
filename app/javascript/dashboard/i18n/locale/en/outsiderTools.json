@@ -1106,7 +1106,8 @@
     "GROUPS": {
       "TELEFONIA": "Telephony",
       "ATENDIMENTO": "Service",
-      "VENDAS": "CRM"
+      "VENDAS": "CRM",
+      "ERP": "Mais Prático ERP"
     },
     "LEVELS": {
       "NONE": "Hidden",
@@ -1171,8 +1172,20 @@
         "HINT": "View: read only."
       },
       "ERP": {
-        "LABEL": "Service orders and quotes (ERP)",
-        "HINT": "View: read only. Use: change sub-status and order fields."
+        "LABEL": "ERP section",
+        "HINT": "None: the ERP menu disappears. The tabs below never go above this level."
+      },
+      "ERP_QUOTES": {
+        "LABEL": "Quotes",
+        "HINT": "View: browse and PDF. Use: create, edit and send quotes."
+      },
+      "ERP_ORDERS": {
+        "LABEL": "Work orders",
+        "HINT": "View: browse. Use: change the substatus and work order fields."
+      },
+      "ERP_SALES": {
+        "LABEL": "Sales orders",
+        "HINT": "View: browse (read only for now)."
       }
     },
     "PROFILES": {

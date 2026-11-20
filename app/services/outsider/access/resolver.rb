@@ -23,8 +23,14 @@ class Outsider::Access::Resolver
                end
   end
 
+  # tela filha (as abas da seção ERP) nunca passa da tela mãe
   def level(screen)
     screen = screen.to_s
+    parent = Catalog.parent(screen)
+    parent ? [own_level(screen), level(parent)].min_by { |item| Catalog.rank(item) } : own_level(screen)
+  end
+
+  def own_level(screen)
     return Catalog.levels(screen).max_by { |item| Catalog.rank(item) } || 'none' if administrator?
     return 'none' if Catalog.admin_only?(screen) || admin_only_screens.include?(screen)
 

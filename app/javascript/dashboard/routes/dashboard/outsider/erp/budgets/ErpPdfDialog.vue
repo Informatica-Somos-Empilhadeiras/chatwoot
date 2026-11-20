@@ -25,13 +25,17 @@ const close = () => {
   release();
 };
 
-const open = async budgetId => {
+// budgetId do orçamento do chat ou uma função que busca o PDF (seção ERP: ErpAPI.recordPdf)
+const open = async source => {
   release();
   filename.value = 'orcamento.pdf';
   isOpen.value = true;
   isLoading.value = true;
   try {
-    const response = await ErpAPI.budgetPdf(budgetId);
+    const response =
+      typeof source === 'function'
+        ? await source()
+        : await ErpAPI.budgetPdf(source);
     url.value = URL.createObjectURL(
       new Blob([response.data], { type: 'application/pdf' })
     );

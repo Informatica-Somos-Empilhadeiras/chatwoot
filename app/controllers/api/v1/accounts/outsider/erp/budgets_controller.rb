@@ -5,17 +5,19 @@
 # Orçamento feito no próprio Mais Prático: "import" cria o registro para enviar o PDF dele e guardar os envios.
 # Desconto acima do limite das Configurações: "approve_discount" confere no ERP o código e a senha de quem pode liberar
 # (Outsider::Erp::DiscountApprover); a senha não é guardada nem registrada ("password" é filtrado do log).
+# Orçamento já gravado: "revise" abre a edição com travas (Outsider::Erp::QuoteRevision: só em NEGOCIAÇÃO e fechado no
+# Mais Prático), "submit" regrava (Outsider::Erp::QuoteUpdater) e "cancel_revision" descarta.
 class Api::V1::Accounts::Outsider::Erp::BudgetsController < Api::V1::Accounts::Outsider::Erp::BaseController
   ITEM_FIELDS = %i[codigo descricao unidade tipo ncm quantidade preco desconto].freeze
 
-  before_action :ensure_erp_use
-  before_action :budget, except: [:index, :create, :import, :options]
-  before_action :ensure_editable, only: [:update, :destroy, :submit, :approve_discount]
+  before_action :ensure_quotes_access
+  before_action :budget, except: [:index, :create, :import, :options, :revise]
+  before_action :ensure_editable, only: [:update, :destroy, :submit, :approve_discount, :cancel_revision]
 
   rescue_from(ActiveRecord::RecordNotFound) { render json: { error: 'not_found' }, status: :not_found }
   rescue_from(::Outsider::Erp::QuoteReport::NotFound) { render json: { error: 'erp_quote_not_found' }, status: :not_found }
   rescue_from(::Outsider::Erp::BudgetForm::Invalid, ::Outsider::Erp::BudgetDefaults::Invalid, ::Outsider::Erp::BudgetImporter::Invalid,
-              ArgumentError) do |error|
+              ::Outsider::Erp::QuoteRevision::Invalid, ArgumentError) do |error|
     render json: { error: 'invalid', reason: error.message }, status: :unprocessable_entity
   end
   rescue_from(::Outsider::Erp::BudgetSender::Blocked) do |error|
@@ -36,7 +38,7 @@ class Api::V1::Accounts::Outsider::Erp::BudgetsController < Api::V1::Accounts::O
   end
 
   def create
-    created = defaults.build(contact: contact, conversation_id: params[:conversation_id], opportunity_id: params[:opportunity_id])
+    created = defaults.build(contact: optional_contact, conversation_id: params[:conversation_id], opportunity_id: params[:opportunity_id])
     render json: { budget: serializer.full(created) }, status: :created
   end
 
@@ -57,7 +59,7 @@ class Api::V1::Accounts::Outsider::Erp::BudgetsController < Api::V1::Accounts::O
   # "Gravar no ERP": vira "submitting" e o job grava; parado há mais de 3 min (job morreu), pode pedir de novo
   def submit
     return render json: { error: 'quote_write_disabled' }, status: :forbidden unless can_create_quote?
-    if @budget.erp_number.blank? && discount_policy.blocked?
+    if (@budget.erp_number.blank? || @budget.revising?) && discount_policy.blocked?
       return render json: { error: 'invalid', reason: 'desconto_sem_liberacao' }, status: :unprocessable_entity
     end
 
@@ -66,9 +68,10 @@ class Api::V1::Accounts::Outsider::Erp::BudgetsController < Api::V1::Accounts::O
     render json: { budget: serializer.full(@budget) }
   end
 
-  # PDF no modelo do relatório do Mais Prático: o oficial (do ERP) quando já gravado, senão a prévia do rascunho
+  # PDF no modelo do relatório do Mais Prático: o oficial (do ERP) quando já gravado, senão a prévia do rascunho (também
+  # na edição de um orçamento gravado, para ver como fica antes de salvar)
   def pdf
-    report = if @budget.in_erp?
+    report = if @budget.in_erp? && !@budget.revising?
                ::Outsider::Erp::QuoteReport.new(Current.account).build(@budget.company, @budget.erp_number)
              else
                ::Outsider::Erp::BudgetPreview.new(@budget).build
@@ -80,16 +83,32 @@ class Api::V1::Accounts::Outsider::Erp::BudgetsController < Api::V1::Accounts::O
   # rascunho novo com o cliente, os itens e as condições deste (feito no chat ou no ERP)
   def copy
     copy = ::Outsider::Erp::BudgetCopy.new(Current.account).from(@budget)
-    created = defaults.build(contact: contact, conversation_id: params[:conversation_id], opportunity_id: params[:opportunity_id], copy: copy)
+    created = defaults.build(contact: optional_contact || @budget.contact, conversation_id: params[:conversation_id],
+                             opportunity_id: params[:opportunity_id], copy: copy)
     render json: { budget: serializer.full(created) }, status: :created
   end
 
   # registro de um orçamento feito no Mais Prático (espelho dos orçamentos), para PDF, envio e cópia
+  # o contato é opcional: na seção ERP o orçamento pode ser de um cliente que ainda não tem contato no chat
   def import
     record = ::Outsider::Erp::BudgetImporter.new(Current.account, Current.user)
-                                            .import(company: params[:company], number: params[:number], contact: contact,
+                                            .import(company: params[:company], number: params[:number], contact: optional_contact,
                                                     name: params[:name], conversation_id: params[:conversation_id])
     render json: { budget: serializer.full(record) }
+  end
+
+  # editar um orçamento já gravado (com as travas do ERP); volta o registro pronto para o editor
+  def revise
+    return render json: { error: 'quote_write_disabled' }, status: :forbidden unless can_create_quote?
+
+    record = ::Outsider::Erp::QuoteRevision.new(Current.account, Current.user)
+                                           .start(company: params[:company], number: params[:number], contact: optional_contact,
+                                                  conversation_id: params[:conversation_id])
+    render json: { budget: serializer.full(record) }
+  end
+
+  def cancel_revision
+    render json: { budget: serializer.full(::Outsider::Erp::QuoteRevision.new(Current.account, Current.user).cancel(@budget)) }
   end
 
   # para a tela de envio: textos das Configurações já preenchidos, caixas de WhatsApp, contato e e-mails sugeridos
@@ -144,6 +163,10 @@ class Api::V1::Accounts::Outsider::Erp::BudgetsController < Api::V1::Accounts::O
     ::Outsider::Erp::Budget.where(account_id: Current.account.id)
   end
 
+  def optional_contact
+    contact if params[:contact_id].present?
+  end
+
   def budget
     @budget ||= budgets.find(params[:id])
   end
@@ -164,8 +187,12 @@ class Api::V1::Accounts::Outsider::Erp::BudgetsController < Api::V1::Accounts::O
     @recipients ||= ::Outsider::Erp::BudgetRecipients.new(Current.account_user)
   end
 
-  def ensure_erp_use
-    render json: { error: 'erp_forbidden' }, status: :forbidden unless can_use_erp?
+  # aba Orçamentos do perfil de acesso: "Vê" consulta e baixa o PDF; o resto (rascunho, gravar, enviar, copiar) pede "Usa"
+  READ_ACTIONS = %w[index show pdf options].freeze
+
+  def ensure_quotes_access
+    level = READ_ACTIONS.include?(action_name) ? 'view' : 'use'
+    render json: { error: 'erp_forbidden' }, status: :forbidden unless allows_screen?('erp_quotes', level)
   end
 
   # rascunho de quem criou ou de um administrador; "submit" também aceita a gravação parada no meio

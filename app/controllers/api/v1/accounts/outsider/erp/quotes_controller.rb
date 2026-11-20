@@ -8,14 +8,4 @@ class Api::V1::Accounts::Outsider::Erp::QuotesController < Api::V1::Accounts::Ou
     quotes = ::Outsider::Erp::Quotes.new(Current.account)
     render json: quotes.meta.merge(quotes: quotes.for_clients(::Outsider::Erp::ContactLink.new(contact).links))
   end
-
-  # listagem global da secao ERP: paginada, com busca e filtros
-  def list
-    return render json: { error: 'quotes_disabled' }, status: :forbidden unless settings.quotes_enabled?
-
-    quotes = ::Outsider::Erp::Quotes.new(Current.account)
-    render json: quotes.meta.merge(quotes.facets).merge(
-      quotes.page(page: params[:page], per: params[:per], query: params[:q], status: params[:status], company: params[:company])
-    )
-  end
 end

@@ -22,7 +22,7 @@ class Outsider::Erp::Writer
   def substatus(company:, code:, value:, conversation: nil)
     order = writable_order(company, code)
     value = value.to_s.squish
-    raise Invalid, 'value' unless @orders.substatus_options(order['Empresa']).include?(value)
+    raise Invalid, 'value' unless substatus_options(order['Empresa']).include?(value)
 
     previous = order['SubStatus'].to_s
     return order if previous == value
@@ -87,12 +87,24 @@ class Outsider::Erp::Writer
   def writable_order(company, code)
     raise Disabled unless @settings.write_enabled?
 
-    order = @orders.find(company.to_s, code)
+    order = current_order(company.to_s, code)
     raise Invalid, 'order' unless order && @settings.companies.include?(order['Empresa'])
     raise Locked, order['Situacao'].to_s if @settings.locked_statuses.include?(order['Situacao'].to_s.strip.upcase)
 
     order
   end
+
+  # OS como está agora no banco do ERP (situação fresca para a trava e OS fora da janela do espelho); sem resposta do
+  # banco, a do espelho
+  def current_order(company, code)
+    return @orders.find(company, code) unless @settings.companies.include?(company)
+
+    records.editor_for(company, code)
+  rescue Outsider::Erp::Records::Detail::NotFound, Outsider::Erp::Client::Error
+    @orders.find(company, code)
+  end
+
+  def records = @records ||= Outsider::Erp::Records::Detail.new(@account, 'orders', client: @client)
 
   # corpo padrão das rotas do Kanban: o campo + as empresas do grupo + a empresa da própria OS
   def body(order, fields)
@@ -100,6 +112,13 @@ class Outsider::Erp::Writer
   end
 
   def lists = @lists ||= Outsider::Erp::Lists.new(@account)
+
+  def substatus_options(company)
+    @orders.substatus_options(company) | records.substatus_options(company)
+  rescue Outsider::Erp::Client::Error
+    @orders.substatus_options(company)
+  end
+
   def erp_user = @settings.erp_user_id_for(@user)
 
   def listed(options, value)

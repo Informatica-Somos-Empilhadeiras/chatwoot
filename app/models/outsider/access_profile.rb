@@ -48,10 +48,17 @@ class Outsider::AccessProfile < ApplicationRecord
   def technician? = kind == 'technician' || (kind == 'custom' && permissions['conversations'] == 'none' && permissions['phone'] == 'use')
 
   def level(screen)
-    Outsider::Access::Catalog.clamp(screen, permissions[screen.to_s] || Outsider::Access::Catalog.default_level(kind, screen))
+    catalog = Outsider::Access::Catalog
+    catalog.clamp(screen, permissions[screen.to_s] || inherited_level(screen) || catalog.default_level(kind, screen))
   end
 
   private
+
+  # OUTSIDER (ERP): tela filha (as abas da seção ERP) que o perfil ainda não escolheu segue a tela mãe
+  def inherited_level(screen)
+    parent = Outsider::Access::Catalog.parent(screen)
+    level(parent) if parent
+  end
 
   def permissions_known
     return errors.add(:permissions, :invalid) unless permissions.is_a?(Hash)

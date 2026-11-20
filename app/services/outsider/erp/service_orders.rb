@@ -10,8 +10,6 @@ class Outsider::Erp::ServiceOrders
               Acessorios DataValidade EnviadoMobile].freeze
   UNDEFINED = 'NÃO DEFINIDO'.freeze
   BOARD_LIMIT = 150
-  PER_DEFAULT = 30
-  PER_MAX = 100
 
   def initialize(account)
     @account = account
@@ -30,27 +28,6 @@ class Outsider::Erp::ServiceOrders
 
   def items = fetch['items']
   def meta = { fetched_at: Time.zone.at(fetch['at']).iso8601, stale: fetch['stale'] }
-
-  # listagem global paginada (mais novos primeiro) com busca e filtros (situacao, empresa, tecnico)
-  def page(page: nil, per: nil, query: nil, situacao: nil, company: nil, technician: nil)
-    per = per.to_i
-    per = PER_DEFAULT if per < 1
-    per = PER_MAX if per > PER_MAX
-    page = [page.to_i, 1].max
-    rows = query.to_s.strip.present? ? search(query, limit: items.size) : items
-    rows = rows.select { |item| item['Empresa'] == company } if company.present?
-    rows = rows.select { |item| item['Situacao'].to_s.casecmp?(situacao.to_s) } if situacao.present?
-    rows = rows.select { |item| item['NomeTecnico'] == technician } if technician.present?
-    rows = sort(rows)
-    { page: page, per: per, total: rows.size, items: rows.slice((page - 1) * per, per) || [] }
-  end
-
-  # opcoes para os filtros da tela
-  def facets
-    { situacoes: items.filter_map { |item| item['Situacao'].presence }.uniq.sort,
-      companies: items.filter_map { |item| item['Empresa'].presence }.uniq.sort,
-      technicians: items.filter_map { |item| item['NomeTecnico'].presence }.uniq.sort }
-  end
 
   def find(company, code)
     items.find { |item| item['Empresa'] == company && item['CodigoOS'].to_i == code.to_i }

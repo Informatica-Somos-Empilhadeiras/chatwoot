@@ -102,7 +102,10 @@
       "PICK_CUSTOMER": "Pick the ERP customer for this contact. The most similar ones come first.",
       "FILTER_PLACEHOLDER": "Filter by name, code or tax ID",
       "MATCH_PHONE": "same phone",
-      "MATCH_NAME": "similar name"
+      "MATCH_NAME": "similar name",
+      "ALL_QUOTES": "See all quotes in the ERP",
+      "ORDERS_IN_ERP": "See this customer's work orders in the ERP",
+      "ORDERS_IN_ERP_COUNT": "See this customer's work orders in the ERP ({count} recent)"
     },
     "QUOTES": {
       "LOADING": "Fetching quotes from the ERP…",
@@ -226,7 +229,11 @@
         "HALF_DONE": "Recording stopped halfway: quote No. {number} already exists in Mais Prático. Click \"Record again\" to finish without duplicating.",
         "SKIPPED": "Left out of the quote: {items}. Check the product in Mais Prático (NCM for the customer state).",
         "CONDITIONS_ERROR": "The quote was recorded, but the other conditions (terms, warranty) were not. Check in Mais Prático.",
-        "FOOTER": "{count} items · draft saved automatically"
+        "FOOTER": "{count} items · draft saved automatically",
+        "REVISING": "Editing quote #{number}",
+        "REVISING_HINT": "You are changing quote #{number}, which is already in Mais Prático. Saving replaces its items and terms there. Customer, payment and freight stay as they are.",
+        "REVISING_OTHER": "{user} is editing this quote.",
+        "REVISED_DONE": "Quote #{number} updated in Mais Prático."
       },
       "SAVE": {
         "SAVED": "Draft saved",
@@ -242,7 +249,9 @@
         "DELETE": "Delete",
         "CONFIRM_DELETE": "Click again to delete",
         "SUBMIT": "Record in the ERP",
-        "SUBMIT_AGAIN": "Record again"
+        "SUBMIT_AGAIN": "Record again",
+        "DISCARD": "Discard changes",
+        "SAVE_REVISION": "Save to ERP"
       },
       "CUSTOMER": {
         "NONE": "Pick the ERP customer",
@@ -271,7 +280,8 @@
         "NO_TECHNICAL": "This product has no technical description in the ERP.",
         "ADD": "Add",
         "EMPTY": "No items.",
-        "NCM": "NCM {ncm}"
+        "NCM": "NCM {ncm}",
+        "ADDED": "Added"
       },
       "TERMS": {
         "TITLE": "Conditions",
@@ -389,8 +399,159 @@
         "SENHA_INVALIDA": "ERP code or password does not match.",
         "SEM_PERMISSAO": "This person has no discount permission in Mais Prático.",
         "SEM_CADASTRO": "This unit's employee records could not be read in the ERP.",
-        "ERP": "The ERP replied: {detail}"
+        "ERP": "The ERP replied: {detail}",
+        "EM_USO": "The quote was opened in Mais Prático or its status changed. Close it there and try again.",
+        "STATUS": "Only quotes in NEGOCIAÇÃO can be edited.",
+        "EM_EDICAO": "Someone else is already editing this quote.",
+        "NOT_REVISING": "This quote is not being edited."
       }
+    },
+    "RECORDS": {
+      "NUMBER": "Number",
+      "CLIENT": "Customer",
+      "STATUS": "Status",
+      "TOTAL": "Total",
+      "UNIT": "Unit",
+      "ALL_UNITS": "All units",
+      "PERIOD": "Period",
+      "FROM": "From",
+      "TO": "To",
+      "PERIODS": {
+        "ALL": "All time",
+        "MONTH": "This month",
+        "30": "Last 30 days",
+        "90": "Last 90 days",
+        "YEAR": "This year",
+        "LAST_YEAR": "Last year",
+        "CUSTOM": "Pick dates"
+      },
+      "CONTACT_SCOPE": "Only {name}",
+      "CLEAR_CONTACT": "Show all customers",
+      "LIVE": "Live from Mais Prático, full history",
+      "RANGE": "{first}–{last} of {total}",
+      "PER_PAGE": "per page",
+      "SERIES": "Serial",
+      "INVOICE": "Invoice {number}",
+      "LATE": "Late",
+      "TODAY": "today",
+      "YESTERDAY": "yesterday",
+      "DAYS_AGO": "{n} days ago",
+      "NOT_FOUND": "This record was not found in Mais Prático.",
+      "NO_ITEMS": "No items.",
+      "ITEMS": "Items ({count})",
+      "SERVICE": "SERVICE",
+      "OPEN_CHAT": "Open conversation",
+      "OPEN_CONTACT": "Open contact",
+      "QUOTES": {
+        "ONE": "Quote {number}",
+        "NEW": "New quote",
+        "SEARCH": "Search by number, customer or tax ID",
+        "PERSON": "Seller",
+        "ALL_PEOPLE": "All sellers",
+        "DATE": "Date",
+        "EMPTY": "No quotes match these filters.",
+        "SUMMARY": "{count} quotes · {sum}",
+        "VIEWS": {
+          "ALL": "All",
+          "NEGOTIATION": "Negotiating",
+          "CLOSED": "Closed",
+          "LOST": "Lost",
+          "MINE": "Mine"
+        }
+      },
+      "ORDERS": {
+        "ONE": "Work order {number}",
+        "SEARCH": "Search by number, customer, tax ID or serial",
+        "PERSON": "Technician",
+        "ALL_PEOPLE": "All technicians",
+        "DATE": "Due",
+        "EMPTY": "No work orders match these filters.",
+        "SUMMARY": "{count} work orders · {sum}",
+        "VIEWS": {
+          "OPEN": "Open",
+          "LATE": "Late",
+          "CLOSED": "Closed",
+          "CANCELED": "Canceled",
+          "ALL": "All",
+          "MINE": "Mine"
+        },
+        "EDIT": "Edit work order",
+        "LOCKED": "Work order {status}: it can no longer be changed here.",
+        "LATE_SINCE": "Due date passed on {date}.",
+        "BOARD": "Board",
+        "TABLE": "List"
+      },
+      "SALES": {
+        "ONE": "Order {number}",
+        "SEARCH": "Search by number, customer or tax ID",
+        "PERSON": "Seller",
+        "ALL_PEOPLE": "All sellers",
+        "DATE": "Date",
+        "EMPTY": "No orders match these filters.",
+        "SUMMARY": "{count} orders · {sum}",
+        "VIEWS": {
+          "ALL": "All"
+        }
+      },
+      "CHAIN": {
+        "TITLE": "Quote, work order and order",
+        "QUOTES": "Quote",
+        "ORDERS": "Work order",
+        "SALES": "Order",
+        "INVOICE": "Invoice",
+        "OPEN": "Open"
+      },
+      "TIMELINE": {
+        "TITLE": "Timeline",
+        "CREATED": "Created: {record}",
+        "STATUS": "{record}: {status}",
+        "AUTHORIZED": "Authorized by {name}",
+        "DELIVERED": "Delivered: {record}",
+        "INVOICED": "Invoiced: {record}, invoice {nota}",
+        "CHAT_CREATED": "{name} created it in the chat",
+        "CHAT_APPROVED": "Discount approved by {name}",
+        "CHAT_EDITED": "{name} edited it in the chat",
+        "SENT": "{name} sent it by {channel} to {to}",
+        "SENT_NO_TO": "{name} sent it by {channel}",
+        "CHANNEL_WHATSAPP": "WhatsApp",
+        "CHANNEL_EMAIL": "email",
+        "FAILED": "not delivered"
+      },
+      "FIELDS": {
+        "SELLER": "Seller",
+        "STARTED_BY": "Started by",
+        "CREATED": "Created",
+        "VALIDITY": "Valid for",
+        "PAYMENT": "Payment",
+        "DELIVERY_TIME": "Delivery time",
+        "WARRANTY": "Warranty",
+        "ATTENTION": "Attn.",
+        "AUTHORIZED_BY": "Authorized by",
+        "TECHNICIAN": "Technician",
+        "ENTRY": "Received",
+        "FORECAST": "Due",
+        "DELIVERED": "Delivered",
+        "ATTENDANCE": "Service type",
+        "SUBSTATUS": "Substatus",
+        "EQUIPMENT": "Equipment",
+        "SERIES": "Serial",
+        "HOURMETER": "Hour meter",
+        "INVOICE_NUMBER": "Invoice",
+        "CHAT": "In the chat",
+        "DEFECTS": "Defects",
+        "ACCESSORIES": "Accessories",
+        "NOTES": "Notes"
+      },
+      "EDIT": {
+        "BUTTON": "Edit",
+        "WRITE_OFF": "To edit, turn on \"Create quotes in the ERP\" in the ERP settings.",
+        "IN_USE": "Open in Mais Prático by {name}. Close it there to edit here.",
+        "STATUS": "Only quotes in NEGOCIAÇÃO can be edited (this one is {status}).",
+        "NO_ACCESS": "Your access profile only lets you view quotes."
+      },
+      "ERROR": "This screen failed: {message}",
+      "TOMORROW": "tomorrow",
+      "IN_DAYS": "in {n} days"
     }
   }
 }

@@ -1,6 +1,8 @@
 # OUTSIDER: aplica o que veio da tela num rascunho de orçamento (Outsider::Erp::Budget). Responsabilidade única: limpar
 # e limitar cada campo (o navegador manda o que quiser) no tamanho que o ERP aceita. Só rascunho muda: depois de
-# gravado no ERP o orçamento é do Mais Prático (para mudar, "Copiar" abre um rascunho novo).
+# gravado no ERP o orçamento é do Mais Prático (para mudar, "Copiar" abre um rascunho novo), a não ser na edição com
+# travas (status "revising", Outsider::Erp::QuoteRevision): aí mudam os itens e as condições que a edição regrava;
+# cliente e unidade ficam.
 class Outsider::Erp::BudgetForm
   class Invalid < StandardError; end
 
@@ -30,19 +32,22 @@ class Outsider::Erp::BudgetForm
   end
 
   def apply(params)
-    raise Invalid, 'not_draft' unless @budget.draft?
-    # a gravação parou no meio e o orçamento já tem número no ERP: muda nada, só gravar de novo (continua de onde parou)
-    raise Invalid, 'in_erp' if @budget.in_erp?
-
+    ensure_changeable!
     params = params.to_h.deep_stringify_keys
-    apply_customer(params) if params.key?('customer_code')
-    @budget.terms = @budget.terms.merge(clean_terms(params['terms'].to_h)) if params.key?('terms')
+    apply_customer(params) if params.key?('customer_code') && @budget.draft?
+    @budget.terms = @budget.terms.merge(clean_terms(editable_terms(params['terms'].to_h))) if params.key?('terms')
     @budget.items = clean_items(params['items']) if params.key?('items')
     @budget.save!
     @budget
   end
 
   private
+
+  def ensure_changeable!
+    raise Invalid, 'not_draft' unless @budget.draft? || @budget.revising?
+    # a gravação parou no meio e o orçamento já tem número no ERP: muda nada, só gravar de novo (continua de onde parou)
+    raise Invalid, 'in_erp' if @budget.draft? && @budget.in_erp?
+  end
 
   # cliente do ERP: a unidade precisa estar nas Configurações (a gravação acontece no banco dela)
   def apply_customer(params)
@@ -57,6 +62,8 @@ class Outsider::Erp::BudgetForm
 
     @budget.assign_attributes(company: company, customer_code: code, customer_name: params['customer_name'].to_s.squish.first(120))
   end
+
+  def editable_terms(terms) = @budget.revising? ? terms.slice(*Outsider::Erp::QuoteRevision::TERMS) : terms
 
   def clean_terms(terms)
     terms.slice(*TERMS.keys).to_h do |key, value|

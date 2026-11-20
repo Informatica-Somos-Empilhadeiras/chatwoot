@@ -1,20 +1,21 @@
 <script setup>
-// OUTSIDER: as OS e os orçamentos de peças e serviços do ERP de um contato (painel da conversa e negócio do CRM). O contato é ligado uma vez
-// aos clientes do ERP (empresa + código): sem vínculo, a lista de clientes do ERP já abre, com os parecidos com o
-// contato (telefone ou nome) no topo, e filtra por nome, código ou CNPJ (ErpPicker).
-// Com "Mostrar ordens de serviço" desligado nas Configurações, o bloco fica só com o vínculo e os orçamentos.
+// OUTSIDER: o ERP de um contato (painel da conversa e negócio do CRM): o vínculo com os clientes do ERP (empresa +
+// código) e os orçamentos de peças e serviços (os 5 mais novos e "Ver todos no ERP"). As OS ficam na seção ERP: aqui
+// só o atalho "Ver as OS no ERP" com o filtro do contato. Sem vínculo, a lista de clientes do ERP já abre, com os
+// parecidos com o contato (telefone ou nome) no topo, e filtra por nome, código ou CNPJ (ErpPicker).
 import { ref, computed, watch } from 'vue';
+import { useRoute } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { useAlert } from 'dashboard/composables';
 import ErpAPI from 'dashboard/api/outsider/erp';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
-import ErpOrderCard from './ErpOrderCard.vue';
 import ErpBudgets from '../budgets/ErpBudgets.vue';
 import ErpPicker from './ErpPicker.vue';
+import { erpTabs } from '../sidebar';
 import {
+  ERP_ROUTE,
   erpState,
-  orderKey,
   formatDate,
   withLoadingRetry,
   erpErrorMessage,
@@ -27,31 +28,29 @@ const props = defineProps({
 });
 
 const { t } = useI18n();
+const route = useRoute();
 
 const loading = ref(false);
 const failure = ref('');
 const links = ref([]);
-const orders = ref([]);
-const options = ref({});
+const orderCount = ref(0);
 const fetchedAt = ref(null);
 const stale = ref(false);
-const tab = ref('orders');
-const showAll = ref(false);
 const searching = ref(false);
 const linking = ref('');
 
-const OPEN_LIMIT = 5;
-// aba que está na tela: sem OS, sempre orçamentos; sem orçamentos, sempre OS
-const activeTab = computed(() => {
-  if (!erpState.ordersEnabled) return 'quotes';
-  if (!erpState.quotesEnabled) return 'orders';
-  return tab.value;
-});
-const showTabs = computed(
-  () => erpState.ordersEnabled && erpState.quotesEnabled
+const showQuotes = computed(() =>
+  erpTabs().some(item => item.name === 'orcamentos')
 );
-const visibleOrders = computed(() =>
-  showAll.value ? orders.value : orders.value.slice(0, OPEN_LIMIT)
+// atalho para as OS dos clientes deste contato na seção ERP (todo o histórico)
+const ordersLink = computed(() =>
+  erpTabs().some(item => item.name === 'os')
+    ? {
+        name: ERP_ROUTE,
+        params: { accountId: route.params.accountId, tab: 'os' },
+        query: { contact: props.contactId },
+      }
+    : null
 );
 
 const load = async () => {
@@ -63,8 +62,7 @@ const load = async () => {
       ErpAPI.contactOrders(props.contactId)
     );
     links.value = data.links || [];
-    orders.value = data.orders || [];
-    options.value = data.options || {};
+    orderCount.value = (data.orders || []).length;
     fetchedAt.value = data.fetched_at;
     stale.value = data.stale;
   } catch (error) {
@@ -131,12 +129,6 @@ const unlink = async row => {
   }
 };
 
-const updated = order => {
-  orders.value = orders.value.map(item =>
-    orderKey(item) === orderKey(order) ? order : item
-  );
-};
-
 const lastUpdate = computed(() =>
   fetchedAt.value
     ? new Date(fetchedAt.value).toLocaleTimeString('pt-BR', {
@@ -149,7 +141,7 @@ const lastUpdate = computed(() =>
 
 <template>
   <div class="flex flex-col gap-3 text-sm">
-    <div v-if="loading && !orders.length" class="flex justify-center p-3">
+    <div v-if="loading && !links.length" class="flex justify-center p-3">
       <Spinner class="text-n-slate-10" />
     </div>
     <p v-else-if="failure" class="mb-0 text-xs text-n-ruby-11">
@@ -231,58 +223,25 @@ const lastUpdate = computed(() =>
       </ErpPicker>
 
       <template v-if="links.length">
-        <div
-          v-if="showTabs"
-          class="flex gap-1 p-0.5 rounded-lg bg-n-alpha-1 self-start"
-        >
-          <button
-            v-for="key in ['orders', 'quotes']"
-            :key="key"
-            type="button"
-            class="px-2.5 py-1 text-xs rounded-md"
-            :class="
-              tab === key
-                ? 'bg-n-solid-1 text-n-slate-12 font-medium shadow-sm'
-                : 'text-n-slate-11'
-            "
-            @click="tab = key"
-          >
-            {{ t(`OUTSIDER_ERP.CONTACT.TABS.${key.toUpperCase()}`) }}
-            <template v-if="key === 'orders'">({{ orders.length }})</template>
-          </button>
-        </div>
-
-        <template v-if="activeTab === 'orders'">
-          <p v-if="!orders.length" class="mb-0 text-xs text-n-slate-10">
-            {{ t('OUTSIDER_ERP.CONTACT.NO_ORDERS') }}
-          </p>
-          <ErpOrderCard
-            v-for="order in visibleOrders"
-            :key="orderKey(order)"
-            :order="order"
-            :options="options[order.Empresa] || []"
-            :conversation-id="conversationId"
-            @updated="updated"
-          />
-          <button
-            v-if="orders.length > OPEN_LIMIT"
-            type="button"
-            class="self-start text-xs text-n-blue-11 hover:underline"
-            @click="showAll = !showAll"
-          >
-            {{
-              showAll
-                ? t('OUTSIDER_ERP.CONTACT.SHOW_LESS')
-                : t('OUTSIDER_ERP.CONTACT.SHOW_ALL', { count: orders.length })
-            }}
-          </button>
-        </template>
         <ErpBudgets
-          v-else-if="erpState.quotesEnabled"
+          v-if="showQuotes"
           :contact-id="contactId"
           :conversation-id="conversationId"
           :opportunity-id="opportunityId"
         />
+        <router-link
+          v-if="ordersLink"
+          :to="ordersLink"
+          class="inline-flex items-center self-start gap-1.5 text-xs font-medium text-n-blue-11 hover:underline"
+        >
+          <Icon icon="i-lucide-wrench" class="size-3.5" />
+          {{
+            orderCount
+              ? t('OUTSIDER_ERP.CONTACT.ORDERS_IN_ERP_COUNT', { count: orderCount })
+              : t('OUTSIDER_ERP.CONTACT.ORDERS_IN_ERP')
+          }}
+          <Icon icon="i-lucide-arrow-up-right" class="size-3.5" />
+        </router-link>
       </template>
 
       <span

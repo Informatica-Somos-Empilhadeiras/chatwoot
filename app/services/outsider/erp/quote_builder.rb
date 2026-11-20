@@ -6,6 +6,8 @@
 #
 # Idempotência: CodigoIntegracaoMobile = Budget#mobile_key; reexecutar o cabeçalho devolve o mesmo orçamento. As escritas
 # fora das funções (Demais Condições, linha de serviço) levam esse código no WHERE: só tocam o orçamento que o chat criou.
+# Edição de um orçamento já gravado (revision: true, Outsider::Erp::QuoteUpdater): a trava no WHERE passa a ser o próprio
+# ERP: só em NEGOCIAÇÃO e sem ninguém com ele aberto no Mais Prático (marca recente de OrcamentoEmUtilizacao).
 class Outsider::Erp::QuoteBuilder
   S = Outsider::Erp::Sql
   # coluna do orçamento no ERP (Demais Condições, varchar) <= condição do rascunho (Outsider::Erp::BudgetForm::TERMS)
@@ -14,12 +16,20 @@ class Outsider::Erp::QuoteBuilder
     'ICMS' => 'icms', 'IPI' => 'ipi', 'descFrete' => 'desc_frete', 'TaxaArmazenagem' => 'armazenagem', 'TaxaCancelamento' => 'cancelamento'
   }.freeze
 
+  # condições que a edição do orçamento gravado regrava (as do cabeçalho que só a função de criar recebe, como cliente,
+  # forma de pagamento e frete, ficam como estão no ERP)
+  REVISION_HEADER = { 'Contato' => ['contato', 50], 'Observacoes' => ['observacoes', 2000] }.freeze
+  NEGOTIATION = 'NEGOCIAÇÃO'.freeze
+  IN_USE_HOURS = 8
+
   # service_codes: serviços gravados direto (entram no total de serviços do orçamento)
-  def initialize(budget, document:, seller:, service_codes: [])
+  # revision: { columns: colunas do orcamento nesta unidade } na edição de um orçamento já gravado
+  def initialize(budget, document:, seller:, service_codes: [], revision: nil)
     @budget = budget
     @document = document
     @seller = seller
     @service_codes = service_codes
+    @revision = revision
   end
 
   def company = @budget.company
@@ -51,7 +61,19 @@ class Outsider::Erp::QuoteBuilder
       "#{S.dec(item['desconto'])}, #{total}, P.ClasFiscal, 0 " \
       "FROM #{bank}.orcamento O JOIN #{bank}.produtos P ON P.CodigoProduto = #{S.int(item['codigo'])} AND P.Tipo = 1 " \
       "JOIN (SELECT IFNULL(MAX(CodigoItem), 0) + 1 AS proximo FROM #{bank}.detalheorcamento WHERE CodigoOrcamento = #{S.int(number)}) M " \
-      "WHERE O.codigoorcamento = #{S.int(number)} AND O.CodigoIntegracaoMobile = #{key}"
+      "WHERE O.codigoorcamento = #{S.int(number)} AND #{guard}"
+  end
+
+  # edição: tira as linhas do orçamento para gravar de novo pelas funções (só passa pela trava do ERP). DELETE de uma
+  # tabela só, com a trava numa subconsulta no orçamento (o DELETE com JOIN pede banco padrão na conexão)
+  def clear_sql(number)
+    "DELETE FROM #{bank}.detalheorcamento WHERE CodigoOrcamento = #{S.int(number)} AND EXISTS (SELECT 1 FROM #{bank}.orcamento O " \
+      "WHERE O.codigoorcamento = #{S.int(number)} AND #{revision_guard})"
+  end
+
+  # edição: o orçamento ainda pode ser mudado agora? (a mesma trava do DELETE, para conferir antes de mexer)
+  def editable_sql(number)
+    "SELECT O.codigoorcamento AS codigo FROM #{bank}.orcamento O WHERE O.codigoorcamento = #{S.int(number)} AND #{revision_guard}"
   end
 
   def finalize_sql(number)
@@ -61,15 +83,30 @@ class Outsider::Erp::QuoteBuilder
   # Demais Condições (texto) que existem nesta unidade e foram preenchidas; nil quando não há o que gravar
   def conditions_sql(number, columns)
     existing = columns.to_set(&:downcase)
-    sets = CONDITIONS.filter_map do |column, term|
+    sets = condition_sets(existing)
+    sets << "O.`totalServicos` = #{S.dec(services_total)}" if existing.include?('totalservicos') && (services_total.positive? || @revision)
+    sets.concat(authorization_sets(existing))
+    sets.concat(revision_sets(existing)) if @revision
+    return if sets.empty?
+
+    "UPDATE #{bank}.orcamento O SET #{sets.join(', ')} WHERE O.codigoorcamento = #{S.int(number)} AND #{guard}"
+  end
+
+  def condition_sets(existing)
+    CONDITIONS.filter_map do |column, term|
       value = @budget.terms[term].to_s.strip
       "O.#{S.column(column)} = #{S.str(value)}" if value.present? && existing.include?(column.downcase)
     end
-    sets << "O.`totalServicos` = #{S.dec(services_total)}" if services_total.positive? && existing.include?('totalservicos')
-    sets.concat(authorization_sets(existing))
-    return if sets.empty?
+  end
 
-    "UPDATE #{bank}.orcamento O SET #{sets.join(', ')} WHERE O.codigoorcamento = #{S.int(number)} AND O.CodigoIntegracaoMobile = #{key}"
+  # edição: A/C, observação e vendedor também mudam (colunas simples do orçamento)
+  def revision_sets(existing)
+    sets = REVISION_HEADER.filter_map do |column, (term, limit)|
+      "O.#{S.column(column)} = #{S.str(@budget.terms[term].to_s.strip.first(limit))}" if existing.include?(column.downcase)
+    end
+    seller = @budget.terms['vendedor'].to_i
+    sets << "O.`Vendedor` = #{S.int(seller)}" if seller.positive? && existing.include?('vendedor')
+    sets
   end
 
   # desconto liberado no chat: quem liberou (código de funcionário do ERP) e quando, nos campos que o ERP já tem
@@ -94,6 +131,20 @@ class Outsider::Erp::QuoteBuilder
   end
 
   private
+
+  # o que limita as escritas fora das funções: o orçamento criado por este rascunho ou, na edição, a trava do ERP
+  def guard = @revision ? revision_guard : "O.CodigoIntegracaoMobile = #{key}"
+
+  # em NEGOCIAÇÃO e ninguém com ele aberto no Mais Prático (marca de mais de IN_USE_HOURS horas é sobra e não conta)
+  def revision_guard
+    existing = Array(@revision&.dig(:columns)).to_set(&:downcase)
+    parts = ["O.`Status` = #{S.str(NEGOTIATION)}"]
+    if existing.include?('orcamentoemutilizacao')
+      fresh = existing.include?('dataemutilizacao') ? " AND IFNULL(O.`DataEmUtilizacao` > NOW() - INTERVAL #{IN_USE_HOURS} HOUR, 0) = 1" : ''
+      parts << "NOT (IFNULL(O.`OrcamentoEmUtilizacao`, 0) = 1#{fresh})"
+    end
+    parts.join(' AND ')
+  end
 
   # na ordem da função: cliente, CPF/CNPJ, forma de pagamento, frete, contato, desconto (0: vai por linha), observação,
   # vendedor, transportadora (0: nenhuma), tipo de frete, gênero da operação, pedido do cliente, código de integração, data

@@ -3,7 +3,7 @@ class Api::V1::Accounts::Outsider::Erp::ServiceOrdersController < Api::V1::Accou
   rescue_from(::Outsider::Erp::Writer::Disabled) { render json: { error: 'write_disabled' }, status: :forbidden }
   rescue_from(::Outsider::Erp::Writer::Invalid) { |error| render json: { error: 'invalid', field: error.message }, status: :unprocessable_entity }
   rescue_from(::Outsider::Erp::Writer::Locked) { |error| render json: { error: 'os_locked', status: error.message }, status: :forbidden }
-  before_action :ensure_orders_enabled, only: %i[board list]
+  before_action :ensure_orders_enabled, only: %i[board]
 
   # contact_id: os vínculos do contato e as OS desses clientes; q: busca por número, cliente, máquina. Com as OS ocultas,
   # só os vínculos (o orçamento precisa deles). O cliente para vincular vem da lista de clientes (CustomersController).
@@ -14,13 +14,6 @@ class Api::V1::Accounts::Outsider::Erp::ServiceOrdersController < Api::V1::Accou
   def board
     data = orders.board(group_by: params[:group_by], company: params[:company], technician: params[:technician], query: params[:q])
     render json: orders.meta.merge(data).merge(options: data[:companies].index_with { |company| orders.substatus_options(company) })
-  end
-
-  # listagem global (secao ERP): paginada, com busca e filtros
-  def list
-    render json: orders.meta.merge(orders.facets).merge(
-      orders.page(page: params[:page], per: params[:per], query: params[:q], situacao: params[:situacao], company: params[:company], technician: params[:technician])
-    )
   end
 
   def substatus

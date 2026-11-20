@@ -2,6 +2,8 @@
 // OUTSIDER: gaveta do orçamento de peças e serviços (Outsider::Erp::Budget). Rascunho: o formulário (ErpBudgetForm)
 // salva sozinho a cada mudança; "Ver PDF" mostra a prévia e "Gravar no ERP" manda para o Mais Prático (o servidor
 // grava no Sidekiq e a gaveta acompanha). Gravado: o PDF oficial e o envio por WhatsApp/e-mail (ErpBudgetSend).
+// Edição de um orçamento já gravado (status "revising", aberta pela seção ERP): o mesmo formulário, com cliente,
+// pagamento e frete travados; "Salvar no ERP" regrava as linhas e "Descartar" volta como estava.
 import { ref, computed, watch, nextTick, onBeforeUnmount } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useAlert } from 'dashboard/composables';
@@ -17,7 +19,7 @@ import { quoteClass } from '../erpStore';
 import { budgetErrorMessage, reasonText } from './budgetHelpers';
 
 const props = defineProps({
-  contactId: { type: Number, required: true },
+  contactId: { type: Number, default: null },
   conversationId: { type: [Number, String], default: null },
   opportunityId: { type: Number, default: null },
 });
@@ -51,14 +53,35 @@ let saved = '';
 const status = computed(() => budget.value?.status);
 const isDraft = computed(() => status.value === 'draft');
 const isSubmitting = computed(() => status.value === 'submitting');
+const isRevising = computed(
+  () =>
+    status.value === 'revising' ||
+    (isSubmitting.value && !!budget.value?.revision)
+);
+// na edição de um orçamento gravado ficam como no ERP (só a função de criar recebe)
+const REVISION_LOCKED = [
+  'customer',
+  'pedido_cliente',
+  'forma_pagto',
+  'genero',
+  'tipo_frete',
+  'frete_valor',
+];
+const locked = computed(() => (isRevising.value ? REVISION_LOCKED : []));
 const isRecorded = computed(() =>
   ['created', 'imported'].includes(status.value)
 );
 const canEdit = computed(
-  () => isDraft.value && budget.value?.can_edit && !budget.value?.erp_number
+  () =>
+    (isDraft.value && budget.value?.can_edit && !budget.value?.erp_number) ||
+    (status.value === 'revising' && budget.value?.can_edit)
 );
 const canCreate = computed(() => options.value.can_create !== false);
 const title = computed(() => {
+  if (isRevising.value)
+    return t('OUTSIDER_ERP.BUDGET.DRAWER.REVISING', {
+      number: budget.value.erp_number,
+    });
   if (isRecorded.value)
     return t('OUTSIDER_ERP.BUDGET.DRAWER.RECORDED', {
       number: budget.value.erp_number,
@@ -73,6 +96,10 @@ const discountBlocked = computed(
 // o que falta para gravar (o servidor confere de novo)
 const missing = computed(() => {
   if (!budget.value) return '';
+  if (isRevising.value) {
+    if (!items.value.length) return 'sem_itens';
+    return discountBlocked.value ? 'desconto_sem_liberacao' : '';
+  }
   if (!budget.value.customer_code) return 'sem_cliente';
   if (!items.value.length) return 'sem_itens';
   if (!Number(terms.value.forma_pagto)) return 'forma_pagto';
@@ -120,9 +147,16 @@ const stopPolling = () => {
 };
 
 const finishSubmit = data => {
+  const wasRevision = !!budget.value?.revision;
   fill(data);
   emit('changed', data);
-  if (data.status === 'created')
+  if (wasRevision && !data.revision)
+    useAlert(
+      t('OUTSIDER_ERP.BUDGET.DRAWER.REVISED_DONE', {
+        number: data.erp_number,
+      })
+    );
+  else if (data.status === 'created')
     useAlert(
       t('OUTSIDER_ERP.BUDGET.DRAWER.RECORDED_DONE', {
         number: data.erp_number,
@@ -293,6 +327,22 @@ const remove = async () => {
   }
 };
 
+// descarta a edição do orçamento gravado: nada foi para o ERP
+const discard = async () => {
+  clearTimeout(saveTimer);
+  busy.value = 'discard';
+  try {
+    await chain;
+    const { data } = await ErpAPI.cancelRevision(budget.value.id);
+    fill(data.budget);
+    emit('changed', data.budget);
+  } catch (error) {
+    useAlert(budgetErrorMessage(t, error));
+  } finally {
+    busy.value = '';
+  }
+};
+
 const showPdf = async () => {
   await saveNow();
   pdfRef.value?.open(budget.value.id);
@@ -303,7 +353,7 @@ const copy = async () => {
   busy.value = 'copy';
   try {
     const { data } = await ErpAPI.copyBudget(budget.value.id, {
-      contact_id: props.contactId,
+      contact_id: props.contactId || undefined,
       conversation_id: props.conversationId || undefined,
       opportunity_id: props.opportunityId || undefined,
     });
@@ -482,6 +532,23 @@ defineExpose({ open });
             <div class="flex-1 min-h-0 px-4 py-4 overflow-y-auto sm:px-6">
               <div class="flex flex-col gap-3">
                 <p
+                  v-if="isRevising"
+                  class="flex items-start gap-2 p-3 mb-0 text-sm rounded-lg bg-n-blue-2 text-n-blue-11"
+                >
+                  <Icon icon="i-lucide-pencil" class="mt-0.5 size-4 shrink-0" />
+                  <span>
+                    {{
+                      budget.can_edit
+                        ? t('OUTSIDER_ERP.BUDGET.DRAWER.REVISING_HINT', {
+                            number: budget.erp_number,
+                          })
+                        : t('OUTSIDER_ERP.BUDGET.DRAWER.REVISING_OTHER', {
+                            user: budget.revision?.name || '—',
+                          })
+                    }}
+                  </span>
+                </p>
+                <p
                   v-if="isDraft && !budget.can_edit"
                   class="flex items-center gap-2 p-3 mb-0 text-sm rounded-lg bg-n-alpha-2 text-n-slate-11"
                 >
@@ -506,7 +573,7 @@ defineExpose({ open });
                   </span>
                 </p>
                 <p
-                  v-if="budget.erp_number && !isRecorded"
+                  v-if="budget.erp_number && !isRecorded && !isRevising"
                   class="p-3 mb-0 text-sm rounded-lg bg-n-amber-2 text-n-amber-11"
                 >
                   {{
@@ -523,13 +590,14 @@ defineExpose({ open });
                   :options="options"
                   :contact-id="contactId"
                   :read-only="!canEdit"
+                  :locked="locked"
                   @customer="changeCustomer"
                 />
               </div>
             </div>
 
             <div
-              v-if="discount.needs_approval && !budget.erp_number"
+              v-if="discount.needs_approval && (!budget.erp_number || isRevising)"
               class="px-4 pt-3 border-t sm:px-6 border-n-weak"
             >
               <ErpDiscountApproval
@@ -544,7 +612,8 @@ defineExpose({ open });
               class="flex flex-wrap items-center gap-2 px-4 py-3 sm:px-6"
               :class="{
                 'border-t border-n-weak':
-                  !discount.needs_approval || budget.erp_number,
+                  !discount.needs_approval ||
+                  (budget.erp_number && !isRevising),
               }"
             >
               <span class="flex-1 min-w-[10rem] text-xs text-n-slate-10">
@@ -566,7 +635,17 @@ defineExpose({ open });
                 </template>
               </span>
               <Button
-                v-if="canEdit"
+                v-if="isRevising && budget.can_edit && !isSubmitting"
+                size="sm"
+                variant="ghost"
+                color="slate"
+                icon="i-lucide-undo-2"
+                :label="t('OUTSIDER_ERP.BUDGET.ACTIONS.DISCARD')"
+                :is-loading="busy === 'discard'"
+                @click="discard"
+              />
+              <Button
+                v-if="canEdit && !isRevising"
                 size="sm"
                 variant="ghost"
                 color="ruby"
@@ -590,13 +669,15 @@ defineExpose({ open });
                 @click="showPdf"
               />
               <Button
-                v-if="isDraft || budget.stuck"
+                v-if="isDraft || status === 'revising' || budget.stuck"
                 size="sm"
                 icon="i-lucide-cloud-upload"
                 :label="
-                  budget.erp_number || budget.stuck
-                    ? t('OUTSIDER_ERP.BUDGET.ACTIONS.SUBMIT_AGAIN')
-                    : t('OUTSIDER_ERP.BUDGET.ACTIONS.SUBMIT')
+                  isRevising
+                    ? t('OUTSIDER_ERP.BUDGET.ACTIONS.SAVE_REVISION')
+                    : budget.erp_number || budget.stuck
+                      ? t('OUTSIDER_ERP.BUDGET.ACTIONS.SUBMIT_AGAIN')
+                      : t('OUTSIDER_ERP.BUDGET.ACTIONS.SUBMIT')
                 "
                 :is-loading="busy === 'submit'"
                 :disabled="

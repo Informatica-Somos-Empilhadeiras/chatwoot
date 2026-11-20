@@ -1,6 +1,6 @@
 # OUTSIDER: o orçamento de peças e serviços (Outsider::Erp::Budget) para a tela: o resumo da lista e o completo do
-# editor/envio. "can_edit": rascunho de quem criou ou de um administrador; "stuck": a gravação parou no meio (o job
-# morreu) e pode ser pedida de novo.
+# editor/envio. "can_edit": rascunho de quem criou ou de um administrador (na edição de um orçamento gravado: de quem
+# abriu a edição ou de um administrador); "stuck": a gravação parou no meio (o job morreu) e pode ser pedida de novo.
 class Outsider::Erp::BudgetSerializer
   STUCK_AFTER = 3.minutes
 
@@ -25,6 +25,8 @@ class Outsider::Erp::BudgetSerializer
   end
 
   def editable?(budget)
+    return @account_user.administrator? || budget.revision['user_id'] == @account_user.user_id if budget.revising?
+
     budget.draft? && (@account_user.administrator? || budget.user_id == @account_user.user_id)
   end
 
@@ -38,7 +40,12 @@ class Outsider::Erp::BudgetSerializer
       items_count: budget.items.size, total: budget.total.to_f, user: budget.user && { id: budget.user.id, name: budget.user.name },
       error: result['error'], skipped_count: Array(result['skipped']).size, can_edit: editable?(budget), stuck: stuck?(budget),
       sends_count: budget.sends.size, last_send: budget.sends.max_by(&:created_at)&.then { |item| send_row(item) }
-    }
+    }.merge(revision_state(budget, result))
+  end
+
+  # edição de um orçamento gravado: quem abriu e as últimas edições salvas
+  def revision_state(budget, result)
+    { revision: budget.revision&.slice('user_id', 'name', 'started_at'), edits: Array(result['edits']).last(5) }
   end
 
   def send_row(item)

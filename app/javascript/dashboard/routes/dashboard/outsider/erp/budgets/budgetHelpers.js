@@ -117,6 +117,10 @@ const KNOWN_REASONS = [
   'senha_invalida',
   'sem_permissao',
   'sem_cadastro',
+  'em_uso',
+  'status',
+  'em_edicao',
+  'not_revising',
 ];
 
 // motivo do servidor (gravação, envio, formulário) em texto; o resto cai na mensagem geral do ERP

@@ -2,7 +2,9 @@
 // OUTSIDER: bloco "Orçamentos de peças e serviços" do contato (painel da conversa, aba CRM e negócio). Junta os
 // orçamentos feitos no chat (rascunhos e gravados) com o espelho dos orçamentos do ERP (os feitos no Mais Prático):
 // o mesmo orçamento aparece uma vez só. PDF, Enviar e Copiar valem para os dois; o do ERP vira registro na hora.
+// Mostra os 5 mais novos; "Ver todos no ERP" abre a seção ERP filtrada pelos clientes deste contato (todo o histórico).
 import { ref, computed, watch } from 'vue';
+import { useRoute } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { useAlert } from 'dashboard/composables';
 import ErpAPI from 'dashboard/api/outsider/erp';
@@ -12,6 +14,7 @@ import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 import ErpBudgetDrawer from './ErpBudgetDrawer.vue';
 import ErpPdfDialog from './ErpPdfDialog.vue';
 import {
+  ERP_ROUTE,
   erpState,
   formatDate,
   formatMoney,
@@ -20,6 +23,7 @@ import {
   erpErrorMessage,
 } from '../erpStore';
 import { budgetErrorMessage, quoteKey, reasonText } from './budgetHelpers';
+import { erpTabs } from '../sidebar';
 
 const props = defineProps({
   contactId: { type: Number, required: true },
@@ -40,6 +44,17 @@ const drawerRef = ref(null);
 const pdfRef = ref(null);
 
 const LIMIT = 5;
+const route = useRoute();
+// a aba Orçamentos da seção ERP (com o filtro do contato), quando a pessoa abre ela
+const allInErp = computed(() =>
+  erpTabs().some(item => item.name === 'orcamentos')
+    ? {
+        name: ERP_ROUTE,
+        params: { accountId: route.params.accountId, tab: 'orcamentos' },
+        query: { contact: props.contactId },
+      }
+    : null
+);
 
 const context = () => ({
   contact_id: props.contactId,
@@ -415,8 +430,16 @@ const lastSend = budget => {
         {{ t('OUTSIDER_ERP.CONTACT.RETRY') }}
       </button>
     </p>
+    <router-link
+      v-if="allInErp"
+      :to="allInErp"
+      class="inline-flex items-center self-start gap-1 text-xs font-medium text-n-blue-11 hover:underline"
+    >
+      {{ t('OUTSIDER_ERP.CONTACT.ALL_QUOTES') }}
+      <Icon icon="i-lucide-arrow-up-right" class="size-3.5" />
+    </router-link>
     <button
-      v-if="rows.length > LIMIT"
+      v-else-if="rows.length > LIMIT"
       type="button"
       class="self-start text-xs text-n-blue-11 hover:underline"
       @click="showAll = !showAll"

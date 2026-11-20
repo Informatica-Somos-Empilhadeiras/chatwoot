@@ -1,33 +1,49 @@
 // OUTSIDER: menu "ERP" no menu lateral (secao Atendimento) com uma aba por modulo: Orcamentos, OS, Pedidos e, para o
-// administrador, as Configuracoes. Some sem a tela ERP no perfil de acesso; com a integracao desligada so o admin ve.
+// administrador, as Configuracoes. Cada aba segue o que esta ligado nas Configuracoes e a linha dela no perfil de acesso
+// (erp_quotes, erp_orders, erp_sales, abaixo da tela "erp"); com a integracao desligada so o admin ve.
 import { allows } from '../access/accessStore';
 import { erpState, ERP_ROUTE } from './erpStore';
 
-export const erpSidebarItems = (t, accountScopedRoute) => {
+export const ERP_TABS = [
+  {
+    name: 'orcamentos',
+    label: 'OUTSIDER_ERP.TABS.ORCAMENTOS',
+    icon: 'i-lucide-file-text',
+  },
+  { name: 'os', label: 'OUTSIDER_ERP.TABS.OS', icon: 'i-lucide-wrench' },
+  {
+    name: 'pedidos',
+    label: 'OUTSIDER_ERP.TABS.PEDIDOS',
+    icon: 'i-lucide-shopping-cart',
+  },
+  {
+    name: 'settings',
+    label: 'OUTSIDER_ERP.TABS.SETTINGS',
+    icon: 'i-lucide-settings-2',
+  },
+];
+
+// abas que a pessoa abre agora (a ordem do menu)
+export const erpTabs = () => {
   if (!erpState.loaded || !allows('erp')) return [];
-  if (!erpState.enabled && !erpState.administrator) return [];
+  const open = {
+    orcamentos:
+      erpState.enabled && erpState.quotesEnabled && allows('erp_quotes'),
+    os: erpState.enabled && erpState.ordersEnabled && allows('erp_orders'),
+    pedidos: erpState.enabled && allows('erp_sales'),
+    settings: erpState.administrator,
+  };
+  return ERP_TABS.filter(tab => open[tab.name]);
+};
 
-  const tab = (name, label, icon) => ({
-    name: `OutsiderErp-${name}`,
-    label: t(label),
-    icon,
+export const erpSidebarItems = (t, accountScopedRoute) => {
+  const children = erpTabs().map(tab => ({
+    name: `OutsiderErp-${tab.name}`,
+    label: t(tab.label),
+    icon: tab.icon,
     activeOn: [ERP_ROUTE],
-    to: accountScopedRoute(ERP_ROUTE, { tab: name }),
-  });
-
-  const children = [];
-  if (erpState.enabled && erpState.quotesEnabled) {
-    children.push(tab('orcamentos', 'OUTSIDER_ERP.TABS.ORCAMENTOS', 'i-lucide-file-text'));
-  }
-  if (erpState.enabled && erpState.ordersEnabled) {
-    children.push(tab('os', 'OUTSIDER_ERP.TABS.OS', 'i-lucide-kanban'));
-  }
-  if (erpState.enabled) {
-    children.push(tab('pedidos', 'OUTSIDER_ERP.TABS.PEDIDOS', 'i-lucide-shopping-cart'));
-  }
-  if (erpState.administrator) {
-    children.push(tab('settings', 'OUTSIDER_ERP.TABS.SETTINGS', 'i-lucide-settings-2'));
-  }
+    to: accountScopedRoute(ERP_ROUTE, { tab: tab.name }),
+  }));
   if (!children.length) return [];
 
   return [

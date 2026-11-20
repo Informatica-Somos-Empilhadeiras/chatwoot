@@ -1,15 +1,16 @@
 <script setup>
 // OUTSIDER: linha "Adicionar peça ou serviço" do orçamento. Ao focar, a lista de produtos da unidade já abre pronta;
-// digitar só filtra (código, código de fábrica ou palavras do nome). Na peça marcada (setas ou mouse) a pessoa já acerta
-// quantidade, valor e desconto e tecla Enter: o item entra e o cursor volta para a busca, pronto para a próxima.
-import { ref, computed, watch, nextTick } from 'vue';
+// digitar só filtra (código, código de fábrica ou palavras do nome). Cada linha tem forma fixa (passar o mouse só muda o
+// fundo): preço, quantidade e o botão "+ Adicionar" sempre à vista. Setas marcam a linha e Enter adiciona; valor e
+// desconto se acertam depois, na própria linha do item (ErpBudgetItems).
+import { ref, computed, watch, nextTick, onBeforeUnmount } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { debounce } from '@chatwoot/utils';
 import ErpAPI from 'dashboard/api/outsider/erp';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 import { erpErrorMessage, formatMoney } from '../erpStore';
-import { formatNumber, formatQty, parseNumber } from './budgetHelpers';
+import { formatQty, parseNumber } from './budgetHelpers';
 
 const props = defineProps({
   company: { type: String, required: true },
@@ -26,22 +27,18 @@ const loading = ref(false);
 const failure = ref('');
 const products = ref([]);
 const active = ref(0);
-const entry = ref({ quantidade: '1', preco: '', desconto: '0' });
+const quantities = ref({});
+const added = ref(null);
 const technical = ref({});
 const technicalOpen = ref(null);
 let lastRun = 0;
+let addedTimer = null;
 
 const current = computed(() => products.value[active.value]);
-
-const resetEntry = product => {
-  entry.value = {
-    quantidade: '1',
-    preco: product ? formatNumber(product.preco) : '',
-    desconto: '0',
-  };
+const quantityOf = product => quantities.value[product.codigo] ?? '1';
+const setQuantity = (product, value) => {
+  quantities.value = { ...quantities.value, [product.codigo]: value };
 };
-
-watch(current, product => resetEntry(product));
 
 const load = async () => {
   lastRun += 1;
@@ -53,7 +50,6 @@ const load = async () => {
     if (mine !== lastRun) return;
     products.value = data.products || [];
     active.value = 0;
-    resetEntry(products.value[0]);
   } catch (error) {
     if (mine === lastRun) {
       products.value = [];
@@ -117,19 +113,23 @@ const add = (product = current.value) => {
     unidade: product.unidade || '',
     tipo: product.tipo,
     ncm: product.ncm || '',
-    quantidade: parseNumber(entry.value.quantidade, 1),
-    preco: parseNumber(entry.value.preco, product.preco),
-    desconto: parseNumber(entry.value.desconto),
+    quantidade: Math.max(parseNumber(quantityOf(product), 1), 0.0001),
+    preco: Number(product.preco) || 0,
+    desconto: 0,
   });
+  setQuantity(product, '1');
   query.value = '';
-  resetEntry(product);
+  // "Adicionado" no mesmo botão por um instante (a linha não muda de tamanho)
+  added.value = product.codigo;
+  clearTimeout(addedTimer);
+  addedTimer = setTimeout(() => {
+    added.value = null;
+  }, 1400);
   nextTick(() => searchRef.value?.focus());
 };
 
-const pick = (index, focusField = false) => {
+const mark = index => {
   active.value = index;
-  if (focusField)
-    nextTick(() => document.getElementById('erp-entry-qty')?.select());
 };
 
 const toggleTechnical = async product => {
@@ -158,7 +158,9 @@ const stockText = product => {
 };
 
 const INPUT =
-  '!mb-0 h-8 px-2 text-sm text-right rounded-lg reset-base bg-n-solid-1 text-n-slate-12 outline outline-1 -outline-offset-1 outline-n-slate-6 focus:outline-n-brand';
+  '!mb-0 h-8 w-14 px-2 text-sm text-right tabular-nums rounded-lg reset-base bg-n-solid-1 text-n-slate-12 outline outline-1 -outline-offset-1 outline-n-slate-6 focus:outline-n-brand';
+
+onBeforeUnmount(() => clearTimeout(addedTimer));
 
 defineExpose({ focus: () => searchRef.value?.focus() });
 </script>
@@ -211,14 +213,19 @@ defineExpose({ focus: () => searchRef.value?.focus() });
         v-for="(product, index) in products"
         :id="`erp-product-${index}`"
         :key="product.codigo"
-        class="flex flex-col gap-2 px-3 py-2 border-b cursor-pointer last:border-b-0 border-n-weak"
-        :class="index === active ? 'bg-n-teal-2' : 'hover:bg-n-alpha-1'"
-        @mouseenter="pick(index)"
-        @click="pick(index, true)"
+        class="border-b last:border-b-0 border-n-weak"
+        :class="
+          index === active
+            ? 'bg-n-alpha-2 shadow-[inset_3px_0_0_rgb(var(--color-brand))]'
+            : 'hover:bg-n-alpha-1'
+        "
       >
-        <div class="flex items-center gap-3">
+        <div
+          class="grid items-center gap-3 px-3 py-2 grid-cols-[2rem_minmax(0,1fr)_auto_auto] sm:grid-cols-[2rem_minmax(0,1fr)_6.5rem_auto_auto]"
+          @click="mark(index)"
+        >
           <span
-            class="flex items-center justify-center rounded-lg shrink-0 size-8 bg-n-alpha-2 text-n-slate-11"
+            class="flex items-center justify-center rounded-lg size-8 bg-n-alpha-2 text-n-slate-11"
           >
             <Icon
               :icon="
@@ -227,18 +234,20 @@ defineExpose({ focus: () => searchRef.value?.focus() });
               class="size-4"
             />
           </span>
-          <div class="flex flex-col flex-1 min-w-0">
-            <span class="text-sm font-medium truncate text-n-slate-12">
+          <div class="flex flex-col min-w-0">
+            <span
+              class="text-sm font-medium truncate text-n-slate-12"
+              :title="product.descricao"
+            >
               {{ product.codigo }} · {{ product.descricao }}
             </span>
             <span
-              class="flex flex-wrap items-center text-xs gap-x-2 text-n-slate-10"
+              class="flex items-center overflow-hidden text-xs whitespace-nowrap gap-x-2 text-n-slate-10"
             >
+              <span class="font-medium sm:hidden text-n-slate-12">
+                {{ formatMoney(product.preco) }}
+              </span>
               <span v-if="product.unidade">{{ product.unidade }}</span>
-              <span v-if="product.ncm">{{
-                t('OUTSIDER_ERP.BUDGET.ITEMS.NCM', { ncm: product.ncm })
-              }}</span>
-              <span v-if="product.fabrica">{{ product.fabrica }}</span>
               <span
                 v-if="product.tipo === 1"
                 class="px-1.5 rounded bg-n-blue-3 text-n-blue-11"
@@ -256,6 +265,9 @@ defineExpose({ focus: () => searchRef.value?.focus() });
               <span v-if="product.bloqueado" class="text-n-ruby-11">
                 {{ t('OUTSIDER_ERP.BUDGET.ITEMS.BLOCKED') }}
               </span>
+              <span v-if="product.ncm" class="hidden md:inline">
+                {{ t('OUTSIDER_ERP.BUDGET.ITEMS.NCM', { ncm: product.ncm }) }}
+              </span>
               <button
                 type="button"
                 class="text-n-blue-11 hover:underline"
@@ -266,15 +278,49 @@ defineExpose({ focus: () => searchRef.value?.focus() });
             </span>
           </div>
           <span
-            v-if="index !== active"
-            class="text-sm font-medium whitespace-nowrap text-n-slate-12"
+            class="hidden text-sm font-medium text-right sm:block tabular-nums whitespace-nowrap text-n-slate-12"
           >
             {{ formatMoney(product.preco) }}
           </span>
+          <input
+            :id="`erp-entry-qty-${index}`"
+            :value="quantityOf(product)"
+            inputmode="decimal"
+            :class="INPUT"
+            :disabled="product.bloqueado"
+            :aria-label="t('OUTSIDER_ERP.BUDGET.ITEMS.QTY')"
+            :title="t('OUTSIDER_ERP.BUDGET.ITEMS.QTY')"
+            @click.stop="mark(index)"
+            @focus="mark(index)"
+            @input="setQuantity(product, $event.target.value)"
+            @keydown.enter.prevent="add(product)"
+            @keydown.esc="onEsc"
+          />
+          <button
+            type="button"
+            class="flex items-center justify-center gap-1 h-8 w-[7.25rem] text-[13px] font-medium rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+            :class="
+              added === product.codigo
+                ? 'bg-n-teal-3 text-n-teal-11'
+                : 'bg-n-brand text-white hover:opacity-90'
+            "
+            :disabled="product.bloqueado"
+            @click.stop="add(product)"
+          >
+            <Icon
+              :icon="added === product.codigo ? 'i-lucide-check' : 'i-lucide-plus'"
+              class="size-4"
+            />
+            {{
+              added === product.codigo
+                ? t('OUTSIDER_ERP.BUDGET.ITEMS.ADDED')
+                : t('OUTSIDER_ERP.BUDGET.ITEMS.ADD')
+            }}
+          </button>
         </div>
         <p
           v-if="technicalOpen === product.codigo"
-          class="mb-0 ml-11 text-xs whitespace-pre-line text-n-slate-11"
+          class="px-3 pb-2 mb-0 text-xs whitespace-pre-line pl-14 text-n-slate-11"
         >
           {{
             technical[product.codigo] === undefined
@@ -283,55 +329,6 @@ defineExpose({ focus: () => searchRef.value?.focus() });
                 t('OUTSIDER_ERP.BUDGET.ITEMS.NO_TECHNICAL')
           }}
         </p>
-        <!-- peça marcada: quantidade, valor e desconto já aqui; Enter adiciona -->
-        <div
-          v-if="index === active && !product.bloqueado"
-          class="flex flex-wrap items-end justify-end gap-2 ml-11"
-          @click.stop
-        >
-          <label class="flex flex-col gap-0.5 text-xs text-n-slate-11">
-            {{ t('OUTSIDER_ERP.BUDGET.ITEMS.QTY') }}
-            <input
-              id="erp-entry-qty"
-              v-model="entry.quantidade"
-              inputmode="decimal"
-              :class="INPUT"
-              class="w-16"
-              @keydown.enter.prevent="add()"
-              @keydown.esc="onEsc"
-            />
-          </label>
-          <label class="flex flex-col gap-0.5 text-xs text-n-slate-11">
-            {{ t('OUTSIDER_ERP.BUDGET.ITEMS.PRICE') }}
-            <input
-              v-model="entry.preco"
-              inputmode="decimal"
-              :class="INPUT"
-              class="w-28"
-              @keydown.enter.prevent="add()"
-              @keydown.esc="onEsc"
-            />
-          </label>
-          <label class="flex flex-col gap-0.5 text-xs text-n-slate-11">
-            {{ t('OUTSIDER_ERP.BUDGET.ITEMS.DISCOUNT') }}
-            <input
-              v-model="entry.desconto"
-              inputmode="decimal"
-              :class="INPUT"
-              class="w-16"
-              @keydown.enter.prevent="add()"
-              @keydown.esc="onEsc"
-            />
-          </label>
-          <button
-            type="button"
-            class="flex items-center gap-1 h-8 px-3 text-sm font-medium text-white rounded-lg bg-n-brand hover:opacity-90"
-            @click="add()"
-          >
-            {{ t('OUTSIDER_ERP.BUDGET.ITEMS.ADD') }}
-            <Icon icon="i-lucide-corner-down-left" class="size-3.5" />
-          </button>
-        </div>
       </div>
     </div>
   </div>

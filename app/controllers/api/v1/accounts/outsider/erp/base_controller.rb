@@ -35,8 +35,9 @@ class Api::V1::Accounts::Outsider::Erp::BaseController < Api::V1::Accounts::Base
     @contact ||= Current.account.contacts.find(params.require(:contact_id))
   end
 
+  # gravar na OS: gravação ligada + "Usa" na aba Ordens de serviço do perfil (que nunca passa da tela "erp")
   def can_edit?
-    settings.write_enabled? && can_use_erp?
+    settings.write_enabled? && allows_screen?('erp_orders', 'use')
   end
 
   # acesso de uso da integração (ver/editar), sem exigir a flag de escrita — para buscas de apoio (produtos, listas)
@@ -44,8 +45,13 @@ class Api::V1::Accounts::Outsider::Erp::BaseController < Api::V1::Accounts::Base
     ::Outsider::Access.for(Current.account_user).allows?('erp', 'use')
   end
 
-  # criar orçamento no ERP: flag própria (desligada por padrão) + acesso de uso
+  # criar orçamento no ERP: flag própria (desligada por padrão) + "Usa" na aba Orçamentos do perfil
   def can_create_quote?
-    settings.quote_write_enabled? && can_use_erp?
+    settings.quote_write_enabled? && allows_screen?('erp_quotes', 'use')
+  end
+
+  # abas da seção ERP no perfil de acesso (erp_quotes, erp_orders, erp_sales)
+  def allows_screen?(screen, level = 'view')
+    ::Outsider::Access.for(Current.account_user).allows?(screen, level)
   end
 end

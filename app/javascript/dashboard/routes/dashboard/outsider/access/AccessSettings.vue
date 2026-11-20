@@ -400,7 +400,10 @@ const remove = async () => {
                   :data-testid="`outsider-access-row-${screen.key}`"
                 >
                   <td>
-                    <span class="font-medium text-n-slate-12">
+                    <span
+                      class="font-medium text-n-slate-12"
+                      :class="{ 'ps-4': screen.parent }"
+                    >
                       {{
                         t(
                           `OUTSIDER_ACCESS.SCREENS.${screen.key.toUpperCase()}.LABEL`

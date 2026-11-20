@@ -94,12 +94,31 @@ RSpec.describe 'Outsider ERP' do # rubocop:disable RSpec/DescribeClass
     let!(:put_substatus) { stub_request(:put, "#{base}/KanbanOrdemServico/api/UpdateSubStatusOS/907").to_return(status: 200, body: '[]') }
     let!(:put_history) { stub_request(:put, "#{base}/KanbanOrdemServico/api/GravaHistoricoSubStatusOS/907").to_return(status: 200, body: '[]') }
 
+    # a OS é lida antes no banco do ERP (situação de agora); sem resposta dele, vale o espelho
+    before { stub_request(:put, "#{base}/dashboard/api/query_execute").to_return(status: 503) }
+
     it 'refuses while writing is off' do
       expect { writer.substatus(company: 'somosemp', code: 907, value: '1- AGENDAR ATENDIMENTO') }.to raise_error(Outsider::Erp::Writer::Disabled)
     end
 
     context 'with writing on' do
       before { settings.update('write_enabled' => true, 'user_erp_ids' => { user.id.to_s => '55' }) }
+
+      it 'checks the situation in the ERP database now, so an order closed in the desktop app is locked' do
+        columns = %w[CodigoOS Situacao SubStatus CodigoCliente Tecnico]
+        stub_request(:put, "#{base}/dashboard/api/query_execute").to_return do |request|
+          sql = JSON.parse(request.body)['SQL_Execute']
+          rows = if sql.include?('information_schema') then columns.map { |name| { 'COLUMN_NAME' => name } }
+                 elsif sql.include?('FROM somosemp.os O WHERE') then [{ 'status' => 'FECHADA', 'substatus' => '2-AGENDADO', 'cliente_codigo' => 716 }]
+                 else
+                   []
+                 end
+          { status: 200, body: rows.to_json }
+        end
+
+        expect { writer.substatus(company: 'somosemp', code: 907, value: '1- AGENDAR ATENDIMENTO') }.to raise_error(Outsider::Erp::Writer::Locked)
+        expect(put_substatus).not_to have_been_requested
+      end
 
       it 'changes the sub-status and writes the ERP history, with the company of the order itself' do
         conversation = create(:conversation, account: account)

@@ -1106,7 +1106,8 @@
     "GROUPS": {
       "TELEFONIA": "Telefonia",
       "ATENDIMENTO": "Atendimento",
-      "VENDAS": "CRM"
+      "VENDAS": "CRM",
+      "ERP": "ERP Mais Prático"
     },
     "LEVELS": {
       "NONE": "Não vê",
@@ -1171,8 +1172,20 @@
         "HINT": "Vê: consulta sem mudar nada."
       },
       "ERP": {
-        "LABEL": "Ordens de serviço e orçamentos (ERP)",
-        "HINT": "Vê: só consulta. Usa: muda o substatus e os campos da OS."
+        "LABEL": "Seção ERP",
+        "HINT": "Não vê: o menu ERP some. As abas abaixo nunca passam deste nível."
+      },
+      "ERP_QUOTES": {
+        "LABEL": "Orçamentos",
+        "HINT": "Vê: consulta e PDF. Usa: cria, edita e envia orçamentos."
+      },
+      "ERP_ORDERS": {
+        "LABEL": "Ordens de serviço",
+        "HINT": "Vê: consulta. Usa: muda o substatus e os campos da OS."
+      },
+      "ERP_SALES": {
+        "LABEL": "Pedidos de venda",
+        "HINT": "Vê: consulta (por enquanto só leitura)."
       }
     },
     "PROFILES": {

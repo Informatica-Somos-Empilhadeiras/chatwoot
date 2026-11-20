@@ -37,18 +37,6 @@ class ErpAPI extends ApiClient {
     return axios.get(`${this.url}/service_orders/board`, { params });
   }
 
-  serviceOrdersList(params) {
-    return axios.get(`${this.url}/service_orders/list`, { params });
-  }
-
-  quotesList(params) {
-    return axios.get(`${this.url}/quotes/list`, { params });
-  }
-
-  salesOrders(params) {
-    return axios.get(`${this.url}/sales_orders`, { params });
-  }
-
   setSubstatus(data) {
     return axios.put(`${this.url}/service_orders/substatus`, data);
   }
@@ -123,7 +111,32 @@ class ErpAPI extends ApiClient {
     return axios.post(`${this.url}/budgets/import`, data);
   }
 
+  // editar um orçamento já gravado (só em NEGOCIAÇÃO e fechado no Mais Prático): company, number, contact_id
+  reviseBudget(data) {
+    return axios.post(`${this.url}/budgets/revise`, data);
+  }
+
+  cancelRevision(id) {
+    return axios.post(`${this.url}/budgets/${id}/cancel_revision`);
+  }
+
+  // seção ERP: listas com todo o histórico (kind: quotes, orders, sales) e o detalhe de um registro
+  records(kind, params) {
+    return axios.get(`${this.url}/records/${kind}`, { params });
+  }
+
+  record(kind, company, number) {
+    return axios.get(`${this.url}/records/${kind}/${company}/${number}`);
+  }
+
   // PDF montado na hora (prévia do rascunho ou o oficial do ERP), como arquivo
+  // PDF de um orçamento do ERP direto da seção ERP (sem criar registro no chat)
+  recordPdf(company, number) {
+    return axios.get(`${this.url}/records/quotes/${company}/${number}/pdf`, {
+      responseType: 'blob',
+    });
+  }
+
   budgetPdf(id) {
     return axios.get(`${this.url}/budgets/${id}/pdf`, { responseType: 'blob' });
   }

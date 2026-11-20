@@ -3,7 +3,8 @@
 # o nome; se o ERP mudar de versão, a lista se ajusta. Fica em cache no Redis por um dia.
 class Outsider::Erp::Schema
   S = Outsider::Erp::Sql
-  TABLES = %w[clientes produtos formapagto orcamento detalheorcamento empresa funcionarios ac_desconto].freeze
+  TABLES = %w[clientes produtos formapagto orcamento detalheorcamento empresa funcionarios ac_desconto os detalheos pedido
+              detalhepedido].freeze
   TTL = 1.day
 
   def initialize(account, client: nil)
