@@ -1,6 +1,6 @@
 # OUTSIDER: um rascunho de orçamento novo já preenchido, para o agente só escolher as peças: o cliente vem do vínculo
-# do contato com o ERP (Outsider::Erp::ContactLink), o "A/C" é o nome do contato, o vendedor é o último que essa pessoa
-# escolheu num orçamento (o cadastro de vendedores do ERP é outro que o de usuários) e as condições são o padrão das
+# do contato com o ERP (Outsider::Erp::ContactLink), o "A/C" é o nome do contato, o vendedor pré-preenche com o código do ERP do agente
+# (editável; sem vínculo do agente, vai o último que a pessoa escolheu) e as condições são o padrão das
 # Configurações. "Copiar" usa o mesmo caminho com o cliente, os itens e as
 # condições de outro orçamento (Outsider::Erp::BudgetCopy).
 class Outsider::Erp::BudgetDefaults
@@ -45,8 +45,12 @@ class Outsider::Erp::BudgetDefaults
     }.compact
   end
 
-  # o vendedor do último orçamento desta pessoa (na primeira vez ela escolhe na lista)
+  # vendedor pré-preenchido com o código do ERP do agente (user_erp_ids), editável na tela; sem vínculo do agente,
+  # cai no último vendedor que essa pessoa escolheu (e, na primeira vez, ela escolhe na lista)
   def seller_code
+    mine = Integer(@settings.data['user_erp_ids'].to_h[@user&.id.to_s].to_s, exception: false)
+    return mine if mine&.positive?
+
     last = Outsider::Erp::Budget.where(account_id: @account.id, user_id: @user&.id).where("terms ? 'vendedor'")
                                 .order(updated_at: :desc).pick(Arel.sql("terms->>'vendedor'"))
     code = Integer(last.to_s, exception: false)
