@@ -1,12 +1,31 @@
 {
   "OUTSIDER_ERP": {
     "TITLE": "ERP Mais Prático",
-    "SIDEBAR": "Ordens de serviço",
+    "SIDEBAR": "ERP",
     "SIDEBAR_QUOTES": "ERP",
     "CANCEL": "Cancelar",
     "TABS": {
       "BOARD": "Quadro de OS",
+      "ORCAMENTOS": "Orçamentos",
+      "OS": "Ordens de serviço",
+      "PEDIDOS": "Pedidos",
       "SETTINGS": "Configurações do ERP"
+    },
+    "LIST": {
+      "SEARCH": "Buscar por número ou cliente",
+      "EMPTY": "Nenhum registro encontrado.",
+      "TOTAL": "{count} registros",
+      "ALL": "Todos",
+      "PREV": "Anterior",
+      "NEXT": "Próxima",
+      "PAGE_OF": "Página {page} de {pages}",
+      "NUMBER": "Número",
+      "CLIENT": "Cliente",
+      "STATUS": "Status",
+      "VALUE": "Total",
+      "SELLER": "Vendedor",
+      "COMPANY": "Empresa",
+      "DATE": "Data"
     },
     "STATES": {
       "OFF": "A integração com o ERP está desligada. Fale com o administrador da conta.",

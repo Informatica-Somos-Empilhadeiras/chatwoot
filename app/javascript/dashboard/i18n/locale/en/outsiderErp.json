@@ -1,12 +1,31 @@
 {
   "OUTSIDER_ERP": {
     "TITLE": "ERP Mais Prático",
-    "SIDEBAR": "Service orders",
+    "SIDEBAR": "ERP",
     "SIDEBAR_QUOTES": "ERP",
     "CANCEL": "Cancel",
     "TABS": {
       "BOARD": "Service order board",
+      "ORCAMENTOS": "Quotes",
+      "OS": "Service orders",
+      "PEDIDOS": "Sales orders",
       "SETTINGS": "ERP settings"
+    },
+    "LIST": {
+      "SEARCH": "Search by number or client",
+      "EMPTY": "No records found.",
+      "TOTAL": "{count} records",
+      "ALL": "All",
+      "PREV": "Previous",
+      "NEXT": "Next",
+      "PAGE_OF": "Page {page} of {pages}",
+      "NUMBER": "Number",
+      "CLIENT": "Client",
+      "STATUS": "Status",
+      "VALUE": "Total",
+      "SELLER": "Seller",
+      "COMPANY": "Company",
+      "DATE": "Date"
     },
     "STATES": {
       "OFF": "The ERP integration is off. Talk to the account administrator.",

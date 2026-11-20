@@ -37,6 +37,18 @@ class ErpAPI extends ApiClient {
     return axios.get(`${this.url}/service_orders/board`, { params });
   }
 
+  serviceOrdersList(params) {
+    return axios.get(`${this.url}/service_orders/list`, { params });
+  }
+
+  quotesList(params) {
+    return axios.get(`${this.url}/quotes/list`, { params });
+  }
+
+  salesOrders(params) {
+    return axios.get(`${this.url}/sales_orders`, { params });
+  }
+
   setSubstatus(data) {
     return axios.put(`${this.url}/service_orders/substatus`, data);
   }

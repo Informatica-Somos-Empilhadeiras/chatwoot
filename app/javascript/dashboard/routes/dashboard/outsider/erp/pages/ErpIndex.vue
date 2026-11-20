@@ -1,26 +1,31 @@
 <script setup>
-// OUTSIDER: página Ordens de serviço: o quadro das OS do ERP Mais Prático e, para administradores, as Configurações da
-// integração. A seção vem da rota (ordens-servico/:tab), escolhida pelos subitens do menu lateral.
+// OUTSIDER: pagina da secao ERP. A aba vem da rota (erp/:tab): Orcamentos, OS (quadro), Pedidos e, para o administrador,
+// Configuracoes. Cada aba so aparece/abre conforme o que esta ligado nas Configuracoes e o perfil de acesso.
 import { computed } from 'vue';
 import { useRoute } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
 import ErpBoard from '../components/ErpBoard.vue';
 import ErpSettings from '../components/ErpSettings.vue';
+import ErpRecordsList from '../components/ErpRecordsList.vue';
 import { erpState } from '../erpStore';
 
 const { t } = useI18n();
 const route = useRoute();
 
-// com as OS ocultas não há quadro: o administrador cai nas Configurações
-const ordersHidden = computed(
-  () => erpState.loaded && erpState.enabled && !erpState.ordersEnabled
-);
+const available = computed(() => {
+  const tabs = [];
+  if (erpState.enabled && erpState.quotesEnabled) tabs.push('orcamentos');
+  if (erpState.enabled && erpState.ordersEnabled) tabs.push('os');
+  if (erpState.enabled) tabs.push('pedidos');
+  if (erpState.administrator) tabs.push('settings');
+  return tabs;
+});
+
 const tab = computed(() =>
-  (route.params.tab === 'settings' || ordersHidden.value) &&
-  erpState.administrator
-    ? 'settings'
-    : 'board'
+  available.value.includes(route.params.tab)
+    ? route.params.tab
+    : available.value[0] || ''
 );
 </script>
 
@@ -33,21 +38,21 @@ const tab = computed(() =>
             {{ t('OUTSIDER_ERP.TITLE') }}
           </span>
           <span class="text-xl font-medium text-n-slate-12">
-            {{ t(`OUTSIDER_ERP.TABS.${tab.toUpperCase()}`) }}
+            {{ tab ? t(`OUTSIDER_ERP.TABS.${tab.toUpperCase()}`) : t('OUTSIDER_ERP.SIDEBAR') }}
           </span>
         </div>
       </header>
       <main class="flex-1 px-6 overflow-y-auto">
         <div class="w-full pb-8 mx-auto max-w-[110rem]">
-          <ErpSettings v-if="tab === 'settings'" />
+          <ErpRecordsList v-if="tab === 'orcamentos'" key="orcamentos" kind="quotes" />
+          <ErpBoard v-else-if="tab === 'os'" />
+          <ErpRecordsList v-else-if="tab === 'pedidos'" key="pedidos" kind="sales" />
+          <ErpSettings v-else-if="tab === 'settings'" />
           <div
-            v-else-if="erpState.loaded && !erpState.enabled"
+            v-else
             class="flex flex-col items-center gap-3 p-10 text-center rounded-xl bg-n-alpha-1"
           >
-            <Icon
-              icon="i-lucide-clipboard-list"
-              class="size-10 text-n-slate-9"
-            />
+            <Icon icon="i-lucide-clipboard-list" class="size-10 text-n-slate-9" />
             <p class="max-w-md mb-0 text-sm text-n-slate-11">
               {{
                 erpState.administrator
@@ -55,21 +60,7 @@ const tab = computed(() =>
                   : t('OUTSIDER_ERP.STATES.OFF')
               }}
             </p>
-            <router-link
-              v-if="erpState.administrator"
-              :to="{ name: 'outsider_erp', params: { tab: 'settings' } }"
-              class="text-sm text-n-blue-11 hover:underline"
-            >
-              {{ t('OUTSIDER_ERP.TABS.SETTINGS') }}
-            </router-link>
           </div>
-          <p
-            v-else-if="ordersHidden"
-            class="p-10 mb-0 text-sm text-center rounded-xl bg-n-alpha-1 text-n-slate-11"
-          >
-            {{ t('OUTSIDER_ERP.STATES.ORDERS_OFF') }}
-          </p>
-          <ErpBoard v-else-if="erpState.enabled" />
         </div>
       </main>
     </div>
