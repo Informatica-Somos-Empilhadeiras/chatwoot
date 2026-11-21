@@ -82,6 +82,34 @@ const loadPdf = async () => {
   }
 };
 
+// "Olá, {contato}!" com o primeiro nome do contato escolhido; sem contato, "Olá!". Só troca o texto que a pessoa ainda
+// não editou (o último que a tela pôs)
+const firstName = name => {
+  const word =
+    String(name || '')
+      .trim()
+      .split(/\s+/)[0] || '';
+  return word ? word[0].toUpperCase() + word.slice(1).toLowerCase() : '';
+};
+const greet = (template, name) =>
+  name
+    ? template.replaceAll('{contato}', name)
+    : template.replace(/,?[ \t]*\{contato\}/g, '');
+const autoTexts = { body: '', whatsapp: '' };
+const applyGreeting = () => {
+  const { templates, contact_fallback: fallback } = delivery.value?.texts || {};
+  if (!templates) return;
+  const name = firstName(contact.value?.name) || fallback || '';
+  if (emailBody.value === autoTexts.body) {
+    emailBody.value = greet(templates.body, name);
+    autoTexts.body = emailBody.value;
+  }
+  if (whatsappText.value === autoTexts.whatsapp) {
+    whatsappText.value = greet(templates.whatsapp, name);
+    autoTexts.whatsapp = whatsappText.value;
+  }
+};
+
 const loadDelivery = async () => {
   loading.value = true;
   failure.value = '';
@@ -92,7 +120,10 @@ const loadDelivery = async () => {
     subject.value = data.texts.subject;
     emailBody.value = data.texts.body;
     whatsappText.value = data.texts.whatsapp;
+    autoTexts.body = emailBody.value;
+    autoTexts.whatsapp = whatsappText.value;
     contact.value = data.recipients.contact;
+    applyGreeting();
     inboxId.value = data.recipients.inbox_id || data.recipients.inboxes[0]?.id;
     const canWhatsapp =
       contact.value?.phone_number && data.recipients.inboxes.length;
@@ -142,6 +173,7 @@ const searchContacts = debounce(async () => {
 
 const pickContact = row => {
   contact.value = row;
+  applyGreeting();
   if (row.default_inbox_id) inboxId.value = row.default_inbox_id;
   searching.value = false;
   contactQuery.value = '';
