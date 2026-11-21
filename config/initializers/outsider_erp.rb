@@ -46,7 +46,14 @@ Rails.application.routes.prepend do
                                                                    company: /[a-z0-9_]+/, number: /\d+/ }
               get 'records/quotes/:company/:number/pdf', to: 'records#pdf', defaults: { kind: 'quotes' },
                                                          constraints: { company: /[a-z0-9_]+/, number: /\d+/ }
-              # NF-e e NFS-e: o PDF da nota espelhado do Nextcloud
+              # NF-e e NFS-e: o PDF da nota espelhado do Nextcloud e o envio dele ao cliente
+              get 'records/invoice_contacts', to: 'records#contacts', defaults: { kind: 'invoices' }
+              get 'records/:kind/:company/:number/delivery', to: 'records#delivery',
+                                                             constraints: { kind: /invoices|service_invoices/, company: /[a-z0-9_]+/,
+                                                                            number: /\d+/ }
+              post 'records/:kind/:company/:number/deliver', to: 'records#deliver',
+                                                             constraints: { kind: /invoices|service_invoices/, company: /[a-z0-9_]+/,
+                                                                            number: /\d+/ }
               get 'records/:kind/:company/:number/document', to: 'records#document',
                                                              constraints: { kind: /invoices|service_invoices/, company: /[a-z0-9_]+/,
                                                                             number: /\d+/ }

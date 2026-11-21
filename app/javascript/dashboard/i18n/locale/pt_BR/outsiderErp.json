@@ -216,6 +216,11 @@
       "OS_EMAIL_SUBJECT": "Assunto do e-mail",
       "OS_EMAIL_BODY": "Texto do e-mail",
       "OS_WHATSAPP_TEXT": "Texto do WhatsApp",
+      "NF_SEND": "Envio da nota fiscal",
+      "NF_PLACEHOLDERS": "Use {numero}, {contato}, {cliente} e {vendedor}: são trocados pelos dados da nota.",
+      "NF_EMAIL_SUBJECT": "Assunto do e-mail",
+      "NF_EMAIL_BODY": "Texto do e-mail",
+      "NF_WHATSAPP_TEXT": "Texto do WhatsApp",
       "NEXTCLOUD": "Notas fiscais no Nextcloud",
       "NEXTCLOUD_HINT": "O chat mostra o PDF da nota que está no Nextcloud, achado pelo número, CFOP e cliente (\"3594 (6102) CLIENTE.pdf\"). Nada fica guardado no chat.",
       "NEXTCLOUD_OFF": "Desligado: preencha endereço, usuário, senha de app e pasta raiz e salve.",
@@ -447,6 +452,14 @@
     },
     "RECORDS": {
       "INVOICE": {
+        "SEND": {
+          "BUTTON": "Enviar",
+          "TITLE": "Enviar a nota fiscal ao cliente",
+          "PDF_TITLE": "Nota fiscal",
+          "HINT": "A nota vai em anexo, do jeito que está no Nextcloud. No WhatsApp fica na conversa; o e-mail vira nota na conversa de onde saiu.",
+          "EMAIL_DONE": "Nota fiscal enviada por e-mail.",
+          "WHATSAPP_DONE": "Nota fiscal enviada no WhatsApp."
+        },
         "VIEW": "Ver nota"
       },
       "NUMBER": "Número",

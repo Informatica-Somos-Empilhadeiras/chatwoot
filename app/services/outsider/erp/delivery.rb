@@ -1,5 +1,5 @@
 # OUTSIDER: o que todo envio de PDF do ERP ao cliente tem em comum (orçamento, Outsider::Erp::BudgetSender, e relatório da
-# OS, Outsider::Erp::ServiceOrderSender): o contato do WhatsApp (com telefone e que não seja grupo), a caixa, a conversa
+# OS e da nota fiscal, Outsider::Erp::DocumentSender): o contato do WhatsApp (com telefone e que não seja grupo), a caixa, a conversa
 # aberta com ele nessa caixa (ou uma nova, atribuída a quem enviou), a mensagem com o PDF, a lista de e-mails e os limites
 # de tamanho. Quem inclui define @account, @user e recipients (Outsider::Erp::BudgetRecipients).
 module Outsider::Erp::Delivery

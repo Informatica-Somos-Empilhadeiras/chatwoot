@@ -3,6 +3,8 @@
 # (NFS-e). Só leitura; a edição continua nas rotas próprias
 # (orçamento do chat em BudgetsController, OS em ServiceOrdersController). Cada aba segue a linha dela no perfil de acesso.
 class Api::V1::Accounts::Outsider::Erp::RecordsController < Api::V1::Accounts::Outsider::Erp::BaseController
+  include ::Outsider::Erp::DocumentSending
+
   rescue_from(::Outsider::Erp::Records::Detail::NotFound, ::Outsider::Erp::QuoteReport::NotFound) do
     render json: { error: 'not_found' }, status: :not_found
   end
@@ -12,6 +14,7 @@ class Api::V1::Accounts::Outsider::Erp::RecordsController < Api::V1::Accounts::O
     render json: { error: 'nextcloud_unavailable', message: error.message }, status: :service_unavailable
   end
   before_action :ensure_kind
+  before_action :ensure_invoice_sending, only: %i[delivery contacts deliver]
 
   # q, view, company, person (código do vendedor/técnico), from, to (AAAA-MM-DD), page, per, sort, direction;
   # contact_id (os clientes do ERP do contato) ou client=empresa:código
@@ -37,11 +40,42 @@ class Api::V1::Accounts::Outsider::Erp::RecordsController < Api::V1::Accounts::O
   def document
     raise ::Outsider::Erp::NextcloudInvoices::NotFound unless settings.nextcloud_enabled?
 
-    file = ::Outsider::Erp::NextcloudInvoices.new(Current.account).fetch(params[:company].to_s, params[:number], params[:kind])
+    file = nextcloud.fetch(params[:company].to_s, params[:number], params[:kind])
     send_data file['content'], filename: file['filename'], type: 'application/pdf', disposition: 'inline'
   end
 
+  # NF-e e NFS-e: envio do PDF do Nextcloud ao cliente por WhatsApp/e-mail, como o relatório da OS (Outsider::Erp::DocumentSending)
+  def delivery
+    note = nextcloud.summary(params[:company].to_s, params[:number], params[:kind])
+    report = { 'numero' => note['numero'], 'cliente' => { 'nome' => note['cliente'] } }
+    render json: delivery_payload(params[:company].to_s, report, "#{invoice_label(note)}.pdf", 'nf')
+  end
+
+  # busca de outro contato para o WhatsApp
+  def contacts
+    render json: { contacts: send_recipients.contacts(params[:q]) }
+  end
+
+  def deliver
+    company = params[:company].to_s
+    note = nextcloud.summary(company, params[:number], params[:kind])
+    deliver_document(-> { nextcloud.fetch(company, params[:number], params[:kind]) }, invoice_label(note).sub(' ', ' Nº '))
+    render json: { ok: true }
+  end
+
   private
+
+  def nextcloud = @nextcloud ||= ::Outsider::Erp::NextcloudInvoices.new(Current.account)
+
+  # "NF-e 5868" / "NFS-e 841" (o número da prefeitura)
+  def invoice_label(note) = "#{params[:kind] == 'service_invoices' ? 'NFS-e' : 'NF-e'} #{note['numero']}"
+
+  # enviar a nota pede "Usa" na aba Notas fiscais do perfil e a conexão com o Nextcloud ligada
+  def ensure_invoice_sending
+    return render json: { error: 'erp_forbidden' }, status: :forbidden unless allows_screen?('erp_invoices', 'use')
+
+    render json: { error: 'invoice_not_in_nextcloud' }, status: :not_found unless settings.nextcloud_enabled?
+  end
 
   LIST_PARAMS = %i[q view company person from to page per sort direction].freeze
 

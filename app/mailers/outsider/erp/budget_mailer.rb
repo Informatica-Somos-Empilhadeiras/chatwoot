@@ -1,5 +1,5 @@
 # OUTSIDER: e-mail com um PDF do ERP em anexo, para um ou vários endereços: o orçamento (ver Outsider::Erp::BudgetMailJob)
-# e o relatório da OS (Outsider::Erp::ServiceOrderSender). Não herda do ApplicationMailer porque ele engole as falhas de
+# e o relatório da OS e a nota fiscal (Outsider::Erp::DocumentSender). Não herda do ApplicationMailer porque ele engole as falhas de
 # SMTP, e no orçamento a falha precisa voltar para o histórico. Sai com o remetente do Chatwoot e o nome de quem enviou;
 # a resposta vai para o e-mail das Configurações ou de quem enviou.
 class Outsider::Erp::BudgetMailer < ActionMailer::Base # rubocop:disable Rails/ApplicationMailer
@@ -7,8 +7,8 @@ class Outsider::Erp::BudgetMailer < ActionMailer::Base # rubocop:disable Rails/A
     document_mail(record.document.blob, record.account, record.user, { 'to' => record.recipients, 'subject' => subject, 'body' => body })
   end
 
-  # message: { 'to' => [...], 'subject' =>, 'body' => }; o PDF da OS já está no Active Storage (sem registro de envio)
-  def service_order(blob, account, user, message)
+  # message: { 'to' => [...], 'subject' =>, 'body' => }; o PDF (OS, nota fiscal) já está no Active Storage, sem registro de envio
+  def document(blob, account, user, message)
     document_mail(blob, account, user, message)
   end
 

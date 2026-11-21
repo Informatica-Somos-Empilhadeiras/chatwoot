@@ -1,13 +1,12 @@
 # OUTSIDER: as OS do ERP (espelho): as do contato, a busca, o quadro, o relatório com as fotos (PDF), o envio dele ao
-# cliente por WhatsApp/e-mail (Outsider::Erp::ServiceOrderSender) e a gravação de substatus/campos (Outsider::Erp::Writer)
+# cliente por WhatsApp/e-mail (Outsider::Erp::DocumentSending) e a gravação de substatus/campos (Outsider::Erp::Writer)
 class Api::V1::Accounts::Outsider::Erp::ServiceOrdersController < Api::V1::Accounts::Outsider::Erp::BaseController
+  include ::Outsider::Erp::DocumentSending
+
   rescue_from(::Outsider::Erp::Writer::Disabled) { render json: { error: 'write_disabled' }, status: :forbidden }
   rescue_from(::Outsider::Erp::Writer::Invalid) { |error| render json: { error: 'invalid', field: error.message }, status: :unprocessable_entity }
   rescue_from(::Outsider::Erp::Writer::Locked) { |error| render json: { error: 'os_locked', status: error.message }, status: :forbidden }
   rescue_from(::Outsider::Erp::ServiceOrderReport::NotFound) { render json: { error: 'os_not_found' }, status: :not_found }
-  rescue_from(::Outsider::Erp::Delivery::Blocked) do |error|
-    render json: { error: 'send_blocked', reason: error.message }, status: :unprocessable_entity
-  end
   before_action :ensure_orders_enabled, only: %i[board report delivery contacts deliver]
   before_action :ensure_send_access, only: %i[delivery contacts deliver]
 
@@ -34,13 +33,7 @@ class Api::V1::Accounts::Outsider::Erp::ServiceOrdersController < Api::V1::Accou
   def delivery
     company, code = report_target
     report = ::Outsider::Erp::ServiceOrderReport.new(Current.account).summary(company, code)
-    source = conversation
-    contact = delivery_contact(company, source)
-    render json: {
-      texts: ::Outsider::Erp::BudgetTexts.new(settings, report, Current.user, prefix: 'os', contact_name: contact&.name).as_json,
-      filename: ::Outsider::Erp::ServiceOrderPdf.new(report).filename,
-      recipients: send_recipients.for_contact(contact, conversation_id: source&.id)
-    }
+    render json: delivery_payload(company, report, ::Outsider::Erp::ServiceOrderPdf.new(report).filename, 'os')
   end
 
   # busca de outro contato para o WhatsApp
@@ -50,7 +43,11 @@ class Api::V1::Accounts::Outsider::Erp::ServiceOrdersController < Api::V1::Accou
 
   def deliver
     company, code = report_target
-    ::Outsider::Erp::ServiceOrderSender.new(Current.account_user).deliver(company, code, deliver_params, conversation: conversation)
+    document = lambda do
+      pdf = ::Outsider::Erp::ServiceOrderPdf.new(::Outsider::Erp::ServiceOrderReport.new(Current.account).build(company, code))
+      { 'filename' => pdf.filename, 'content' => pdf.render }
+    end
+    deliver_document(document, "OS Nº #{code}")
     render json: { ok: true }
   end
 
@@ -117,33 +114,8 @@ class Api::V1::Accounts::Outsider::Erp::ServiceOrdersController < Api::V1::Accou
     [company, code]
   end
 
-  # o contato escolhido na tela, senão o da conversa de onde abriu, senão o vinculado ao cliente da OS
-  def delivery_contact(company, source)
-    return Current.account.contacts.find_by(id: params[:contact_id]) if params[:contact_id].present?
-    return source.contact if source
-
-    linked = ::Outsider::Erp::Records::ContactFinder.new(Current.account).for_clients([[company, params[:client_code]]]).values.first
-    linked && Current.account.contacts.find_by(id: linked['contact_id'])
-  end
-
   # enviar o relatório ao cliente pede "Usa" na aba Ordens de serviço do perfil (o do orçamento pede na de Orçamentos)
   def ensure_send_access
     render json: { error: 'erp_forbidden' }, status: :forbidden unless allows_screen?('erp_orders', 'use')
-  end
-
-  def send_recipients
-    @send_recipients ||= ::Outsider::Erp::BudgetRecipients.new(Current.account_user)
-  end
-
-  def deliver_params
-    params.permit(:channel, :contact_id, :inbox_id, :subject, :message, to: [])
-  end
-
-  def conversation
-    return if params[:conversation_id].blank?
-
-    conversation = Current.account.conversations.find_by!(display_id: params[:conversation_id])
-    authorize conversation, :show?
-    conversation
   end
 end

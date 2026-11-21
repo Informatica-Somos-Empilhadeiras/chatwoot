@@ -1,6 +1,6 @@
 <script setup>
 // OUTSIDER: o PDF à esquerda e o envio ao cliente à direita. Do orçamento já no ERP (o PDF oficial, com os impostos que
-// o ERP calculou, e o histórico de envios) ou de outra fonte, como o relatório da OS (ErpOrderSendDialog), que passa
+// o ERP calculou, e o histórico de envios) ou de outra fonte, como o relatório da OS e a nota fiscal (ErpDocumentSendDialog), que passa
 // source = { pdf, delivery, contacts(q), deliver(payload), labels }. E-mail: vários endereços (já vêm o do contato e,
 // no orçamento, os do cliente no ERP), assunto e mensagem com o texto padrão das Configurações. WhatsApp: na conversa
 // do contato (ou de outro, pela busca) numa caixa de WhatsApp, com a mensagem.
@@ -14,6 +14,7 @@ import Icon from 'dashboard/components-next/icon/Icon.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 import { formatDate } from '../erpStore';
 import { blobError, budgetErrorMessage } from './budgetHelpers';
+import ErpPdfPages from './ErpPdfPages.vue';
 
 const props = defineProps({
   budget: { type: Object, default: null },
@@ -24,6 +25,9 @@ const emit = defineEmits(['sent', 'meta']);
 
 const { t } = useI18n();
 const pdfUrl = ref('');
+// o PDF desenhado pelo pdf.js (igual em qualquer navegador); sem ele, o leitor do navegador
+const pdfFile = ref(null);
+const pdfViewerFailed = ref(false);
 const pdfLoading = ref(true);
 const pdfFailure = ref('');
 const loading = ref(true);
@@ -69,9 +73,8 @@ const loadPdf = async () => {
   pdfFailure.value = '';
   try {
     const response = await api.value.pdf();
-    pdfUrl.value = URL.createObjectURL(
-      new Blob([response.data], { type: 'application/pdf' })
-    );
+    pdfFile.value = new Blob([response.data], { type: 'application/pdf' });
+    pdfUrl.value = URL.createObjectURL(pdfFile.value);
   } catch (error) {
     pdfFailure.value = budgetErrorMessage(t, await blobError(error));
   } finally {
@@ -222,10 +225,16 @@ const TEXTAREA =
         </button>
       </p>
       <iframe
-        v-if="pdfUrl"
+        v-if="pdfUrl && pdfViewerFailed"
         :src="pdfUrl"
         :title="labels.pdfTitle"
         class="flex-1 w-full border-0 min-h-[24rem]"
+      />
+      <ErpPdfPages
+        v-else-if="pdfFile"
+        :file="pdfFile"
+        class="flex-1 min-h-[24rem]"
+        @failed="pdfViewerFailed = true"
       />
     </div>
 

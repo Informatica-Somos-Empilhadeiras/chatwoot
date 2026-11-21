@@ -1,6 +1,6 @@
 <script setup>
 // OUTSIDER: uma ordem de serviço do ERP (espelho). Fechada mostra o essencial; aberta mostra os detalhes, o relatório
-// com as fotos do checklist (PDF, ErpPdfDialog), o envio dele ao cliente (ErpOrderSendDialog, para quem "Usa" as OS) e,
+// com as fotos do checklist (PDF, ErpPdfDialog), o envio dele ao cliente (ErpDocumentSendDialog, para quem "Usa" as OS) e,
 // para quem pode editar (escrita ligada + perfil "Usa"), os controles de edição (ErpOrderEditor). O cartão só exibe; a
 // edição e a gravação ficam no editor.
 import { ref, computed } from 'vue';
@@ -10,7 +10,7 @@ import Button from 'dashboard/components-next/button/Button.vue';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
 import ErpOrderEditor from './ErpOrderEditor.vue';
 import ErpPdfDialog from '../budgets/ErpPdfDialog.vue';
-import ErpOrderSendDialog from './ErpOrderSendDialog.vue';
+import ErpDocumentSendDialog from './ErpDocumentSendDialog.vue';
 import { allows } from '../../access/accessStore';
 import { erpState, formatDate, dotClass, substatusClass } from '../erpStore';
 
@@ -161,7 +161,7 @@ const details = computed(() =>
           @click="openSend"
         />
         <ErpPdfDialog ref="pdfRef" />
-        <ErpOrderSendDialog ref="sendRef" />
+        <ErpDocumentSendDialog ref="sendRef" />
       </div>
       <p v-if="order.Nome" class="mb-0 text-xs font-medium text-n-slate-12">
         {{ order.Nome }}

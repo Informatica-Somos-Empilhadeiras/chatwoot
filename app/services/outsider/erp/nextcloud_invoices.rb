@@ -37,16 +37,21 @@ class Outsider::Erp::NextcloudInvoices
 
   # kind: invoices (NF-e) ou service_invoices (NFS-e); number: a chave da nota no ERP. { 'filename', 'content' }
   def fetch(company, number, kind)
+    note = summary(company, number, kind)
+    href = pick(this_number(search(note['numero']), note['numero']), note) || raise(NotFound)
+    { 'filename' => File.basename(URI.decode_uri_component(href)), 'content' => download(href) }
+  end
+
+  # a nota no ERP: { 'numero' (o que vai no nome do arquivo), 'cfop', 'pedido', 'cliente' (nome) }
+  def summary(company, number, kind)
     raise ArgumentError, 'company' unless @settings.companies.include?(company)
 
     @kind = KINDS.fetch(kind)
     note = note(company, Integer(number.to_s, 10))
     # NFS-e sem o número da prefeitura ainda não foi emitida
-    file_number = note['numero'].to_i
-    raise NotFound unless file_number.positive?
+    raise NotFound unless note['numero'].to_i.positive?
 
-    href = pick(this_number(search(file_number), file_number), note) || raise(NotFound)
-    { 'filename' => File.basename(URI.decode_uri_component(href)), 'content' => download(href) }
+    note.merge('numero' => note['numero'].to_i)
   end
 
   private

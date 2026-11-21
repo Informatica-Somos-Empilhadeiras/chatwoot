@@ -166,6 +166,27 @@ class ErpAPI extends ApiClient {
     );
   }
 
+  // envio da nota (NF-e/NFS-e do Nextcloud) ao cliente, como o da OS: textos, arquivo e para quem/por onde
+  invoiceDelivery(kind, company, number, params) {
+    return axios.get(
+      `${this.url}/records/${kind}/${company}/${number}/delivery`,
+      { params }
+    );
+  }
+
+  invoiceContacts(q) {
+    return axios.get(`${this.url}/records/invoice_contacts`, {
+      params: { q },
+    });
+  }
+
+  deliverInvoice(kind, company, number, data) {
+    return axios.post(
+      `${this.url}/records/${kind}/${company}/${number}/deliver`,
+      data
+    );
+  }
+
   budgetPdf(id) {
     return axios.get(`${this.url}/budgets/${id}/pdf`, { responseType: 'blob' });
   }

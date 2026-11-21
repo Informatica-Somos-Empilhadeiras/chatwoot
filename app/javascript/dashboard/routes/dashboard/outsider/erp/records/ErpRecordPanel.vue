@@ -18,7 +18,7 @@ import ErpRecordTimeline from './ErpRecordTimeline.vue';
 import ErpOrderEditor from '../components/ErpOrderEditor.vue';
 import ErpBudgetDrawer from '../budgets/ErpBudgetDrawer.vue';
 import ErpPdfDialog from '../budgets/ErpPdfDialog.vue';
-import ErpOrderSendDialog from '../components/ErpOrderSendDialog.vue';
+import ErpDocumentSendDialog from '../components/ErpDocumentSendDialog.vue';
 import { budgetErrorMessage } from '../budgets/budgetHelpers';
 import { allows } from '../../access/accessStore';
 import {
@@ -272,6 +272,7 @@ const edit = computed(() => detail.value?.edit || {});
 // enviar e copiar pedem "Usa" na aba Orçamentos do perfil; editar pede também a gravação de orçamentos ligada
 const canUseQuotes = computed(() => allows('erp_quotes', 'use'));
 const canUseOrders = computed(() => allows('erp_orders', 'use'));
+const canUseInvoices = computed(() => allows('erp_invoices', 'use'));
 const editBlocked = computed(() => {
   if (!canUseQuotes.value) return t('OUTSIDER_ERP.RECORDS.EDIT.NO_ACCESS');
   if (!erpState.quoteWriteEnabled)
@@ -352,12 +353,22 @@ const showInvoice = () =>
   );
 
 // OS: o mesmo relatório, com a prévia e o envio ao cliente por WhatsApp ou e-mail (como o orçamento)
-const orderSendRef = ref(null);
+const sendDialogRef = ref(null);
 const sendOrder = () =>
-  orderSendRef.value?.open({
+  sendDialogRef.value?.open({
     company: view.value.company,
     code: view.value.number,
     contactId: detail.value?.contact_id,
+  });
+
+// NF-e e NFS-e: a nota do Nextcloud enviada ao cliente por WhatsApp ou e-mail (como a OS)
+const sendInvoice = () =>
+  sendDialogRef.value?.open({
+    kind: viewKind.value,
+    company: view.value.company,
+    code: view.value.number,
+    contactId: detail.value?.contact_id,
+    clientCode: header.value.cliente_codigo,
   });
 
 const send = () =>
@@ -508,6 +519,15 @@ const LABEL =
           icon="i-lucide-file-text"
           :label="t('OUTSIDER_ERP.RECORDS.INVOICE.VIEW')"
           @click="showInvoice"
+        />
+        <Button
+          v-if="canUseInvoices"
+          size="sm"
+          variant="faded"
+          color="slate"
+          icon="i-lucide-send"
+          :label="t('OUTSIDER_ERP.RECORDS.INVOICE.SEND.BUTTON')"
+          @click="sendInvoice"
         />
       </div>
       <div
@@ -777,6 +797,6 @@ const LABEL =
       @changed="refresh"
     />
     <ErpPdfDialog ref="pdfRef" />
-    <ErpOrderSendDialog ref="orderSendRef" />
+    <ErpDocumentSendDialog ref="sendDialogRef" />
   </aside>
 </template>

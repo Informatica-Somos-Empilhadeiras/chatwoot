@@ -216,6 +216,11 @@
       "OS_EMAIL_SUBJECT": "Email subject",
       "OS_EMAIL_BODY": "Email text",
       "OS_WHATSAPP_TEXT": "WhatsApp text",
+      "NF_SEND": "Sending the invoice",
+      "NF_PLACEHOLDERS": "Use {numero}, {contato}, {cliente} and {vendedor}: they are replaced with the invoice data.",
+      "NF_EMAIL_SUBJECT": "Email subject",
+      "NF_EMAIL_BODY": "Email text",
+      "NF_WHATSAPP_TEXT": "WhatsApp text",
       "NEXTCLOUD": "Invoices on Nextcloud",
       "NEXTCLOUD_HINT": "The chat shows the invoice PDF stored on Nextcloud, found by number, CFOP and customer (\"3594 (6102) CUSTOMER.pdf\"). Nothing is stored in the chat.",
       "NEXTCLOUD_OFF": "Off: fill in address, user, app password and root folder, then save.",
@@ -447,6 +452,14 @@
     },
     "RECORDS": {
       "INVOICE": {
+        "SEND": {
+          "BUTTON": "Send",
+          "TITLE": "Send the invoice to the customer",
+          "PDF_TITLE": "Invoice",
+          "HINT": "The invoice goes attached, exactly as it is on Nextcloud. On WhatsApp it stays in the conversation; the email becomes a note in the conversation it was sent from.",
+          "EMAIL_DONE": "Invoice sent by email.",
+          "WHATSAPP_DONE": "Invoice sent on WhatsApp."
+        },
         "VIEW": "View invoice"
       },
       "NUMBER": "Number",
