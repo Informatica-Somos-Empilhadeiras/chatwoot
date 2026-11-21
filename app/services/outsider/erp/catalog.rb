@@ -88,8 +88,11 @@ class Outsider::Erp::Catalog
   def sql(company, column, query)
     fields = schema.select_list(company, TABLE, 'P', FIELDS)
     "SELECT P.CodigoProduto AS codigo, #{column} AS descricao, #{fields} FROM #{S.ident(company)}.produtos P " \
-      "WHERE #{conditions(company, column, query).join(' AND ')} ORDER BY #{column} LIMIT #{LIMIT}"
+      "WHERE #{conditions(company, column, query).join(' AND ')} ORDER BY #{exact_first(query)}#{column} LIMIT #{LIMIT}"
   end
+
+  # buscando um número, o produto com esse código vem primeiro (antes dos que só têm o número no nome)
+  def exact_first(query) = query.match?(/\A\d{1,9}\z/) ? "P.CodigoProduto = #{S.int(query)} DESC, " : ''
 
   # só os ativos; número: o código, o código de fábrica ou a descrição com ele; texto: todas as palavras na descrição
   def conditions(company, column, query)

@@ -3,18 +3,17 @@
 // novo; as mais antigas saem quando passa de MAX.
 import ErpAPI from 'dashboard/api/outsider/erp';
 
-const MAX = 60;
+const MAX = 120;
 const cache = new Map();
 
-export const photoUrl = (company, code, id) => {
-  const key = `${company}:${code}:${id}`;
-  const cached = cache.get(key);
-  if (cached) {
+const cached = (key, request) => {
+  const hit = cache.get(key);
+  if (hit) {
     cache.delete(key);
-    cache.set(key, cached);
-    return cached;
+    cache.set(key, hit);
+    return hit;
   }
-  const promise = ErpAPI.productPhoto(company, code, id).then(response =>
+  const promise = request().then(response =>
     URL.createObjectURL(response.data)
   );
   promise.catch(() => cache.delete(key));
@@ -26,6 +25,17 @@ export const photoUrl = (company, code, id) => {
   }
   return promise;
 };
+
+export const photoUrl = (company, code, id) =>
+  cached(`${company}:${code}:${id}`, () =>
+    ErpAPI.productPhoto(company, code, id)
+  );
+
+// a primeira foto pequena (miniatura da lista)
+export const thumbnailUrl = (company, code) =>
+  cached(`${company}:${code}:thumb`, () =>
+    ErpAPI.productThumbnail(company, code)
+  );
 
 // a imagem em PNG, o formato que a área de transferência aceita em todos os navegadores
 export const pngBlob = async url => {

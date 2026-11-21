@@ -107,9 +107,24 @@ class ErpAPI extends ApiClient {
     });
   }
 
+  // quantas fotos têm os produtos já escolhidos no orçamento ({ counts: { 1022: 3 } })
+  productPhotoCounts(company, codes) {
+    return axios.get(`${this.url}/catalog/photo_counts`, {
+      params: { company, codes: codes.join(',') },
+    });
+  }
+
   // a imagem em si (vem do Nextcloud); em blob porque o <img> não leva a autenticação da API
   productPhoto(company, code, id) {
     return axios.get(`${this.url}/catalog/${code}/photos/${id}`, {
+      params: { company },
+      responseType: 'blob',
+    });
+  }
+
+  // a primeira foto em miniatura (JPG pequeno), para a lista mostrar a foto no lugar do ícone
+  productThumbnail(company, code) {
+    return axios.get(`${this.url}/catalog/${code}/thumbnail`, {
       params: { company },
       responseType: 'blob',
     });

@@ -11,6 +11,7 @@ import ErpAPI from 'dashboard/api/outsider/erp';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 import ErpPhotoViewer from '../products/ErpPhotoViewer.vue';
+import ErpPhotoThumb from '../products/ErpPhotoThumb.vue';
 import { erpState, erpErrorMessage, formatMoney } from '../erpStore';
 import { formatQty, parseNumber } from './budgetHelpers';
 
@@ -172,6 +173,10 @@ const stockText = product => {
     : t('OUTSIDER_ERP.BUDGET.ITEMS.NO_STOCK');
 };
 
+// botões de "Descrição técnica" e "Fotos" em cada produto: com fundo, para não passarem despercebidos
+const CHIP =
+  'inline-flex items-center gap-1 h-7 px-2.5 text-xs font-medium rounded-md';
+
 const INPUT =
   '!mb-0 h-8 w-14 px-2 text-sm text-right tabular-nums rounded-lg reset-base bg-n-solid-1 text-n-slate-12 outline outline-1 -outline-offset-1 outline-n-slate-6 focus:outline-n-brand';
 
@@ -236,17 +241,25 @@ defineExpose({ focus: () => searchRef.value?.focus() });
         "
       >
         <div
-          class="grid items-center gap-3 px-3 py-2 grid-cols-[2rem_minmax(0,1fr)_auto_auto] sm:grid-cols-[2rem_minmax(0,1fr)_6.5rem_auto_auto]"
+          class="grid items-center gap-3 px-3 py-2 grid-cols-[3.5rem_minmax(0,1fr)_auto_auto] sm:grid-cols-[3.5rem_minmax(0,1fr)_6.5rem_auto_auto]"
           @click="mark(index)"
         >
+          <ErpPhotoThumb
+            v-if="erpState.productPhotos && product.fotos"
+            :company="company"
+            :code="product.codigo"
+            :count="product.fotos"
+            @open="openPhotos(product)"
+          />
           <span
-            class="flex items-center justify-center rounded-lg size-8 bg-n-alpha-2 text-n-slate-11"
+            v-else
+            class="flex items-center justify-center rounded-lg size-14 bg-n-alpha-2 text-n-slate-11"
           >
             <Icon
               :icon="
                 product.tipo === 1 ? 'i-lucide-wrench' : 'i-lucide-package'
               "
-              class="size-4"
+              class="size-5"
             />
           </span>
           <div class="flex flex-col min-w-0">
@@ -283,21 +296,44 @@ defineExpose({ focus: () => searchRef.value?.focus() });
               <span v-if="product.ncm" class="hidden md:inline">
                 {{ t('OUTSIDER_ERP.BUDGET.ITEMS.NCM', { ncm: product.ncm }) }}
               </span>
+            </span>
+            <span class="flex flex-wrap items-center gap-1.5 mt-1">
               <button
                 type="button"
-                class="text-n-blue-11 hover:underline"
+                :class="[
+                  CHIP,
+                  technicalOpen === product.codigo
+                    ? 'bg-n-slate-12 text-n-slate-1'
+                    : 'bg-n-alpha-2 text-n-slate-12 hover:bg-n-alpha-3',
+                ]"
                 @click.stop="toggleTechnical(product)"
               >
+                <Icon icon="i-lucide-file-text" class="size-3.5" />
                 {{ t('OUTSIDER_ERP.BUDGET.ITEMS.TECHNICAL') }}
+                <Icon
+                  :icon="
+                    technicalOpen === product.codigo
+                      ? 'i-lucide-chevron-up'
+                      : 'i-lucide-chevron-down'
+                  "
+                  class="size-3.5"
+                />
               </button>
               <button
-                v-if="erpState.productPhotos"
+                v-if="erpState.productPhotos && product.fotos !== 0"
                 type="button"
-                class="flex items-center gap-0.5 text-n-blue-11 hover:underline"
+                class="bg-n-teal-9 text-white hover:bg-n-teal-10"
+                :class="[CHIP]"
                 @click.stop="openPhotos(product)"
               >
                 <Icon icon="i-lucide-images" class="size-3.5" />
-                {{ t('OUTSIDER_ERP.PRODUCTS.PHOTOS.BUTTON') }}
+                {{
+                  product.fotos
+                    ? t('OUTSIDER_ERP.PRODUCTS.PHOTOS.BUTTON_COUNT', {
+                        count: product.fotos,
+                      })
+                    : t('OUTSIDER_ERP.PRODUCTS.PHOTOS.BUTTON')
+                }}
               </button>
             </span>
           </div>
@@ -346,7 +382,7 @@ defineExpose({ focus: () => searchRef.value?.focus() });
         </div>
         <p
           v-if="technicalOpen === product.codigo"
-          class="px-3 pb-2 mb-0 text-xs whitespace-pre-line pl-14 text-n-slate-11"
+          class="px-3 py-2 mx-3 mb-2 text-sm whitespace-pre-line rounded-lg ml-[5rem] bg-n-alpha-2 text-n-slate-12"
         >
           {{
             technical[product.codigo] === undefined

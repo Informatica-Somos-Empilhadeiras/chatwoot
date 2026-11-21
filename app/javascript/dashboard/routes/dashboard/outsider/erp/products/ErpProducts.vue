@@ -9,6 +9,7 @@ import ErpAPI from 'dashboard/api/outsider/erp';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 import ErpProductDetail from './ErpProductDetail.vue';
+import ErpPhotoThumb from './ErpPhotoThumb.vue';
 import { erpState, erpErrorMessage, formatMoney } from '../erpStore';
 
 const { t } = useI18n();
@@ -30,6 +31,11 @@ const load = async () => {
     const { data } = await ErpAPI.catalog(company.value, query.value.trim());
     if (mine !== lastRun) return;
     products.value = data.products || [];
+    // código exato digitado: já abre o produto
+    const exact = products.value.find(
+      product => String(product.codigo) === query.value.trim()
+    );
+    if (exact) selected.value = exact.codigo;
   } catch (error) {
     if (mine === lastRun) {
       products.value = [];
@@ -46,9 +52,6 @@ watch(company, () => {
   load();
 });
 onMounted(load);
-
-const SELECT =
-  '!mb-0 h-9 px-2 text-sm rounded-lg reset-base bg-n-solid-1 text-n-slate-12 outline outline-1 -outline-offset-1 outline-n-slate-6';
 </script>
 
 <template>
@@ -58,32 +61,46 @@ const SELECT =
     <aside
       class="flex flex-col min-h-0 overflow-hidden border rounded-xl border-n-weak bg-n-solid-1"
     >
-      <div class="flex gap-2 p-3 border-b border-n-weak">
-        <label
-          class="flex items-center flex-1 min-w-0 gap-2 px-2 rounded-lg h-9 bg-n-alpha-1 outline outline-1 -outline-offset-1 outline-n-slate-6 focus-within:outline-n-brand"
-        >
+      <div class="flex flex-col gap-2 p-3 border-b border-n-weak">
+        <div class="relative">
           <Icon
             icon="i-lucide-search"
-            class="size-4 text-n-slate-10 shrink-0"
+            class="absolute -translate-y-1/2 pointer-events-none size-4 left-3 top-1/2 text-n-slate-10"
           />
           <input
             v-model="query"
-            type="search"
-            class="!mb-0 flex-1 min-w-0 h-full text-sm bg-transparent reset-base text-n-slate-12 placeholder:text-n-slate-10"
-            :placeholder="t('OUTSIDER_ERP.BUDGET.ITEMS.SEARCH')"
+            type="text"
+            :placeholder="t('OUTSIDER_ERP.PRODUCTS.SEARCH')"
+            class="!mb-0 w-full h-10 pl-9 pr-9 text-sm rounded-xl reset-base bg-n-alpha-1 text-n-slate-12 outline outline-1 -outline-offset-1 outline-n-slate-6 focus:outline-2 focus:outline-n-brand"
           />
-          <Spinner v-if="loading" class="size-3.5 text-n-slate-10" />
-        </label>
-        <select
+          <Spinner
+            v-if="loading"
+            class="absolute -translate-y-1/2 right-3 top-1/2 size-4 text-n-slate-10"
+          />
+        </div>
+        <div
           v-if="erpState.companies.length > 1"
-          v-model="company"
-          :class="SELECT"
+          class="flex p-0.5 rounded-lg bg-n-alpha-2"
+          role="radiogroup"
           :aria-label="t('OUTSIDER_ERP.RECORDS.UNIT')"
         >
-          <option v-for="item in erpState.companies" :key="item" :value="item">
+          <button
+            v-for="item in erpState.companies"
+            :key="item"
+            type="button"
+            role="radio"
+            :aria-checked="company === item"
+            class="flex-1 h-7 px-2.5 text-xs rounded-md truncate"
+            :class="
+              company === item
+                ? 'bg-n-solid-1 text-n-slate-12 font-medium shadow-sm'
+                : 'text-n-slate-11 hover:text-n-slate-12'
+            "
+            @click="company = item"
+          >
             {{ item }}
-          </option>
-        </select>
+          </button>
+        </div>
       </div>
       <div class="flex-1 min-h-0 overflow-y-auto max-h-[50vh] md:max-h-none">
         <p v-if="failure" class="p-3 mb-0 text-xs text-n-ruby-11">
@@ -110,14 +127,23 @@ const SELECT =
           "
           @click="selected = product.codigo"
         >
+          <ErpPhotoThumb
+            v-if="product.fotos"
+            :company="company"
+            :code="product.codigo"
+            :count="product.fotos"
+            size="size-11"
+            @open="selected = product.codigo"
+          />
           <span
-            class="flex items-center justify-center rounded-lg shrink-0 size-8 bg-n-alpha-2 text-n-slate-11"
+            v-else
+            class="flex items-center justify-center rounded-lg shrink-0 size-11 bg-n-alpha-2 text-n-slate-11"
           >
             <Icon
               :icon="
                 product.tipo === 1 ? 'i-lucide-wrench' : 'i-lucide-package'
               "
-              class="size-4"
+              class="size-5"
             />
           </span>
           <span class="flex flex-col flex-1 min-w-0">

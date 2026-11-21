@@ -30,6 +30,18 @@ class Outsider::Erp::NextcloudClient
     raise Error, e.class.name
   end
 
+  # os nomes dos arquivos direto numa pasta (sem as subpastas), numa chamada só
+  def list(folder)
+    response = http.request(list_request(folder))
+    raise Error, "HTTP #{response.code}" unless response.code == '207'
+
+    Nokogiri::XML(response.body).remove_namespaces!.xpath('//response[not(.//collection)]/href').map do |href|
+      URI.decode_uri_component(File.basename(href.text))
+    end
+  rescue *NETWORK_ERRORS => e
+    raise Error, e.class.name
+  end
+
   # o conteúdo de um arquivo pelo href que a busca devolveu
   def download(href)
     request = Net::HTTP::Get.new(href)
@@ -66,6 +78,15 @@ class Outsider::Erp::NextcloudClient
     rescue JSON::ParserError
       @settings.nextcloud_user
     end
+  end
+
+  def list_request(folder)
+    request = Net::HTTP::Propfind.new("#{files_root}/#{encoded(folder.delete_prefix('/'))}/")
+    request.basic_auth(@settings.nextcloud_user, @settings.nextcloud_password)
+    request['Depth'] = '1'
+    request['Content-Type'] = 'text/xml; charset=utf-8'
+    request.body = '<?xml version="1.0"?><d:propfind xmlns:d="DAV:"><d:prop><d:resourcetype/></d:prop></d:propfind>'
+    request
   end
 
   def search_request(folder, pattern)

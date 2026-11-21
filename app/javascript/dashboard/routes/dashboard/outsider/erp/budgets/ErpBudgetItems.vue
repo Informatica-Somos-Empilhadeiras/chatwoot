@@ -1,10 +1,15 @@
 <script setup>
 // OUTSIDER: peças e serviços do orçamento. Quantidade, valor e desconto (%) se editam direto na linha; a busca de produto
-// fica embaixo da tabela (ErpProductSearch), assim a lista que abre não tapa os itens já escolhidos.
-import { ref } from 'vue';
+// fica embaixo da tabela (ErpProductSearch), assim a lista que abre não tapa os itens já escolhidos. Item com foto tem o
+// botão "Fotos (n)", que abre o carrossel (ErpPhotoViewer) como na busca.
+import { ref, computed, watch, inject } from 'vue';
 import { useI18n } from 'vue-i18n';
+import ErpAPI from 'dashboard/api/outsider/erp';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
 import ErpProductSearch from './ErpProductSearch.vue';
+import ErpPhotoViewer from '../products/ErpPhotoViewer.vue';
+import ErpPhotoThumb from '../products/ErpPhotoThumb.vue';
+import { erpState } from '../erpStore';
 import {
   formatNumber,
   formatQty,
@@ -23,6 +28,39 @@ const items = defineModel({ type: Array, default: () => [] });
 
 const { t } = useI18n();
 const searchRef = ref(null);
+const viewerRef = ref(null);
+const photoTarget = inject('erpPhotoTarget', null);
+// { código: quantas fotos } dos itens; só pergunta pelos códigos que ainda não sabe
+const photoCounts = ref({});
+
+const codes = computed(() => [
+  ...new Set(items.value.map(item => Number(item.codigo)).filter(Boolean)),
+]);
+
+watch(
+  [codes, () => props.company, () => erpState.productPhotos],
+  async ([list, company, enabled], [, oldCompany] = []) => {
+    if (!enabled || !company) return;
+    if (company !== oldCompany) photoCounts.value = {};
+    const missing = list.filter(code => !(code in photoCounts.value));
+    if (!missing.length) return;
+    try {
+      const { data } = await ErpAPI.productPhotoCounts(company, missing);
+      photoCounts.value = { ...photoCounts.value, ...data.counts };
+    } catch {
+      // sem a contagem (Nextcloud fora), o item fica sem o botão
+    }
+  },
+  { immediate: true }
+);
+
+const openPhotos = item =>
+  viewerRef.value?.open({
+    company: props.company,
+    code: Number(item.codigo),
+    title: item.descricao,
+    target: photoTarget?.value,
+  });
 
 const add = item => {
   items.value = [...items.value, item];
@@ -61,7 +99,7 @@ const shown = (item, field) => {
 const INPUT =
   '!mb-0 h-8 px-2 text-sm text-right rounded-lg reset-base bg-n-solid-1 text-n-slate-12 outline outline-1 -outline-offset-1 outline-n-slate-6 focus:outline-n-brand disabled:opacity-70';
 const ROW =
-  'flex flex-wrap items-center gap-2 sm:grid sm:grid-cols-[2rem_3.5rem_minmax(0,1fr)_4.5rem_6.5rem_4.5rem_6rem_1.75rem] sm:gap-3';
+  'flex flex-wrap items-center gap-2 sm:grid sm:grid-cols-[2.5rem_3.5rem_minmax(0,1fr)_4.5rem_6.5rem_4.5rem_6rem_1.75rem] sm:gap-3';
 
 defineExpose({ focusSearch: () => searchRef.value?.focus() });
 </script>
@@ -91,8 +129,17 @@ defineExpose({ focusSearch: () => searchRef.value?.focus() });
       :class="ROW"
       class="px-1 py-1.5 border-b border-n-weak last:border-b-0"
     >
+      <ErpPhotoThumb
+        v-if="photoCounts[Number(item.codigo)]"
+        :company="company"
+        :code="Number(item.codigo)"
+        :count="photoCounts[Number(item.codigo)]"
+        size="size-10"
+        @open="openPhotos(item)"
+      />
       <span
-        class="items-center justify-center hidden rounded-lg sm:flex size-8 bg-n-alpha-2 text-n-slate-11"
+        v-else
+        class="items-center justify-center hidden rounded-lg sm:flex size-10 bg-n-alpha-2 text-n-slate-11"
       >
         <Icon
           :icon="
@@ -116,6 +163,19 @@ defineExpose({ focusSearch: () => searchRef.value?.focus() });
         >
           {{ t('OUTSIDER_ERP.BUDGET.ITEMS.SERVICE') }}
         </span>
+        <button
+          v-if="photoCounts[Number(item.codigo)]"
+          type="button"
+          class="inline-flex items-center gap-1 h-6 px-2 text-xs font-medium rounded-md shrink-0 bg-n-teal-9 text-white hover:bg-n-teal-10"
+          @click="openPhotos(item)"
+        >
+          <Icon icon="i-lucide-images" class="size-3.5" />
+          {{
+            t('OUTSIDER_ERP.PRODUCTS.PHOTOS.BUTTON_COUNT', {
+              count: photoCounts[Number(item.codigo)],
+            })
+          }}
+        </button>
       </span>
       <input
         :value="shown(item, 'quantidade')"
@@ -178,5 +238,6 @@ defineExpose({ focusSearch: () => searchRef.value?.focus() });
     <p v-if="!items.length && readOnly" class="mb-0 text-sm text-n-slate-10">
       {{ t('OUTSIDER_ERP.BUDGET.ITEMS.EMPTY') }}
     </p>
+    <ErpPhotoViewer ref="viewerRef" />
   </div>
 </template>

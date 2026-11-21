@@ -56,8 +56,8 @@ const go = next => {
   index.value = (next + total) % total;
   composing.value = false;
   load(photos.value[index.value]);
-  // a próxima já vem baixando
-  if (total > 1) load(photos.value[(index.value + 1) % total]);
+  // as outras vêm logo atrás (as miniaturas mostram todas)
+  photos.value.forEach(load);
 };
 
 // options: { company, code, title, photos (se já tiver a lista), index, target }
@@ -157,30 +157,36 @@ defineExpose({ open });
       v-if="isOpen"
       ref="rootRef"
       tabindex="-1"
-      class="fixed inset-0 z-[10001] flex items-center justify-center p-0 outline-none sm:p-6 bg-n-alpha-black1 backdrop-blur-[2px]"
+      class="fixed inset-0 z-[10001] flex items-center justify-center outline-none sm:p-6 bg-n-alpha-black1 backdrop-blur-[2px]"
       @keydown="onKey"
       @keydown.esc.stop="close"
       @click.self="close"
     >
       <div
-        class="flex flex-col w-full h-full max-w-4xl overflow-hidden shadow-xl sm:h-auto sm:max-h-full sm:rounded-xl bg-n-solid-2 outline outline-1 outline-n-container"
+        class="grid grid-rows-[auto_minmax(0,1fr)_auto_auto] w-full h-full sm:w-[min(64rem,100%)] sm:h-[min(52rem,100%)] overflow-hidden shadow-xl sm:rounded-xl bg-n-solid-2 outline outline-1 outline-n-container"
       >
         <header
-          class="flex items-center justify-between gap-2 px-4 py-3 border-b border-n-weak"
+          class="flex items-center gap-3 px-4 py-3 border-b border-n-weak"
         >
-          <div class="flex flex-col min-w-0">
-            <span class="text-sm font-medium truncate text-n-slate-12">
-              {{ product.code }} · {{ product.title }}
+          <div class="flex flex-col flex-1 min-w-0">
+            <span class="text-xs text-n-slate-10">
+              {{ t('OUTSIDER_ERP.PRODUCTS.CODE', { code: product.code }) }}
             </span>
-            <span v-if="photos.length" class="text-xs text-n-slate-10">
-              {{
-                t('OUTSIDER_ERP.PRODUCTS.PHOTOS.COUNTER', {
-                  current: index + 1,
-                  total: photos.length,
-                })
-              }}
+            <span class="text-sm font-medium truncate text-n-slate-12">
+              {{ product.title }}
             </span>
           </div>
+          <span
+            v-if="photos.length"
+            class="px-2.5 py-1 text-sm font-semibold rounded-lg shrink-0 tabular-nums bg-n-alpha-2 text-n-slate-12"
+          >
+            {{
+              t('OUTSIDER_ERP.PRODUCTS.PHOTOS.COUNTER', {
+                current: index + 1,
+                total: photos.length,
+              })
+            }}
+          </span>
           <Button
             size="sm"
             variant="ghost"
@@ -191,65 +197,73 @@ defineExpose({ open });
           />
         </header>
 
-        <div
-          class="relative flex items-center justify-center flex-1 min-h-[18rem] sm:h-[60vh] bg-n-alpha-1"
-        >
-          <Spinner
+        <div class="relative min-h-[16rem] bg-n-alpha-1">
+          <div
             v-if="loading || (current && !currentUrl && !broken[current.id])"
-            class="text-n-slate-10"
-          />
-          <p v-else-if="failure" class="px-6 mb-0 text-sm text-n-ruby-11">
-            {{ failure }}
-          </p>
-          <p
-            v-else-if="!photos.length"
-            class="px-6 mb-0 text-sm text-n-slate-11"
+            class="absolute inset-0 flex items-center justify-center"
           >
-            {{ t('OUTSIDER_ERP.PRODUCTS.PHOTOS.NONE') }}
-          </p>
+            <Spinner class="text-n-slate-10" />
+          </div>
           <p
-            v-else-if="broken[current.id]"
-            class="px-6 mb-0 text-sm text-center text-n-slate-11"
+            v-else-if="failure || !photos.length || broken[current.id]"
+            class="absolute inset-0 flex items-center justify-center px-6 mb-0 text-sm text-center text-n-slate-11"
           >
-            {{ t('OUTSIDER_ERP.PRODUCTS.PHOTOS.MISSING') }}
+            {{
+              failure ||
+              (photos.length
+                ? t('OUTSIDER_ERP.PRODUCTS.PHOTOS.MISSING')
+                : t('OUTSIDER_ERP.PRODUCTS.PHOTOS.NONE'))
+            }}
           </p>
           <img
             v-else-if="currentUrl"
             :src="currentUrl"
             :alt="current.nome"
-            class="object-contain w-full h-full"
+            class="absolute inset-0 object-contain m-auto max-w-full max-h-full p-3"
           />
           <template v-if="photos.length > 1">
             <button
               type="button"
-              class="absolute flex items-center justify-center -translate-y-1/2 rounded-full shadow left-3 top-1/2 size-10 bg-n-solid-1 text-n-slate-12 hover:bg-n-solid-3"
+              class="absolute flex items-center justify-center -translate-y-1/2 rounded-full shadow-lg left-3 top-1/2 size-11 bg-n-slate-12 text-n-slate-1 opacity-90 hover:opacity-100"
               :aria-label="t('OUTSIDER_ERP.PRODUCTS.PHOTOS.PREVIOUS')"
               @click="go(index - 1)"
             >
-              <Icon icon="i-lucide-chevron-left" class="size-5" />
+              <Icon icon="i-lucide-chevron-left" class="size-6" />
             </button>
             <button
               type="button"
-              class="absolute flex items-center justify-center -translate-y-1/2 rounded-full shadow right-3 top-1/2 size-10 bg-n-solid-1 text-n-slate-12 hover:bg-n-solid-3"
+              class="absolute flex items-center justify-center -translate-y-1/2 rounded-full shadow-lg right-3 top-1/2 size-11 bg-n-slate-12 text-n-slate-1 opacity-90 hover:opacity-100"
               :aria-label="t('OUTSIDER_ERP.PRODUCTS.PHOTOS.NEXT')"
               @click="go(index + 1)"
             >
-              <Icon icon="i-lucide-chevron-right" class="size-5" />
+              <Icon icon="i-lucide-chevron-right" class="size-6" />
             </button>
+            <div
+              class="absolute flex gap-1.5 -translate-x-1/2 bottom-3 left-1/2 px-2.5 py-1.5 rounded-full bg-n-slate-12/80"
+            >
+              <span
+                v-for="(photo, position) in photos"
+                :key="photo.id"
+                class="rounded-full size-2"
+                :class="position === index ? 'bg-n-slate-1' : 'bg-n-slate-1/40'"
+              />
+            </div>
           </template>
         </div>
 
         <div
-          v-if="photos.length > 1"
-          class="flex gap-2 px-4 py-2 overflow-x-auto border-t border-n-weak"
+          class="flex gap-2 px-4 py-3 overflow-x-auto border-t border-n-weak"
+          :class="{ hidden: photos.length < 2 }"
         >
           <button
             v-for="(photo, position) in photos"
             :key="photo.id"
             type="button"
-            class="flex items-center justify-center overflow-hidden rounded-lg shrink-0 size-14 bg-n-alpha-2 outline outline-2 -outline-offset-2"
+            class="relative flex items-center justify-center overflow-hidden rounded-lg shrink-0 size-16 bg-n-alpha-2 outline -outline-offset-2"
             :class="
-              position === index ? 'outline-n-brand' : 'outline-transparent'
+              position === index
+                ? 'outline-2 outline-n-brand'
+                : 'outline-1 outline-n-weak opacity-70 hover:opacity-100'
             "
             :aria-label="
               t('OUTSIDER_ERP.PRODUCTS.PHOTOS.COUNTER', {
@@ -266,6 +280,11 @@ defineExpose({ open });
               class="object-cover w-full h-full"
             />
             <Icon v-else icon="i-lucide-image" class="size-4 text-n-slate-9" />
+            <span
+              class="absolute bottom-0.5 right-0.5 min-w-[1.125rem] px-1 text-[11px] font-semibold leading-[1.125rem] text-center rounded bg-n-slate-12 text-n-slate-1"
+            >
+              {{ position + 1 }}
+            </span>
           </button>
         </div>
 
@@ -285,14 +304,12 @@ defineExpose({ open });
           />
           <div class="flex justify-end gap-2">
             <Button
-              size="sm"
               variant="faded"
               color="slate"
               :label="t('OUTSIDER_ERP.CANCEL')"
               @click="composing = false"
             />
             <Button
-              size="sm"
               color="teal"
               icon="i-lucide-send"
               :label="t('OUTSIDER_ERP.PRODUCTS.PHOTOS.SEND_NOW')"
@@ -304,11 +321,15 @@ defineExpose({ open });
 
         <footer
           v-else
-          class="flex flex-wrap items-center justify-end gap-2 px-4 py-3 border-t border-n-weak"
+          class="flex flex-wrap items-center gap-2 px-4 py-3 border-t border-n-weak"
         >
+          <span
+            class="flex-1 min-w-0 text-xs truncate text-n-slate-10"
+            :title="current?.nome"
+          >
+            {{ current?.nome }}
+          </span>
           <Button
-            size="sm"
-            variant="faded"
             color="slate"
             icon="i-lucide-copy"
             :label="t('OUTSIDER_ERP.PRODUCTS.PHOTOS.COPY')"
@@ -316,8 +337,6 @@ defineExpose({ open });
             @click="copy"
           />
           <Button
-            size="sm"
-            variant="faded"
             color="slate"
             icon="i-lucide-download"
             :label="t('OUTSIDER_ERP.BUDGET.PDF.DOWNLOAD')"
@@ -326,7 +345,6 @@ defineExpose({ open });
           />
           <Button
             v-if="canSend"
-            size="sm"
             color="teal"
             icon="i-lucide-message-circle"
             :label="t('OUTSIDER_ERP.PRODUCTS.PHOTOS.SEND')"

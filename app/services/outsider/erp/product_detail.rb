@@ -7,7 +7,7 @@ class Outsider::Erp::ProductDetail
   S = Outsider::Erp::Sql
   HIDDEN = /custo|lucro|margem|markup|comiss|senha/i
   # o que já está no cabeçalho (descrição, preço, unidade, estoque...) e a descrição técnica, que tem lugar próprio
-  SKIP = (%w[CodigoProduto DescrTec] + Outsider::Erp::Catalog::DESCRIPTION + Outsider::Erp::Catalog::FIELDS.values.flatten).freeze
+  SKIP = (%w[CodigoProduto DescrTec] + Outsider::Erp::Catalog::DESCRIPTION + Outsider::Erp::Catalog::FIELDS.values.flatten).map(&:downcase).freeze
   MAX_TEXT = 300
 
   def initialize(account)
@@ -34,7 +34,7 @@ class Outsider::Erp::ProductDetail
 
   # sem os ocultos, os vazios, os zerados e o que não é texto legível (imagem guardada na tabela, por exemplo)
   def visible?(name, value)
-    return false if SKIP.include?(name) || name.match?(HIDDEN) || value.nil? || value == false
+    return false if SKIP.include?(name.downcase) || name.match?(HIDDEN) || value.nil? || value == false
 
     readable?(value.to_s)
   end

@@ -37,9 +37,11 @@ Rails.application.routes.prepend do
               resources :lists, only: [:index]
               resources :catalog, only: [:index, :show] do
                 get :technical, on: :collection
+                get :photo_counts, action: :photo_counts_for, on: :collection
                 # aba Produtos e orçamento: as fotos do produto (no Nextcloud) e o envio de uma ao cliente
                 member do
                   get :photos
+                  get :thumbnail
                   get 'photos/:photo_id', action: :photo, constraints: { photo_id: /\d+/ }
                   post 'photos/:photo_id/send', action: :send_photo, constraints: { photo_id: /\d+/ }
                 end
