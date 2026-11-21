@@ -8,7 +8,8 @@ const waiting = [];
 let running = 0;
 let library = null;
 
-const loadLibrary = () => {
+// o pdf.js e o worker dele, carregados uma vez (miniaturas e a prévia de PDF do ERP, ErpPdfPages)
+export const loadPdfLibrary = () => {
   if (!library) {
     library = Promise.all([
       import('pdfjs-dist/legacy/build/pdf.mjs'),
@@ -60,7 +61,7 @@ const writeStored = (key, value) => {
 };
 
 const render = async (source, width) => {
-  const lib = await loadLibrary();
+  const lib = await loadPdfLibrary();
   const url = typeof source === 'function' ? await source() : source;
   const doc = await lib.getDocument({ url, isEvalSupported: false }).promise;
   try {

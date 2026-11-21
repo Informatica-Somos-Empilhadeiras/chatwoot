@@ -366,6 +366,9 @@
       },
       "PDF": {
         "TITLE": "PDF do orçamento",
+        "ZOOM_IN": "Aumentar",
+        "ZOOM_OUT": "Diminuir",
+        "OPEN": "Abrir no navegador",
         "DOWNLOAD": "Baixar"
       },
       "SEND": {
