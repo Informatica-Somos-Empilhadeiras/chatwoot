@@ -1,10 +1,8 @@
 {
   "OUTSIDER_REPORTS": {
-    "SIDEBAR": "Management reports",
-    "NONE": "No report enabled for you. The administrator enables it in the access profile (Management reports).",
     "TECHNICIANS": {
       "TAB": "Technicians performance",
-      "RULE": "Only sales orders invoiced in the period count (with a valid NF-e or NFS-e issued between the dates). The technician is the one set by the seller on the order; with more than one service order, each technician gets their share. Orders without an invoice do not count.",
+      "RULE": "A technician gets credit for sales orders invoiced in the period (valid NF-e or NFS-e issued between the dates) that have a service order: the one linked to the order in the ERP or, when the service order was done later, the closed one the seller linked on the order in the chat. With more than one service order, each technician gets their share. Orders without an invoice do not count.",
       "PERIODS": {
         "MONTH": "This month",
         "LAST_MONTH": "Last month",
@@ -20,14 +18,15 @@
       "KPI": {
         "BILLED": "Invoiced in the period",
         "ORDERS": "Invoiced orders: {count}",
-        "WITH_TECH": "With technician",
+        "WITH_TECH": "With technician (ERP or chat service order)",
         "COVERAGE": "{pct} of invoiced",
         "COMMISSION": "Technicians commission",
         "COMMISSION_HINT": "{pct} of invoiced · technicians: {count}",
         "WITHOUT_TECH": "Invoiced without technician",
         "WITHOUT_TECH_HINT": "Orders to fill in: {count}",
         "WAITING": "With technician, no invoice",
-        "WAITING_HINT": "Orders waiting for invoice: {count} (not counted)"
+        "WAITING_HINT": "Orders waiting for invoice: {count} (not counted)",
+        "SOURCES": "From ERP service order: {erp} · set in the chat: {chat}"
       },
       "TABLE": {
         "TITLE": "By technician",
@@ -57,11 +56,15 @@
         "SELLER": "Seller",
         "OS": "SO",
         "CREDIT": "Credited",
-        "VALUE": "Value"
+        "VALUE": "Value",
+        "ORIGIN_ERP": "ERP",
+        "ORIGIN_ERP_HINT": "Technician from the service order linked by the ERP",
+        "ORIGIN_CHAT": "chat",
+        "ORIGIN_CHAT_HINT": "Technician set by the seller on the order"
       },
       "LISTS": {
         "WITHOUT_TECH": "Invoiced without technician",
-        "WITHOUT_TECH_HINT": "Open the order and set the service order so it counts.",
+        "WITHOUT_TECH_HINT": "No service order linked in the ERP: open the order and set it.",
         "WITHOUT_TECH_EMPTY": "Every invoiced order in the period has a technician.",
         "WAITING": "With technician, waiting for invoice",
         "WAITING_HINT": "They count in the month the invoice is issued.",

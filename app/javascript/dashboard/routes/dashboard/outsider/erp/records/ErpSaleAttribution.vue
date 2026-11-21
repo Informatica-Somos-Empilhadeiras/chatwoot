@@ -26,6 +26,14 @@ const props = defineProps({
 
 const emit = defineEmits(['changed']);
 
+// o que impede de gravar mesmo com senha (o resto a senha comercial libera)
+const BLOCKING = [
+  'os_nao_encontrada',
+  'sem_tecnico',
+  'os_aberta',
+  'os_cancelada',
+];
+
 const { t } = useI18n();
 const loading = ref(true);
 const failure = ref('');
@@ -145,9 +153,7 @@ const divergences = computed(() =>
   rows.value.flatMap(row => row.info?.divergencias || [])
 );
 const blocking = computed(() =>
-  divergences.value.some(item =>
-    ['os_nao_encontrada', 'sem_tecnico'].includes(item)
-  )
+  divergences.value.some(item => BLOCKING.includes(item))
 );
 const needsPassword = computed(
   () => !blocking.value && divergences.value.length > 0
@@ -402,9 +408,7 @@ const INPUT =
           :key="item"
           class="flex items-start gap-1.5 mb-0 text-xs"
           :class="
-            ['os_nao_encontrada', 'sem_tecnico'].includes(item)
-              ? 'text-n-ruby-11'
-              : 'text-n-amber-11'
+            BLOCKING.includes(item) ? 'text-n-ruby-11' : 'text-n-amber-11'
           "
         >
           <Icon

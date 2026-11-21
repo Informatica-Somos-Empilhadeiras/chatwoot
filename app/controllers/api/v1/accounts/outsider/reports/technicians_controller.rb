@@ -1,4 +1,4 @@
-# OUTSIDER: relatório de desempenho dos técnicos (seção Relatórios de gestão, Outsider::Erp::TechnicianReport). Ver
+# OUTSIDER: relatório de desempenho dos técnicos (aba de relatório da seção ERP, Outsider::Erp::TechnicianReport). Ver
 # pede a linha "Desempenho dos técnicos" do perfil de acesso; a comissão e as metas só o administrador muda.
 class Api::V1::Accounts::Outsider::Reports::TechniciansController < Api::V1::Accounts::BaseController
   before_action :ensure_erp

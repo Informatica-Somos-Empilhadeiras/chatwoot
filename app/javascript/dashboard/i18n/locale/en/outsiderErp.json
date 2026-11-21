@@ -6,7 +6,7 @@
     "CANCEL": "Cancel",
     "SALE_ATTRIBUTION": {
       "TITLE": "Technician and service order",
-      "HINT": "Set by the seller for the technicians report. Counts only after invoicing.",
+      "HINT": "Order without a service order linked in the ERP: set the service order done and closed after invoicing. Counts in the report only after the invoice.",
       "INTERNAL": "Chat only · does not change the ERP",
       "EMPTY": "No technician set for this sale.",
       "ADD": "Set service order",
@@ -32,7 +32,9 @@
         "CLIENTE_DIFERENTE": "The service order customer is someone else ({cliente}).",
         "JA_USADA": "This service order is already on sale {pedido}.",
         "SEM_TECNICO": "This service order has no technician in the ERP.",
-        "OS_NAO_ENCONTRADA": "Service order not found in this unit."
+        "OS_NAO_ENCONTRADA": "Service order not found in this unit.",
+        "OS_ABERTA": "This service order is not closed yet. Only done and closed service orders count.",
+        "OS_CANCELADA": "This service order is cancelled/lost and does not count."
       }
     },
     "PRODUCTS": {
@@ -64,6 +66,7 @@
     },
     "TABS": {
       "PRODUTOS": "Products",
+      "REPORTS": "Reports",
       "BOARD": "Service order board",
       "ORCAMENTOS": "Quotes",
       "OS": "Service orders",
@@ -479,6 +482,8 @@
         "PARTES": "The service order shares must add up to the sale value.",
         "SEM_TECNICO": "This service order has no technician in the ERP. Set it in the service order and try again.",
         "OS_NAO_ENCONTRADA": "Service order not found in this unit.",
+        "OS_ABERTA": "The service order is not closed yet. Close it in Mais Prático and try again.",
+        "OS_CANCELADA": "The service order is cancelled/lost and does not count.",
         "NOT_DRAFT": "This quote is already recorded and no longer changes. Use \"Copy\" to make another.",
         "IN_ERP": "This quote already has an ERP number. Use \"Record again\" to finish.",
         "COMPANY": "This unit is not in the ERP Settings.",

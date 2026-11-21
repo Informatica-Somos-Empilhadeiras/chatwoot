@@ -6,7 +6,7 @@
     "CANCEL": "Cancelar",
     "SALE_ATTRIBUTION": {
       "TITLE": "Técnico e OS do pedido",
-      "HINT": "Informado pelo vendedor para o relatório dos técnicos. Só conta depois do faturamento.",
+      "HINT": "Pedido sem OS ligada no ERP: informe a OS feita e fechada depois do faturamento. Só conta no relatório depois da nota.",
       "INTERNAL": "Só no chat · não muda o ERP",
       "EMPTY": "Nenhum técnico informado para este pedido.",
       "ADD": "Informar OS",
@@ -32,7 +32,9 @@
         "CLIENTE_DIFERENTE": "O cliente da OS é outro ({cliente}).",
         "JA_USADA": "Esta OS já está no pedido {pedido}.",
         "SEM_TECNICO": "Esta OS não tem técnico no ERP.",
-        "OS_NAO_ENCONTRADA": "Não achei esta OS nesta unidade."
+        "OS_NAO_ENCONTRADA": "Não achei esta OS nesta unidade.",
+        "OS_ABERTA": "Esta OS ainda não está fechada. Só OS feita e fechada conta para a premiação.",
+        "OS_CANCELADA": "Esta OS está cancelada/perdida e não conta."
       }
     },
     "PRODUCTS": {
@@ -64,6 +66,7 @@
     },
     "TABS": {
       "PRODUTOS": "Produtos",
+      "REPORTS": "Relatórios",
       "BOARD": "Quadro de OS",
       "ORCAMENTOS": "Orçamentos",
       "OS": "Ordens de serviço",
@@ -479,6 +482,10 @@
         "PARTES": "A soma das partes das OS precisa dar o valor do pedido.",
         "SEM_TECNICO": "Esta OS não tem técnico no ERP. Preencha o técnico na OS e tente de novo.",
         "OS_NAO_ENCONTRADA": "Não achei esta OS nesta unidade.",
+        "OS_ABERTA": "A OS ainda não está fechada. Feche a OS no Mais Prático e tente de novo.",
+        "OS_CANCELADA": "A OS está cancelada/perdida e não conta para a premiação.",
+        "OS_ABERTA": "A OS ainda não está fechada. Feche a OS no Mais Prático e tente de novo.",
+        "OS_CANCELADA": "A OS está cancelada/perdida e não conta para a premiação.",
         "NOT_DRAFT": "Este orçamento já foi gravado e não muda mais. Use \"Copiar\" para fazer outro.",
         "IN_ERP": "Este orçamento já tem número no ERP. Use \"Gravar de novo\" para terminar.",
         "COMPANY": "Esta unidade não está nas Configurações do ERP.",

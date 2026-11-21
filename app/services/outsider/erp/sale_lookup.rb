@@ -18,6 +18,7 @@ class Outsider::Erp::SaleLookup
                                                                'total' => %w[TotalNF Total], 'pedido' => %w[Pedido], 'rotulo' => %w[CodigoNFS] } }
   }.freeze
   NOT_BILLED = /CANCEL|INUTIL|DENEG|REJEIT/i
+  LOST_ORDER = /CANCEL|PERDID/i
 
   def initialize(account, client: nil)
     @account = account
@@ -37,6 +38,14 @@ class Outsider::Erp::SaleLookup
     conditions << "X.numero_col = #{S.int(sale['os'])}" if sale['os'].to_i.positive?
     conditions << "X.orcamento_col = #{S.int(sale['orcamento'])}" if sale['orcamento'].to_i.positive?
     conditions.empty? ? [] : rows(company, 'os', ORDER, conditions.join(' OR '), limit: 10)
+  end
+
+  # OS ligadas aos pedidos pelo próprio ERP (pedido.OS e as OS do mesmo orçamento), em lote; as canceladas/perdidas não
+  def orders_for_sales(company, sales)
+    found = [['numero', sales.pluck('os')], ['orcamento', sales.pluck('orcamento')]].flat_map do |column, values|
+      clean(values).each_slice(BATCH).flat_map { |slice| rows(company, 'os', ORDER, "X.#{column}_col IN (#{slice.join(', ')})") }
+    end
+    found.uniq { |row| row['numero'].to_i }.reject { |row| row['situacao'].to_s.match?(LOST_ORDER) }
   end
 
   # notas de saída válidas dos pedidos: { pedido => [{ kind, numero, data, total, rotulo }] }

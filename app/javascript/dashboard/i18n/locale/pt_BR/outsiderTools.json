@@ -1108,7 +1108,7 @@
       "ATENDIMENTO": "Atendimento",
       "VENDAS": "CRM",
       "ERP": "ERP Mais Prático",
-      "RELATORIOS": "Relat\u00f3rios de gest\u00e3o"
+      "RELATORIOS": "Relatórios do ERP"
     },
     "LEVELS": {
       "NONE": "Não vê",
@@ -1201,8 +1201,8 @@
         "HINT": "Usa: cadastra cliente novo no ERP (pré-cadastro, como o aplicativo de vendas)."
       },
       "REPORTS": {
-        "LABEL": "Seção Relatórios de gestão",
-        "HINT": "Não vê: o menu some. Os relatórios abaixo nunca passam deste nível."
+        "LABEL": "Relatórios do ERP",
+        "HINT": "Não vê: as abas de relatório somem da seção ERP. Os relatórios abaixo nunca passam deste nível."
       },
       "REPORTS_TECHNICIANS": {
         "LABEL": "Desempenho dos técnicos",

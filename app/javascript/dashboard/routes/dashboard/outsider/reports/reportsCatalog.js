@@ -1,11 +1,9 @@
-// OUTSIDER: os relatórios da seção Relatórios de gestão. Cada um é uma aba (gestao/:report) com a linha dele no perfil
-// de acesso (screen, abaixo da tela "reports") e a condição para aparecer. Relatório novo: uma entrada aqui, o
-// componente e o controlador em app/controllers/api/v1/accounts/outsider/reports/.
+// OUTSIDER: os relatórios da seção ERP. Cada um é uma aba (erp/relatorio-<chave>), separada das abas dos módulos, com
+// a linha dele no perfil de acesso (screen, abaixo da tela "reports") e a condição para aparecer. Relatório novo: uma
+// entrada aqui, o componente e o controlador em app/controllers/api/v1/accounts/outsider/reports/.
 import { defineAsyncComponent } from 'vue';
 import { allows } from '../access/accessStore';
 import { erpState } from '../erp/erpStore';
-
-export const REPORTS_ROUTE = 'outsider_reports';
 
 export const REPORTS = [
   {
@@ -20,8 +18,15 @@ export const REPORTS = [
   },
 ];
 
-// os relatórios que a pessoa abre agora (na ordem do menu)
-export const openReports = () => {
+// os relatórios que a pessoa abre agora, como abas da seção ERP (na ordem do menu)
+export const reportTabs = () => {
   if (!allows('reports')) return [];
-  return REPORTS.filter(report => allows(report.screen) && report.available());
+  return REPORTS.filter(
+    report => allows(report.screen) && report.available()
+  ).map(report => ({
+    name: `relatorio-${report.key}`,
+    label: report.label,
+    icon: report.icon,
+    report,
+  }));
 };

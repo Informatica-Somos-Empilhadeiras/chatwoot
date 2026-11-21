@@ -1108,7 +1108,7 @@
       "ATENDIMENTO": "Service",
       "VENDAS": "CRM",
       "ERP": "Mais Prático ERP",
-      "RELATORIOS": "Management reports"
+      "RELATORIOS": "ERP reports"
     },
     "LEVELS": {
       "NONE": "Hidden",
@@ -1201,8 +1201,8 @@
         "HINT": "Use: registers a new client in the ERP (pre-registration, like the sales app)."
       },
       "REPORTS": {
-        "LABEL": "Management reports section",
-        "HINT": "None: the menu is hidden. Reports below never exceed this level."
+        "LABEL": "ERP reports",
+        "HINT": "None: report tabs are hidden in the ERP section. Reports below never exceed this level."
       },
       "REPORTS_TECHNICIANS": {
         "LABEL": "Technicians performance",

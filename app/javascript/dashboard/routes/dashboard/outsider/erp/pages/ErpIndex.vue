@@ -15,6 +15,7 @@ import ErpRecords from '../records/ErpRecords.vue';
 import ErpClientDialog from '../clients/ErpClientDialog.vue';
 import { kindForTab } from '../records/recordsConfig';
 import { erpTabs } from '../sidebar';
+import { reportTabs } from '../../reports/reportsCatalog';
 import { erpState, ERP_ROUTE } from '../erpStore';
 
 const { t } = useI18n();
@@ -41,11 +42,16 @@ const remember = (key, value) => {
 };
 
 const tabs = computed(() => erpTabs());
+// relatórios: abas separadas das dos módulos (reports/reportsCatalog.js)
+const reports = computed(() => (erpState.loaded ? reportTabs() : []));
 const tab = computed(() => {
-  const names = tabs.value.map(item => item.name);
+  const names = [...tabs.value, ...reports.value].map(item => item.name);
   return names.includes(route.params.tab) ? route.params.tab : names[0] || '';
 });
 const notesMode = ref(stored(NOTES_KEY, NOTE_KINDS, 'invoices'));
+const currentReport = computed(() =>
+  reports.value.find(item => item.name === tab.value)
+);
 const kind = computed(() =>
   tab.value === 'notas' ? notesMode.value : kindForTab(tab.value)
 );
@@ -100,9 +106,11 @@ watch(tab, () => {
             <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
               <h1 class="mb-0 text-xl font-medium text-n-slate-12">
                 {{
-                  tab
-                    ? t(`OUTSIDER_ERP.TABS.${tab.toUpperCase()}`)
-                    : t('OUTSIDER_ERP.SIDEBAR')
+                  currentReport
+                    ? t(currentReport.label)
+                    : tab
+                      ? t(`OUTSIDER_ERP.TABS.${tab.toUpperCase()}`)
+                      : t('OUTSIDER_ERP.SIDEBAR')
                 }}
               </h1>
               <Button
@@ -174,7 +182,7 @@ watch(tab, () => {
               </button>
             </div>
             <nav
-              v-if="tabs.length > 1"
+              v-if="tabs.length + reports.length > 1"
               class="flex items-center gap-0.5 p-0.5 overflow-x-auto rounded-lg bg-n-alpha-2"
             >
               <button
@@ -192,6 +200,29 @@ watch(tab, () => {
                 <Icon :icon="item.icon" class="size-4" />
                 <span class="hidden md:inline">{{ t(item.label) }}</span>
               </button>
+              <template v-if="reports.length">
+                <span class="w-px h-5 mx-1 bg-n-strong shrink-0" />
+                <span
+                  class="hidden px-1.5 text-[11px] font-medium uppercase tracking-wide text-n-slate-10 lg:inline"
+                >
+                  {{ t('OUTSIDER_ERP.TABS.REPORTS') }}
+                </span>
+                <button
+                  v-for="item in reports"
+                  :key="item.name"
+                  type="button"
+                  class="flex items-center gap-1.5 h-8 px-3 text-[13px] rounded-md whitespace-nowrap"
+                  :class="
+                    tab === item.name
+                      ? 'bg-n-solid-1 text-n-slate-12 font-medium shadow-sm'
+                      : 'text-n-slate-11 hover:text-n-slate-12'
+                  "
+                  @click="go(item.name)"
+                >
+                  <Icon :icon="item.icon" class="size-4" />
+                  <span class="hidden md:inline">{{ t(item.label) }}</span>
+                </button>
+              </template>
             </nav>
           </div>
         </div>
@@ -228,6 +259,11 @@ watch(tab, () => {
           <ErpBoard v-else-if="showBoard" />
           <ErpRecords v-else-if="kind" :key="kind" :kind="kind" />
           <ErpProducts v-else-if="tab === 'produtos'" />
+          <component
+            :is="currentReport.report.component"
+            v-else-if="currentReport"
+            :key="currentReport.name"
+          />
           <ErpSettings v-else-if="tab === 'settings'" />
           <div
             v-else

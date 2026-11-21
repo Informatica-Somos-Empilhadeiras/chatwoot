@@ -1,8 +1,10 @@
 // OUTSIDER: menu "ERP" no menu lateral (secao Atendimento) com uma aba por modulo: Orcamentos, OS, Pedidos, Notas fiscais,
 // Produtos (consulta, com as fotos) e, para o administrador, as Configuracoes. Cada aba segue o que esta ligado nas Configuracoes e a linha dela no perfil
 // de acesso (erp_quotes, erp_orders, erp_sales, erp_invoices, erp_products, abaixo da tela "erp"); com a integracao desligada so o admin ve.
+// Depois dos modulos, os relatorios (reports/reportsCatalog.js), cada um com a linha dele no perfil.
 import { allows } from '../access/accessStore';
 import { erpState, ERP_ROUTE } from './erpStore';
+import { reportTabs } from '../reports/reportsCatalog';
 
 export const ERP_TABS = [
   {
@@ -49,13 +51,15 @@ export const erpTabs = () => {
 };
 
 export const erpSidebarItems = (t, accountScopedRoute) => {
-  const children = erpTabs().map(tab => ({
-    name: `OutsiderErp-${tab.name}`,
-    label: t(tab.label),
-    icon: tab.icon,
-    activeOn: [ERP_ROUTE],
-    to: accountScopedRoute(ERP_ROUTE, { tab: tab.name }),
-  }));
+  const children = [...erpTabs(), ...(erpState.loaded ? reportTabs() : [])].map(
+    tab => ({
+      name: `OutsiderErp-${tab.name}`,
+      label: t(tab.label),
+      icon: tab.icon,
+      activeOn: [ERP_ROUTE],
+      to: accountScopedRoute(ERP_ROUTE, { tab: tab.name }),
+    })
+  );
   if (!children.length) return [];
 
   return [

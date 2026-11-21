@@ -271,6 +271,16 @@ const TD = 'px-3 py-2.5 align-middle whitespace-nowrap tabular-nums';
               }}
             </span>
           </div>
+          <span class="text-[11px] text-n-slate-10">
+            {{
+              label('KPI.SOURCES', {
+                erp: summary.pedidos_tecnico_erp || 0,
+                chat:
+                  (summary.pedidos_com_tecnico || 0) -
+                  (summary.pedidos_tecnico_erp || 0),
+              })
+            }}
+          </span>
         </div>
         <div
           class="flex flex-col gap-1 p-4 border rounded-xl border-n-weak bg-n-solid-1"
@@ -558,6 +568,25 @@ const TD = 'px-3 py-2.5 align-middle whitespace-nowrap tabular-nums';
                           <td
                             class="py-1.5 pr-3 whitespace-nowrap text-n-slate-11"
                           >
+                            <span
+                              class="px-1 mr-1 text-[10px] font-medium rounded"
+                              :class="
+                                sale.origem === 'erp'
+                                  ? 'bg-n-alpha-2 text-n-slate-11'
+                                  : 'bg-n-amber-3 text-n-amber-11'
+                              "
+                              :title="
+                                label(
+                                  `DETAIL.ORIGIN_${sale.origem === 'erp' ? 'ERP' : 'CHAT'}_HINT`
+                                )
+                              "
+                            >
+                              {{
+                                label(
+                                  `DETAIL.ORIGIN_${sale.origem === 'erp' ? 'ERP' : 'CHAT'}`
+                                )
+                              }}
+                            </span>
                             {{ sale.linha.os }}
                             <template v-if="sale.linha.parte < 100">
                               · {{ percent(sale.linha.parte) }}

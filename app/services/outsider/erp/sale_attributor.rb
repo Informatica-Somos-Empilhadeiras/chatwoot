@@ -2,7 +2,9 @@
 # não tem esses campos no pedido, isso fica só no Chatwoot (Outsider::Erp::SaleAttribution) e é a base do relatório de
 # desempenho dos técnicos. A OS precisa existir na unidade e ter técnico; se o vendedor ou o cliente dela forem outros,
 # ou se ela já estiver em outro pedido, só grava com a senha comercial (a mesma da liberação de desconto,
-# Outsider::Erp::DiscountApprover). Com mais de uma OS, cada uma leva uma parte do valor (somam 100%).
+# Outsider::Erp::DiscountApprover). Com mais de uma OS, cada uma leva uma parte do valor (somam 100%). Regra da
+# premiação: o vínculo manual é para a OS feita depois do faturamento, então ela precisa estar fechada/finalizada (aberta
+# ou cancelada não grava). Pedido com OS já ligada no ERP não precisa de vínculo: o relatório usa a do ERP.
 class Outsider::Erp::SaleAttributor
   class NotFound < StandardError; end
 
@@ -16,6 +18,9 @@ class Outsider::Erp::SaleAttributor
   end
 
   MAX_LINES = 10
+  # só OS feita e encerrada conta (a regra da premiação): aberta ainda não, cancelada/perdida nunca
+  CLOSED_ORDER = /FECHAD|FINALIZ|ENCERR|CONCLU/i
+  LOST_ORDER = Outsider::Erp::SaleLookup::LOST_ORDER
   # divergências que a senha comercial libera; as outras impedem de gravar
   APPROVABLE = %w[vendedor_diferente cliente_diferente ja_usada].freeze
 
@@ -125,12 +130,17 @@ class Outsider::Erp::SaleAttributor
   end
 
   def divergences(order, sale, used_in)
-    list = []
-    list << 'sem_tecnico' unless order['tecnico'].to_i.positive?
+    list = [('sem_tecnico' unless order['tecnico'].to_i.positive?), order_state(order['situacao'].to_s)]
     list << 'vendedor_diferente' if order['vendedor'].to_i.positive? && order['vendedor'].to_i != sale['vendedor'].to_i
     list << 'cliente_diferente' if order['cliente'].to_i != sale['cliente'].to_i
     list << 'ja_usada' if used_in
-    list
+    list.compact
+  end
+
+  def order_state(status)
+    return 'os_cancelada' if status.match?(LOST_ORDER)
+
+    'os_aberta' unless status.match?(CLOSED_ORDER)
   end
 
   # { os => pedido } das OS que já estão no vínculo de outro pedido da mesma unidade

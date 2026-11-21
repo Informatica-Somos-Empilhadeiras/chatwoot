@@ -1,4 +1,4 @@
-# OUTSIDER: rotas da seção Relatórios de gestão (um controlador por relatório em
+# OUTSIDER: rotas dos relatórios da seção ERP (um controlador por relatório em
 # app/controllers/api/v1/accounts/outsider/reports/). Mudou rota: reiniciar o Rails.
 Rails.application.routes.prepend do
   namespace :api, defaults: { format: 'json' } do

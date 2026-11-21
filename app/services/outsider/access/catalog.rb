@@ -29,9 +29,9 @@ module Outsider::Access::Catalog
     { key: 'erp_invoices', group: 'erp', levels: %w[none view use], agent: 'use', technician: 'none', parent: 'erp' },
     { key: 'erp_products', group: 'erp', levels: %w[none view], agent: 'view', technician: 'none', parent: 'erp' },
     { key: 'erp_clients', group: 'erp', levels: %w[none use], agent: 'use', technician: 'none', parent: 'erp' },
-    # OUTSIDER (Relatórios de gestão): a seção e uma linha por relatório (os próximos entram aqui). Começa fechada para
+    # OUTSIDER (Relatórios do ERP, abas da seção ERP): a linha geral e uma por relatório (os próximos entram aqui). Começa fechada para
     # agente e técnico: o administrador libera no perfil de quem precisa (comissão é informação sensível).
-    { key: 'reports', group: 'relatorios', levels: %w[none view], agent: 'none', technician: 'none' },
+    { key: 'reports', group: 'relatorios', levels: %w[none view], agent: 'none', technician: 'none', parent: 'erp' },
     { key: 'reports_technicians', group: 'relatorios', levels: %w[none view], agent: 'none', technician: 'none', parent: 'reports' }
   ].freeze
   BY_KEY = SCREENS.index_by { |screen| screen[:key] }.freeze

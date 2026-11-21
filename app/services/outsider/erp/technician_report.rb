@@ -1,9 +1,9 @@
-# OUTSIDER: relatório de desempenho dos técnicos (seção Relatórios de gestão). Base: pedidos de venda FATURADOS no
-# período, ou seja, com nota de saída válida (NF-e ou NFS-e, não cancelada) emitida entre as datas; pedido sem nota
-# não entra. O técnico vem do vínculo informado pelo vendedor no chat (Outsider::Erp::SaleAttribution), porque o pedido
-# do Mais Prático não tem técnico nem OS. Cada técnico recebe a parte dele do valor faturado (NF-e = peças, NFS-e =
-# serviços). Também mostra o que ficou de fora: pedidos faturados sem técnico informado e pedidos com técnico que ainda
-# não foram faturados. Só leitura no ERP; o resultado fica guardado alguns minutos.
+# OUTSIDER: relatório de desempenho dos técnicos (seção ERP, Relatórios). Base: pedidos de venda FATURADOS no período,
+# ou seja, com nota de saída válida (NF-e ou NFS-e, não cancelada) emitida entre as datas; pedido sem nota não entra.
+# O técnico vem do vínculo informado pelo vendedor no chat (Outsider::Erp::SaleAttribution), porque o pedido do Mais
+# Prático não tem técnico nem OS; sem ele, das OS que o próprio ERP liga ao pedido. Cada técnico recebe a parte dele do
+# valor faturado (NF-e = peças, NFS-e = serviços). Também mostra o que ficou de fora: pedidos faturados sem técnico e
+# pedidos com técnico que ainda não foram faturados. Só leitura no ERP; o resultado fica guardado alguns minutos.
 class Outsider::Erp::TechnicianReport
   MAX_DAYS = 400
   CACHE_TTL = 5.minutes
@@ -52,7 +52,8 @@ class Outsider::Erp::TechnicianReport
     total = credited + sum(unattributed)
     {
       'faturado' => total.round(2), 'pedidos' => attributed.size + unattributed.size, 'faturado_com_tecnico' => credited.round(2),
-      'pedidos_com_tecnico' => attributed.size, 'cobertura_pct' => total.positive? ? (credited * 100 / total).round(1) : 0,
+      'pedidos_com_tecnico' => attributed.size, 'pedidos_tecnico_erp' => attributed.count { |sale| sale['origem'] == 'erp' },
+      'cobertura_pct' => total.positive? ? (credited * 100 / total).round(1) : 0,
       'sem_tecnico_valor' => sum(unattributed).round(2), 'sem_tecnico_pedidos' => unattributed.size,
       'aguardando_valor' => sum(pending).round(2), 'aguardando_pedidos' => pending.size
     }

@@ -87,6 +87,8 @@ const KNOWN_REASONS = [
   'partes',
   'sem_tecnico',
   'os_nao_encontrada',
+  'os_aberta',
+  'os_cancelada',
   'no_conversation',
   'not_draft',
   'in_erp',

@@ -1,10 +1,8 @@
 {
   "OUTSIDER_REPORTS": {
-    "SIDEBAR": "Relatórios de gestão",
-    "NONE": "Nenhum relatório liberado para você. O administrador libera no perfil de acesso (Relatórios de gestão).",
     "TECHNICIANS": {
       "TAB": "Desempenho dos técnicos",
-      "RULE": "Só entram pedidos de venda faturados no período (com NF-e ou NFS-e válida emitida entre as datas). O técnico é o informado pelo vendedor no pedido; com mais de uma OS, cada técnico recebe a parte dele. Pedido sem nota não entra.",
+      "RULE": "Conta para o técnico o pedido de venda faturado no período (NF-e ou NFS-e válida emitida entre as datas) que tem OS: a OS ligada ao pedido no próprio ERP ou, quando a OS foi feita depois, a OS fechada que o vendedor vinculou no pedido pelo chat. Com mais de uma OS, cada técnico recebe a parte dele. Pedido sem nota não entra.",
       "PERIODS": {
         "MONTH": "Este mês",
         "LAST_MONTH": "Mês passado",
@@ -20,14 +18,15 @@
       "KPI": {
         "BILLED": "Faturado no período",
         "ORDERS": "Pedidos faturados: {count}",
-        "WITH_TECH": "Com técnico informado",
+        "WITH_TECH": "Com técnico (OS do ERP ou do chat)",
         "COVERAGE": "{pct} do faturado",
         "COMMISSION": "Comissão dos técnicos",
         "COMMISSION_HINT": "{pct} sobre o faturado · técnicos: {count}",
         "WITHOUT_TECH": "Faturado sem técnico",
         "WITHOUT_TECH_HINT": "Pedidos para informar: {count}",
         "WAITING": "Com técnico, sem nota",
-        "WAITING_HINT": "Pedidos aguardando faturamento: {count} (não contam)"
+        "WAITING_HINT": "Pedidos aguardando faturamento: {count} (não contam)",
+        "SOURCES": "Pela OS do ERP: {erp} · informados no chat: {chat}"
       },
       "TABLE": {
         "TITLE": "Por técnico",
@@ -57,11 +56,15 @@
         "SELLER": "Vendedor",
         "OS": "OS",
         "CREDIT": "Creditado",
-        "VALUE": "Valor"
+        "VALUE": "Valor",
+        "ORIGIN_ERP": "ERP",
+        "ORIGIN_ERP_HINT": "Técnico da OS que o ERP liga ao pedido",
+        "ORIGIN_CHAT": "chat",
+        "ORIGIN_CHAT_HINT": "Técnico informado pelo vendedor no pedido"
       },
       "LISTS": {
         "WITHOUT_TECH": "Faturados sem técnico informado",
-        "WITHOUT_TECH_HINT": "Abra o pedido e informe a OS para entrarem no relatório.",
+        "WITHOUT_TECH_HINT": "Sem OS ligada no ERP: abra o pedido e informe a OS.",
         "WITHOUT_TECH_EMPTY": "Todos os pedidos faturados do período têm técnico.",
         "WAITING": "Com técnico, aguardando faturamento",
         "WAITING_HINT": "Entram no relatório do mês em que a nota for emitida.",

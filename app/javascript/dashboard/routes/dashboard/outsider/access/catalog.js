@@ -20,7 +20,6 @@ export const SCREEN_PATHS = [
   ['teams', path('teams(/|$)')],
   ['crm', path('crm(/|$)')],
   ['erp', path('erp(/|$)')],
-  ['reports', path('gestao(/|$)')],
 ];
 
 export const screenForPath = fullPath => {
