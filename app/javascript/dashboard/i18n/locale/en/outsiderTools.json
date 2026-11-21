@@ -1107,7 +1107,8 @@
       "TELEFONIA": "Telephony",
       "ATENDIMENTO": "Service",
       "VENDAS": "CRM",
-      "ERP": "Mais Prático ERP"
+      "ERP": "Mais Prático ERP",
+      "RELATORIOS": "Management reports"
     },
     "LEVELS": {
       "NONE": "Hidden",
@@ -1185,7 +1186,7 @@
       },
       "ERP_SALES": {
         "LABEL": "Sales orders",
-        "HINT": "View: browse (read only for now)."
+        "HINT": "View: browse sales orders. Use: also set the technician and service order of an order (chat only, for the technicians report)."
       },
       "ERP_INVOICES": {
         "LABEL": "Invoices",
@@ -1198,6 +1199,14 @@
       "ERP_CLIENTS": {
         "LABEL": "Client registration",
         "HINT": "Use: registers a new client in the ERP (pre-registration, like the sales app)."
+      },
+      "REPORTS": {
+        "LABEL": "Management reports section",
+        "HINT": "None: the menu is hidden. Reports below never exceed this level."
+      },
+      "REPORTS_TECHNICIANS": {
+        "LABEL": "Technicians performance",
+        "HINT": "View: invoicing, commission and goals per technician."
       }
     },
     "PROFILES": {

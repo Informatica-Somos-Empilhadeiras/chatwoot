@@ -6,6 +6,7 @@ import outsiderVoice from './outsiderVoice.json'; // OUTSIDER: telefonia
 import outsiderTools from './outsiderTools.json'; // OUTSIDER: busca, transferência, bot e aparência
 import outsiderTeams from './outsiderTeams.json'; // OUTSIDER: canal do Microsoft Teams
 import outsiderErp from './outsiderErp.json'; // OUTSIDER: ordens de serviço do ERP
+import outsiderReports from './outsiderReports.json'; // OUTSIDER: relatórios de gestão
 import agentBots from './agentBots.json';
 import agentMgmt from './agentMgmt.json';
 import attributesMgmt from './attributesMgmt.json';
@@ -59,6 +60,7 @@ export default {
   ...outsiderTools, // OUTSIDER
   ...outsiderTeams, // OUTSIDER
   ...outsiderErp, // OUTSIDER
+  ...outsiderReports, // OUTSIDER
   ...agentBots,
   ...agentMgmt,
   ...attributesMgmt,

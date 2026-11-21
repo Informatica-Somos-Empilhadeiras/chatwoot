@@ -1107,7 +1107,8 @@
       "TELEFONIA": "Telefonia",
       "ATENDIMENTO": "Atendimento",
       "VENDAS": "CRM",
-      "ERP": "ERP Mais Prático"
+      "ERP": "ERP Mais Prático",
+      "RELATORIOS": "Relat\u00f3rios de gest\u00e3o"
     },
     "LEVELS": {
       "NONE": "Não vê",
@@ -1185,7 +1186,7 @@
       },
       "ERP_SALES": {
         "LABEL": "Pedidos de venda",
-        "HINT": "Vê: consulta (por enquanto só leitura)."
+        "HINT": "Vê: consulta os pedidos. Usa: também informa o técnico e a OS do pedido (só no chat, para o relatório dos técnicos)."
       },
       "ERP_INVOICES": {
         "LABEL": "Notas fiscais",
@@ -1198,6 +1199,14 @@
       "ERP_CLIENTS": {
         "LABEL": "Cadastro de clientes",
         "HINT": "Usa: cadastra cliente novo no ERP (pré-cadastro, como o aplicativo de vendas)."
+      },
+      "REPORTS": {
+        "LABEL": "Seção Relatórios de gestão",
+        "HINT": "Não vê: o menu some. Os relatórios abaixo nunca passam deste nível."
+      },
+      "REPORTS_TECHNICIANS": {
+        "LABEL": "Desempenho dos técnicos",
+        "HINT": "Vê: faturamento, comissão e metas por técnico."
       }
     },
     "PROFILES": {

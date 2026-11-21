@@ -2,7 +2,8 @@
 // OUTSIDER: painel de detalhe da seção ERP (/outsider/erp/records/:kind/:empresa/:número): cabeçalho, ações, a corrente
 // orçamento -> OS -> pedido (nós clicáveis), dados, cliente, itens, totais e a linha do tempo. Orçamento: Editar (só em
 // NEGOCIAÇÃO e fechado no Mais Prático), Ver PDF, Enviar e Copiar, pela gaveta do orçamento. OS: a edição de sempre
-// (ErpOrderEditor), travada quando a OS está fechada. Pedido e notas (NF-e, NFS-e): só leitura. Um nó da corrente troca o
+// (ErpOrderEditor), travada quando a OS está fechada. Pedido: técnico e OS informados no chat (ErpSaleAttribution, só
+// no Chatwoot). Notas (NF-e, NFS-e): só leitura. Um nó da corrente troca o
 // painel aqui mesmo (sem mudar de aba), com "Voltar" para o registro anterior.
 import { ref, computed } from 'vue';
 import { useRoute } from 'vue-router';
@@ -15,6 +16,7 @@ import Icon from 'dashboard/components-next/icon/Icon.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 import ErpRecordChain from './ErpRecordChain.vue';
 import ErpRecordTimeline from './ErpRecordTimeline.vue';
+import ErpSaleAttribution from './ErpSaleAttribution.vue';
 import ErpOrderEditor from '../components/ErpOrderEditor.vue';
 import ErpBudgetDrawer from '../budgets/ErpBudgetDrawer.vue';
 import ErpPdfDialog from '../budgets/ErpPdfDialog.vue';
@@ -273,6 +275,7 @@ const edit = computed(() => detail.value?.edit || {});
 const canUseQuotes = computed(() => allows('erp_quotes', 'use'));
 const canUseOrders = computed(() => allows('erp_orders', 'use'));
 const canUseInvoices = computed(() => allows('erp_invoices', 'use'));
+const canUseSales = computed(() => allows('erp_sales', 'use'));
 const editBlocked = computed(() => {
   if (!canUseQuotes.value) return t('OUTSIDER_ERP.RECORDS.EDIT.NO_ACCESS');
   if (!erpState.quoteWriteEnabled)
@@ -580,6 +583,15 @@ const LABEL =
         <span :class="LABEL">{{ t('OUTSIDER_ERP.RECORDS.CHAIN.TITLE') }}</span>
         <ErpRecordChain :chain="detail.chain" @jump="openNode" />
       </section>
+
+      <ErpSaleAttribution
+        v-if="viewKind === 'sales'"
+        :key="`${view.company}:${view.number}`"
+        :company="view.company"
+        :number="view.number"
+        :can-edit="canUseSales"
+        @changed="load"
+      />
 
       <p
         v-if="viewKind === 'orders' && orderLocked"

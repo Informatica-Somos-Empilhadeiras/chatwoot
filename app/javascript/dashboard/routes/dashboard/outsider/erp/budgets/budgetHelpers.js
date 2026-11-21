@@ -80,6 +80,13 @@ export const blobError = async error => {
 };
 
 const KNOWN_REASONS = [
+  'senha_comercial',
+  'sem_os',
+  'muitas_os',
+  'os_repetida',
+  'partes',
+  'sem_tecnico',
+  'os_nao_encontrada',
   'no_conversation',
   'not_draft',
   'in_erp',

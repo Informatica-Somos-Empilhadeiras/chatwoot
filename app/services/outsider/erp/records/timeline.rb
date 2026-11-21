@@ -1,13 +1,15 @@
 # OUTSIDER: a linha do tempo do painel de detalhe da seção ERP (como a jornada do CRM): o que aconteceu com o
 # orçamento, as OS, os pedidos e as notas fiscais da corrente (datas do próprio ERP) e o que foi feito pelo chat
-# (criação, liberação de desconto, edições do orçamento gravado, envios por WhatsApp/e-mail). A tela só traduz o "type".
+# (criação, liberação de desconto, edições do orçamento gravado, envios por WhatsApp/e-mail, técnico/OS do pedido
+# informados pelo vendedor). A tela só traduz o "type".
 class Outsider::Erp::Records::Timeline
   def initialize(account)
     @account = account
   end
 
   def build(detail)
-    events = chain_events(detail['chain']) + header_events(detail) + chat_events(detail['budget_record'])
+    events = chain_events(detail['chain']) + header_events(detail) + chat_events(detail['budget_record']) +
+             attribution_events(detail['attribution'])
     events.select { |event| event['at'].present? }.sort_by { |event| time(event['at']) || Time.zone.at(0) }
   end
 
@@ -53,6 +55,17 @@ class Outsider::Erp::Records::Timeline
     list << { 'at' => approval['at'], 'type' => 'chat_approved', 'name' => approval['by_name'] } if approval['by_code'].present?
     list += Array(budget.erp_result.to_h['edits']).map { |edit| { 'at' => edit['at'], 'type' => 'chat_edited', 'name' => edit['name'] } }
     list + budget.sends.includes(:user).order(:created_at).map { |send| send_event(send) }
+  end
+
+  # técnico/OS do pedido informados no chat (não vêm do ERP): cada gravação e a remoção
+  def attribution_events(record)
+    return [] unless record
+
+    record.history.map do |entry|
+      os = Array(entry['lines']).map { |line| { 'os' => line['os'], 'tecnico' => line['tecnico'], 'parte' => line['parte'] } }
+      { 'at' => entry['at'], 'type' => entry['action'] == 'removed' ? 'chat_unattributed' : 'chat_attributed', 'name' => entry['name'],
+        'os' => os, 'approved_by' => entry['approved_by'] }.compact
+    end
   end
 
   def send_event(send)

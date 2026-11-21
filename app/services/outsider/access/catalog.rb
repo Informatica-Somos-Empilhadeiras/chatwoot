@@ -5,7 +5,7 @@ module Outsider::Access::Catalog
   LEVELS = %w[none view use manage].freeze
   RANK = LEVELS.each_with_index.to_h.freeze
 
-  # group: telefonia, atendimento, vendas, erp; admin_only: só administrador (o perfil não libera); parent: tela mãe (a
+  # group: telefonia, atendimento, vendas, erp, relatorios; admin_only: só administrador (o perfil não libera); parent: tela mãe (a
   # filha sem escolha no perfil segue a mãe e nunca passa dela)
   SCREENS = [
     { key: 'phone', group: 'telefonia', levels: %w[none use], agent: 'use', technician: 'use' },
@@ -20,15 +20,19 @@ module Outsider::Access::Catalog
     { key: 'teams', group: 'atendimento', levels: %w[none use], agent: 'use', technician: 'use' },
     { key: 'crm', group: 'vendas', levels: %w[none view use], agent: 'use', technician: 'none' },
     # OUTSIDER (ERP): a seção ERP Mais Prático (menu e API) e uma linha por aba. Orçamentos: Usa cria, edita e envia;
-    # OS: Usa muda substatus e campos e envia o relatório; Pedidos: só consulta; Notas fiscais: Usa envia a nota ao cliente;
+    # OS: Usa muda substatus e campos e envia o relatório; Pedidos: Usa informa o técnico e a OS (só no chat);
     # Produtos: só consulta (com as fotos); Clientes: Usa cadastra cliente no ERP
     { key: 'erp', group: 'erp', levels: %w[none view use], agent: 'use', technician: 'none' },
     { key: 'erp_quotes', group: 'erp', levels: %w[none view use], agent: 'use', technician: 'none', parent: 'erp' },
     { key: 'erp_orders', group: 'erp', levels: %w[none view use], agent: 'use', technician: 'none', parent: 'erp' },
-    { key: 'erp_sales', group: 'erp', levels: %w[none view], agent: 'view', technician: 'none', parent: 'erp' },
+    { key: 'erp_sales', group: 'erp', levels: %w[none view use], agent: 'use', technician: 'none', parent: 'erp' },
     { key: 'erp_invoices', group: 'erp', levels: %w[none view use], agent: 'use', technician: 'none', parent: 'erp' },
     { key: 'erp_products', group: 'erp', levels: %w[none view], agent: 'view', technician: 'none', parent: 'erp' },
-    { key: 'erp_clients', group: 'erp', levels: %w[none use], agent: 'use', technician: 'none', parent: 'erp' }
+    { key: 'erp_clients', group: 'erp', levels: %w[none use], agent: 'use', technician: 'none', parent: 'erp' },
+    # OUTSIDER (Relatórios de gestão): a seção e uma linha por relatório (os próximos entram aqui). Começa fechada para
+    # agente e técnico: o administrador libera no perfil de quem precisa (comissão é informação sensível).
+    { key: 'reports', group: 'relatorios', levels: %w[none view], agent: 'none', technician: 'none' },
+    { key: 'reports_technicians', group: 'relatorios', levels: %w[none view], agent: 'none', technician: 'none', parent: 'reports' }
   ].freeze
   BY_KEY = SCREENS.index_by { |screen| screen[:key] }.freeze
   KEYS = BY_KEY.keys.freeze
@@ -48,7 +52,8 @@ module Outsider::Access::Catalog
     [%r{\Aapi/v1/accounts/(contacts|companies)(/|\z)}, 'contacts'],
     [%r{\Aapi/v1/accounts/outsider/whatsapp_statuses\z}, 'whatsapp_status'],
     [%r{\Aapi/v1/accounts/outsider/teams_}, 'teams'],
-    [%r{\Aapi/v1/accounts/outsider/erp/}, 'erp']
+    [%r{\Aapi/v1/accounts/outsider/erp/}, 'erp'],
+    [%r{\Aapi/v1/accounts/outsider/reports/}, 'reports']
   ].freeze
 
   # ações que não mudam nada para quem só vê (marcar como lida, avisar que está digitando)

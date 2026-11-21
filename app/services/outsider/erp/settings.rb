@@ -10,6 +10,7 @@
 class Outsider::Erp::Settings
   include Outsider::Erp::Settings::Nextcloud
   include Outsider::Erp::Settings::CompanyNames
+  include Outsider::Erp::Settings::Reports
 
   KEY = 'outsider_erp'.freeze
   HOST = /\A[a-z0-9-]+(\.[a-z0-9-]+)*\.inntegra\.com\.br\z/
@@ -48,7 +49,7 @@ class Outsider::Erp::Settings
     # cadastro de cliente no ERP pela função do próprio Mais Prático (sp_CadastraCliente, Outsider::Erp::ClientRegistrar):
     # entra como pré-cadastro, que o escritório completa. Desligado por padrão.
     'client_write_enabled' => false
-  }.merge(Outsider::Erp::SendTexts::DEFAULTS, NEXTCLOUD_DEFAULTS, COMPANY_NAMES_DEFAULTS).freeze
+  }.merge(Outsider::Erp::SendTexts::DEFAULTS, NEXTCLOUD_DEFAULTS, COMPANY_NAMES_DEFAULTS, REPORTS_DEFAULTS).freeze
   # textos livres e o tamanho máximo: os do formulário do orçamento e os de envio (orçamento e OS, Outsider::Erp::SendTexts)
   TEXTS = { 'quote_prazo_entrega' => 255, 'quote_validade' => 255, 'quote_garantia' => 255 }.merge(Outsider::Erp::SendTexts::LIMITS).freeze
 
@@ -106,7 +107,7 @@ class Outsider::Erp::Settings
   def update(params)
     params = params.to_h.deep_stringify_keys
     @errors = []
-    parts = %i[clean_connection clean_display clean_cache clean_write clean_quote clean_client clean_nextcloud clean_company_names]
+    parts = %i[clean_connection clean_display clean_cache clean_write clean_quote clean_client clean_nextcloud clean_company_names clean_reports]
     cleaned = parts.reduce(data) { |out, part| out.merge(send(part, params)) }
     raise Invalid, @errors if @errors.any?
 
@@ -187,12 +188,6 @@ class Outsider::Erp::Settings
   rescue URI::InvalidURIError
     @errors << 'base_url'
     base_url
-  end
-
-  def clean_companies(list)
-    list = Array(list).map { |item| item.to_s.strip.downcase }.compact_blank.uniq
-    @errors << 'companies' if list.size > 20 || list.any? { |item| !item.match?(COMPANY) }
-    list.grep(COMPANY).first(20)
   end
 
   # vazio mantém o que já estava; clear_device_id apaga

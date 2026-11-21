@@ -14,6 +14,12 @@ module Outsider::Erp::Settings::CompanyNames
 
   private
 
+  def clean_companies(list)
+    list = Array(list).map { |item| item.to_s.strip.downcase }.compact_blank.uniq
+    @errors << 'companies' if list.size > 20 || list.any? { |item| !item.match?(Outsider::Erp::Settings::COMPANY) }
+    list.grep(Outsider::Erp::Settings::COMPANY).first(20)
+  end
+
   # { banco => nome }: só texto curto; nome vazio tira a unidade da lista (volta a aparecer pelo banco)
   def clean_company_names(params)
     names = params.fetch('company_names', company_names)

@@ -95,6 +95,34 @@ class ErpAPI extends ApiClient {
     });
   }
 
+  // pedido de venda: técnico e OS informados no chat (só no Chatwoot, para o relatório dos técnicos)
+  saleAttribution(company, number) {
+    return axios.get(
+      `${this.url}/records/sales/${company}/${number}/attribution`
+    );
+  }
+
+  previewSaleAttribution(company, number, os) {
+    return axios.get(
+      `${this.url}/records/sales/${company}/${number}/attribution/preview`,
+      { params: { os } }
+    );
+  }
+
+  // lines: [{ os, parte }]; approval: { code, password } (senha comercial)
+  saveSaleAttribution(company, number, data) {
+    return axios.put(
+      `${this.url}/records/sales/${company}/${number}/attribution`,
+      data
+    );
+  }
+
+  removeSaleAttribution(company, number) {
+    return axios.delete(
+      `${this.url}/records/sales/${company}/${number}/attribution`
+    );
+  }
+
   // aba Produtos: o produto inteiro, com a lista das fotos (só leitura)
   product(company, code) {
     return axios.get(`${this.url}/catalog/${code}`, { params: { company } });

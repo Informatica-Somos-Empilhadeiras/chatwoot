@@ -20,6 +20,7 @@ export const SCREEN_PATHS = [
   ['teams', path('teams(/|$)')],
   ['crm', path('crm(/|$)')],
   ['erp', path('erp(/|$)')],
+  ['reports', path('gestao(/|$)')],
 ];
 
 export const screenForPath = fullPath => {
@@ -41,4 +42,10 @@ export const HOME_ROUTES = {
   contacts: 'contacts_dashboard_index',
 };
 
-export const GROUPS = ['telefonia', 'atendimento', 'vendas', 'erp'];
+export const GROUPS = [
+  'telefonia',
+  'atendimento',
+  'vendas',
+  'erp',
+  'relatorios',
+];

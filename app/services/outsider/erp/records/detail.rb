@@ -77,7 +77,8 @@ class Outsider::Erp::Records::Detail
 
   def finish(data)
     budget = data.delete('budget_record')
-    data.merge('timeline' => Outsider::Erp::Records::Timeline.new(@account).build(data.merge('budget_record' => budget)),
+    timeline = Outsider::Erp::Records::Timeline.new(@account).build(data.merge('budget_record' => budget, 'attribution' => attribution(data)))
+    data.merge('timeline' => timeline,
                'budget_id' => budget&.id, 'revising' => budget&.revising? == true).merge(kind_extras(data))
   end
 
@@ -101,6 +102,13 @@ class Outsider::Erp::Records::Detail
       'Defeitos' => header['defeitos'], 'Observacoes' => header['observacoes'], 'Acessorios' => header['acessorios'],
       'DataPrevisao' => header['previsao'], 'DataValidade' => header['validade']
     }
+  end
+
+  # pedido de venda: o técnico e a OS informados no chat (Outsider::Erp::SaleAttributor) entram na linha do tempo
+  def attribution(data)
+    return unless @kind == 'sales'
+
+    Outsider::Erp::SaleAttribution.find_by(account_id: @account.id, company: data['company'], order_number: data['numero'])
   end
 
   def budget(company, number)

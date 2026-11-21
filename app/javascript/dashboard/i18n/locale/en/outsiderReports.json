@@ -1,0 +1,94 @@
+{
+  "OUTSIDER_REPORTS": {
+    "SIDEBAR": "Management reports",
+    "NONE": "No report enabled for you. The administrator enables it in the access profile (Management reports).",
+    "TECHNICIANS": {
+      "TAB": "Technicians performance",
+      "RULE": "Only sales orders invoiced in the period count (with a valid NF-e or NFS-e issued between the dates). The technician is the one set by the seller on the order; with more than one service order, each technician gets their share. Orders without an invoice do not count.",
+      "PERIODS": {
+        "MONTH": "This month",
+        "LAST_MONTH": "Last month",
+        "DAYS30": "Last 30 days",
+        "CUSTOM": "Pick dates"
+      },
+      "FROM": "From",
+      "TO": "to",
+      "UNTIL": "Until",
+      "ALL_UNITS": "All units",
+      "EXPORT": "Export CSV",
+      "SETTINGS": "Commission and goals",
+      "KPI": {
+        "BILLED": "Invoiced in the period",
+        "ORDERS": "Invoiced orders: {count}",
+        "WITH_TECH": "With technician",
+        "COVERAGE": "{pct} of invoiced",
+        "COMMISSION": "Technicians commission",
+        "COMMISSION_HINT": "{pct} of invoiced · technicians: {count}",
+        "WITHOUT_TECH": "Invoiced without technician",
+        "WITHOUT_TECH_HINT": "Orders to fill in: {count}",
+        "WAITING": "With technician, no invoice",
+        "WAITING_HINT": "Orders waiting for invoice: {count} (not counted)"
+      },
+      "TABLE": {
+        "TITLE": "By technician",
+        "EMPTY": "No invoiced order with a technician in this period.",
+        "TECH": "Technician",
+        "ORDERS": "Orders",
+        "OS": "SO",
+        "BILLED": "Invoiced",
+        "PARTS": "Parts",
+        "SERVICES": "Services",
+        "TICKET": "Average ticket",
+        "SHARE": "Share",
+        "LEAD": "SO→invoice",
+        "DAYS": "{days} days",
+        "GOAL": "Goal",
+        "NO_GOAL": "no goal",
+        "COMMISSION": "Commission"
+      },
+      "DETAIL": {
+        "CLIENTS": "Customers served: {count}",
+        "ATTENDANCE": "Service type:",
+        "SELLERS": "Sellers:",
+        "ORDER": "Order",
+        "ORDER_NUMBER": "Order {number}",
+        "NOTES": "Invoices",
+        "CLIENT": "Customer",
+        "SELLER": "Seller",
+        "OS": "SO",
+        "CREDIT": "Credited",
+        "VALUE": "Value"
+      },
+      "LISTS": {
+        "WITHOUT_TECH": "Invoiced without technician",
+        "WITHOUT_TECH_HINT": "Open the order and set the service order so it counts.",
+        "WITHOUT_TECH_EMPTY": "Every invoiced order in the period has a technician.",
+        "WAITING": "With technician, waiting for invoice",
+        "WAITING_HINT": "They count in the month the invoice is issued.",
+        "WAITING_EMPTY": "No order with technician waiting for an invoice."
+      },
+      "CSV": {
+        "TECNICO": "Technician",
+        "UNIDADE": "Unit",
+        "PEDIDO": "Order",
+        "NOTAS": "Invoices",
+        "DATA_NOTA": "Invoice date",
+        "CLIENTE": "Customer",
+        "VENDEDOR": "Seller",
+        "OS": "SO",
+        "PARTE": "Share (%)",
+        "VALOR": "Credited value",
+        "PECAS": "Parts",
+        "SERVICOS": "Services"
+      },
+      "CONFIG": {
+        "TITLE": "Technicians commission and goals",
+        "COMMISSION": "Commission (%)",
+        "COMMISSION_HINT": "On the invoiced value credited to each technician.",
+        "GOALS": "Monthly goal (R$)",
+        "GOALS_HINT": "Empty: no goal. The goal matches the technician name.",
+        "SAVE": "Save"
+      }
+    }
+  }
+}

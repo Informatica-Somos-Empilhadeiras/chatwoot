@@ -1,0 +1,94 @@
+{
+  "OUTSIDER_REPORTS": {
+    "SIDEBAR": "Relatórios de gestão",
+    "NONE": "Nenhum relatório liberado para você. O administrador libera no perfil de acesso (Relatórios de gestão).",
+    "TECHNICIANS": {
+      "TAB": "Desempenho dos técnicos",
+      "RULE": "Só entram pedidos de venda faturados no período (com NF-e ou NFS-e válida emitida entre as datas). O técnico é o informado pelo vendedor no pedido; com mais de uma OS, cada técnico recebe a parte dele. Pedido sem nota não entra.",
+      "PERIODS": {
+        "MONTH": "Este mês",
+        "LAST_MONTH": "Mês passado",
+        "DAYS30": "Últimos 30 dias",
+        "CUSTOM": "Escolher datas"
+      },
+      "FROM": "De",
+      "TO": "até",
+      "UNTIL": "Até",
+      "ALL_UNITS": "Todas as unidades",
+      "EXPORT": "Exportar CSV",
+      "SETTINGS": "Comissão e metas",
+      "KPI": {
+        "BILLED": "Faturado no período",
+        "ORDERS": "Pedidos faturados: {count}",
+        "WITH_TECH": "Com técnico informado",
+        "COVERAGE": "{pct} do faturado",
+        "COMMISSION": "Comissão dos técnicos",
+        "COMMISSION_HINT": "{pct} sobre o faturado · técnicos: {count}",
+        "WITHOUT_TECH": "Faturado sem técnico",
+        "WITHOUT_TECH_HINT": "Pedidos para informar: {count}",
+        "WAITING": "Com técnico, sem nota",
+        "WAITING_HINT": "Pedidos aguardando faturamento: {count} (não contam)"
+      },
+      "TABLE": {
+        "TITLE": "Por técnico",
+        "EMPTY": "Nenhum pedido faturado com técnico informado neste período.",
+        "TECH": "Técnico",
+        "ORDERS": "Pedidos",
+        "OS": "OS",
+        "BILLED": "Faturado",
+        "PARTS": "Peças",
+        "SERVICES": "Serviços",
+        "TICKET": "Ticket médio",
+        "SHARE": "Participação",
+        "LEAD": "Prazo OS→nota",
+        "DAYS": "{days} dias",
+        "GOAL": "Meta",
+        "NO_GOAL": "sem meta",
+        "COMMISSION": "Comissão"
+      },
+      "DETAIL": {
+        "CLIENTS": "Clientes atendidos: {count}",
+        "ATTENDANCE": "Atendimento:",
+        "SELLERS": "Vendedores:",
+        "ORDER": "Pedido",
+        "ORDER_NUMBER": "Pedido {number}",
+        "NOTES": "Notas",
+        "CLIENT": "Cliente",
+        "SELLER": "Vendedor",
+        "OS": "OS",
+        "CREDIT": "Creditado",
+        "VALUE": "Valor"
+      },
+      "LISTS": {
+        "WITHOUT_TECH": "Faturados sem técnico informado",
+        "WITHOUT_TECH_HINT": "Abra o pedido e informe a OS para entrarem no relatório.",
+        "WITHOUT_TECH_EMPTY": "Todos os pedidos faturados do período têm técnico.",
+        "WAITING": "Com técnico, aguardando faturamento",
+        "WAITING_HINT": "Entram no relatório do mês em que a nota for emitida.",
+        "WAITING_EMPTY": "Nenhum pedido com técnico esperando nota."
+      },
+      "CSV": {
+        "TECNICO": "Técnico",
+        "UNIDADE": "Unidade",
+        "PEDIDO": "Pedido",
+        "NOTAS": "Notas",
+        "DATA_NOTA": "Data da nota",
+        "CLIENTE": "Cliente",
+        "VENDEDOR": "Vendedor",
+        "OS": "OS",
+        "PARTE": "Parte (%)",
+        "VALOR": "Valor creditado",
+        "PECAS": "Peças",
+        "SERVICOS": "Serviços"
+      },
+      "CONFIG": {
+        "TITLE": "Comissão e metas dos técnicos",
+        "COMMISSION": "Comissão (%)",
+        "COMMISSION_HINT": "Sobre o valor faturado creditado a cada técnico.",
+        "GOALS": "Meta do mês (R$)",
+        "GOALS_HINT": "Vazio: sem meta. A meta vale pelo nome do técnico.",
+        "SAVE": "Salvar"
+      }
+    }
+  }
+}

@@ -1,6 +1,7 @@
 <script setup>
 // OUTSIDER: linha do tempo do registro (Outsider::Erp::Records::Timeline): o que aconteceu no ERP com o orçamento, as
-// OS, os pedidos e as notas da corrente, e o que foi feito pelo chat (criação, desconto liberado, edições, envios). Mais novo em
+// OS, os pedidos e as notas da corrente, e o que foi feito pelo chat (criação, desconto liberado, edições, envios, técnico
+// e OS do pedido informados pelo vendedor, com o selo "informado no chat"). Mais novo em
 // cima; cada evento com bolinha e linha, como o histórico da jornada do CRM.
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -23,6 +24,8 @@ const STYLE = {
   chat_approved: ['i-lucide-badge-percent', 'bg-n-teal-3 text-n-teal-11'],
   chat_edited: ['i-lucide-pencil', 'bg-n-blue-3 text-n-blue-11'],
   sent: ['i-lucide-send', 'bg-n-brand/15 text-n-brand'],
+  chat_attributed: ['i-lucide-hard-hat', 'bg-n-brand/15 text-n-brand'],
+  chat_unattributed: ['i-lucide-hard-hat', 'bg-n-slate-3 text-n-slate-11'],
 };
 
 const when = value => {
@@ -60,6 +63,14 @@ const text = event => {
         )
       : '',
     to: (event.to || []).filter(Boolean).join(', '),
+    os: (event.os || [])
+      .map(line =>
+        t('OUTSIDER_ERP.RECORDS.TIMELINE.OS_LINE', {
+          number: line.os,
+          name: line.tecnico || '—',
+        })
+      )
+      .join(', '),
   };
   const key =
     event.type === 'sent' && !values.to
@@ -100,6 +111,22 @@ const list = computed(() => [...props.events].reverse());
           <template v-if="event.type === 'sent' && event.status === 'failed'">
             · {{ t('OUTSIDER_ERP.RECORDS.TIMELINE.FAILED') }}
           </template>
+          <template v-if="event.approved_by">
+            ·
+            {{
+              t('OUTSIDER_ERP.RECORDS.TIMELINE.APPROVED_BY', {
+                name: event.approved_by,
+              })
+            }}
+          </template>
+        </span>
+        <span
+          v-if="
+            event.type.startsWith('chat_') && event.type.endsWith('attributed')
+          "
+          class="self-start mt-0.5 px-1.5 text-[10px] font-medium uppercase tracking-wide rounded bg-n-amber-3 text-n-amber-11"
+        >
+          {{ t('OUTSIDER_ERP.RECORDS.TIMELINE.EXTERNAL') }}
         </span>
       </div>
     </li>

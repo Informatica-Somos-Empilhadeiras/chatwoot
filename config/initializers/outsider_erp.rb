@@ -65,6 +65,13 @@ Rails.application.routes.prepend do
               get 'records/:kind/:company/:number/document', to: 'records#document',
                                                              constraints: { kind: /invoices|service_invoices/, company: /[a-z0-9_]+/,
                                                                             number: /\d+/ }
+              # pedido de venda: técnico e OS informados no chat (só no Chatwoot, para o relatório dos técnicos)
+              scope 'records/sales/:company/:number', constraints: { company: /[a-z0-9_]+/, number: /\d+/ } do
+                get 'attribution', to: 'sale_attributions#show'
+                get 'attribution/preview', to: 'sale_attributions#preview'
+                put 'attribution', to: 'sale_attributions#update'
+                delete 'attribution', to: 'sale_attributions#destroy'
+              end
               # orçamento de peças e serviços feito no chat (separado da proposta comercial do CRM)
               resources :budgets, only: [:index, :show, :create, :update, :destroy] do
                 collection do
