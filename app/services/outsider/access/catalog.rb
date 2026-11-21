@@ -20,12 +20,13 @@ module Outsider::Access::Catalog
     { key: 'teams', group: 'atendimento', levels: %w[none use], agent: 'use', technician: 'use' },
     { key: 'crm', group: 'vendas', levels: %w[none view use], agent: 'use', technician: 'none' },
     # OUTSIDER (ERP): a seção ERP Mais Prático (menu e API) e uma linha por aba. Orçamentos: Usa cria, edita e envia;
-    # OS: Usa muda substatus e campos; Pedidos e Notas fiscais: só consulta; Clientes: Usa cadastra cliente no ERP
+    # OS: Usa muda substatus e campos e envia o relatório; Pedidos: só consulta; Notas fiscais: Usa envia a nota ao cliente;
+    # Clientes: Usa cadastra cliente no ERP
     { key: 'erp', group: 'erp', levels: %w[none view use], agent: 'use', technician: 'none' },
     { key: 'erp_quotes', group: 'erp', levels: %w[none view use], agent: 'use', technician: 'none', parent: 'erp' },
     { key: 'erp_orders', group: 'erp', levels: %w[none view use], agent: 'use', technician: 'none', parent: 'erp' },
     { key: 'erp_sales', group: 'erp', levels: %w[none view], agent: 'view', technician: 'none', parent: 'erp' },
-    { key: 'erp_invoices', group: 'erp', levels: %w[none view], agent: 'view', technician: 'none', parent: 'erp' },
+    { key: 'erp_invoices', group: 'erp', levels: %w[none view use], agent: 'use', technician: 'none', parent: 'erp' },
     { key: 'erp_clients', group: 'erp', levels: %w[none use], agent: 'use', technician: 'none', parent: 'erp' }
   ].freeze
   BY_KEY = SCREENS.index_by { |screen| screen[:key] }.freeze
