@@ -1,9 +1,9 @@
 # OUTSIDER: o PDF oficial de uma nota fiscal espelhado do Nextcloud da Somos. O Fiscal guarda as notas de todas as
-# empresas como "<número> (<CFOP>) <cliente>.pdf" em subpastas que ele organiza; a busca parte da pasta raiz das
-# Configurações (a do Fiscal) e usa a busca do próprio Nextcloud (WebDAV SEARCH, em todas as subpastas). A mesma
-# numeração existe em outras empresas, então o arquivo só vale se o CFOP e o cliente baterem com a nota no ERP (sem
-# cliente no ERP, só um arquivo com o mesmo CFOP serve). Na dúvida não mostra: nunca a nota de outra empresa. Baixa na
-# hora: nada fica guardado no chat.
+# empresas como "<número> (<CFOP>) <cliente> - <pedido interno>.pdf" em subpastas que ele organiza; a busca parte da
+# pasta raiz das Configurações (a do Fiscal) e usa a busca do próprio Nextcloud (WebDAV SEARCH, em todas as subpastas).
+# A mesma numeração existe em outras empresas, então o arquivo só vale se o CFOP bater com a nota no ERP e o cliente
+# ou o pedido também (sem cliente no ERP, só um arquivo com o mesmo CFOP serve). Na dúvida não mostra: nunca a nota de
+# outra empresa. Baixa na hora e repassa o arquivo como está: nada fica guardado no chat.
 class Outsider::Erp::NextcloudInvoices
   class NotFound < StandardError; end
   class Error < StandardError; end
@@ -11,7 +11,8 @@ class Outsider::Erp::NextcloudInvoices
   S = Outsider::Erp::Sql
   TIMEOUT = 20
   MAX_BYTES = 20.megabytes
-  FILE_NAME = /\A\d+\s*(?:\((\d{4})\))?\s*(.*?)\s*\.pdf\z/i
+  # "5868 (5405) PERBONI FLV SA - 2083.pdf": CFOP, cliente e o pedido interno (opcional)
+  FILE_NAME = /\A\d+\s*(?:\((\d{4})\))?\s*(.*?)(?:\s+-\s+(\d+))?\s*\.pdf\z/i
   NAME_CHARS = 20
 
   def initialize(account)
@@ -32,18 +33,18 @@ class Outsider::Erp::NextcloudInvoices
 
   private
 
-  # CFOP e cliente da nota no ERP, para separar das notas de mesmo número das outras empresas
+  # CFOP, cliente e pedido da nota no ERP, para separar das notas de mesmo número das outras empresas
   def note(company, number)
     db = S.ident(company)
     name = @schema.pick(company, 'clientes', %w[Nome RazaoSocial NomeCliente Razao])
     code = @schema.pick(company, 'clientes', %w[CodigoCliente Codigo])
     client = name && code ? "C.#{S.column(name)}" : 'NULL'
     join = name && code ? " LEFT JOIN #{db}.clientes C ON C.#{S.column(code)} = N.CodigoCliente" : ''
-    sql = "SELECT N.CFOP AS cfop, #{client} AS cliente FROM #{db}.notafiscal N#{join} WHERE N.CodigoNF = #{S.int(number)}"
+    sql = "SELECT N.CFOP AS cfop, N.Pedido AS pedido, #{client} AS cliente FROM #{db}.notafiscal N#{join} WHERE N.CodigoNF = #{S.int(number)}"
     @client.query_execute(sql).grep(Hash).first || raise(NotFound)
   end
 
-  # [[href, modificado, cfop, cliente]] dos PDFs desta nota ("3594 (6102) ..." serve, "35940 ..." não) dentro da raiz
+  # { href, modified, cfop, client, order } dos PDFs desta nota ("3594 (6102) ..." serve, "35940 ..." não) dentro da raiz
   def this_number(results, number)
     prefix = URI.decode_uri_component("#{files_root}#{encoded(@settings.nextcloud_folder)}/")
     results.filter_map do |href, modified|
@@ -51,19 +52,23 @@ class Outsider::Erp::NextcloudInvoices
       name = File.basename(path)
       next unless path.start_with?(prefix) && path.exclude?('/../') && name.match?(/\A#{number}[ (]/) && (match = name.match(FILE_NAME))
 
-      [href, modified, match[1], match[2]]
+      { href: href, modified: modified, cfop: match[1], client: match[2], order: match[3] }
     end
   end
 
   def pick(files, note)
-    same_cfop = files.select { |_, _, file_cfop| same_cfop?(file_cfop, note['cfop']) }
-    chosen = if note['cliente'].present?
-               same_cfop.select { |*, file_client| same_client?(file_client, note['cliente']) }
-             else
-               same_cfop.one? ? same_cfop : []
-             end
-    chosen.max_by { |_, modified| modified_at(modified) }&.first
+    same_cfop = files.select { |file| same_cfop?(file[:cfop], note['cfop']) }
+    chosen = note['cliente'].present? ? same_cfop.select { |file| same_buyer?(file, note) } : only(same_cfop)
+    chosen.max_by { |file| modified_at(file[:modified]) }&.dig(:href)
   end
+
+  # sem cliente no ERP, só vale se houver um arquivo só
+  def only(files) = files.one? ? files : []
+
+  def same_buyer?(file, note) = same_client?(file[:client], note['cliente']) || same_order?(file[:order], note['pedido'])
+
+  # o pedido interno no fim do nome ("... - 2083") confirma a nota quando o nome do cliente veio diferente
+  def same_order?(file_order, erp_order) = file_order.present? && file_order.to_i.positive? && file_order.to_i == erp_order.to_i
 
   # arquivo sem CFOP no nome ou nota sem CFOP no ERP não descartam
   def same_cfop?(file_cfop, erp_cfop)
