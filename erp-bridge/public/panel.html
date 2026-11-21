@@ -68,6 +68,8 @@
             ${o.observacoes ? `<div class="text-slate-500 pt-1 border-t border-slate-100 mt-1">${esc(o.observacoes)}</div>` : ''}
           </div>
           <div class="flex gap-1 pt-2 mt-2 border-t border-slate-100">
+            <a href="/relatorio.html?os=${encodeURIComponent(o.codigo)}&empresa=${encodeURIComponent(o.empresa || '')}" target="_blank" rel="noopener"
+               class="text-[11px] px-2 py-1 rounded border border-slate-300 hover:bg-slate-100">Relatório</a>
             <input class="ss-in flex-1 text-[11px] px-1.5 py-1 border border-slate-300 rounded" value="${esc(o.subStatus || '')}" data-cod="${esc(o.codigo)}" data-emp="${esc(o.empresa || '')}" data-old="${esc(o.subStatus || '')}" />
             <button type="button" class="ss-save text-[11px] px-2 py-1 rounded bg-slate-800 text-white hover:bg-slate-700">Salvar substatus</button>
           </div>

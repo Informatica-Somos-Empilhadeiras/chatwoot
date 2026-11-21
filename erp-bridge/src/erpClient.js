@@ -33,19 +33,22 @@ function buildValoresDashUrl() {
   return `${config.erpBaseUrl}/KanbanOrdemServico/api/valoresDash?${p.toString()}`;
 }
 
-async function httpGetJson(url) {
+// GET no ERP com timeout cobrindo tambem a leitura do corpo (read recebe o Response).
+export async function erpGet(url, accept, read) {
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), config.timeoutMs);
   try {
-    const headers = { Accept: 'application/json', 'User-Agent': config.userAgent };
+    const headers = { Accept: accept, 'User-Agent': config.userAgent };
     if (config.deviceId) headers['x-device-id'] = config.deviceId;
     const res = await fetch(url, { headers, signal: ctrl.signal });
     if (!res.ok) throw new Error(`ERP respondeu ${res.status}`);
-    return await res.json();
+    return await read(res);
   } finally {
     clearTimeout(t);
   }
 }
+
+const httpGetJson = url => erpGet(url, 'application/json', res => res.json());
 
 async function loadMock() {
   const raw = await readFile(join(__dir, '..', 'mock', 'valoresDash.sample.json'), 'utf8');

@@ -6,6 +6,9 @@ import { fetchAllOs } from './src/erpClient.js';
 import { normalizeOs } from './src/normalize.js';
 import { matchOsForContact } from './src/match.js';
 import { updateCampo, updateSubStatus, campoSuportado, camposDisponiveis } from './src/erpWrite.js';
+import {
+  relatorioOs, fotoChecklist, logoEmissor, codigoValido, empresaValida, refValida, NaoEncontrado,
+} from './src/kanbanReport.js';
 
 const __dir = dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -50,6 +53,53 @@ app.get('/api/os', async (req, res) => {
     res.json({ count: os.length, mock: config.mock, os });
   } catch (err) {
     res.status(502).json({ error: 'falha ao consultar o ERP', detail: String(err.message || err) });
+  }
+});
+
+// ---- Relatorio da OS (o mesmo do kanban de KPI) e fotos do checklist. So leitura. ----
+// OS so com digitos e empresa da lista configurada: a ponte nao vira proxy aberto do ERP.
+function osValida(req, res, next) {
+  if (config.mock) return res.status(409).json({ error: 'relatorio indisponivel no modo de exemplo (MOCK=true)' });
+  const empresa = String(req.query.empresa || '');
+  if (!codigoValido(req.params.codigo) || !empresaValida(empresa)) {
+    return res.status(400).json({ error: 'OS ou empresa invalida' });
+  }
+  req.empresa = empresa;
+  next();
+}
+
+function falhaRelatorio(res, err) {
+  res.status(err instanceof NaoEncontrado ? 404 : 502).json({ error: String(err.message || err) });
+}
+
+function enviarImagem(res, img) {
+  res.set({ 'Content-Type': img.type, 'Cache-Control': 'private, max-age=1800', 'X-Content-Type-Options': 'nosniff' });
+  res.send(img.body);
+}
+
+app.get('/api/os/:codigo/relatorio', osValida, async (req, res) => {
+  try {
+    const { data } = await relatorioOs(req.params.codigo, req.empresa);
+    res.json(data);
+  } catch (err) {
+    falhaRelatorio(res, err);
+  }
+});
+
+app.get('/api/os/:codigo/imagem/:ref', osValida, async (req, res) => {
+  if (!refValida(req.params.codigo, req.params.ref)) return res.status(400).json({ error: 'imagem invalida' });
+  try {
+    enviarImagem(res, await fotoChecklist(req.params.ref, req.empresa));
+  } catch (err) {
+    falhaRelatorio(res, err);
+  }
+});
+
+app.get('/api/os/:codigo/logo', osValida, async (req, res) => {
+  try {
+    enviarImagem(res, await logoEmissor(req.params.codigo, req.empresa));
+  } catch (err) {
+    falhaRelatorio(res, err);
   }
 });
 

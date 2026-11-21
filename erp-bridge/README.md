@@ -35,6 +35,20 @@ O `valoresDash` **não retorna CNPJ/telefone** — só `CodigoCliente` e `Nome`.
 - **Confiável:** grave o `CodigoCliente` do ERP no contato como atributo custom `erp_codigo_cliente`. O painel casa por ele.
 - **Reforço:** busca por nome (aproximada) e busca manual por nº de OS / nome.
 
+## Relatório da OS com fotos (igual ao kanban de KPI)
+
+Cada OS no painel tem o link **Relatório**, que abre `relatorio.html` numa aba nova com o mesmo conteúdo do PDF do kanban (cliente/equipamento, serviço, check-in/out, avaliação técnica, produtos e o checklist com as fotos) e o botão **Imprimir / Salvar PDF**. Só leitura, sem gravar nada em disco.
+
+| Rota do bridge | Vem do ERP (GET) |
+|---|---|
+| `GET /api/os/:codigo/relatorio?empresa=` | `DadosOS_PDF`, `DadosCheckIn_PDF`, `DadosCheckList_PDF`, `DadosProdutosOS_PDF` (`?CodigoOS=&Empresa=`) |
+| `GET /api/os/:codigo/imagem/:ref?empresa=` | `getimagemchecklistos/{ref}/{empresa}` — `ref` é o `CaminhoIMG` do checklist (`{CodigoOS}_{n}`) |
+| `GET /api/os/:codigo/logo?empresa=` | `download-logo-empresa/{CNPJ do emissor que veio no relatório}` |
+
+- Cache em memória: relatório 5 min por OS (single-flight), imagens 30 min (até 150). Abrir o mesmo relatório várias vezes = 1 ida ao ERP.
+- A empresa precisa estar em `ERP_EMPRESAS` e a `ref` tem que ser da própria OS; a ponte recusa qualquer resposta do ERP que não seja imagem. Assim ela não vira proxy aberto do ERP.
+- No modo exemplo (`MOCK=true`) o relatório responde 409, porque não há dados de exemplo para ele.
+
 ## Escrita de campos de OS (parcial, confirmada por captura)
 
 Endpoints reais capturados do app oficial (edição de OS existente). Habilite com `WRITE_ENABLED=true`.
@@ -64,6 +78,7 @@ Pronto — `PUT /api/os/:cod/campo/Observacoes` passa a funcionar, sem mexer em 
 
 - [x] **Fase 1:** espelho read-only de OS (`valoresDash`), com cache e matching.
 - [x] **Fase 3a:** escrita de campos de OS existente (substatus, defeitos) — confirmada por captura, gated.
+- [x] **Relatório da OS com fotos** do checklist (mesmo conteúdo do PDF do kanban de KPI), imprimível.
 - [ ] **Fase 2:** orçamentos — endpoint encontrado: `cotacaoDesempenho/api/valoresDash` (`CodigoOrcamento`, `OrdemServico`, `Status`, `ValorTotal`).
 - [ ] **Fase 3b:** mais campos de update (confirmar cada endpoint por captura); criar/excluir OS depende do desktop ou de endpoint sancionado da Inntegra.
 - [ ] **Fase 4:** agendamento → Teams (Microsoft Graph) / Google Agenda + aviso aos envolvidos (cliente via Chatwoot/WhatsApp).

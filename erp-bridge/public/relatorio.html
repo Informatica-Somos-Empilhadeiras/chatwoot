@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Relatório de OS</title>
+  <script src="https://cdn.tailwindcss.com/3.4.13"></script>
+</head>
+<body class="bg-slate-100 text-slate-800 antialiased print:bg-white">
+  <div class="max-w-4xl mx-auto p-4 print:p-0 print:max-w-none">
+    <div class="flex items-center justify-between gap-2 mb-3 print:hidden">
+      <p id="status" class="text-sm text-slate-500">Carregando relatório...</p>
+      <button id="imprimir" type="button" class="hidden text-sm px-3 py-1.5 rounded-md bg-slate-800 text-white hover:bg-slate-700">Imprimir / Salvar PDF</button>
+    </div>
+    <article id="rel" class="hidden bg-white rounded-lg shadow-sm p-6 print:shadow-none print:rounded-none print:p-0"></article>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(location.search);
+    const os = params.get('os') || '';
+    const empresa = params.get('empresa') || '';
+
+    function esc(s) {
+      return String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    }
+    // Mostra a data/hora como o ERP gravou (sem converter fuso): 2026-11-11T07:20 -> 11/11/2026 - 07:20
+    function dataHora(s) {
+      const m = /^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2}))?/.exec(String(s || ''));
+      if (!m) return s || '-';
+      return `${m[3]}/${m[2]}/${m[1]}${m[4] ? ` - ${m[4]}:${m[5]}` : ''}`;
+    }
+
+    const titulo = t => `<h2 class="text-center text-xs font-semibold uppercase tracking-wide text-slate-400 mt-6 mb-3">${esc(t)}</h2>`;
+    const campo = (rotulo, valor) => `
+      <div>
+        <div class="text-[11px] font-semibold uppercase text-sky-800">${esc(rotulo)}</div>
+        <div class="text-sm">${esc(valor || '-')}</div>
+      </div>`;
+    const tabela = (cabecalho, linhas) => `
+      <table class="w-full text-sm border border-slate-300 border-collapse">
+        <thead><tr>${cabecalho.map(c => `<th class="border border-slate-300 px-2 py-1 text-xs font-semibold">${esc(c)}</th>`).join('')}</tr></thead>
+        <tbody>${linhas.map(l => `<tr>${l.map(c => `<td class="border border-slate-300 px-2 py-1">${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody>
+      </table>`;
+    const fotos = urls => (urls.length ? `
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-2">
+        ${urls.map(u => `<a href="${esc(u)}" target="_blank" rel="noopener" class="block break-inside-avoid">
+          <img src="${esc(u)}" alt="" class="w-full h-40 object-contain bg-slate-50 rounded border border-slate-200" />
+        </a>`).join('')}
+      </div>` : '');
+
+    function render(r) {
+      const { cliente: c, equipamento: e, servico: s } = r;
+      const cabecalho = `
+        <header class="flex items-start gap-4 border-b-2 border-sky-800 pb-3">
+          ${r.logo ? `<img src="${esc(r.logo)}" alt="" class="h-20 w-20 object-contain" />` : ''}
+          <div class="flex-1">
+            <div class="text-lg font-bold text-sky-800">${esc(r.emissor.nome)}</div>
+            ${r.emissor.telefone ? `<div class="text-xs font-semibold">Telefone: ${esc(r.emissor.telefone)}</div>` : ''}
+            ${r.emissor.email ? `<div class="text-xs font-semibold">E-mail: ${esc(r.emissor.email)}</div>` : ''}
+            <div class="mt-2 text-base font-semibold">Impressão de Ordem de Serviço - Check-List</div>
+          </div>
+          <div class="text-right text-xs">
+            ORDEM DE SERVIÇO: <b>${esc(r.codigo)}</b><br />Emitido em ${esc(new Date().toLocaleDateString('pt-BR'))}
+          </div>
+        </header>`;
+
+      const clienteEquip = titulo('Dados do cliente e equipamento') + `
+        <div class="grid grid-cols-2 gap-x-6">
+          <div class="space-y-2">${campo('Cliente', c.nome)}${campo('CNPJ/CPF', c.documento)}${campo('Endereço', c.endereco)}${campo('Cidade', c.cidade)}</div>
+          <div class="space-y-2">
+            ${campo('Descrição', e.descricao)}${campo('Marca', e.marca)}${campo('Modelo', e.modelo)}
+            <div class="grid grid-cols-2 gap-2">${campo('Nº série', e.serie)}${campo('Horímetro', e.horimetro)}</div>
+          </div>
+        </div>`;
+
+      const servico = titulo('Dados do serviço') + `
+        <div class="space-y-2">
+          ${campo('Tipo de atendimento', s.tipoAtendimento)}${campo('Classificação', s.classificacao)}
+          ${campo('Técnico principal', s.tecnico)}${campo('Defeitos mencionados', s.defeitos)}
+        </div>`;
+
+      const eventos = r.eventos.length ? titulo('Eventos (check-in/out)') + tabela(
+        ['Evento', 'Observações', 'Check-in', 'Check-out'],
+        r.eventos.map(ev => [ev.tipo, ev.observacoes, dataHora(ev.checkIn), dataHora(ev.checkOut)]),
+      ) : '';
+
+      const avaliacao = r.avaliacao ? titulo('Avaliação técnica')
+        + `<div class="border border-slate-300 p-3 text-sm whitespace-pre-line">${esc(r.avaliacao)}</div>` : '';
+
+      const produtos = r.produtos.length ? titulo('Produtos / serviços') + tabela(
+        ['Código', 'Descrição', 'Unidade', 'Qtd'],
+        r.produtos.map(p => [p.codigo, p.descricao, p.unidade, p.quantidade]),
+      ) : '';
+
+      const checklist = r.checklist.length ? titulo(r.familia || 'Check-list') + r.checklist.map(sec => `
+        <section>
+          <h3 class="text-center text-sm font-semibold text-slate-500 mt-4 mb-2">${esc(sec.nome)}</h3>
+          ${sec.itens.map(i => `
+            <div class="mt-4 break-inside-avoid">
+              <div class="flex flex-wrap justify-between gap-2 text-sm font-semibold">
+                <span>${esc(i.atributo)}</span>
+                <span>${i.chegada ? `CHEGADA: ${esc(i.chegada)}` : ''}${i.saida ? `&nbsp;&nbsp;SAÍDA: ${esc(i.saida)}` : ''}</span>
+              </div>
+              ${fotos(i.fotos)}
+            </div>`).join('')}
+        </section>`).join('') : '';
+
+      return cabecalho + clienteEquip + servico + eventos + avaliacao + produtos + checklist;
+    }
+
+    async function carregar() {
+      const status = document.getElementById('status');
+      if (!/^\d+$/.test(os) || !empresa) {
+        status.textContent = 'Abra pelo painel de OS do Chatwoot (link "Relatório").';
+        return;
+      }
+      try {
+        const res = await fetch(`/api/os/${os}/relatorio?empresa=${encodeURIComponent(empresa)}`);
+        const r = await res.json();
+        if (!res.ok) throw new Error(r.error || 'erro');
+        document.title = `OS ${r.codigo} - Relatório`;
+        const rel = document.getElementById('rel');
+        rel.innerHTML = render(r);
+        rel.classList.remove('hidden');
+        document.getElementById('imprimir').classList.remove('hidden');
+        status.textContent = `OS ${r.codigo} · ${r.empresa}`;
+      } catch (e) {
+        status.innerHTML = `<span class="text-red-600">Falha: ${esc(e.message)}</span>`;
+      }
+    }
+
+    // Espera todas as fotos carregarem antes de abrir a impressão (senão saem em branco no PDF).
+    document.getElementById('imprimir').addEventListener('click', async () => {
+      await Promise.all([...document.images].map(img => (img.complete ? null : new Promise((ok) => {
+        img.addEventListener('load', ok, { once: true });
+        img.addEventListener('error', ok, { once: true });
+      }))));
+      window.print();
+    });
+
+    carregar();
+  </script>
+</body>
+</html>
