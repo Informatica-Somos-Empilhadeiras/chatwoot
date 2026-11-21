@@ -113,7 +113,8 @@ class Outsider::Erp::NextcloudInvoices
     request = Outsider::Erp::NextcloudInvoices::SearchRequest.new("#{@base.path}/remote.php/dav/")
     request.basic_auth(@settings.nextcloud_user, @settings.nextcloud_password)
     request['Content-Type'] = 'text/xml; charset=utf-8'
-    scope = "/files/#{ERB::Util.url_encode(user_id)}#{encoded(@settings.nextcloud_folder)}"
+    # o escopo vai como caminho puro, como na documentação do Nextcloud ("Fiscal%24" não era achado como "Fiscal$")
+    scope = "/files/#{user_id}#{@settings.nextcloud_folder}"
     request.body = search_body(scope, "#{number} %")
     request
   end
