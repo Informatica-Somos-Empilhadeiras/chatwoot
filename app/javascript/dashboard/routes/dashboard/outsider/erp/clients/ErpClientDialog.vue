@@ -2,7 +2,8 @@
 // OUTSIDER: "Cadastrar cliente no ERP". O cliente entra no Mais Prático pela função do próprio ERP, como pré-cadastro
 // (o escritório completa município, perfil e o resto). Abre da seção ERP, do bloco do ERP no contato e da escolha de
 // cliente do orçamento; com um contato, já vem com o nome, a empresa e o telefone dele, e o contato fica vinculado ao
-// cliente novo. CPF/CNPJ já cadastrado na unidade: avisa e oferece usar o existente em vez de gravar outro.
+// cliente novo. CPF/CNPJ já cadastrado na unidade: avisa e oferece usar o existente em vez de gravar outro. CNPJ novo:
+// busca os dados da empresa (a mesma consulta das propostas) e preenche o cadastro (mergeCompany).
 import { ref, computed, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { debounce } from '@chatwoot/utils';
@@ -21,6 +22,7 @@ import {
   isValidDocument,
   maskDocument,
   maskCep,
+  mergeCompany,
 } from './clientHelpers';
 
 const emit = defineEmits(['created']);
@@ -38,6 +40,9 @@ const existing = ref(null);
 const checking = ref(false);
 const touched = ref(false);
 const serverFields = ref([]);
+// consulta do CNPJ: '' | searching | filled | filled_without_ie | not_found | unavailable
+const companyState = ref('');
+const companyFilled = ref({});
 
 const companies = computed(() => erpState.companies || []);
 const isCompany = computed(() => form.value.person === 'J');
@@ -76,6 +81,28 @@ const loadOptions = async () => {
   }
 };
 
+// CNPJ que ainda não é cliente da unidade: preenche com os dados da empresa (se trocar o CNPJ no meio, descarta)
+const fetchCompany = async () => {
+  const documento = documentClean.value;
+  companyState.value = 'searching';
+  try {
+    const { data } = await ErpAPI.clientCompany(documento);
+    if (documento !== documentClean.value) return;
+    const merged = mergeCompany(form.value, data.customer, companyFilled.value);
+    form.value = merged.form;
+    companyFilled.value = merged.filled;
+    companyState.value = data.customer.state_registration
+      ? 'filled'
+      : 'filled_without_ie';
+  } catch (error) {
+    if (documento !== documentClean.value) return;
+    companyState.value =
+      error?.response?.data?.error === 'not_found'
+        ? 'not_found'
+        : 'unavailable';
+  }
+};
+
 const lookup = debounce(async () => {
   if (!documentValid.value || !company.value) return;
   checking.value = true;
@@ -90,10 +117,12 @@ const lookup = debounce(async () => {
   } finally {
     checking.value = false;
   }
+  if (!existing.value && isCompany.value && documentValid.value) fetchCompany();
 }, 400);
 
 watch([documentClean, company], () => {
   existing.value = null;
+  companyState.value = '';
   serverFields.value = serverFields.value.filter(
     field => field !== 'documento'
   );
@@ -132,6 +161,8 @@ const open = (options = {}) => {
   existing.value = null;
   touched.value = false;
   serverFields.value = [];
+  companyState.value = '';
+  companyFilled.value = {};
   isOpen.value = true;
   loadOptions();
 };
@@ -327,6 +358,18 @@ defineExpose({ open, isOpen });
                 class="text-[11px] font-normal text-n-ruby-11"
               >
                 {{ t('OUTSIDER_ERP.CLIENT.BAD_DOCUMENT') }}
+              </span>
+              <span
+                v-else-if="companyState"
+                class="flex items-center gap-1 text-[11px] font-normal text-n-slate-11"
+              >
+                <Spinner
+                  v-if="companyState === 'searching'"
+                  class="size-3 shrink-0"
+                />
+                {{
+                  t(`OUTSIDER_ERP.CLIENT.COMPANY.${companyState.toUpperCase()}`)
+                }}
               </span>
             </label>
             <label :class="LABEL" class="sm:col-span-4">

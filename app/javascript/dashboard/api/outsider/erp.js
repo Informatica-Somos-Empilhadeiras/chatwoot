@@ -195,6 +195,11 @@ class ErpAPI extends ApiClient {
     });
   }
 
+  // dados da empresa pelo CNPJ para preencher o cadastro (a mesma consulta das propostas)
+  clientCompany(documento) {
+    return axios.get(`${this.url}/clients/company`, { params: { documento } });
+  }
+
   createClient(client, contactId) {
     return axios.post(`${this.url}/clients`, {
       client,

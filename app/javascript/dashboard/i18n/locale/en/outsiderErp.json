@@ -618,6 +618,13 @@
       "CNPJ": "CNPJ",
       "CPF": "CPF",
       "BAD_DOCUMENT": "The check digits do not match.",
+      "COMPANY": {
+        "SEARCHING": "Looking up the company by CNPJ…",
+        "FILLED": "Filled with the company registry data. Please check.",
+        "FILLED_WITHOUT_IE": "Filled with the company registry data (no state registration found). Please check.",
+        "NOT_FOUND": "CNPJ not found in the public registry. Fill in by hand.",
+        "UNAVAILABLE": "The CNPJ lookup is unavailable right now. Fill in by hand."
+      },
       "LEGAL_NAME": "Legal name",
       "NAME": "Name",
       "TRADE_NAME": "Trade name",

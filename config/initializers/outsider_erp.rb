@@ -26,6 +26,7 @@ Rails.application.routes.prepend do
                 collection do
                   get :options
                   get :lookup
+                  get :company
                 end
               end
               resource :contact_link, only: [:create, :destroy]

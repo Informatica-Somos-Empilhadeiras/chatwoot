@@ -144,6 +144,41 @@ export const EMPTY_CLIENT = () => ({
   copiar_endereco: true,
 });
 
+// dados da empresa pelo CNPJ (a mesma consulta das propostas). O cadastro (razão social, nome fantasia, IE e endereço)
+// troca pelo que veio, inclusive em branco, para não sobrar nada de um CNPJ consultado antes; telefone e e-mail só
+// trocam quando estão vazios ou vieram da consulta anterior, porque os do contato costumam valer mais.
+const COMPANY_FIELDS = {
+  nome: 'company',
+  apelido: 'trade_name',
+  rg_ie: 'state_registration',
+  endereco: 'street',
+  numero: 'number',
+  referencia: 'complement',
+  bairro: 'district',
+  cidade: 'city',
+};
+const COMPANY_CONTACT_FIELDS = { telefone: 'phone', email: 'email' };
+
+export const mergeCompany = (form, found, filled = {}) => {
+  const text = key => String(found[key] || '').trim();
+  const next = { ...form, cep: maskCep(found.zip) };
+  Object.entries(COMPANY_FIELDS).forEach(([field, key]) => {
+    next[field] = text(key);
+  });
+  next.uf = UFS.includes(text('state')) ? text('state') : '';
+  Object.entries(COMPANY_CONTACT_FIELDS).forEach(([field, key]) => {
+    const current = String(next[field] || '').trim();
+    if (!current || current === filled[field]) next[field] = text(key);
+  });
+  const nowFilled = Object.fromEntries(
+    Object.entries(COMPANY_CONTACT_FIELDS).map(([field, key]) => [
+      field,
+      next[field] && next[field] === text(key) ? next[field] : '',
+    ])
+  );
+  return { form: next, filled: nowFilled };
+};
+
 // o contato do Chatwoot vira o começo do cadastro: com empresa, pessoa jurídica (a pessoa entra como contato);
 // sem empresa, pessoa física com o nome dele
 export const fromContact = contact => {

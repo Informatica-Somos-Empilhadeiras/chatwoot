@@ -9,7 +9,8 @@
 # Cada serviço aceita poucas consultas por minuto por servidor (5 e 3 nas duas primeiras), então o
 # resultado fica um dia em cache.
 #
-# Só os campos da proposta saem daqui. A resposta de cada serviço é lida até MAX_BYTES e descartada, e a
+# Só os campos da proposta e do cadastro de cliente no ERP (Outsider::Erp, que precisa de nome fantasia e da rua,
+# do número e do complemento separados) saem daqui. A resposta de cada serviço é lida até MAX_BYTES e descartada, e a
 # busca inteira para em DEADLINE, abaixo dos 15 s do rack-timeout. Aceita o CNPJ alfanumérico (letras nas
 # 12 primeiras posições, em uso desde julho de 2026).
 class Outsider::Crm::CompanyLookup
@@ -18,7 +19,8 @@ class Outsider::Crm::CompanyLookup
   class Unavailable < StandardError; end
   class TooLarge < StandardError; end
 
-  FIELDS = %w[company document state_registration address district city state zip phone email].freeze
+  FIELDS = %w[company trade_name document state_registration address street number complement district city state zip phone
+              email].freeze
   COMPLETE = %w[company state_registration email].freeze
   URLS = {
     cnpja: 'https://open.cnpja.com/office/%s',
@@ -27,16 +29,17 @@ class Outsider::Crm::CompanyLookup
   }.freeze
   # onde cada campo está na resposta de cada serviço (Hash#dig)
   PATHS = {
-    cnpja: { company: %w[company name], street: %w[address street], number: %w[address number], details: %w[address details],
-             district: %w[address district], city: %w[address city], state: %w[address state], zip: %w[address zip],
-             area: ['phones', 0, 'area'], phone: ['phones', 0, 'number'], email: ['emails', 0, 'address'] },
-    cnpjws: { company: %w[razao_social], street_type: %w[estabelecimento tipo_logradouro], street: %w[estabelecimento logradouro],
+    cnpja: { company: %w[company name], trade_name: %w[alias], street: %w[address street], number: %w[address number],
+             details: %w[address details], district: %w[address district], city: %w[address city], state: %w[address state],
+             zip: %w[address zip], area: ['phones', 0, 'area'], phone: ['phones', 0, 'number'], email: ['emails', 0, 'address'] },
+    cnpjws: { company: %w[razao_social], trade_name: %w[estabelecimento nome_fantasia],
+              street_type: %w[estabelecimento tipo_logradouro], street: %w[estabelecimento logradouro],
               number: %w[estabelecimento numero], details: %w[estabelecimento complemento], district: %w[estabelecimento bairro],
               city: %w[estabelecimento cidade nome], state: %w[estabelecimento estado sigla], zip: %w[estabelecimento cep],
               area: %w[estabelecimento ddd1], phone: %w[estabelecimento telefone1], email: %w[estabelecimento email] },
-    brasilapi: { company: %w[razao_social], street_type: %w[descricao_tipo_logradouro], street: %w[logradouro], number: %w[numero],
-                 details: %w[complemento], district: %w[bairro], city: %w[municipio], state: %w[uf], zip: %w[cep],
-                 phone: %w[ddd_telefone_1], email: %w[email] }
+    brasilapi: { company: %w[razao_social], trade_name: %w[nome_fantasia], street_type: %w[descricao_tipo_logradouro],
+                 street: %w[logradouro], number: %w[numero], details: %w[complemento], district: %w[bairro], city: %w[municipio],
+                 state: %w[uf], zip: %w[cep], phone: %w[ddd_telefone_1], email: %w[email] }
   }.freeze
   # inscrições estaduais: a lista e, em cada uma, número, estado e se está ativa (a BrasilAPI não tem)
   REGISTRATIONS = {
@@ -73,7 +76,7 @@ class Outsider::Crm::CompanyLookup
 
   # { customer: { company:, document:, ... }, sources: ['cnpja', ...] }
   def perform
-    Rails.cache.fetch("outsider_crm_company_lookup/#{@document}", expires_in: CACHE_TTL) { lookup }
+    Rails.cache.fetch("outsider_crm_company_lookup/v2/#{@document}", expires_in: CACHE_TTL) { lookup }
   end
 
   private
@@ -141,11 +144,17 @@ class Outsider::Crm::CompanyLookup
     value = ->(key) { data.dig(*PATHS[provider][key]) if PATHS[provider][key] }
     state = value[:state]
     {
-      'company' => value[:company], 'state_registration' => state_registration(provider, data, state),
-      'address' => street_line([value[:street_type], value[:street]].compact_blank.join(' '), value[:number], value[:details]),
+      'company' => value[:company], 'trade_name' => value[:trade_name], 'state_registration' => state_registration(provider, data, state),
       'district' => value[:district], 'city' => value[:city], 'state' => state, 'zip' => format_zip(value[:zip]),
       'phone' => format_phone("#{value[:area]}#{value[:phone]}"), 'email' => value[:email]
-    }
+    }.merge(address_fields(value))
+  end
+
+  # a proposta usa a linha inteira (rua, número - complemento); o cadastro do ERP usa as partes
+  def address_fields(value)
+    street = [value[:street_type], value[:street]].compact_blank.join(' ')
+    { 'address' => street_line(street, value[:number], value[:details]), 'street' => street, 'number' => value[:number],
+      'complement' => value[:details] }
   end
 
   # IE ativa no estado do endereço: as de outros estados são de substituto tributário, não do cliente

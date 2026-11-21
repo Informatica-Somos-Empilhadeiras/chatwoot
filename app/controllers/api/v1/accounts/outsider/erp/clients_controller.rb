@@ -10,6 +10,9 @@ class Api::V1::Accounts::Outsider::Erp::ClientsController < Api::V1::Accounts::O
   rescue_from(::Outsider::Erp::ClientRegistrar::Invalid) do |error|
     render json: { error: 'invalid', reason: error.message, fields: error.fields }, status: :unprocessable_entity
   end
+  rescue_from(::Outsider::Crm::CompanyLookup::Invalid) { render json: { error: 'invalid_document' }, status: :unprocessable_entity }
+  rescue_from(::Outsider::Crm::CompanyLookup::NotFound) { render json: { error: 'not_found' }, status: :not_found }
+  rescue_from(::Outsider::Crm::CompanyLookup::Unavailable) { render json: { error: 'unavailable' }, status: :service_unavailable }
 
   # vendedores da unidade e o vendedor do agente (o mesmo que o orçamento pré-preenche)
   def options
@@ -22,6 +25,11 @@ class Api::V1::Accounts::Outsider::Erp::ClientsController < Api::V1::Accounts::O
   # já existe um cliente com este CPF/CNPJ na unidade? (a tela avisa antes de gravar)
   def lookup
     render json: { customer: registrar.existing(params.require(:company), params.require(:documento)) }
+  end
+
+  # dados da empresa pelo CNPJ para preencher o cadastro (a mesma consulta das propostas: Outsider::Crm::CompanyLookup)
+  def company
+    render json: ::Outsider::Crm::CompanyLookup.new(params.require(:documento)).perform
   end
 
   def create

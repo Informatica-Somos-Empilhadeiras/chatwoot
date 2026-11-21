@@ -618,6 +618,13 @@
       "CNPJ": "CNPJ",
       "CPF": "CPF",
       "BAD_DOCUMENT": "Os dígitos verificadores não conferem.",
+      "COMPANY": {
+        "SEARCHING": "Buscando a empresa pelo CNPJ…",
+        "FILLED": "Preenchido com os dados do cadastro da empresa. Confira.",
+        "FILLED_WITHOUT_IE": "Preenchido com os dados do cadastro da empresa (sem inscrição estadual). Confira.",
+        "NOT_FOUND": "CNPJ não encontrado no cadastro público. Preencha à mão.",
+        "UNAVAILABLE": "A consulta do CNPJ não respondeu agora. Preencha à mão."
+      },
       "LEGAL_NAME": "Razão social",
       "NAME": "Nome",
       "TRADE_NAME": "Nome fantasia",
