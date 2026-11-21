@@ -78,7 +78,23 @@ class Outsider::Erp::NextcloudInvoices
     size >= 5 && first.first(size) == second.first(size)
   end
 
-  def files_root = "#{@base.path}/remote.php/dav/files/#{ERB::Util.url_encode(@settings.nextcloud_user)}"
+  def files_root = "#{@base.path}/remote.php/dav/files/#{ERB::Util.url_encode(user_id)}"
+
+  # o caminho dos arquivos usa o ID do usuário no Nextcloud, que pode não ser o login (conta criada por e-mail, LDAP):
+  # pergunta ao próprio Nextcloud quem é o usuário da senha
+  def user_id
+    @user_id ||= begin
+      request = Net::HTTP::Get.new("#{@base.path}/ocs/v2.php/cloud/user?format=json")
+      request.basic_auth(@settings.nextcloud_user, @settings.nextcloud_password)
+      request['OCS-APIRequest'] = 'true'
+      response = http.request(request)
+      raise Error, "HTTP #{response.code}" unless response.code == '200'
+
+      JSON.parse(response.body).dig('ocs', 'data', 'id').presence || @settings.nextcloud_user
+    rescue JSON::ParserError
+      @settings.nextcloud_user
+    end
+  end
 
   def encoded(path) = path.split('/').map { |part| ERB::Util.url_encode(part) }.join('/')
 
@@ -97,7 +113,7 @@ class Outsider::Erp::NextcloudInvoices
     request = Outsider::Erp::NextcloudInvoices::SearchRequest.new("#{@base.path}/remote.php/dav/")
     request.basic_auth(@settings.nextcloud_user, @settings.nextcloud_password)
     request['Content-Type'] = 'text/xml; charset=utf-8'
-    scope = "/files/#{ERB::Util.url_encode(@settings.nextcloud_user)}#{encoded(@settings.nextcloud_folder)}"
+    scope = "/files/#{ERB::Util.url_encode(user_id)}#{encoded(@settings.nextcloud_folder)}"
     request.body = search_body(scope, "#{number} %")
     request
   end
@@ -126,7 +142,7 @@ class Outsider::Erp::NextcloudInvoices
     request = Net::HTTP::Get.new(href)
     request.basic_auth(@settings.nextcloud_user, @settings.nextcloud_password)
     response = http.request(request)
-    raise Error, "HTTP #{response.code}" unless response.code == '200'
+    raise Error, "HTTP #{response.code} no arquivo" unless response.code == '200'
     raise Error, 'arquivo grande demais' if response.body.bytesize > MAX_BYTES
 
     response.body
