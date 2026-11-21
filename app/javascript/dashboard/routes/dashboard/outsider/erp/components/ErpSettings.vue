@@ -53,7 +53,6 @@ const fill = data => {
     ...data.settings,
     extra_fields: (data.settings.extra_fields || []).map(row => ({ ...row })),
     user_erp_ids: { ...(data.settings.user_erp_ids || {}) },
-    nextcloud_folders: { ...(data.settings.nextcloud_folders || {}) },
   };
   people.value = data.people || [];
   quoteLists.value = data.quote_lists || {};
@@ -99,11 +98,6 @@ const load = async () => {
 onMounted(load);
 
 const hasError = key => errors.value.includes(key);
-
-// uma pasta do Nextcloud por unidade (as da lista de empresas acima)
-const companyList = computed(() =>
-  companiesText.value.split(/[\s,;]+/).filter(Boolean)
-);
 
 const save = async (extra = {}) => {
   saving.value = true;
@@ -775,19 +769,18 @@ const removeField = index => form.value.extra_fields.splice(index, 1);
           t('OUTSIDER_ERP.SETTINGS.NEXTCLOUD_PASSWORD_HINT')
         }}</span>
       </label>
-      <label
-        v-for="company in companyList"
-        :key="company"
-        class="flex flex-col gap-1 text-sm"
-      >
+      <label class="flex flex-col gap-1 text-sm">
         <span class="text-n-slate-11">{{
-          t('OUTSIDER_ERP.SETTINGS.NEXTCLOUD_FOLDER', { company })
+          t('OUTSIDER_ERP.SETTINGS.NEXTCLOUD_FOLDER')
         }}</span>
         <input
-          v-model="form.nextcloud_folders[company]"
+          v-model="form.nextcloud_folder"
           :placeholder="t('OUTSIDER_ERP.SETTINGS.NEXTCLOUD_FOLDER_PLACEHOLDER')"
-          :class="[INPUT, hasError('nextcloud_folders') && '!outline-n-ruby-9']"
+          :class="[INPUT, hasError('nextcloud_folder') && '!outline-n-ruby-9']"
         />
+        <span class="text-xs text-n-slate-10">{{
+          t('OUTSIDER_ERP.SETTINGS.NEXTCLOUD_FOLDER_HINT')
+        }}</span>
       </label>
     </section>
 
