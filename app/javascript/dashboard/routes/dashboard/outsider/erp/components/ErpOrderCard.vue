@@ -1,7 +1,8 @@
 <script setup>
 // OUTSIDER: uma ordem de serviço do ERP (espelho). Fechada mostra o essencial; aberta mostra os detalhes, o relatório
-// com as fotos do checklist (PDF, ErpPdfDialog) e, para quem pode editar (escrita ligada + perfil "Usa"), os controles
-// de edição (ErpOrderEditor). O cartão só exibe; a edição e a gravação ficam no editor.
+// com as fotos do checklist (PDF, ErpPdfDialog), o envio dele ao cliente (ErpOrderSendDialog, para quem "Usa" as OS) e,
+// para quem pode editar (escrita ligada + perfil "Usa"), os controles de edição (ErpOrderEditor). O cartão só exibe; a
+// edição e a gravação ficam no editor.
 import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import ErpAPI from 'dashboard/api/outsider/erp';
@@ -9,6 +10,8 @@ import Button from 'dashboard/components-next/button/Button.vue';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
 import ErpOrderEditor from './ErpOrderEditor.vue';
 import ErpPdfDialog from '../budgets/ErpPdfDialog.vue';
+import ErpOrderSendDialog from './ErpOrderSendDialog.vue';
+import { allows } from '../../access/accessStore';
 import { erpState, formatDate, dotClass, substatusClass } from '../erpStore';
 
 const props = defineProps({
@@ -23,6 +26,16 @@ const emit = defineEmits(['updated']);
 const { t } = useI18n();
 const open = ref(props.startOpen);
 const pdfRef = ref(null);
+const sendRef = ref(null);
+const canSend = computed(() => allows('erp_orders', 'use'));
+
+const openSend = () =>
+  sendRef.value?.open({
+    company: props.order.Empresa,
+    code: props.order.CodigoOS,
+    conversationId: props.conversationId,
+    clientCode: props.order.CodigoCliente,
+  });
 
 const openReport = () =>
   pdfRef.value?.open(() =>
@@ -129,7 +142,7 @@ const details = computed(() =>
     </button>
 
     <div v-if="open" class="flex flex-col gap-3 pt-2 border-t border-n-weak">
-      <div class="flex">
+      <div class="flex flex-wrap gap-2">
         <Button
           size="sm"
           variant="faded"
@@ -138,7 +151,17 @@ const details = computed(() =>
           :label="t('OUTSIDER_ERP.ORDER.REPORT')"
           @click="openReport"
         />
+        <Button
+          v-if="canSend"
+          size="sm"
+          variant="faded"
+          color="slate"
+          icon="i-lucide-send"
+          :label="t('OUTSIDER_ERP.ORDER.SEND.BUTTON')"
+          @click="openSend"
+        />
         <ErpPdfDialog ref="pdfRef" />
+        <ErpOrderSendDialog ref="sendRef" />
       </div>
       <p v-if="order.Nome" class="mb-0 text-xs font-medium text-n-slate-12">
         {{ order.Nome }}

@@ -68,6 +68,14 @@
       "NOTE_HINT": "Each change is logged as a private note in this conversation.",
       "VIEW_ONLY": "Your profile can only view service orders.",
       "REPORT": "Report with photos",
+      "SEND": {
+        "BUTTON": "Send",
+        "TITLE": "Send the report of SO {code} to the customer",
+        "PDF_TITLE": "Service order report",
+        "HINT": "The report goes attached. On WhatsApp it stays in the conversation; the email becomes a note in the conversation it was sent from.",
+        "EMAIL_DONE": "Service order report sent by email.",
+        "WHATSAPP_DONE": "Service order report sent on WhatsApp."
+      },
       "NO_TECHNICIAN": "No technician",
       "DETAILS": {
         "SITUATION": "Situation",
@@ -199,6 +207,11 @@
       "QUOTE_REPLY_TO_PLACEHOLDER": "sales{'@'}company.com",
       "QUOTE_EMAIL_BODY": "Email text",
       "QUOTE_WHATSAPP_TEXT": "WhatsApp text",
+      "OS_SEND": "Sending the service order report",
+      "OS_PLACEHOLDERS": "Use {numero}, {contato}, {cliente}, {tecnico} and {vendedor}: they are replaced with the service order data.",
+      "OS_EMAIL_SUBJECT": "Email subject",
+      "OS_EMAIL_BODY": "Email text",
+      "OS_WHATSAPP_TEXT": "WhatsApp text",
       "CLIENT_WRITE": "Customer registration",
       "CLIENT_WRITE_HINT": "Lets agents register customers in Mais Prático from the chat, through the ERP's own function. Customers are saved as pre-registrations, and an already registered CPF/CNPJ is never saved again. Off by default; who can use it is set in the access profile (Customer registration).",
       "CLIENT_WRITE_ENABLED": "Allow registration"

@@ -34,23 +34,20 @@ class Outsider::Erp::Settings
     'extra_fields' => [], 'substatus_options' => [], 'locked_statuses' => %w[FECHADA CANCELADA PERDIDA],
     # orçamento de peças e serviços (Outsider::Erp::Budget), gravado pelas funções do ERP (Outsider::Erp::QuoteCreator);
     # a gravação começa desligada. Serviço (sem NCM, que a função do ERP descarta) é gravado direto por padrão
-    # (decisão do dono em 19/11/2026), até a Inntegra corrigir a função. Padrões do formulário e textos de envio
-    # ({numero}, {contato}, {cliente}, {total}, {pagamento}, {vendedor}). Desconto acima do limite (% por linha e no total)
+    # (decisão do dono em 19/11/2026), até a Inntegra corrigir a função. Padrões do formulário (os textos de envio do
+    # orçamento e da OS ficam em Outsider::Erp::SendTexts). Desconto acima do limite (% por linha e no total)
     # pede o código e a senha de quem tem a permissão de desconto do ERP (Outsider::Erp::DiscountPolicy); o ERP da Somos
     # não tem limite preenchido, então ele fica aqui (0 = qualquer desconto pede liberação).
     'quote_write_enabled' => false, 'quote_forma_pagto' => 0, 'quote_tipo_frete' => 0, 'quote_genero_operacao' => 0,
     'quote_services_direct' => true, 'quote_discount_approval' => true, 'quote_discount_line_max' => 0, 'quote_discount_total_max' => 0,
     'quote_prazo_entrega' => '', 'quote_validade' => '', 'quote_garantia' => '',
-    'quote_email_subject' => 'Orçamento Nº {numero}', 'quote_reply_to' => '',
-    'quote_email_body' => "Olá, {contato}!\n\nSegue em anexo o orçamento Nº {numero} de peças e serviços, no valor de {total}, " \
-                          "com pagamento em {pagamento}.\n\nQualquer dúvida, estou à disposição.\n{vendedor}",
-    'quote_whatsapp_text' => 'Olá, {contato}! Segue o orçamento Nº {numero}, no valor de {total}.',
+    'quote_reply_to' => '',
     # cadastro de cliente no ERP pela função do próprio Mais Prático (sp_CadastraCliente, Outsider::Erp::ClientRegistrar):
     # entra como pré-cadastro, que o escritório completa. Desligado por padrão.
     'client_write_enabled' => false
-  }.freeze
-  QUOTE_TEXTS = { 'quote_prazo_entrega' => 255, 'quote_validade' => 255, 'quote_garantia' => 255, 'quote_email_subject' => 200,
-                  'quote_email_body' => 4000, 'quote_whatsapp_text' => 2000 }.freeze
+  }.merge(Outsider::Erp::SendTexts::DEFAULTS).freeze
+  # textos livres e o tamanho máximo: os do formulário do orçamento e os de envio (orçamento e OS, Outsider::Erp::SendTexts)
+  TEXTS = { 'quote_prazo_entrega' => 255, 'quote_validade' => 255, 'quote_garantia' => 255 }.merge(Outsider::Erp::SendTexts::LIMITS).freeze
 
   class Invalid < StandardError
     attr_reader :errors
@@ -161,7 +158,7 @@ class Outsider::Erp::Settings
       'quote_discount_line_max' => clamp(params, 'quote_discount_line_max', 0, 100),
       'quote_discount_total_max' => clamp(params, 'quote_discount_total_max', 0, 100),
       'quote_reply_to' => clean_reply_to(params.fetch('quote_reply_to', data['quote_reply_to']))
-    }.merge(QUOTE_TEXTS.to_h { |key, max| [key, params.fetch(key, data[key]).to_s.strip.first(max)] })
+    }.merge(TEXTS.to_h { |key, max| [key, params.fetch(key, data[key]).to_s.strip.first(max)] })
   end
 
   def clean_client(params)

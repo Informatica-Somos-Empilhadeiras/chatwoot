@@ -1,7 +1,9 @@
 <script setup>
-// OUTSIDER: orçamento já no ERP: o PDF oficial (com os impostos que o ERP calculou) à esquerda e o envio à direita.
-// E-mail: vários endereços (já vêm o do contato e os do cliente no ERP), assunto e mensagem com o texto padrão das
-// Configurações. WhatsApp: na conversa do contato (ou de outro, pela busca) numa caixa de WhatsApp, com a mensagem.
+// OUTSIDER: o PDF à esquerda e o envio ao cliente à direita. Do orçamento já no ERP (o PDF oficial, com os impostos que
+// o ERP calculou, e o histórico de envios) ou de outra fonte, como o relatório da OS (ErpOrderSendDialog), que passa
+// source = { pdf, delivery, contacts(q), deliver(payload), labels }. E-mail: vários endereços (já vêm o do contato e,
+// no orçamento, os do cliente no ERP), assunto e mensagem com o texto padrão das Configurações. WhatsApp: na conversa
+// do contato (ou de outro, pela busca) numa caixa de WhatsApp, com a mensagem.
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useAlert } from 'dashboard/composables';
@@ -14,7 +16,8 @@ import { formatDate } from '../erpStore';
 import { blobError, budgetErrorMessage } from './budgetHelpers';
 
 const props = defineProps({
-  budget: { type: Object, required: true },
+  budget: { type: Object, default: null },
+  source: { type: Object, default: null },
 });
 
 const emit = defineEmits(['sent', 'meta']);
@@ -41,11 +44,31 @@ const contactResults = ref([]);
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+// sem source, o orçamento (props.budget)
+const api = computed(
+  () =>
+    props.source || {
+      pdf: () => ErpAPI.budgetPdf(props.budget.id),
+      delivery: () => ErpAPI.budgetDelivery(props.budget.id),
+      contacts: q => ErpAPI.budgetContacts(props.budget.id, q),
+      deliver: payload => ErpAPI.deliverBudget(props.budget.id, payload),
+    }
+);
+const labels = computed(
+  () =>
+    props.source?.labels || {
+      pdfTitle: t('OUTSIDER_ERP.BUDGET.PDF.TITLE'),
+      hint: t('OUTSIDER_ERP.BUDGET.SEND.HISTORY_HINT'),
+      emailDone: t('OUTSIDER_ERP.BUDGET.SEND.EMAIL_DONE'),
+      whatsappDone: t('OUTSIDER_ERP.BUDGET.SEND.WHATSAPP_DONE'),
+    }
+);
+
 const loadPdf = async () => {
   pdfLoading.value = true;
   pdfFailure.value = '';
   try {
-    const response = await ErpAPI.budgetPdf(props.budget.id);
+    const response = await api.value.pdf();
     pdfUrl.value = URL.createObjectURL(
       new Blob([response.data], { type: 'application/pdf' })
     );
@@ -60,7 +83,7 @@ const loadDelivery = async () => {
   loading.value = true;
   failure.value = '';
   try {
-    const { data } = await ErpAPI.budgetDelivery(props.budget.id);
+    const { data } = await api.value.delivery();
     delivery.value = data;
     emails.value = [...(data.recipients.emails || [])];
     subject.value = data.texts.subject;
@@ -107,10 +130,7 @@ const onEmailKey = event => {
 
 const searchContacts = debounce(async () => {
   try {
-    const { data } = await ErpAPI.budgetContacts(
-      props.budget.id,
-      contactQuery.value
-    );
+    const { data } = await api.value.contacts(contactQuery.value);
     contactResults.value = data.contacts || [];
   } catch {
     contactResults.value = [];
@@ -153,13 +173,11 @@ const send = async () => {
             inbox_id: inboxId.value,
             message: whatsappText.value,
           };
-    const { data } = await ErpAPI.deliverBudget(props.budget.id, payload);
+    const { data } = await api.value.deliver(payload);
     useAlert(
-      t(
-        channel.value === 'email'
-          ? 'OUTSIDER_ERP.BUDGET.SEND.EMAIL_DONE'
-          : 'OUTSIDER_ERP.BUDGET.SEND.WHATSAPP_DONE'
-      )
+      channel.value === 'email'
+        ? labels.value.emailDone
+        : labels.value.whatsappDone
     );
     emit('sent', data.budget);
   } catch (error) {
@@ -206,7 +224,7 @@ const TEXTAREA =
       <iframe
         v-if="pdfUrl"
         :src="pdfUrl"
-        :title="t('OUTSIDER_ERP.BUDGET.PDF.TITLE')"
+        :title="labels.pdfTitle"
         class="flex-1 w-full border-0 min-h-[24rem]"
       />
     </div>
@@ -414,7 +432,7 @@ const TEXTAREA =
 
       <div class="flex flex-wrap items-center justify-between gap-2 mt-auto">
         <span class="text-xs text-n-slate-10">
-          {{ t('OUTSIDER_ERP.BUDGET.SEND.HISTORY_HINT') }}
+          {{ labels.hint }}
         </span>
         <Button
           :label="
@@ -434,7 +452,7 @@ const TEXTAREA =
       </div>
 
       <div
-        v-if="budget.sends?.length"
+        v-if="budget?.sends?.length"
         class="flex flex-col gap-1.5 pt-3 border-t border-n-weak"
       >
         <span

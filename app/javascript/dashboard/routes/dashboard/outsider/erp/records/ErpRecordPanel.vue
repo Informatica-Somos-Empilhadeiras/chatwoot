@@ -18,6 +18,7 @@ import ErpRecordTimeline from './ErpRecordTimeline.vue';
 import ErpOrderEditor from '../components/ErpOrderEditor.vue';
 import ErpBudgetDrawer from '../budgets/ErpBudgetDrawer.vue';
 import ErpPdfDialog from '../budgets/ErpPdfDialog.vue';
+import ErpOrderSendDialog from '../components/ErpOrderSendDialog.vue';
 import { budgetErrorMessage } from '../budgets/budgetHelpers';
 import { allows } from '../../access/accessStore';
 import {
@@ -270,6 +271,7 @@ const chatUrl = computed(() => {
 const edit = computed(() => detail.value?.edit || {});
 // enviar e copiar pedem "Usa" na aba Orçamentos do perfil; editar pede também a gravação de orçamentos ligada
 const canUseQuotes = computed(() => allows('erp_quotes', 'use'));
+const canUseOrders = computed(() => allows('erp_orders', 'use'));
 const editBlocked = computed(() => {
   if (!canUseQuotes.value) return t('OUTSIDER_ERP.RECORDS.EDIT.NO_ACCESS');
   if (!erpState.quoteWriteEnabled)
@@ -338,6 +340,15 @@ const showReport = () =>
       ErpAPI.serviceOrderReport(view.value.company, view.value.number)
     )
   );
+
+// OS: o mesmo relatório, com a prévia e o envio ao cliente por WhatsApp ou e-mail (como o orçamento)
+const orderSendRef = ref(null);
+const sendOrder = () =>
+  orderSendRef.value?.open({
+    company: view.value.company,
+    code: view.value.number,
+    contactId: detail.value?.contact_id,
+  });
 
 const send = () =>
   run('send', async () => {
@@ -484,6 +495,15 @@ const LABEL =
           :label="t('OUTSIDER_ERP.ORDER.REPORT')"
           :is-loading="busy === 'report'"
           @click="showReport"
+        />
+        <Button
+          v-if="canUseOrders"
+          size="sm"
+          variant="faded"
+          color="slate"
+          icon="i-lucide-send"
+          :label="t('OUTSIDER_ERP.ORDER.SEND.BUTTON')"
+          @click="sendOrder"
         />
       </div>
     </header>
@@ -730,5 +750,6 @@ const LABEL =
       @changed="refresh"
     />
     <ErpPdfDialog ref="pdfRef" />
+    <ErpOrderSendDialog ref="orderSendRef" />
   </aside>
 </template>

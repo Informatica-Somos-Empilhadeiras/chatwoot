@@ -1,16 +1,25 @@
-# OUTSIDER: e-mail com o orçamento do ERP em anexo (ver Outsider::Erp::BudgetMailJob), para um ou vários endereços.
-# Não herda do ApplicationMailer porque ele engole as falhas de SMTP, e aqui a falha precisa voltar para o histórico.
-# Sai com o remetente do Chatwoot e o nome de quem enviou; a resposta vai para o e-mail das Configurações ou de quem enviou.
+# OUTSIDER: e-mail com um PDF do ERP em anexo, para um ou vários endereços: o orçamento (ver Outsider::Erp::BudgetMailJob)
+# e o relatório da OS (Outsider::Erp::ServiceOrderSender). Não herda do ApplicationMailer porque ele engole as falhas de
+# SMTP, e no orçamento a falha precisa voltar para o histórico. Sai com o remetente do Chatwoot e o nome de quem enviou;
+# a resposta vai para o e-mail das Configurações ou de quem enviou.
 class Outsider::Erp::BudgetMailer < ActionMailer::Base # rubocop:disable Rails/ApplicationMailer
   def budget(record, subject, body)
-    blob = record.document.blob
-    attachments[blob.filename.to_s] = { mime_type: 'application/pdf', content: blob.download }
-    mail(to: record.recipients, from: sender(record.user), reply_to: reply_to(record), subject: subject) do |format|
-      format.text { render plain: body.presence || subject }
-    end
+    document_mail(record.document.blob, record.account, record.user, { 'to' => record.recipients, 'subject' => subject, 'body' => body })
+  end
+
+  # message: { 'to' => [...], 'subject' =>, 'body' => }; o PDF da OS já está no Active Storage (sem registro de envio)
+  def service_order(blob, account, user, message)
+    document_mail(blob, account, user, message)
   end
 
   private
+
+  def document_mail(blob, account, user, message)
+    attachments[blob.filename.to_s] = { mime_type: 'application/pdf', content: blob.download }
+    mail(to: message['to'], from: sender(user), reply_to: reply_to(account, user), subject: message['subject']) do |format|
+      format.text { render plain: message['body'].presence || message['subject'] }
+    end
+  end
 
   def sender(user)
     address = Mail::Address.new(ENV.fetch('MAILER_SENDER_EMAIL', 'Chatwoot <accounts@chatwoot.com>'))
@@ -19,7 +28,7 @@ class Outsider::Erp::BudgetMailer < ActionMailer::Base # rubocop:disable Rails/A
     email_address_with_name(address.address, user.name)
   end
 
-  def reply_to(record)
-    Outsider::Erp::Settings.new(record.account).data['quote_reply_to'].presence || record.user&.email
+  def reply_to(account, user)
+    Outsider::Erp::Settings.new(account).data['quote_reply_to'].presence || user&.email
   end
 end

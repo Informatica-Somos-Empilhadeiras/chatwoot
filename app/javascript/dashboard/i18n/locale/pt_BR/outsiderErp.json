@@ -68,6 +68,14 @@
       "NOTE_HINT": "Cada mudança fica numa nota privada desta conversa.",
       "VIEW_ONLY": "Seu perfil só permite consultar as OS.",
       "REPORT": "Relatório com fotos",
+      "SEND": {
+        "BUTTON": "Enviar",
+        "TITLE": "Enviar o relatório da OS {code} ao cliente",
+        "PDF_TITLE": "Relatório da OS",
+        "HINT": "O relatório vai em anexo. No WhatsApp fica na conversa; o e-mail vira nota na conversa de onde saiu.",
+        "EMAIL_DONE": "Relatório da OS enviado por e-mail.",
+        "WHATSAPP_DONE": "Relatório da OS enviado no WhatsApp."
+      },
       "NO_TECHNICIAN": "Sem técnico",
       "DETAILS": {
         "SITUATION": "Situação",
@@ -199,6 +207,11 @@
       "QUOTE_REPLY_TO_PLACEHOLDER": "comercial{'@'}empresa.com.br",
       "QUOTE_EMAIL_BODY": "Texto do e-mail",
       "QUOTE_WHATSAPP_TEXT": "Texto do WhatsApp",
+      "OS_SEND": "Envio do relatório da OS",
+      "OS_PLACEHOLDERS": "Use {numero}, {contato}, {cliente}, {tecnico} e {vendedor}: são trocados pelos dados da OS.",
+      "OS_EMAIL_SUBJECT": "Assunto do e-mail",
+      "OS_EMAIL_BODY": "Texto do e-mail",
+      "OS_WHATSAPP_TEXT": "Texto do WhatsApp",
       "CLIENT_WRITE": "Cadastro de clientes",
       "CLIENT_WRITE_HINT": "Permite cadastrar cliente no Mais Prático pelo chat, pela função do próprio ERP. O cliente entra como pré-cadastro, e um CPF/CNPJ já cadastrado nunca é gravado de novo. Começa desligado; quem pode usar é definido no perfil de acesso (Cadastro de clientes).",
       "CLIENT_WRITE_ENABLED": "Permitir cadastrar"

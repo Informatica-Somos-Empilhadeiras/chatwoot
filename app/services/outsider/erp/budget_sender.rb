@@ -3,14 +3,12 @@
 #   mensagem e o registro do envio apontam para o mesmo arquivo (Outsider::Erp::BudgetDocument).
 # - E-mail: para um ou vários endereços, com assunto e corpo, pelo servidor de e-mail do Chatwoot
 #   (Outsider::Erp::BudgetMailJob); fica uma nota privada na conversa em que o orçamento foi feito.
-# O PDF sai sempre do que está no ERP agora (Outsider::Erp::QuoteReport).
+# O PDF sai sempre do que está no ERP agora (Outsider::Erp::QuoteReport). O que é igual no envio da OS fica em
+# Outsider::Erp::Delivery (Blocked também vem de lá).
 class Outsider::Erp::BudgetSender
-  class Blocked < StandardError; end
+  include Outsider::Erp::Delivery
 
   CHANNELS = %w[whatsapp email].freeze
-  MAX_EMAILS = 10
-  MAX_MESSAGE = 4_000
-  MAX_SUBJECT = 200
 
   def initialize(account_user)
     @account_user = account_user
@@ -33,7 +31,7 @@ class Outsider::Erp::BudgetSender
 
   def whatsapp(budget, params)
     contact = whatsapp_contact(budget, params[:contact_id])
-    inbox = recipients.whatsapp_inboxes.find { |item| item.id == params[:inbox_id].to_i } || raise(Blocked, 'inbox')
+    inbox = whatsapp_inbox(params[:inbox_id])
     text = clean(params[:message], MAX_MESSAGE)
     document = document(budget)
     Outsider::Erp::Budget.transaction do
@@ -47,19 +45,11 @@ class Outsider::Erp::BudgetSender
 
   # outro contato escolhido na busca, senão o do orçamento; precisa ter telefone e não ser grupo
   def whatsapp_contact(budget, contact_id)
-    contact = contact_id.present? ? @account.contacts.find_by(id: contact_id) : budget.contact
-    raise Blocked, 'no_phone' if contact.nil? || contact.phone_number.blank? || Outsider::Crm::ContactSummary.group?(contact)
-
-    contact
+    whatsapp_ready!(contact_id.present? ? @account.contacts.find_by(id: contact_id) : budget.contact)
   end
 
   def email(budget, params)
-    raise Blocked, 'no_mail_server' unless recipients.system_email?
-
-    addresses = emails(params[:to])
-    subject = clean(params[:subject], MAX_SUBJECT)
-    raise Blocked, 'subject_required' if subject.blank?
-
+    addresses, subject = mail_target(params)
     body = clean(params[:message], MAX_MESSAGE)
     record = create_send(budget, document(budget), channel: :email, recipients: addresses, subject: subject)
     deliver_mail(record, subject, body)
@@ -85,17 +75,6 @@ class Outsider::Erp::BudgetSender
     Outsider::Erp::BudgetMailJob.perform_later(record.id, subject, body)
   end
 
-  def whatsapp_conversation(inbox, contact)
-    contact_inbox = ContactInbox.find_by(contact: contact, inbox: inbox) || ContactInboxBuilder.new(contact: contact, inbox: inbox).perform
-    contact_inbox.conversations.where.not(status: :resolved).order(last_activity_at: :desc).first ||
-      ConversationBuilder.new(params: ActionController::Parameters.new(assignee_id: @user.id), contact_inbox: contact_inbox).perform
-  end
-
-  def post(conversation, text, attachments: [], private: false)
-    params = ActionController::Parameters.new(content: text.presence, private: private, attachments: attachments)
-    Messages::MessageBuilder.new(@user, conversation, params).perform
-  end
-
   def note(budget, text)
     conversation = budget.conversation_id && @account.conversations.find_by(id: budget.conversation_id)
     post(conversation, text, private: true) if conversation
@@ -103,23 +82,7 @@ class Outsider::Erp::BudgetSender
     Rails.logger.warn("[Outsider::Erp] nota do envio do orçamento #{budget.id}: #{e.message}")
   end
 
-  def emails(value)
-    list = Array(value).flat_map { |item| item.to_s.split(/[;,\s]+/) }.compact_blank.uniq(&:downcase)
-    raise Blocked, 'no_email' if list.empty?
-    raise Blocked, 'too_many_emails' if list.size > MAX_EMAILS
-    raise Blocked, 'invalid_email' unless list.all?(URI::MailTo::EMAIL_REGEXP)
-
-    list
-  end
-
   def recipients
     @recipients ||= Outsider::Erp::BudgetRecipients.new(@account_user)
-  end
-
-  def clean(value, limit)
-    text = value.to_s.strip
-    raise Blocked, 'too_long' if text.size > limit
-
-    text
   end
 end

@@ -45,6 +45,19 @@ class ErpAPI extends ApiClient {
     });
   }
 
+  // envio do relatório da OS ao cliente (como o do orçamento): textos, arquivo e para quem/por onde
+  serviceOrderDelivery(params) {
+    return axios.get(`${this.url}/service_orders/delivery`, { params });
+  }
+
+  serviceOrderContacts(q) {
+    return axios.get(`${this.url}/service_orders/contacts`, { params: { q } });
+  }
+
+  deliverServiceOrder(data) {
+    return axios.post(`${this.url}/service_orders/deliver`, data);
+  }
+
   setSubstatus(data) {
     return axios.put(`${this.url}/service_orders/substatus`, data);
   }

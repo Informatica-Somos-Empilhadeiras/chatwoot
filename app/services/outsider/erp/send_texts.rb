@@ -1,0 +1,17 @@
+# OUTSIDER: modelos dos textos de envio ao cliente, que as Configurações do ERP guardam e o agente ainda edita antes de
+# enviar (Outsider::Erp::BudgetTexts preenche): do orçamento ({numero}, {contato}, {cliente}, {total}, {pagamento},
+# {vendedor}) e do relatório da OS ({numero}, {contato}, {cliente}, {tecnico}, {vendedor}). LIMITS: tamanho máximo.
+module Outsider::Erp::SendTexts
+  DEFAULTS = {
+    'quote_email_subject' => 'Orçamento Nº {numero}',
+    'quote_email_body' => "Olá, {contato}!\n\nSegue em anexo o orçamento Nº {numero} de peças e serviços, no valor de {total}, " \
+                          "com pagamento em {pagamento}.\n\nQualquer dúvida, estou à disposição.\n{vendedor}",
+    'quote_whatsapp_text' => 'Olá, {contato}! Segue o orçamento Nº {numero}, no valor de {total}.',
+    'os_email_subject' => 'Ordem de Serviço Nº {numero}',
+    'os_email_body' => "Olá, {contato}!\n\nSegue em anexo o relatório da Ordem de Serviço Nº {numero}, com o check-list e as fotos " \
+                       "do atendimento.\n\nQualquer dúvida, estou à disposição.\n{vendedor}",
+    'os_whatsapp_text' => 'Olá, {contato}! Segue o relatório da Ordem de Serviço Nº {numero}.'
+  }.freeze
+  LIMITS = { 'quote_email_subject' => 200, 'quote_email_body' => 4000, 'quote_whatsapp_text' => 2000, 'os_email_subject' => 200,
+             'os_email_body' => 4000, 'os_whatsapp_text' => 2000 }.freeze
+end

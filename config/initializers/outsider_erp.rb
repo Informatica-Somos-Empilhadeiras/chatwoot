@@ -17,6 +17,10 @@ Rails.application.routes.prepend do
                 collection do
                   get :board
                   get :report
+                  # envio do relatório ao cliente (WhatsApp/e-mail), como o do orçamento
+                  get :delivery
+                  get :contacts
+                  post :deliver
                   %i[substatus field status technician attendance_type].each { |action| put action }
                 end
               end

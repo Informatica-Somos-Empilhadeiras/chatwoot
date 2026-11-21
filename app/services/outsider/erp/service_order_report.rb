@@ -27,6 +27,14 @@ class Outsider::Erp::ServiceOrderReport
     }
   end
 
+  # só o que o envio precisa antes de gerar o PDF (textos e nome do arquivo): número, cliente e serviço, sem as fotos
+  def summary(company, code)
+    order = part('DadosOS_PDF', company, code).first
+    raise NotFound unless order
+
+    { 'numero' => code.to_i, 'empresa' => company, 'cliente' => customer(order), 'servico' => service(order) }
+  end
+
   private
 
   def part(endpoint, company, code) = @client.service_order_report(endpoint, company, code)
