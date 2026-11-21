@@ -10,7 +10,12 @@ import Icon from 'dashboard/components-next/icon/Icon.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 import ErpProductDetail from './ErpProductDetail.vue';
 import ErpPhotoThumb from './ErpPhotoThumb.vue';
-import { erpState, erpErrorMessage, formatMoney } from '../erpStore';
+import {
+  erpState,
+  erpErrorMessage,
+  formatMoney,
+  companyName,
+} from '../erpStore';
 
 const { t } = useI18n();
 const company = ref(erpState.companies[0] || '');
@@ -80,7 +85,7 @@ onMounted(load);
         </div>
         <div
           v-if="erpState.companies.length > 1"
-          class="flex p-0.5 rounded-lg bg-n-alpha-2"
+          class="grid grid-cols-2 gap-0.5 p-0.5 rounded-lg bg-n-alpha-2"
           role="radiogroup"
           :aria-label="t('OUTSIDER_ERP.RECORDS.UNIT')"
         >
@@ -90,15 +95,16 @@ onMounted(load);
             type="button"
             role="radio"
             :aria-checked="company === item"
-            class="flex-1 h-7 px-2.5 text-xs rounded-md truncate"
+            class="h-7 px-2.5 text-xs rounded-md truncate"
             :class="
               company === item
                 ? 'bg-n-solid-1 text-n-slate-12 font-medium shadow-sm'
                 : 'text-n-slate-11 hover:text-n-slate-12'
             "
+            :title="item"
             @click="company = item"
           >
-            {{ item }}
+            {{ companyName(item) }}
           </button>
         </div>
       </div>

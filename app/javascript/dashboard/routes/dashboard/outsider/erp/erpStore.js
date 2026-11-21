@@ -21,12 +21,18 @@ export const erpState = reactive({
   fields: [],
   fieldKinds: {},
   companies: [],
+  // { banco: nome na tela } (Configurações do ERP): "somosfilial" aparece como "Filial Distrito Federal"
+  companyNames: {},
   lockedStatuses: [],
   // NF-e: o PDF da nota espelhado do Nextcloud (conexão nas Configurações)
   nextcloudInvoices: false,
   // fotos dos produtos (Nextcloud, pasta das fotos nas Configurações)
   productPhotos: false,
 });
+
+// o nome da unidade para as telas; sem nome nas Configurações, o próprio banco
+export const companyName = db =>
+  erpState.companyNames[String(db || '').toLowerCase()] || db || '';
 
 export const loadErpStatus = async accountId => {
   if (!accountId) return;
@@ -48,6 +54,7 @@ export const loadErpStatus = async accountId => {
       fields: data.fields || [],
       fieldKinds: data.field_kinds || {},
       companies: data.companies || [],
+      companyNames: data.company_names || {},
       lockedStatuses: data.locked_statuses || [],
       nextcloudInvoices: data.nextcloud_invoices === true,
       productPhotos: data.product_photos === true,

@@ -177,6 +177,8 @@
       "BASE_URL_HINT": "Só https em um endereço inntegra.com.br.",
       "COMPANIES": "Empresas (bancos) do grupo",
       "COMPANIES_HINT": "Separadas por vírgula, como aparecem no ERP (ex.: somosemp, somosfilial). Só estas empresas são lidas e gravadas.",
+      "COMPANY_NAMES": "Nome de cada unidade",
+      "COMPANY_NAMES_HINT": "Como a unidade aparece nas telas (filtros, listas, orçamentos). Vazio mostra o nome do banco.",
       "DEVICE_ID": "x-device-id",
       "DEVICE_ID_SET": "já informado (deixe vazio para manter)",
       "DEVICE_ID_HINT": "O valor do cabeçalho x-device-id de uma requisição do painel do ERP (DevTools > Rede). Não volta para a tela depois de salvo.",

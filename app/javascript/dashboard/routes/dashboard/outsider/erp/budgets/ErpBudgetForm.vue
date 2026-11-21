@@ -12,7 +12,7 @@ import ErpPicker from '../components/ErpPicker.vue';
 import ErpBudgetItems from './ErpBudgetItems.vue';
 import ErpBudgetConditions from './ErpBudgetConditions.vue';
 import ErpClientDialog from '../clients/ErpClientDialog.vue';
-import { erpState, withLoadingRetry } from '../erpStore';
+import { erpState, withLoadingRetry, companyName } from '../erpStore';
 
 const props = defineProps({
   budget: { type: Object, required: true },
@@ -169,7 +169,7 @@ defineExpose({ focusSearch: () => itemsRef.value?.focusSearch() });
           <span class="text-xs truncate text-n-slate-10">
             {{
               [
-                `${row.empresa} #${row.codigo}`,
+                `${companyName(row.empresa)} #${row.codigo}`,
                 row.fantasia,
                 row.cidade && [row.cidade, row.uf].filter(Boolean).join('/'),
                 row.documento,

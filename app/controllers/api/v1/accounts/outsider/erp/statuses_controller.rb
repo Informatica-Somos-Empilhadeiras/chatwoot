@@ -6,12 +6,17 @@ class Api::V1::Accounts::Outsider::Erp::StatusesController < Api::V1::Accounts::
     render json: {
       enabled: settings.enabled?, can_edit: settings.enabled? && can_edit?, write_enabled: settings.write_enabled?,
       orders_enabled: settings.orders_enabled?, quotes_enabled: settings.quotes_enabled?, administrator: Current.account_user.administrator?,
-      fields: settings.writable_fields.keys, field_kinds: ::Outsider::Erp::Settings::FIELD_KINDS, companies: settings.companies,
+      fields: settings.writable_fields.keys, field_kinds: ::Outsider::Erp::Settings::FIELD_KINDS,
       locked_statuses: settings.locked_statuses
-    }.merge(writes, nextcloud)
+    }.merge(writes, nextcloud, units)
   end
 
   private
+
+  # as unidades (bancos do ERP) e o nome de cada uma nas telas
+  def units
+    { companies: settings.companies, company_names: settings.company_names }
+  end
 
   # o que vem do Nextcloud: as notas fiscais em PDF e as fotos dos produtos
   def nextcloud

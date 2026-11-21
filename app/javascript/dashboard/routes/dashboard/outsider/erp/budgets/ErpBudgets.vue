@@ -21,6 +21,7 @@ import {
   quoteClass,
   withLoadingRetry,
   erpErrorMessage,
+  companyName,
 } from '../erpStore';
 import { budgetErrorMessage, quoteKey, reasonText } from './budgetHelpers';
 import { erpTabs } from '../sidebar';
@@ -327,7 +328,7 @@ const lastSend = budget => {
               })
             }}
             <span class="text-xs font-normal text-n-slate-10">
-              {{ row.quote?.Banco || row.budget.company }}
+              {{ companyName(row.quote?.Banco || row.budget.company) }}
             </span>
           </span>
           <span

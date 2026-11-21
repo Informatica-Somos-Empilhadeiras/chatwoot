@@ -21,6 +21,7 @@ import {
   formatDate,
   withLoadingRetry,
   erpErrorMessage,
+  companyName,
 } from '../erpStore';
 
 const props = defineProps({
@@ -90,10 +91,10 @@ const searchCustomers = async q => {
 };
 
 const customerKey = row => `${row.empresa}:${row.codigo}`;
-// "somosemp #716 · GDS · GOIÂNIA/GO · 12.345.678/0001-90"
+// "Matriz #716 · GDS · GOIÂNIA/GO · 12.345.678/0001-90"
 const customerDetails = row =>
   [
-    `${row.empresa} #${row.codigo}`,
+    `${companyName(row.empresa)} #${row.codigo}`,
     row.fantasia,
     row.cidade && [row.cidade, row.uf].filter(Boolean).join('/'),
     row.documento,
@@ -179,7 +180,7 @@ const lastUpdate = computed(() =>
           <Icon icon="i-lucide-link" class="size-3 text-n-slate-10" />
           <span class="truncate max-w-40">{{ row.nome || row.codigo }}</span>
           <span class="whitespace-nowrap text-n-slate-10">
-            {{ row.empresa }} #{{ row.codigo }}
+            {{ companyName(row.empresa) }} #{{ row.codigo }}
           </span>
           <button
             v-if="erpState.canEdit || erpState.administrator"

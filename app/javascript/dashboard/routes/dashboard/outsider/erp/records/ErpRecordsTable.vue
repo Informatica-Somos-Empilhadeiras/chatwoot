@@ -6,7 +6,7 @@
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
-import { formatDate, formatMoney } from '../erpStore';
+import { formatDate, formatMoney, companyName } from '../erpStore';
 import {
   KINDS,
   displayNumber,
@@ -172,7 +172,7 @@ const TH =
               {{ numberOf(row) }}
             </div>
             <div class="text-[11px] text-n-slate-10 truncate">
-              {{ row.banco }}
+              {{ companyName(row.banco) }}
             </div>
           </td>
           <td class="py-2.5 px-3 align-top">
@@ -274,7 +274,9 @@ const TH =
           <span class="text-[13px] font-semibold tabular-nums text-n-slate-12">
             {{ numberOf(row) }}
           </span>
-          <span class="text-[11px] text-n-slate-10">{{ row.banco }}</span>
+          <span class="text-[11px] text-n-slate-10">{{
+            companyName(row.banco)
+          }}</span>
           <span class="flex-1" />
           <span
             class="text-[13px] font-medium tabular-nums whitespace-nowrap text-n-slate-12"

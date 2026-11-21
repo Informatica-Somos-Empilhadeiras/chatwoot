@@ -11,7 +11,12 @@ import Icon from 'dashboard/components-next/icon/Icon.vue';
 import Button from 'dashboard/components-next/button/Button.vue';
 import Switch from 'dashboard/components-next/switch/Switch.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
-import { erpState, loadErpStatus, erpErrorMessage } from '../erpStore';
+import {
+  erpState,
+  loadErpStatus,
+  erpErrorMessage,
+  companyName,
+} from '../erpStore';
 
 const { t } = useI18n();
 const accountId = useMapGetter('getCurrentAccountId');
@@ -48,11 +53,20 @@ const QUOTE_SELECTS = [
 const INPUT =
   '!mb-0 h-8 px-2 text-sm rounded-lg reset-base bg-n-solid-1 text-n-slate-12 outline outline-1 -outline-offset-1 outline-n-slate-6';
 
+// as unidades digitadas acima, para dar nome a cada uma
+const companyList = computed(() =>
+  companiesText.value
+    .split(/[\s,;]+/)
+    .map(item => item.trim().toLowerCase())
+    .filter(Boolean)
+);
+
 const fill = data => {
   form.value = {
     ...data.settings,
     extra_fields: (data.settings.extra_fields || []).map(row => ({ ...row })),
     user_erp_ids: { ...(data.settings.user_erp_ids || {}) },
+    company_names: { ...(data.settings.company_names || {}) },
   };
   people.value = data.people || [];
   quoteLists.value = data.quote_lists || {};
@@ -211,6 +225,30 @@ const removeField = index => form.value.extra_fields.splice(index, 1);
           t('OUTSIDER_ERP.SETTINGS.COMPANIES_HINT')
         }}</span>
       </label>
+      <div v-if="companyList.length" class="flex flex-col gap-1.5 text-sm">
+        <span class="text-n-slate-11">{{
+          t('OUTSIDER_ERP.SETTINGS.COMPANY_NAMES')
+        }}</span>
+        <label
+          v-for="db in companyList"
+          :key="db"
+          class="grid items-center grid-cols-[9rem_minmax(0,1fr)] gap-2"
+        >
+          <span class="text-xs truncate tabular-nums text-n-slate-10">
+            {{ db }}
+          </span>
+          <input
+            v-model="form.company_names[db]"
+            type="text"
+            maxlength="60"
+            :placeholder="db"
+            :class="INPUT"
+          />
+        </label>
+        <span class="text-xs text-n-slate-10">{{
+          t('OUTSIDER_ERP.SETTINGS.COMPANY_NAMES_HINT')
+        }}</span>
+      </div>
       <label class="flex flex-col gap-1 text-sm">
         <span class="text-n-slate-11">{{
           t('OUTSIDER_ERP.SETTINGS.DEVICE_ID')
@@ -262,7 +300,7 @@ const removeField = index => form.value.extra_fields.splice(index, 1);
               :key="company"
               class="ml-2 text-n-slate-11"
             >
-              {{ company }}: {{ count }}
+              {{ companyName(company) }}: {{ count }}
             </span>
           </p>
           <p class="mb-0 text-n-slate-11">

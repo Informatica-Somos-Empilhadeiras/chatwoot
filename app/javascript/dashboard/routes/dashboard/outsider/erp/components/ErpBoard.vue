@@ -9,7 +9,12 @@ import ErpAPI from 'dashboard/api/outsider/erp';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
 import ErpOrderCard from './ErpOrderCard.vue';
-import { orderKey, withLoadingRetry, erpErrorMessage } from '../erpStore';
+import {
+  orderKey,
+  withLoadingRetry,
+  erpErrorMessage,
+  companyName,
+} from '../erpStore';
 
 const { t } = useI18n();
 
@@ -101,7 +106,7 @@ const lastUpdate = () =>
           :key="company"
           :value="company"
         >
-          {{ company }}
+          {{ companyName(company) }}
         </option>
       </select>
       <select

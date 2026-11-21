@@ -16,7 +16,12 @@ import ErpRecordsTable from './ErpRecordsTable.vue';
 import ErpRecordsPager from './ErpRecordsPager.vue';
 import ErpRecordPanel from './ErpRecordPanel.vue';
 import ErpBudgetDrawer from '../budgets/ErpBudgetDrawer.vue';
-import { erpState, erpErrorMessage, formatMoney } from '../erpStore';
+import {
+  erpState,
+  erpErrorMessage,
+  formatMoney,
+  companyName,
+} from '../erpStore';
 import { budgetErrorMessage } from '../budgets/budgetHelpers';
 import {
   KINDS,
@@ -245,7 +250,7 @@ const DATE =
             :key="item.value"
             :value="item.value"
           >
-            {{ item.value }} ({{ item.count }})
+            {{ companyName(item.value) }} ({{ item.count }})
           </option>
         </select>
         <select v-model="person" :class="SELECT" :aria-label="label('PERSON')">

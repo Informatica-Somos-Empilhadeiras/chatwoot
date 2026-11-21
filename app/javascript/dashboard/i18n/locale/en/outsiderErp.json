@@ -177,6 +177,8 @@
       "BASE_URL_HINT": "Only https on an inntegra.com.br address.",
       "COMPANIES": "Group companies (databases)",
       "COMPANIES_HINT": "Comma separated, as in the ERP (e.g. somosemp, somosfilial). Only these are read and written.",
+      "COMPANY_NAMES": "Name of each unit",
+      "COMPANY_NAMES_HINT": "How the unit shows on screen (filters, lists, budgets). Empty shows the database name.",
       "DEVICE_ID": "x-device-id",
       "DEVICE_ID_SET": "already set (leave empty to keep)",
       "DEVICE_ID_HINT": "The x-device-id header of a request from the ERP dashboard (DevTools > Network). Never shown again after saving.",

@@ -13,7 +13,7 @@ import ErpAPI from 'dashboard/api/outsider/erp';
 import Button from 'dashboard/components-next/button/Button.vue';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
-import { erpState, erpErrorMessage } from '../erpStore';
+import { erpState, erpErrorMessage, companyName } from '../erpStore';
 import {
   UFS,
   EMPTY_CLIENT,
@@ -301,7 +301,7 @@ defineExpose({ open, isOpen });
               {{ t('OUTSIDER_ERP.CLIENT.UNIT') }}
               <select v-model="company" :class="SELECT">
                 <option v-for="item in companies" :key="item" :value="item">
-                  {{ item }}
+                  {{ companyName(item) }}
                 </option>
               </select>
             </label>
