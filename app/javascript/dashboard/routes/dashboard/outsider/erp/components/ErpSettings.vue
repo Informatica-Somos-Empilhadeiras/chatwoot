@@ -11,7 +11,7 @@ import Icon from 'dashboard/components-next/icon/Icon.vue';
 import Button from 'dashboard/components-next/button/Button.vue';
 import Switch from 'dashboard/components-next/switch/Switch.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
-import { loadErpStatus, erpErrorMessage } from '../erpStore';
+import { erpState, loadErpStatus, erpErrorMessage } from '../erpStore';
 
 const { t } = useI18n();
 const accountId = useMapGetter('getCurrentAccountId');
@@ -727,6 +727,18 @@ const removeField = index => form.value.extra_fields.splice(index, 1);
         </h4>
         <p class="mb-0 text-xs text-n-slate-10">
           {{ t('OUTSIDER_ERP.SETTINGS.NEXTCLOUD_HINT') }}
+        </p>
+        <p
+          class="mb-0 text-xs font-medium"
+          :class="
+            erpState.nextcloudInvoices ? 'text-n-teal-11' : 'text-n-amber-11'
+          "
+        >
+          {{
+            erpState.nextcloudInvoices
+              ? t('OUTSIDER_ERP.SETTINGS.NEXTCLOUD_ON')
+              : t('OUTSIDER_ERP.SETTINGS.NEXTCLOUD_OFF')
+          }}
         </p>
       </div>
       <label class="flex flex-col gap-1 text-sm">
