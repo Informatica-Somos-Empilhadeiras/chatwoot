@@ -1,16 +1,21 @@
 # OUTSIDER: a conexão com o Nextcloud onde o escritório guarda as notas fiscais em PDF (Outsider::Erp::NextcloudInvoices):
-# endereço (https), usuário, senha de app e a pasta raiz onde a busca começa (a do Fiscal, com todas as empresas).
+# endereço (https), usuário, senha de app, a pasta raiz onde a busca das notas começa (a do Fiscal, com todas as empresas)
+# e a pasta das fotos dos produtos (Outsider::Erp::ProductPhotos, que o script do servidor do ERP copia para lá).
 # A senha fica criptografada (Outsider::Bot::Secrets) e nunca volta para a tela, como o x-device-id. Parte do
 # Outsider::Erp::Settings.
 module Outsider::Erp::Settings::Nextcloud
   NEXTCLOUD_USER = /\A[\w.@+-]{1,100}\z/
-  NEXTCLOUD_DEFAULTS = { 'nextcloud_url' => '', 'nextcloud_user' => '', 'nextcloud_secret' => nil, 'nextcloud_folder' => '' }.freeze
+  NEXTCLOUD_DEFAULTS = { 'nextcloud_url' => '', 'nextcloud_user' => '', 'nextcloud_secret' => nil, 'nextcloud_folder' => '',
+                         'nextcloud_photos_folder' => '/SERVIDOR/Almoxarifado$/Fotos de produtos' }.freeze
 
   def nextcloud_url = data['nextcloud_url'].to_s
   def nextcloud_user = data['nextcloud_user'].to_s
   def nextcloud_folder = data['nextcloud_folder'].to_s
+  def nextcloud_photos_folder = data['nextcloud_photos_folder'].to_s
   def nextcloud_password = Outsider::Bot::Secrets.load(data['nextcloud_secret']).to_h['password'].to_s
-  def nextcloud_enabled? = enabled? && nextcloud_url.present? && nextcloud_user.present? && nextcloud_password.present? && nextcloud_folder.present?
+  def nextcloud_connected? = enabled? && nextcloud_url.present? && nextcloud_user.present? && nextcloud_password.present?
+  def nextcloud_enabled? = nextcloud_connected? && nextcloud_folder.present?
+  def product_photos_enabled? = nextcloud_connected? && nextcloud_photos_folder.present?
 
   private
 
@@ -19,7 +24,8 @@ module Outsider::Erp::Settings::Nextcloud
       'nextcloud_url' => clean_nextcloud_url(params.fetch('nextcloud_url', nextcloud_url)),
       'nextcloud_user' => clean_nextcloud_user(params.fetch('nextcloud_user', nextcloud_user)),
       'nextcloud_secret' => clean_nextcloud_secret(params),
-      'nextcloud_folder' => clean_nextcloud_folder(params.fetch('nextcloud_folder', nextcloud_folder))
+      'nextcloud_folder' => clean_nextcloud_folder(params.fetch('nextcloud_folder', nextcloud_folder), 'nextcloud_folder'),
+      'nextcloud_photos_folder' => clean_nextcloud_folder(params.fetch('nextcloud_photos_folder', nextcloud_photos_folder), 'nextcloud_photos_folder')
     }
   end
 
@@ -57,12 +63,12 @@ module Outsider::Erp::Settings::Nextcloud
     Outsider::Bot::Secrets.dump('password' => password.first(200))
   end
 
-  # "/SERVIDOR/Fiscal$": caminho absoluto no Nextcloud, sem ".."
-  def clean_nextcloud_folder(value)
+  # "/SERVIDOR/Fiscal$": caminho absoluto no Nextcloud, sem ".."; inválido mantém o que estava
+  def clean_nextcloud_folder(value, key)
     path = value.to_s.strip.chomp('/')
     return path if path.empty? || (path.start_with?('/') && path.length <= 300 && path.split('/').exclude?('..') && !path.match?(/[[:cntrl:]]/))
 
-    @errors << 'nextcloud_folder'
-    nextcloud_folder
+    @errors << key
+    data[key].to_s
   end
 end

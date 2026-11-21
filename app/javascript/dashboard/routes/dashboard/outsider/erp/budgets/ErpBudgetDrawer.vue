@@ -4,7 +4,7 @@
 // grava no Sidekiq e a gaveta acompanha). Gravado: o PDF oficial e o envio por WhatsApp/e-mail (ErpBudgetSend).
 // Edição de um orçamento já gravado (status "revising", aberta pela seção ERP): o mesmo formulário, com cliente,
 // pagamento e frete travados; "Salvar no ERP" regrava as linhas e "Descartar" volta como estava.
-import { ref, computed, watch, nextTick, onBeforeUnmount } from 'vue';
+import { ref, computed, watch, nextTick, provide, onBeforeUnmount } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useAlert } from 'dashboard/composables';
 import ErpAPI from 'dashboard/api/outsider/erp';
@@ -371,6 +371,15 @@ const sent = data => {
   emit('changed', data);
 };
 
+// fotos dos produtos (ErpProductSearch): vão na conversa do chat de onde abriu ou na aberta do cliente no WhatsApp
+provide(
+  'erpPhotoTarget',
+  computed(() => ({
+    conversationId: props.conversationId,
+    contactId: budget.value?.contact_id || props.contactId,
+  }))
+);
+
 const onKey = event => {
   if (
     event.key === 'Escape' &&
@@ -597,7 +606,9 @@ defineExpose({ open });
             </div>
 
             <div
-              v-if="discount.needs_approval && (!budget.erp_number || isRevising)"
+              v-if="
+                discount.needs_approval && (!budget.erp_number || isRevising)
+              "
               class="px-4 pt-3 border-t sm:px-6 border-n-weak"
             >
               <ErpDiscountApproval

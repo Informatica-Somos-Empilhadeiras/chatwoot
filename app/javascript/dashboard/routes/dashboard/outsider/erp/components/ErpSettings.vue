@@ -831,6 +831,31 @@ const removeField = index => form.value.extra_fields.splice(index, 1);
           t('OUTSIDER_ERP.SETTINGS.NEXTCLOUD_FOLDER_HINT')
         }}</span>
       </label>
+      <label class="flex flex-col gap-1 text-sm">
+        <span class="text-n-slate-11">{{
+          t('OUTSIDER_ERP.SETTINGS.NEXTCLOUD_PHOTOS_FOLDER')
+        }}</span>
+        <input
+          v-model="form.nextcloud_photos_folder"
+          :placeholder="
+            t('OUTSIDER_ERP.SETTINGS.NEXTCLOUD_PHOTOS_FOLDER_PLACEHOLDER')
+          "
+          :class="[
+            INPUT,
+            hasError('nextcloud_photos_folder') && '!outline-n-ruby-9',
+          ]"
+        />
+        <span
+          class="text-xs"
+          :class="erpState.productPhotos ? 'text-n-teal-11' : 'text-n-slate-10'"
+        >
+          {{
+            erpState.productPhotos
+              ? t('OUTSIDER_ERP.SETTINGS.NEXTCLOUD_PHOTOS_ON')
+              : t('OUTSIDER_ERP.SETTINGS.NEXTCLOUD_PHOTOS_FOLDER_HINT')
+          }}
+        </span>
+      </label>
     </section>
 
     <div class="flex justify-end">

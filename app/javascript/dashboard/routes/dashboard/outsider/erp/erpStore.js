@@ -24,6 +24,8 @@ export const erpState = reactive({
   lockedStatuses: [],
   // NF-e: o PDF da nota espelhado do Nextcloud (conexão nas Configurações)
   nextcloudInvoices: false,
+  // fotos dos produtos (Nextcloud, pasta das fotos nas Configurações)
+  productPhotos: false,
 });
 
 export const loadErpStatus = async accountId => {
@@ -48,6 +50,7 @@ export const loadErpStatus = async accountId => {
       companies: data.companies || [],
       lockedStatuses: data.locked_statuses || [],
       nextcloudInvoices: data.nextcloud_invoices === true,
+      productPhotos: data.product_photos === true,
     });
   } catch {
     // sem acesso pelo perfil (403) ou fora do ar: o ERP some da tela

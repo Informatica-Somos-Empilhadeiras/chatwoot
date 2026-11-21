@@ -80,6 +80,7 @@ export const blobError = async error => {
 };
 
 const KNOWN_REASONS = [
+  'no_conversation',
   'not_draft',
   'in_erp',
   'company',

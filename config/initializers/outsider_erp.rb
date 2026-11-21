@@ -35,8 +35,14 @@ Rails.application.routes.prepend do
               end
               resource :contact_link, only: [:create, :destroy]
               resources :lists, only: [:index]
-              resources :catalog, only: [:index] do
+              resources :catalog, only: [:index, :show] do
                 get :technical, on: :collection
+                # aba Produtos e orçamento: as fotos do produto (no Nextcloud) e o envio de uma ao cliente
+                member do
+                  get :photos
+                  get 'photos/:photo_id', action: :photo, constraints: { photo_id: /\d+/ }
+                  post 'photos/:photo_id/send', action: :send_photo, constraints: { photo_id: /\d+/ }
+                end
               end
               resources :quotes, only: [:index]
               # seção ERP: listas com todo o histórico e o detalhe (kind: quotes, orders, sales, invoices, service_invoices)

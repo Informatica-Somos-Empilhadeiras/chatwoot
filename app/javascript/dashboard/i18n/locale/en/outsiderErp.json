@@ -4,7 +4,33 @@
     "SIDEBAR": "ERP",
     "SIDEBAR_QUOTES": "ERP",
     "CANCEL": "Cancel",
+    "PRODUCTS": {
+      "PICK": "Pick a product from the list to see its full record and photos.",
+      "CODE": "Code {code}",
+      "FACTORY": "factory {code}",
+      "FIELDS": "Other record details",
+      "PHOTOS": {
+        "TITLE": "Photos",
+        "BUTTON": "Photos",
+        "NONE": "This product has no photos in the Nextcloud folder.",
+        "MISSING": "Could not open this photo from Nextcloud.",
+        "MISSING_SHORT": "Could not open",
+        "COUNTER": "Photo {current} of {total}",
+        "PREVIOUS": "Previous photo",
+        "NEXT": "Next photo",
+        "COPY": "Copy",
+        "COPIED": "Photo copied. Just paste it (Ctrl+V).",
+        "COPY_FAILED": "Could not copy the photo. Use \"Download\".",
+        "COPY_UNSUPPORTED": "This browser cannot copy images. Use \"Download\".",
+        "SEND": "Send to customer",
+        "SEND_NOW": "Send",
+        "SEND_HINT": "It goes into the existing conversation with the customer (this chat or the open WhatsApp one). No new conversation is opened.",
+        "MESSAGE": "Message with the photo (optional)",
+        "SENT": "Photo sent in the customer conversation."
+      }
+    },
     "TABS": {
+      "PRODUTOS": "Products",
       "BOARD": "Service order board",
       "ORCAMENTOS": "Quotes",
       "OS": "Service orders",
@@ -225,6 +251,10 @@
       "NEXTCLOUD_HINT": "The chat shows the invoice PDF stored on Nextcloud, found by number, CFOP and customer (\"3594 (6102) CUSTOMER.pdf\"). Nothing is stored in the chat.",
       "NEXTCLOUD_OFF": "Off: fill in address, user, app password and root folder, then save.",
       "NEXTCLOUD_ON": "On: the \"View invoice\" button shows on NF-e details.",
+      "NEXTCLOUD_PHOTOS_FOLDER": "Product photos folder",
+      "NEXTCLOUD_PHOTOS_FOLDER_PLACEHOLDER": "e.g. /SERVIDOR/Almoxarifado$/Fotos de produtos",
+      "NEXTCLOUD_PHOTOS_FOLDER_HINT": "The folder the ERP server script copies G:\\Anexos\\Produto into. Empty turns photos off.",
+      "NEXTCLOUD_PHOTOS_ON": "On: photos show in the Products tab and in the budget product search.",
       "NEXTCLOUD_URL": "Nextcloud address",
       "NEXTCLOUD_URL_PLACEHOLDER": "e.g. https://cloud.yourcompany.com",
       "NEXTCLOUD_FOLDER_PLACEHOLDER": "e.g. /SERVIDOR/Fiscal$",
@@ -406,6 +436,7 @@
         "NO_INBOX": "No WhatsApp inbox available to you in this account."
       },
       "REASONS": {
+        "NO_CONVERSATION": "This customer has no open WhatsApp conversation. Open the conversation in the chat and send the photo from there.",
         "NOT_DRAFT": "This quote is already recorded and no longer changes. Use \"Copy\" to make another.",
         "IN_ERP": "This quote already has an ERP number. Use \"Record again\" to finish.",
         "COMPANY": "This unit is not in the ERP Settings.",

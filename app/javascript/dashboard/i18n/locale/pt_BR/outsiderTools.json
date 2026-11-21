@@ -1191,6 +1191,10 @@
         "LABEL": "Notas fiscais",
         "HINT": "Vê: consulta as NF-e e NFS-e (só leitura)."
       },
+      "ERP_PRODUCTS": {
+        "LABEL": "Produtos",
+        "HINT": "Vê: consulta os produtos do ERP, com as fotos (só leitura)."
+      },
       "ERP_CLIENTS": {
         "LABEL": "Cadastro de clientes",
         "HINT": "Usa: cadastra cliente novo no ERP (pré-cadastro, como o aplicativo de vendas)."

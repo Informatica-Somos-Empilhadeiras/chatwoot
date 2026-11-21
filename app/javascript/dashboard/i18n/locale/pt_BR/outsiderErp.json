@@ -4,7 +4,33 @@
     "SIDEBAR": "ERP",
     "SIDEBAR_QUOTES": "ERP",
     "CANCEL": "Cancelar",
+    "PRODUCTS": {
+      "PICK": "Escolha um produto na lista para ver o cadastro completo e as fotos.",
+      "CODE": "Código {code}",
+      "FACTORY": "fábrica {code}",
+      "FIELDS": "Outras informações do cadastro",
+      "PHOTOS": {
+        "TITLE": "Fotos",
+        "BUTTON": "Fotos",
+        "NONE": "Este produto não tem fotos na pasta do Nextcloud.",
+        "MISSING": "Não consegui abrir esta foto do Nextcloud.",
+        "MISSING_SHORT": "Não abriu",
+        "COUNTER": "Foto {current} de {total}",
+        "PREVIOUS": "Foto anterior",
+        "NEXT": "Próxima foto",
+        "COPY": "Copiar",
+        "COPIED": "Foto copiada. É só colar (Ctrl+V).",
+        "COPY_FAILED": "Não consegui copiar a foto. Use \"Baixar\".",
+        "COPY_UNSUPPORTED": "Este navegador não deixa copiar imagem. Use \"Baixar\".",
+        "SEND": "Enviar ao cliente",
+        "SEND_NOW": "Enviar",
+        "SEND_HINT": "Vai na conversa que já existe com o cliente (a deste chat ou a aberta no WhatsApp). Nenhuma conversa nova é aberta.",
+        "MESSAGE": "Mensagem junto da foto (opcional)",
+        "SENT": "Foto enviada na conversa do cliente."
+      }
+    },
     "TABS": {
+      "PRODUTOS": "Produtos",
       "BOARD": "Quadro de OS",
       "ORCAMENTOS": "Orçamentos",
       "OS": "Ordens de serviço",
@@ -225,6 +251,10 @@
       "NEXTCLOUD_HINT": "O chat mostra o PDF da nota que está no Nextcloud, achado pelo número, CFOP e cliente (\"3594 (6102) CLIENTE.pdf\"). Nada fica guardado no chat.",
       "NEXTCLOUD_OFF": "Desligado: preencha endereço, usuário, senha de app e pasta raiz e salve.",
       "NEXTCLOUD_ON": "Ligado: o botão \"Ver nota\" aparece no detalhe das NF-e.",
+      "NEXTCLOUD_PHOTOS_FOLDER": "Pasta das fotos dos produtos",
+      "NEXTCLOUD_PHOTOS_FOLDER_PLACEHOLDER": "ex.: /SERVIDOR/Almoxarifado$/Fotos de produtos",
+      "NEXTCLOUD_PHOTOS_FOLDER_HINT": "A pasta para onde o script do servidor do ERP copia o G:\\Anexos\\Produto. Vazio desliga as fotos.",
+      "NEXTCLOUD_PHOTOS_ON": "Ligado: as fotos aparecem na aba Produtos e na busca de produtos do orçamento.",
       "NEXTCLOUD_URL": "Endereço do Nextcloud",
       "NEXTCLOUD_URL_PLACEHOLDER": "ex.: https://nuvem.suaempresa.com.br",
       "NEXTCLOUD_FOLDER_PLACEHOLDER": "ex.: /SERVIDOR/Fiscal$",
@@ -406,6 +436,7 @@
         "NO_INBOX": "Nenhuma caixa de WhatsApp nesta conta para você."
       },
       "REASONS": {
+        "NO_CONVERSATION": "Este cliente não tem conversa aberta no WhatsApp. Abra a conversa pelo chat e mande a foto de lá.",
         "NOT_DRAFT": "Este orçamento já foi gravado e não muda mais. Use \"Copiar\" para fazer outro.",
         "IN_ERP": "Este orçamento já tem número no ERP. Use \"Gravar de novo\" para terminar.",
         "COMPANY": "Esta unidade não está nas Configurações do ERP.",

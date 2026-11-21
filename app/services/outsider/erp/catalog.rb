@@ -55,6 +55,16 @@ class Outsider::Erp::Catalog
 
   def existing_codes(company, codes) = kinds(company, codes).keys
 
+  # um produto na forma da lista, mesmo inativo (o cabeçalho do detalhe na aba Produtos); nil se não existe
+  def product(company, code)
+    company = scoped_company(company)
+    column = description_column(company)
+    sql = "SELECT P.CodigoProduto AS codigo, #{column} AS descricao, #{schema.select_list(company, TABLE, 'P', FIELDS)} " \
+          "FROM #{S.ident(company)}.produtos P WHERE P.CodigoProduto = #{S.int(code)}"
+    row = @client.query_execute(sql).grep(Hash).first
+    row && present(row)
+  end
+
   private
 
   def schema

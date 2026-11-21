@@ -2,14 +2,16 @@
 // OUTSIDER: linha "Adicionar peça ou serviço" do orçamento. Ao focar, a lista de produtos da unidade já abre pronta;
 // digitar só filtra (código, código de fábrica ou palavras do nome). Cada linha tem forma fixa (passar o mouse só muda o
 // fundo): preço, quantidade e o botão "+ Adicionar" sempre à vista. Setas marcam a linha e Enter adiciona; valor e
-// desconto se acertam depois, na própria linha do item (ErpBudgetItems).
-import { ref, computed, watch, nextTick, onBeforeUnmount } from 'vue';
+// desconto se acertam depois, na própria linha do item (ErpBudgetItems). "Fotos" abre o carrossel do produto
+// (ErpPhotoViewer), de onde o vendedor copia a foto ou manda na conversa do cliente que a gaveta do orçamento informa.
+import { ref, computed, watch, nextTick, inject, onBeforeUnmount } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { debounce } from '@chatwoot/utils';
 import ErpAPI from 'dashboard/api/outsider/erp';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
-import { erpErrorMessage, formatMoney } from '../erpStore';
+import ErpPhotoViewer from '../products/ErpPhotoViewer.vue';
+import { erpState, erpErrorMessage, formatMoney } from '../erpStore';
 import { formatQty, parseNumber } from './budgetHelpers';
 
 const props = defineProps({
@@ -33,6 +35,9 @@ const technical = ref({});
 const technicalOpen = ref(null);
 let lastRun = 0;
 let addedTimer = null;
+const viewerRef = ref(null);
+// { conversationId, contactId } do orçamento aberto (ErpBudgetDrawer): para onde a foto pode ir
+const photoTarget = inject('erpPhotoTarget', null);
 
 const current = computed(() => products.value[active.value]);
 const quantityOf = product => quantities.value[product.codigo] ?? '1';
@@ -91,6 +96,16 @@ const onEsc = event => {
 // fecha ao sair de todo o bloco (busca + lista), não ao ir da busca para a quantidade
 const onFocusOut = event => {
   if (!event.currentTarget.contains(event.relatedTarget)) hide();
+};
+
+const openPhotos = product => {
+  hide();
+  viewerRef.value?.open({
+    company: props.company,
+    code: product.codigo,
+    title: product.descricao,
+    target: photoTarget?.value,
+  });
 };
 
 const move = step => {
@@ -275,6 +290,15 @@ defineExpose({ focus: () => searchRef.value?.focus() });
               >
                 {{ t('OUTSIDER_ERP.BUDGET.ITEMS.TECHNICAL') }}
               </button>
+              <button
+                v-if="erpState.productPhotos"
+                type="button"
+                class="flex items-center gap-0.5 text-n-blue-11 hover:underline"
+                @click.stop="openPhotos(product)"
+              >
+                <Icon icon="i-lucide-images" class="size-3.5" />
+                {{ t('OUTSIDER_ERP.PRODUCTS.PHOTOS.BUTTON') }}
+              </button>
             </span>
           </div>
           <span
@@ -308,7 +332,9 @@ defineExpose({ focus: () => searchRef.value?.focus() });
             @click.stop="add(product)"
           >
             <Icon
-              :icon="added === product.codigo ? 'i-lucide-check' : 'i-lucide-plus'"
+              :icon="
+                added === product.codigo ? 'i-lucide-check' : 'i-lucide-plus'
+              "
               class="size-4"
             />
             {{
@@ -331,5 +357,6 @@ defineExpose({ focus: () => searchRef.value?.focus() });
         </p>
       </div>
     </div>
+    <ErpPhotoViewer ref="viewerRef" />
   </div>
 </template>

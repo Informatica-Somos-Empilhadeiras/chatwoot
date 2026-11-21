@@ -95,6 +95,34 @@ class ErpAPI extends ApiClient {
     });
   }
 
+  // aba Produtos: o produto inteiro, com a lista das fotos (só leitura)
+  product(company, code) {
+    return axios.get(`${this.url}/catalog/${code}`, { params: { company } });
+  }
+
+  // só a lista das fotos de um produto (botão de fotos do orçamento)
+  productPhotos(company, code) {
+    return axios.get(`${this.url}/catalog/${code}/photos`, {
+      params: { company },
+    });
+  }
+
+  // a imagem em si (vem do Nextcloud); em blob porque o <img> não leva a autenticação da API
+  productPhoto(company, code, id) {
+    return axios.get(`${this.url}/catalog/${code}/photos/${id}`, {
+      params: { company },
+      responseType: 'blob',
+    });
+  }
+
+  // manda a foto ao cliente numa conversa que já existe (conversation_id ou contact_id)
+  sendProductPhoto(company, code, id, data) {
+    return axios.post(`${this.url}/catalog/${code}/photos/${id}/send`, {
+      company,
+      ...data,
+    });
+  }
+
   // orçamento de peças e serviços feito no chat (separado da proposta comercial do CRM)
   budgets(contactId) {
     return axios.get(`${this.url}/budgets`, {

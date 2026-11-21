@@ -7,11 +7,16 @@ class Api::V1::Accounts::Outsider::Erp::StatusesController < Api::V1::Accounts::
       enabled: settings.enabled?, can_edit: settings.enabled? && can_edit?, write_enabled: settings.write_enabled?,
       orders_enabled: settings.orders_enabled?, quotes_enabled: settings.quotes_enabled?, administrator: Current.account_user.administrator?,
       fields: settings.writable_fields.keys, field_kinds: ::Outsider::Erp::Settings::FIELD_KINDS, companies: settings.companies,
-      locked_statuses: settings.locked_statuses, nextcloud_invoices: settings.nextcloud_enabled?
-    }.merge(writes)
+      locked_statuses: settings.locked_statuses
+    }.merge(writes, nextcloud)
   end
 
   private
+
+  # o que vem do Nextcloud: as notas fiscais em PDF e as fotos dos produtos
+  def nextcloud
+    { nextcloud_invoices: settings.nextcloud_enabled?, product_photos: settings.product_photos_enabled? }
+  end
 
   # gravações com flag própria: orçamento e cadastro de cliente (Outsider::Erp::ClientRegistrar)
   def writes
