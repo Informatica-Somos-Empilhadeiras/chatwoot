@@ -54,7 +54,11 @@ export const loadErpStatus = async accountId => {
 
 // OS em status terminal (FECHADA/CANCELADA/PERDIDA): so leitura; reabrir e no desktop do ERP
 export const isOrderLocked = order =>
-  erpState.lockedStatuses.includes(String(order?.Situacao || '').trim().toUpperCase());
+  erpState.lockedStatuses.includes(
+    String(order?.Situacao || '')
+      .trim()
+      .toUpperCase()
+  );
 
 // listas de apoio da edição da OS (situações, técnicos, tipos de atendimento). Buscadas uma vez por conta e
 // compartilhadas entre os cartões (o backend já guarda em cache por alguns minutos); uma falha deixa tentar de novo.
@@ -183,6 +187,7 @@ export const erpErrorMessage = (t, error) => {
     quote_write_disabled: 'QUOTE_WRITE_DISABLED',
     client_write_disabled: 'CLIENT_WRITE_DISABLED',
     invalid: 'INVALID',
+    os_not_found: 'OS_NOT_FOUND',
   };
   if (error?.response?.status === 403 && !known[code])
     return t('OUTSIDER_ERP.ERRORS.NO_PERMISSION');

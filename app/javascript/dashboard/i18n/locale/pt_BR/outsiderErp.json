@@ -42,6 +42,7 @@
       "QUOTE_WRITE_DISABLED": "A criação de orçamento no ERP está desligada ou o seu perfil só permite consultar.",
       "INVALID": "Não foi possível gravar: confira o valor escolhido.",
       "NO_PERMISSION": "Seu perfil de acesso não permite isso.",
+      "OS_NOT_FOUND": "OS não encontrada no ERP.",
       "GENERIC": "Não foi possível falar com o ERP.",
       "CLIENT_WRITE_DISABLED": "O cadastro de clientes no ERP está desligado nas Configurações (só um administrador liga)."
     },
@@ -66,6 +67,7 @@
       "LOCKED": "OS fechada — somente leitura.",
       "NOTE_HINT": "Cada mudança fica numa nota privada desta conversa.",
       "VIEW_ONLY": "Seu perfil só permite consultar as OS.",
+      "REPORT": "Relatório com fotos",
       "NO_TECHNICIAN": "Sem técnico",
       "DETAILS": {
         "SITUATION": "Situação",

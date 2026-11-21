@@ -42,6 +42,7 @@
       "QUOTE_WRITE_DISABLED": "Creating quotes in the ERP is off or your profile is read only.",
       "INVALID": "Could not save: check the chosen value.",
       "NO_PERMISSION": "Your access profile does not allow this.",
+      "OS_NOT_FOUND": "Service order not found in the ERP.",
       "GENERIC": "Could not reach the ERP.",
       "CLIENT_WRITE_DISABLED": "Customer registration in the ERP is turned off in the settings (only an administrator can turn it on)."
     },
@@ -66,6 +67,7 @@
       "LOCKED": "Closed service order — read only.",
       "NOTE_HINT": "Each change is logged as a private note in this conversation.",
       "VIEW_ONLY": "Your profile can only view service orders.",
+      "REPORT": "Report with photos",
       "NO_TECHNICIAN": "No technician",
       "DETAILS": {
         "SITUATION": "Situation",

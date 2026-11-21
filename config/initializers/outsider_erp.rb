@@ -16,6 +16,7 @@ Rails.application.routes.prepend do
               resources :service_orders, only: [:index] do
                 collection do
                   get :board
+                  get :report
                   %i[substatus field status technician attendance_type].each { |action| put action }
                 end
               end

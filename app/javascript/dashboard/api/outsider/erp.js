@@ -37,6 +37,14 @@ class ErpAPI extends ApiClient {
     return axios.get(`${this.url}/service_orders/board`, { params });
   }
 
+  // relatório da OS com as fotos do checklist (PDF montado no servidor)
+  serviceOrderReport(company, code) {
+    return axios.get(`${this.url}/service_orders/report`, {
+      params: { company, code },
+      responseType: 'blob',
+    });
+  }
+
   setSubstatus(data) {
     return axios.put(`${this.url}/service_orders/substatus`, data);
   }

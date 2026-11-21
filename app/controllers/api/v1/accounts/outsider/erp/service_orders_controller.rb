@@ -1,9 +1,11 @@
-# OUTSIDER: as OS do ERP (espelho): as do contato, a busca, o quadro e a gravação de substatus/campos (Outsider::Erp::Writer)
+# OUTSIDER: as OS do ERP (espelho): as do contato, a busca, o quadro, o relatório com as fotos (PDF) e a gravação de
+# substatus/campos (Outsider::Erp::Writer)
 class Api::V1::Accounts::Outsider::Erp::ServiceOrdersController < Api::V1::Accounts::Outsider::Erp::BaseController
   rescue_from(::Outsider::Erp::Writer::Disabled) { render json: { error: 'write_disabled' }, status: :forbidden }
   rescue_from(::Outsider::Erp::Writer::Invalid) { |error| render json: { error: 'invalid', field: error.message }, status: :unprocessable_entity }
   rescue_from(::Outsider::Erp::Writer::Locked) { |error| render json: { error: 'os_locked', status: error.message }, status: :forbidden }
-  before_action :ensure_orders_enabled, only: %i[board]
+  rescue_from(::Outsider::Erp::ServiceOrderReport::NotFound) { render json: { error: 'os_not_found' }, status: :not_found }
+  before_action :ensure_orders_enabled, only: %i[board report]
 
   # contact_id: os vínculos do contato e as OS desses clientes; q: busca por número, cliente, máquina. Com as OS ocultas,
   # só os vínculos (o orçamento precisa deles). O cliente para vincular vem da lista de clientes (CustomersController).
@@ -14,6 +16,17 @@ class Api::V1::Accounts::Outsider::Erp::ServiceOrdersController < Api::V1::Accou
   def board
     data = orders.board(group_by: params[:group_by], company: params[:company], technician: params[:technician], query: params[:q])
     render json: orders.meta.merge(data).merge(options: data[:companies].index_with { |company| orders.substatus_options(company) })
+  end
+
+  # relatório da OS com as fotos do checklist (PDF no modelo do kanban de KPI do Mais Prático), lido direto do ERP: serve ao
+  # quadro e ao histórico (OS fora da janela do espelho). Como o PDF do orçamento, só confere a unidade; a OS o ERP confirma.
+  def report
+    company = params.require(:company).to_s
+    code = Integer(params.require(:code).to_s, exception: false)
+    raise ::Outsider::Erp::ServiceOrderReport::NotFound unless code && settings.companies.include?(company)
+
+    document = ::Outsider::Erp::ServiceOrderPdf.new(::Outsider::Erp::ServiceOrderReport.new(Current.account).build(company, code))
+    send_data document.render, filename: document.filename, type: 'application/pdf', disposition: 'inline'
   end
 
   def substatus

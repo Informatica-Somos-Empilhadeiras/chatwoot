@@ -331,6 +331,14 @@ const showPdf = () =>
       );
   });
 
+// OS: relatório com as fotos do checklist (o mesmo do kanban de KPI), montado na hora pelo servidor
+const showReport = () =>
+  run('report', () =>
+    pdfRef.value?.open(() =>
+      ErpAPI.serviceOrderReport(view.value.company, view.value.number)
+    )
+  );
+
 const send = () =>
   run('send', async () => {
     const budget = await ensureBudget();
@@ -464,6 +472,20 @@ const LABEL =
         <Icon icon="i-lucide-lock" class="size-3.5 shrink-0" />
         {{ editBlocked }}
       </p>
+      <div
+        v-if="detail && viewKind === 'orders'"
+        class="flex flex-wrap items-center gap-2 mt-3"
+      >
+        <Button
+          size="sm"
+          variant="faded"
+          color="slate"
+          icon="i-lucide-file-text"
+          :label="t('OUTSIDER_ERP.ORDER.REPORT')"
+          :is-loading="busy === 'report'"
+          @click="showReport"
+        />
+      </div>
     </header>
 
     <div v-if="loading" class="flex items-center justify-center flex-1">

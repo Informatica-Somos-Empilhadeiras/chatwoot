@@ -1,5 +1,6 @@
 # OUTSIDER: chamadas à API web do ERP Mais Prático (ver Outsider::Erp::Settings para as regras). Só os caminhos daqui:
-# leitura das OS (KanbanOrdemServico/valoresDash), dos orçamentos (cotacaoDesempenho/valoresDash) e a gravação de campos
+# leitura das OS (KanbanOrdemServico/valoresDash), do relatório de uma OS com as fotos do checklist (Dados*_PDF e
+# getimagemchecklistos, os mesmos do kanban de KPI), dos orçamentos (cotacaoDesempenho/valoresDash) e a gravação de campos
 # de uma OS que já existe (PUT KanbanOrdemServico/Update<Campo>/<OS>). Nós nos identificamos (User-Agent próprio) e
 # nunca disparamos gravação de teste: quem chama já conferiu a OS, a empresa e o campo.
 class Outsider::Erp::Client
@@ -15,6 +16,7 @@ class Outsider::Erp::Client
   QUOTES_PATH = '/cotacaoDesempenho/api/valoresDash'.freeze
   UPDATE_PATH = '/KanbanOrdemServico/api/%<endpoint>s/%<code>d'.freeze
   KANBAN_LIST_PATH = '/KanbanOrdemServico/api/%<endpoint>s'.freeze
+  PHOTO_PATH = '/KanbanOrdemServico/api/getimagemchecklistos/%<ref>s/%<company>s'.freeze
   QUERY_PATH = '/dashboard/api/query_execute'.freeze
 
   def initialize(settings)
@@ -57,6 +59,17 @@ class Outsider::Erp::Client
     list(get(format(KANBAN_LIST_PATH, endpoint: endpoint), companies_query(@settings.companies), read_timeout))
   end
 
+  # uma parte do relatório de uma OS (o mesmo que o kanban de KPI deles imprime): DadosOS_PDF, DadosCheckIn_PDF,
+  # DadosCheckList_PDF, DadosProdutosOS_PDF
+  def service_order_report(endpoint, company, code, read_timeout: READ_TIMEOUT)
+    list(get(format(KANBAN_LIST_PATH, endpoint: endpoint), [['CodigoOS', Integer(code)], ['Empresa', company]], read_timeout))
+  end
+
+  # foto do checklist de uma OS (ref = CaminhoIMG, "<OS>_<n>"), em bytes; quem desenha confere o formato
+  def checklist_photo(company, ref, read_timeout: READ_TIMEOUT)
+    get(format(PHOTO_PATH, ref: ref, company: ERB::Util.url_encode(company)), [], read_timeout, accept: 'image/*').b
+  end
+
   # rota liberada pela Inntegra para a Somos: roda a SQL do lado do servidor (ver Outsider::Erp::Sql para a montagem
   # segura, e Outsider::Erp::QuoteCreator para o uso). Só quem chama monta a SQL; aqui só transporta e devolve o JSON.
   def query_execute(sql, read_timeout: WRITE_TIMEOUT)
@@ -76,14 +89,15 @@ class Outsider::Erp::Client
     companies.map { |company| ['listaEmpresas[]', company] }
   end
 
-  def headers
-    { 'Accept' => 'application/json', 'User-Agent' => USER_AGENT }.merge(@settings.device_id.present? ? { 'x-device-id' => @settings.device_id } : {})
+  def headers(accept = 'application/json')
+    { 'Accept' => accept, 'User-Agent' => USER_AGENT }.merge(@settings.device_id.present? ? { 'x-device-id' => @settings.device_id } : {})
   end
 
-  def get(path, query, read_timeout)
+  def get(path, query, read_timeout, accept: 'application/json')
     body = +''
-    url = "#{@settings.base_url}#{path}?#{URI.encode_www_form(query)}"
-    response = HTTParty.get(url, headers: headers, open_timeout: OPEN_TIMEOUT, read_timeout: read_timeout, stream_body: true) do |fragment|
+    url = "#{@settings.base_url}#{path}"
+    url += "?#{URI.encode_www_form(query)}" if query.any?
+    response = HTTParty.get(url, headers: headers(accept), open_timeout: OPEN_TIMEOUT, read_timeout: read_timeout, stream_body: true) do |fragment|
       next unless fragment.code == 200
 
       body << fragment

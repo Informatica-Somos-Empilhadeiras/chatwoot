@@ -1,7 +1,20 @@
-# OUTSIDER: os textos do PDF do orçamento (Outsider::Erp::QuotePdf): linhas do emitente e do cliente, CNPJ/CPF, datas,
-# valores no formato brasileiro e a limpeza para Windows-1252 (as fontes do próprio PDF não têm o resto).
+# OUTSIDER: os textos do PDF do orçamento (Outsider::Erp::QuotePdf) e do relatório da OS (Outsider::Erp::ServiceOrderPdf):
+# logo e linhas do emitente do cabeçalho, linhas do cliente, CNPJ/CPF, datas, valores no formato brasileiro e a limpeza
+# para Windows-1252 (as fontes do próprio PDF não têm o resto).
 module Outsider::Erp::QuotePdfText
   private
+
+  def logo(bytes)
+    return if bytes.blank?
+
+    @pdf.image(StringIO.new(bytes), at: [6, 86], fit: [84, 80])
+  rescue Prawn::Errors::UnsupportedImageType, StandardError
+    nil
+  end
+
+  def emitter_lines(emitter)
+    @pdf.font('Times-Roman', size: 9) { emitter_rows(emitter).each { |row| @pdf.text(clean(row), leading: 0.5) } }
+  end
 
   def emitter_rows(emitter)
     address = [[emitter['endereco'], emitter['numero']].compact_blank.join(', '), emitter['bairro'],

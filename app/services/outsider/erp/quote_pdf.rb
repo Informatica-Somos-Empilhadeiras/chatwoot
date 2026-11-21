@@ -55,18 +55,6 @@ class Outsider::Erp::QuotePdf
 
   def title = @report['previa'] ? 'Prévia do orçamento' : "Orçamento Nº #{@report['numero']}"
 
-  def logo(bytes)
-    return if bytes.blank?
-
-    @pdf.image(StringIO.new(bytes), at: [6, 86], fit: [84, 80])
-  rescue Prawn::Errors::UnsupportedImageType, StandardError
-    nil
-  end
-
-  def emitter_lines(emitter)
-    @pdf.font('Times-Roman', size: 9) { emitter_rows(emitter).each { |row| @pdf.text(clean(row), leading: 0.5) } }
-  end
-
   def customer
     data = @report['cliente'].to_h
     @pdf.bounding_box([0, @pdf.cursor], width: width) do

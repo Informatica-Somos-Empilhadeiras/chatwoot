@@ -1,11 +1,14 @@
 <script setup>
-// OUTSIDER: uma ordem de serviço do ERP (espelho). Fechada mostra o essencial; aberta mostra os detalhes e, para quem
-// pode editar (escrita ligada + perfil "Usa"), os controles de edição (ErpOrderEditor). O cartão só exibe; a edição e
-// a gravação ficam no editor.
+// OUTSIDER: uma ordem de serviço do ERP (espelho). Fechada mostra o essencial; aberta mostra os detalhes, o relatório
+// com as fotos do checklist (PDF, ErpPdfDialog) e, para quem pode editar (escrita ligada + perfil "Usa"), os controles
+// de edição (ErpOrderEditor). O cartão só exibe; a edição e a gravação ficam no editor.
 import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import ErpAPI from 'dashboard/api/outsider/erp';
+import Button from 'dashboard/components-next/button/Button.vue';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
 import ErpOrderEditor from './ErpOrderEditor.vue';
+import ErpPdfDialog from '../budgets/ErpPdfDialog.vue';
 import { erpState, formatDate, dotClass, substatusClass } from '../erpStore';
 
 const props = defineProps({
@@ -19,6 +22,12 @@ const emit = defineEmits(['updated']);
 
 const { t } = useI18n();
 const open = ref(props.startOpen);
+const pdfRef = ref(null);
+
+const openReport = () =>
+  pdfRef.value?.open(() =>
+    ErpAPI.serviceOrderReport(props.order.Empresa, props.order.CodigoOS)
+  );
 
 const late = computed(() => Number(props.order.DiasAtraso) > 0);
 
@@ -120,6 +129,17 @@ const details = computed(() =>
     </button>
 
     <div v-if="open" class="flex flex-col gap-3 pt-2 border-t border-n-weak">
+      <div class="flex">
+        <Button
+          size="sm"
+          variant="faded"
+          color="slate"
+          icon="i-lucide-file-text"
+          :label="t('OUTSIDER_ERP.ORDER.REPORT')"
+          @click="openReport"
+        />
+        <ErpPdfDialog ref="pdfRef" />
+      </div>
       <p v-if="order.Nome" class="mb-0 text-xs font-medium text-n-slate-12">
         {{ order.Nome }}
         <span class="font-normal text-n-slate-10">
