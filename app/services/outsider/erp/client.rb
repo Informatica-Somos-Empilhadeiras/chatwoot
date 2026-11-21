@@ -1,6 +1,6 @@
 # OUTSIDER: chamadas à API web do ERP Mais Prático (ver Outsider::Erp::Settings para as regras). Só os caminhos daqui:
-# leitura das OS (KanbanOrdemServico/valoresDash), do relatório de uma OS com as fotos do checklist (Dados*_PDF e
-# getimagemchecklistos, os mesmos do kanban de KPI), dos orçamentos (cotacaoDesempenho/valoresDash) e a gravação de campos
+# leitura das OS (KanbanOrdemServico/valoresDash), do relatório de uma OS com as fotos do checklist (Dados*_PDF,
+# getimagemchecklistos e download-logo-empresa, os mesmos do kanban de KPI), dos orçamentos (cotacaoDesempenho/valoresDash) e a gravação de campos
 # de uma OS que já existe (PUT KanbanOrdemServico/Update<Campo>/<OS>). Nós nos identificamos (User-Agent próprio) e
 # nunca disparamos gravação de teste: quem chama já conferiu a OS, a empresa e o campo.
 class Outsider::Erp::Client
@@ -17,6 +17,7 @@ class Outsider::Erp::Client
   UPDATE_PATH = '/KanbanOrdemServico/api/%<endpoint>s/%<code>d'.freeze
   KANBAN_LIST_PATH = '/KanbanOrdemServico/api/%<endpoint>s'.freeze
   PHOTO_PATH = '/KanbanOrdemServico/api/getimagemchecklistos/%<ref>s/%<company>s'.freeze
+  LOGO_PATH = '/KanbanOrdemServico/api/download-logo-empresa/%<cnpj>s'.freeze
   QUERY_PATH = '/dashboard/api/query_execute'.freeze
 
   def initialize(settings)
@@ -68,6 +69,11 @@ class Outsider::Erp::Client
   # foto do checklist de uma OS (ref = CaminhoIMG, "<OS>_<n>"), em bytes; quem desenha confere o formato
   def checklist_photo(company, ref, read_timeout: READ_TIMEOUT)
     get(format(PHOTO_PATH, ref: ref, company: ERB::Util.url_encode(company)), [], read_timeout, accept: 'image/*').b
+  end
+
+  # logo que o relatório da OS deles usa (pelo CNPJ do emitente, só dígitos), em bytes
+  def company_logo(cnpj, read_timeout: READ_TIMEOUT)
+    get(format(LOGO_PATH, cnpj: cnpj.to_s.gsub(/\D/, '')), [], read_timeout, accept: 'image/*').b
   end
 
   # rota liberada pela Inntegra para a Somos: roda a SQL do lado do servidor (ver Outsider::Erp::Sql para a montagem

@@ -1,16 +1,14 @@
-# OUTSIDER: PDF do relatório de uma OS no modelo da "Impressão de Ordem de Serviço - Check-List" do kanban de KPI do Mais
-# Prático: cabeçalho com logo e dados do emitente (o mesmo do orçamento), cliente e equipamento, serviço, check-in/out,
-# avaliação técnica, produtos e o checklist com as fotos em grade. Só desenha o hash do Outsider::Erp::ServiceOrderReport.
-# Fontes do próprio PDF: o texto sai em Windows-1252.
+# OUTSIDER: PDF do relatório de uma OS igual à "Impressão de Ordem de Serviço - Check-List" que o kanban de KPI do Mais
+# Prático emite. Fontes, tamanhos, cores, posições e espaçamentos foram medidos no PDF da OS 850 deles (ver Layout): o
+# cabeçalho se repete em toda página (12pt mais alto a partir da 2ª), os dados vêm em rótulo/valor, check-in/out e
+# produtos em tabela (Tables), a avaliação técnica numa caixa e o checklist com as fotos em grade (Checklist). Só
+# desenha o hash do Outsider::Erp::ServiceOrderReport. As medidas contam do topo da página, como no original.
 class Outsider::Erp::ServiceOrderPdf
   include Outsider::Erp::QuotePdfText
-  MARGIN = 28
-  FONT_SIZE = 9
-  LABEL_COLOR = '1F4E79'.freeze
-  TITLE_COLOR = '7A808A'.freeze
-  PHOTOS_PER_ROW = 4
-  PHOTO_HEIGHT = 150
-  GAP = 8
+  include Outsider::Erp::ServiceOrderPdf::Layout
+  include Outsider::Erp::ServiceOrderPdf::Drawing
+  include Outsider::Erp::ServiceOrderPdf::Tables
+  include Outsider::Erp::ServiceOrderPdf::Checklist
 
   Prawn::Fonts::AFM.hide_m17n_warning = true
 
@@ -24,14 +22,14 @@ class Outsider::Erp::ServiceOrderPdf
   end
 
   def render
-    @pdf = Prawn::Document.new(page_size: 'A4', margin: MARGIN, info: { Title: clean(filename.delete_suffix('.pdf')), Creator: 'Chat' })
-    @pdf.font('Helvetica', size: FONT_SIZE)
-    header
+    @pdf = Prawn::Document.new(page_size: 'A4', margin: 0, info: { Title: clean(filename.delete_suffix('.pdf')), Creator: 'Chat' })
+    @pdf.default_kerning(false)
+    start_page(first: true)
     customer_and_equipment
     service
-    events
+    table(EVENTS, @report['eventos'].map { |event| event.values_at('tipo', 'observacoes', 'check_in', 'check_out') })
     evaluation
-    products
+    table(PRODUCTS, @report['produtos'].map { |item| [item['codigo'], item['descricao'], item['unidade'], qty(item['quantidade'])] })
     checklist
     page_numbers
     @pdf.render
@@ -39,147 +37,136 @@ class Outsider::Erp::ServiceOrderPdf
 
   private
 
-  def width = @pdf.bounds.width
+  # ---- página e cabeçalho ----
 
-  def header
+  def start_page(first: false)
+    @pdf.start_new_page unless first
+    top = @pdf.page_number == 1 ? 24.72 : 12.72
+    header(top)
+    @y = top + 89.4
+    @after = :header
+  end
+
+  # nova página; devolve onde fica o 1º elemento dela (a distância vem de quem chama, a partir da linha azul)
+  def page_break(offset)
+    start_page
+    @y + offset
+  end
+
+  def header(top)
     emitter = @report['emitente'].to_h
-    @pdf.bounding_box([0, @pdf.cursor], width: width, height: 92) do
-      @pdf.stroke_bounds
-      logo(emitter['logo'])
-      @pdf.bounding_box([96, 86], width: width - 270, height: 82) { emitter_lines(emitter) }
-      heading(width - 170)
-    end
+    logo(emitter['logo'], top)
+    letterhead(emitter, top)
+    write_right([['ORDEM DE SERVIÇO: ', :normal], [@report['numero'].to_s, :bold]], top + 67.68)
+    write_right([['Data: ', :normal], [Time.zone.today.strftime('%d/%m/%Y'), :bold]], top + 78.12)
+    bar(LEFT, top + 87.84, [RIGHT - LEFT, 1.56], BLUE)
   end
 
-  # à direita do cabeçalho: número da OS e data de emissão
-  def heading(left)
-    @pdf.text_box(clean("Ordem de Serviço Nº #{@report['numero']}"), at: [left, 84], width: 162, align: :right, size: 12, style: :bold)
-    @pdf.text_box('Check-List', at: [left, 66], width: 162, align: :right, size: 10)
-    @pdf.text_box(clean("Emitido em #{Time.zone.today.strftime('%d/%m/%Y')}"), at: [left, 18], width: 162, align: :right, size: 9, style: :bold)
+  # ao lado do logo: nome em azul, telefone, e-mail e o título
+  def letterhead(emitter, top)
+    write(emitter['nome'], [127.2, top + 12.72], size: 14, style: :bold, color: BLUE)
+    write(label('Telefone', emitter['fone']), [127.2, top + 25.68], style: :bold)
+    write(label('E-mail', emitter['email']), [127.2, top + 36.84], style: :bold)
+    write('Impressão de Ordem de Serviço - Check-List', [127.2, top + 61.8], size: 14, style: :bold)
   end
 
-  def customer_and_equipment
-    customer = @report['cliente'].to_h
-    equipment = @report['equipamento'].to_h
-    title('Dados do cliente e equipamento')
-    columns([['Cliente', customer['nome']], ['CNPJ/CPF', document(customer['documento'])], ['Endereço', customer['endereco']],
-             ['Cidade', customer['cidade']]],
-            [['Descrição', equipment['descricao']], ['Marca', equipment['marca']], ['Modelo', equipment['modelo']],
-             ['Nº de série', equipment['serie']], ['Horímetro', equipment['horimetro']]])
-  end
-
-  def service
-    data = @report['servico'].to_h
-    title('Dados do serviço')
-    columns([['Tipo de atendimento', data['tipo_atendimento']], ['Classificação', data['classificacao']]],
-            [['Técnico principal', data['tecnico']]])
-    field('Defeitos mencionados', data['defeitos'])
-  end
-
-  def events
-    rows = @report['eventos'].map { |event| [event['tipo'], event['observacoes'], event['check_in'], event['check_out']] }
-    return if rows.empty?
-
-    title('Eventos (check-in/out)')
-    table(%w[Evento Observações Check-in Check-out], rows, { 2 => 100, 3 => 100 })
-  end
-
-  def evaluation
-    return if @report['avaliacao'].blank?
-
-    title('Avaliação técnica')
-    @pdf.text(clean(@report['avaliacao']), leading: 1.5)
-  end
-
-  def products
-    rows = @report['produtos'].map { |item| [item['codigo'], item['descricao'], item['unidade'], qty(item['quantidade'])] }
-    return if rows.empty?
-
-    title('Produtos / serviços')
-    table(%w[Código Descrição Unidade Qtd], rows, { 0 => 60, 2 => 55, 3 => 40 })
-  end
-
-  def checklist
-    return if @report['checklist'].blank?
-
-    title(@report['familia'].presence || 'Check-list', room_for(@report['checklist'].first) + 30)
-    @report['checklist'].each do |section|
-      @pdf.start_new_page if @pdf.cursor < room_for(section)
-      @pdf.move_down 2
-      @pdf.text(clean(section['nome']), size: 9.5, style: :bold, align: :center, color: TITLE_COLOR)
-      section['itens'].each { |item| checklist_item(item) }
-    end
-  end
-
-  # espaço para o nome da seção não ficar sozinho no pé da página, longe do primeiro item (e das fotos dele)
-  def room_for(section) = section['itens'].first&.dig('fotos').present? ? PHOTO_HEIGHT + 50 : 60
-
-  # nome do item à esquerda, leitura de chegada/saída à direita, fotos embaixo
-  def checklist_item(item)
-    @pdf.start_new_page if @pdf.cursor < (item['fotos'].any? ? PHOTO_HEIGHT + 30 : 30)
-    @pdf.move_down 8
-    top = @pdf.cursor
-    @pdf.text_box(clean(reading(item)), at: [width - 190, top], width: 190, align: :right, size: 9, style: :bold)
-    @pdf.bounding_box([0, top], width: width - 200) { @pdf.text(clean(item['atributo']), size: 9, style: :bold) }
-    @pdf.move_down 4
-    photos(item['fotos'])
-  end
-
-  def reading(item) = [label('CHEGADA', item['chegada']), label('SAÍDA', item['saida'])].compact.join('    ')
-
-  def photos(list)
-    cell = (width - (GAP * (PHOTOS_PER_ROW - 1))) / PHOTOS_PER_ROW
-    list.each_slice(PHOTOS_PER_ROW) do |row|
-      @pdf.start_new_page if @pdf.cursor < PHOTO_HEIGHT
-      top = @pdf.cursor
-      row.each_with_index { |bytes, index| photo(bytes, [index * (cell + GAP), top], cell) }
-      @pdf.move_cursor_to(top - PHOTO_HEIGHT - GAP)
-    end
-  end
-
-  def photo(bytes, at, cell)
-    @pdf.bounding_box(at, width: cell, height: PHOTO_HEIGHT) do
-      @pdf.image(StringIO.new(bytes), fit: [cell, PHOTO_HEIGHT], position: :center, vposition: :center)
-    end
+  # o logo ocupa a caixa inteira (o deles é esticado para 90,36 x 80,40)
+  def logo(bytes, top)
+    @pdf.image(StringIO.new(bytes), at: [LEFT, PAGE_HEIGHT - top], width: 90.36, height: 80.4) if bytes.present?
   rescue Prawn::Errors::UnsupportedImageType, StandardError
     nil
   end
 
-  def title(text, room = 80)
-    @pdf.start_new_page if @pdf.cursor < room
-    @pdf.move_down 14
-    @pdf.text(clean(text.upcase), size: 9, style: :bold, color: TITLE_COLOR, align: :center)
-    @pdf.move_down 6
-  end
-
-  def field(name, value)
-    @pdf.text(clean(name.upcase), size: 7.5, style: :bold, color: LABEL_COLOR)
-    @pdf.text(clean(value.presence || '-'))
-    @pdf.move_down 5
-  end
-
-  # duas colunas de campos lado a lado; o cursor segue da mais comprida
-  def columns(left, right)
-    top = @pdf.cursor
-    half = (width - 16) / 2
-    @pdf.bounding_box([0, top], width: half) { left.each { |name, value| field(name, value) } }
-    left_bottom = @pdf.cursor
-    @pdf.bounding_box([half + 16, top], width: half) { right.each { |name, value| field(name, value) } }
-    @pdf.move_cursor_to([left_bottom, @pdf.cursor].min)
-  end
-
-  def table(head, rows, widths)
-    cells = ([head] + rows).map { |row| row.map { |cell| clean(cell.to_s) } }
-    style = { size: 8.5, padding: [3, 4], border_color: 'BFC5CD' }
-    @pdf.table(cells, header: true, width: width, column_widths: widths, cell_style: style) do |table|
-      table.row(0).font_style = :bold
-      table.row(0).background_color = 'F1F3F5'
+  # "Página 1 de 2" no alto, em Times 8 preto, em toda página
+  def page_numbers
+    total = @pdf.page_count
+    (1..total).each do |number|
+      @pdf.go_to_page(number)
+      text = clean("Página #{number} de #{total}")
+      @pdf.font('Times-Roman') do
+        @pdf.fill_color('000000')
+        @pdf.draw_text(text, at: [298.35 - (@pdf.width_of(text, size: 8) / 2), PAGE_HEIGHT - 9.0], size: 8)
+      end
     end
   end
 
-  def page_numbers
-    return if @pdf.page_count < 2
+  # ---- campos ----
 
-    @pdf.number_pages('<page>/<total>', at: [width - 40, -6], width: 40, align: :right, size: 7)
+  def customer_and_equipment
+    customer = @report['cliente'].to_h
+    equipment = @report['equipamento'].to_h
+    section_title('Dados do cliente e equipamento')
+    field_row([['Cliente', customer['nome']], ['Descrição', equipment['descricao']]], COLUMNS)
+    field_row([['CNPJ', customer['documento']], ['Marca', equipment['marca']]], COLUMNS)
+    field_row([['Endereço', customer['endereco']], ['Modelo', equipment['modelo']]], COLUMNS)
+    field_row([['Cidade', customer['cidade']], ['Nº série', equipment['serie']], ['Horímetro', equipment['horimetro']]], COLUMNS_WITH_HOURS)
+  end
+
+  def service
+    data = @report['servico'].to_h
+    section_title('Dados do serviço')
+    [['Tipo de atendimento', data['tipo_atendimento']], ['Classificação', data['classificacao']],
+     ['Técnico principal', data['tecnico']], ['Defeitos mencionados', data['defeitos']]].each { |pair| field_row([pair], FULL_ROW) }
+  end
+
+  def section_title(text)
+    baseline = @y + (@after == :header ? 29.28 : 30.0)
+    baseline = page_break(29.28) if baseline + 18.72 + LINE > BOTTOM
+    write_center(text.upcase, baseline)
+    @y = baseline
+    @after = :title
+  end
+
+  # uma linha de campos lado a lado (rótulo em cima, valor embaixo); a seguinte parte do valor mais comprido. No
+  # original o valor fica 11,31 abaixo do rótulo e a linha seguinte 18,75 abaixo do valor (18,72 logo após o título).
+  def field_row(pairs, columns)
+    values = pairs.each_with_index.map { |(_, value), index| wrap(value, columns[index][1]) }
+    extra = LINE * (values.map(&:size).max - 1)
+    baseline = @y + (@after == :value ? 18.75 : 18.72)
+    baseline = page_break(29.28) if baseline + 11.31 + extra > BOTTOM
+    pairs.each_with_index { |(name, _), index| field(name, values[index], columns[index][0], baseline) }
+    @y = baseline + 11.31 + extra
+    @after = :value
+  end
+
+  def field(name, lines, left, baseline)
+    write(name.upcase, [left, baseline], style: :bold, color: LABEL)
+    lines.each_with_index { |line, row| write(line, [left, baseline + 11.31 + (LINE * row)]) }
+  end
+
+  # ---- avaliação técnica: texto numa caixa de traço cinza ----
+
+  def evaluation
+    lines = wrap(@report['avaliacao'].to_s.gsub("\r\n", "\n"), 530.28)
+    return if lines.join.blank?
+
+    baseline = @y + (@after == :table ? 24.0 : 30.0)
+    baseline = page_break(29.28) if baseline + 6.35 + 20.65 + LINE + 21.25 > BOTTOM
+    write_center('AVALIAÇÃO TÉCNICA', baseline)
+    @y = evaluation_box(lines, baseline + 6.35)
+    @after = :box
+  end
+
+  # escreve as linhas a partir do topo da caixa; se não couberem, fecha a caixa e continua na página seguinte
+  def evaluation_box(lines, box_top)
+    line_y = box_top + 20.65
+    lines.each_with_index do |line, index|
+      if index.positive? && line_y + 21.25 > BOTTOM
+        frame(box_top, line_y - EVALUATION_LINE + 21.25)
+        box_top = page_break(12.0)
+        line_y = box_top + 20.65
+      end
+      write(line, [33.25, line_y])
+      line_y += EVALUATION_LINE
+    end
+    frame(box_top, line_y - EVALUATION_LINE + 21.25)
+  end
+
+  # devolve o fundo da caixa (traço de 0,84 pelo centro, de 25,35 a 571,43)
+  def frame(top, bottom)
+    @pdf.stroke_color(GRID)
+    @pdf.line_width(BORDER)
+    @pdf.stroke_rectangle([25.35, PAGE_HEIGHT - top], 546.08, bottom - top)
+    bottom
   end
 end

@@ -17,16 +17,13 @@ class Outsider::Erp::ServiceOrderReport
     order = part('DadosOS_PDF', company, code).first
     raise NotFound unless order
 
-    checklist = part('DadosCheckList_PDF', company, code)
     {
-      'numero' => code.to_i, 'empresa' => company,
-      'emitente' => Outsider::Erp::Emitter.new(@account, client: @client).data_for(company),
+      'numero' => code.to_i, 'empresa' => company, 'emitente' => emitter(order),
       'cliente' => customer(order), 'equipamento' => equipment(order), 'servico' => service(order),
       'avaliacao' => text(order['AvaliacaoTecnica']),
       'eventos' => part('DadosCheckIn_PDF', company, code).map { |row| event(row) },
       'produtos' => part('DadosProdutosOS_PDF', company, code).map { |row| product(row) },
-      'familia' => text(checklist.first&.dig('DescricaoFamilia')),
-      'checklist' => sections(company, code, checklist)
+      'checklist' => sections(company, code, part('DadosCheckList_PDF', company, code))
     }
   end
 
@@ -37,6 +34,12 @@ class Outsider::Erp::ServiceOrderReport
   def text(value) = value.to_s.strip
 
   def joined(*values) = values.map { |value| text(value) }.compact_blank.join(' - ')
+
+  # o cabeçalho do relatório deles vem da própria OS (colunas *Impressao) e o logo do CNPJ do emitente
+  def emitter(row)
+    { 'nome' => text(row['NomeImpressao']), 'fone' => text(row['TelefoneImpressao']), 'email' => text(row['EmailImpressao']),
+      'logo' => image(-> { @client.company_logo(row['CPF_CNPJ']) }) }
+  end
 
   def customer(row)
     { 'nome' => text(row['NomeCliente']), 'documento' => text(row['CPF_CNPJCliente']),
@@ -89,11 +92,13 @@ class Outsider::Erp::ServiceOrderReport
 
   # só as fotos desta OS, em JPEG/PNG (o que o Prawn desenha); a que faltar no ERP fica de fora e o relatório sai assim mesmo
   def photos_for(company, code, refs)
-    refs.uniq.select { |ref| ref.match?(PHOTO_REF) && ref.start_with?("#{code.to_i}_") }.index_with { |ref| photo(company, ref) }.compact
+    refs.uniq.select { |ref| ref.match?(PHOTO_REF) && ref.start_with?("#{code.to_i}_") }
+        .index_with { |ref| image(-> { @client.checklist_photo(company, ref) }) }.compact
   end
 
-  def photo(company, ref)
-    bytes = @client.checklist_photo(company, ref)
+  # imagem do ERP só se vier JPEG/PNG (o que o Prawn desenha); a que faltar fica de fora e o relatório sai assim mesmo
+  def image(fetch)
+    bytes = fetch.call
     bytes if bytes.start_with?("\xFF\xD8".b, "\x89PNG".b)
   rescue Outsider::Erp::Client::Error
     nil
