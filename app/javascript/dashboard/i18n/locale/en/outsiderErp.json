@@ -45,6 +45,8 @@
       "OS_NOT_FOUND": "Service order not found in the ERP.",
       "INVOICE_NOT_IN_NEXTCLOUD": "The PDF of this invoice was not found in the Nextcloud folder.",
       "NEXTCLOUD_UNAVAILABLE": "Could not reach Nextcloud right now.",
+      "NEXTCLOUD_AUTH": "Nextcloud rejected the user or password. Check the ERP settings (with two-factor authentication, use an app password).",
+      "NEXTCLOUD_FOLDER": "Nextcloud could not find the invoices root folder. Check the path in the ERP settings.",
       "GENERIC": "Could not reach the ERP.",
       "CLIENT_WRITE_DISABLED": "Customer registration in the ERP is turned off in the settings (only an administrator can turn it on)."
     },

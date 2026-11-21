@@ -196,12 +196,19 @@ export const erpErrorMessage = (t, error) => {
   };
   if (error?.response?.status === 403 && !known[code])
     return t('OUTSIDER_ERP.ERRORS.NO_PERMISSION');
+  // Nextcloud: senha recusada e pasta não encontrada têm texto próprio; o resto mostra o motivo (HTTP 400, SocketError...)
+  const nextcloud = {
+    'HTTP 401': 'NEXTCLOUD_AUTH',
+    'HTTP 404': 'NEXTCLOUD_FOLDER',
+  };
+  const reason = String(error?.response?.data?.message || '');
+  if (code === 'nextcloud_unavailable' && nextcloud[reason])
+    return t(`OUTSIDER_ERP.ERRORS.${nextcloud[reason]}`);
   const text = t(`OUTSIDER_ERP.ERRORS.${known[code] || 'GENERIC'}`);
   // o motivo curto ajuda a achar o problema: o do ERP (HTTP 403, Net::ReadTimeout...) ou o status do próprio Chatwoot
-  const detail =
-    code === 'erp_unavailable'
-      ? String(error?.response?.data?.message || '').slice(0, 80)
-      : '';
+  const detail = ['erp_unavailable', 'nextcloud_unavailable'].includes(code)
+    ? reason.slice(0, 80)
+    : '';
   const status = !known[code] && error?.response?.status;
   if (detail) return `${text} (${detail})`;
   return status ? `${text} (HTTP ${status})` : text;

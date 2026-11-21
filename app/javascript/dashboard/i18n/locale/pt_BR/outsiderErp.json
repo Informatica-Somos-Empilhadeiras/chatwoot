@@ -45,6 +45,8 @@
       "OS_NOT_FOUND": "OS não encontrada no ERP.",
       "INVOICE_NOT_IN_NEXTCLOUD": "Não achei o PDF desta nota na pasta do Nextcloud.",
       "NEXTCLOUD_UNAVAILABLE": "Não consegui falar com o Nextcloud agora.",
+      "NEXTCLOUD_AUTH": "O Nextcloud recusou o usuário ou a senha. Confira nas Configurações do ERP (com verificação em duas etapas, use uma senha de app).",
+      "NEXTCLOUD_FOLDER": "O Nextcloud não achou a pasta raiz das notas. Confira o caminho nas Configurações do ERP.",
       "GENERIC": "Não foi possível falar com o ERP.",
       "CLIENT_WRITE_DISABLED": "O cadastro de clientes no ERP está desligado nas Configurações (só um administrador liga)."
     },
