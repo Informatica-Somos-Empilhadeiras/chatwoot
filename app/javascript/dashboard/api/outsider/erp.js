@@ -158,10 +158,10 @@ class ErpAPI extends ApiClient {
     });
   }
 
-  // NF-e: o PDF oficial da nota espelhado do Nextcloud
-  invoiceDocument(company, number) {
+  // NF-e (invoices) e NFS-e (service_invoices): o PDF oficial da nota espelhado do Nextcloud
+  invoiceDocument(kind, company, number) {
     return axios.get(
-      `${this.url}/records/invoices/${company}/${number}/document`,
+      `${this.url}/records/${kind}/${company}/${number}/document`,
       { responseType: 'blob' }
     );
   }

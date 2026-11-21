@@ -341,10 +341,14 @@ const showReport = () =>
     )
   );
 
-// NF-e: o PDF oficial da nota, espelhado do Nextcloud (a prévia já tem o botão de baixar)
+// NF-e e NFS-e: o PDF oficial da nota, espelhado do Nextcloud (a prévia já tem o botão de baixar)
 const showInvoice = () =>
   pdfRef.value?.open(() =>
-    ErpAPI.invoiceDocument(view.value.company, view.value.number)
+    ErpAPI.invoiceDocument(
+      viewKind.value,
+      view.value.company,
+      view.value.number
+    )
   );
 
 // OS: o mesmo relatório, com a prévia e o envio ao cliente por WhatsApp ou e-mail (como o orçamento)
@@ -490,7 +494,11 @@ const LABEL =
         {{ editBlocked }}
       </p>
       <div
-        v-if="detail && viewKind === 'invoices' && erpState.nextcloudInvoices"
+        v-if="
+          detail &&
+          ['invoices', 'service_invoices'].includes(viewKind) &&
+          erpState.nextcloudInvoices
+        "
         class="flex flex-wrap items-center gap-2 mt-3"
       >
         <Button

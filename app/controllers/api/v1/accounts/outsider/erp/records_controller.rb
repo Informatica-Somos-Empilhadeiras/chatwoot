@@ -33,11 +33,11 @@ class Api::V1::Accounts::Outsider::Erp::RecordsController < Api::V1::Accounts::O
     send_data document.render, filename: document.filename, type: 'application/pdf', disposition: 'inline'
   end
 
-  # NF-e: o PDF oficial da nota espelhado do Nextcloud (achado pelo número, CFOP e cliente), para ver e baixar
+  # NF-e e NFS-e: o PDF oficial da nota espelhado do Nextcloud (achado pelo número, pedido, cliente e CFOP), para ver e baixar
   def document
     raise ::Outsider::Erp::NextcloudInvoices::NotFound unless settings.nextcloud_enabled?
 
-    file = ::Outsider::Erp::NextcloudInvoices.new(Current.account).fetch(params[:company].to_s, params[:number])
+    file = ::Outsider::Erp::NextcloudInvoices.new(Current.account).fetch(params[:company].to_s, params[:number], params[:kind])
     send_data file['content'], filename: file['filename'], type: 'application/pdf', disposition: 'inline'
   end
 
