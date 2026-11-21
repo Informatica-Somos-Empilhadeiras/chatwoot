@@ -486,6 +486,22 @@ const removeField = index => form.value.extra_fields.splice(index, 1);
       </details>
     </section>
 
+    <!-- cadastro de cliente no ERP pela função do Mais Prático (pré-cadastro) -->
+    <section class="flex items-start justify-between gap-4">
+      <div class="flex flex-col gap-1">
+        <h3 class="text-base font-medium text-n-slate-12">
+          {{ t('OUTSIDER_ERP.SETTINGS.CLIENT_WRITE') }}
+        </h3>
+        <p class="mb-0 text-sm text-n-slate-11">
+          {{ t('OUTSIDER_ERP.SETTINGS.CLIENT_WRITE_HINT') }}
+        </p>
+      </div>
+      <label class="flex items-center gap-2 text-sm text-n-slate-12 shrink-0">
+        <Switch v-model="form.client_write_enabled" />
+        {{ t('OUTSIDER_ERP.SETTINGS.CLIENT_WRITE_ENABLED') }}
+      </label>
+    </section>
+
     <!-- orçamento de peças e serviços: gravação no ERP, padrões do formulário, desconto e envio -->
     <section class="flex flex-col gap-4">
       <div class="flex items-start justify-between gap-4">

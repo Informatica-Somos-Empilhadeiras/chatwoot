@@ -1,7 +1,7 @@
 require 'rails_helper'
 
 # OUTSIDER: seção ERP (Outsider::Erp::Records): listas com todo o histórico lidas direto do banco do ERP, contagens e o
-# detalhe com a corrente orçamento -> OS -> pedido. O query_execute é simulado conforme a SQL recebida; aqui o que se
+# detalhe com a corrente orçamento -> OS -> pedido -> notas (NF-e e NFS-e). O query_execute é simulado conforme a SQL recebida; aqui o que se
 # confere é a SQL: só SELECT, só nos bancos das Configurações, valores escapados, nunca a coluna de senha.
 RSpec.describe 'Outsider ERP records section' do # rubocop:disable RSpec/DescribeClass
   let(:account) { create(:account) }
@@ -11,7 +11,9 @@ RSpec.describe 'Outsider ERP records section' do # rubocop:disable RSpec/Describ
       'orcamento' => %w[codigoorcamento CodigoCliente orcamentoData Status total Vendedor OrdemServico CodigoIntegracaoMobile IDLogado Validade
                         DataStatus OrcamentoEmUtilizacao NomeUserEmUtilizacao DataEmUtilizacao Contato],
       'os' => %w[CodigoOS CodigoCliente DataEntrada Situacao Total Tecnico DataPrevisao DataEntrega NSerie Orcamento Pedido Defeitos],
-      'pedido' => %w[CodigoPedido CodigoCliente PedidoData Vendedor total orcamento NotaFiscal fechado],
+      'pedido' => %w[CodigoPedido CodigoCliente PedidoData Vendedor total orcamento NotaFiscal fechado OS],
+      'notafiscal' => %w[CodigoNF Emissao Status TotalNF Pedido TipoNota],
+      'notafiscalservico' => %w[SeqNFSe Emissao Status TotalNF Pedido CodigoNFS CodigoRps],
       'clientes' => %w[CodigoCliente Nome Apelido CPF_CNPJ Cidade UF],
       'funcionarios' => %w[CodigoFuncionario Nome Senha Vendedor],
       'detalheorcamento' => %w[CodigoOrcamento CodigoItem CodigoProduto Quantidade PrecoUnitario TotalLinha],
@@ -57,18 +59,21 @@ RSpec.describe 'Outsider ERP records section' do # rubocop:disable RSpec/Describ
        'cliente_codigo' => 716, 'cliente' => ' PRIMA  FOODS ', 'pessoa_codigo' => 6, 'pessoa' => 'CRISTIANE' }]
   end
 
+  # o primeiro trecho de SQL encontrado decide a resposta (o cabeçalho do orçamento vem depois da consulta da corrente)
   def detail_answer(sql)
-    if sql.include?('FROM somosemp.orcamento O WHERE O.`codigoorcamento` = 4119 ORDER')
-      [{ 'numero' => 4119, 'os' => 310, 'status' => 'NEGOCIAÇÃO', 'data' => '2026-11-10T03:00:00.000Z' }]
-    elsif sql.include?('FROM somosemp.orcamento O WHERE O.`codigoorcamento` = 4119') then [quote_header]
-    elsif sql.include?('FROM somosemp.os O WHERE')
-      [{ 'numero' => 310, 'status' => 'FECHADA', 'pedido' => 155, 'data' => '2026-11-12T03:00:00.000Z', 'entrega' => '2026-11-15T03:00:00.000Z' }]
-    elsif sql.include?('FROM somosemp.pedido O WHERE') then [{ 'numero' => 155, 'nota' => 15_016, 'data' => '2026-11-16T03:00:00.000Z' }]
-    elsif sql.include?('.detalheorcamento D') then [{ 'codigo' => 491, 'descricao' => 'MOLA', 'tipo' => 0, 'quantidade' => 2, 'unitario' => 142,
-                                                      'total' => 284 }]
-    else
-      []
-    end
+    {
+      'FROM somosemp.orcamento O WHERE O.`codigoorcamento` = 4119 ORDER' => [{ 'numero' => 4119, 'os' => 310, 'status' => 'NEGOCIAÇÃO',
+                                                                               'data' => '2026-11-10T03:00:00.000Z' }],
+      'FROM somosemp.orcamento O WHERE O.`codigoorcamento` = 4119' => [quote_header],
+      'FROM somosemp.os O WHERE' => [{ 'numero' => 310, 'status' => 'FECHADA', 'pedido' => 155, 'data' => '2026-11-12T03:00:00.000Z',
+                                       'entrega' => '2026-11-15T03:00:00.000Z' }],
+      'FROM somosemp.pedido O WHERE' => [{ 'numero' => 155, 'fechado' => 1, 'data' => '2026-11-16T03:00:00.000Z' }],
+      'FROM somosemp.notafiscal O WHERE' => [{ 'numero' => 15_016, 'status' => 'IMPRESSA', 'pedido' => 155, 'tipo' => 0,
+                                               'data' => '2026-11-17T03:00:00.000Z' }],
+      'FROM somosemp.notafiscalservico O WHERE' => [{ 'numero' => 77, 'status' => 'IMPRESSA', 'pedido' => 155, 'nfse' => 2_027_001,
+                                                      'data' => '2026-11-17T03:00:00.000Z' }],
+      '.detalheorcamento D' => [{ 'codigo' => 491, 'descricao' => 'MOLA', 'tipo' => 0, 'quantidade' => 2, 'unitario' => 142, 'total' => 284 }]
+    }.find { |fragment, _| sql.include?(fragment) }&.last || []
   end
 
   def lister(kind) = Outsider::Erp::Records::Lister.new(account, kind, user: user)
@@ -135,15 +140,22 @@ RSpec.describe 'Outsider ERP records section' do # rubocop:disable RSpec/Describ
   describe 'detail' do
     let(:detail) { Outsider::Erp::Records::Detail.new(account, 'quotes').build('somosemp', '4119') }
 
-    it 'builds the header, items, the quote -> OS -> pedido chain and the timeline' do
+    it 'builds the header, items and the quote -> OS -> pedido -> notes chain' do
       expect(detail['header']).to include('status' => 'NEGOCIAÇÃO', 'contato' => 'Gilmar')
       expect(detail['itens']).to eq([{ 'codigo' => 491, 'descricao' => 'MOLA', 'servico' => false, 'unidade' => '', 'quantidade' => 2.0,
                                        'unitario' => 142.0, 'desconto' => 0.0, 'total' => 284.0 }])
       expect(detail['chain'].map { |node| [node['kind'], node['numero'], node['status'], node['current']] })
-        .to eq([['quotes', 4119, 'NEGOCIAÇÃO', true], ['orders', 310, 'FECHADA', false], ['sales', 155, 'FATURADO', false]])
-      expect(detail['timeline'].pluck('type').first(3)).to eq(%w[created created delivered])
-      expect(detail['timeline'].pluck('type').last(2)).to contain_exactly('created', 'invoiced')
+        .to eq([['quotes', 4119, 'NEGOCIAÇÃO', true], ['orders', 310, 'FECHADA', false], ['sales', 155, 'FECHADO', false],
+                ['invoices', 15_016, 'IMPRESSA', false], ['service_invoices', 77, 'IMPRESSA', false]])
+      expect(detail['chain'].last).to include('rotulo' => '2027001', 'pedido' => 155)
       expect(detail['edit']).to eq('allowed' => true, 'in_use_by' => nil)
+    end
+
+    it 'finds the pedido through the OS and the notes through the pedido, and shows them on the timeline' do
+      expect(detail['timeline'].pluck('type').first(3)).to eq(%w[created created delivered])
+      expect(detail['timeline'].pluck('type').last(3)).to eq(%w[created invoiced invoiced])
+      expect(erp_sqls.find { |sql| sql.include?('FROM somosemp.pedido O WHERE O.`orcamento`') }).to include('O.`OS` IN (310)')
+      expect(erp_sqls.find { |sql| sql.include?('FROM somosemp.notafiscal O WHERE') }).to include('O.`Pedido` IN (155)')
     end
 
     it 'blocks editing while the quote is open in the desktop app, but not for an old mark' do

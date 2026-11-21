@@ -1,8 +1,8 @@
 <script setup>
 // OUTSIDER: uma aba da seção ERP (orçamentos, OS ou pedidos) com TODO o histórico lido direto do banco do ERP: visões
 // rápidas com contagem, busca (número, cliente, CNPJ), unidade, vendedor/técnico, período, tabela paginada e o painel
-// de detalhe ao lado. O registro aberto fica na rota (?open=empresa:número), então os links da corrente orçamento ->
-// OS -> pedido abrem direto na outra aba. ?contact=<id> mostra só os clientes do ERP ligados àquele contato.
+// de detalhe ao lado. O registro aberto fica na rota (?open=empresa:número); os nós da corrente orçamento -> OS ->
+// pedido trocam o painel sem sair da aba. ?contact=<id> mostra só os clientes do ERP ligados àquele contato.
 import { ref, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
@@ -16,7 +16,7 @@ import ErpRecordsTable from './ErpRecordsTable.vue';
 import ErpRecordsPager from './ErpRecordsPager.vue';
 import ErpRecordPanel from './ErpRecordPanel.vue';
 import ErpBudgetDrawer from '../budgets/ErpBudgetDrawer.vue';
-import { ERP_ROUTE, erpState, erpErrorMessage, formatMoney } from '../erpStore';
+import { erpState, erpErrorMessage, formatMoney } from '../erpStore';
 import { budgetErrorMessage } from '../budgets/budgetHelpers';
 import {
   KINDS,
@@ -153,20 +153,6 @@ const select = row => setQuery({ open: recordKey(row) });
 const close = () => setQuery({ open: undefined });
 const clearContact = () => setQuery({ contact: undefined });
 
-// nó da corrente: mesma aba troca o painel; outra aba abre lá com o registro
-const jump = node => {
-  const key = `${node.company}:${node.numero}`;
-  if (node.kind === props.kind) {
-    setQuery({ open: key });
-    return;
-  }
-  router.push({
-    name: ERP_ROUTE,
-    params: { ...route.params, tab: KINDS[node.kind].tab },
-    query: { open: key },
-  });
-};
-
 // orçamento novo direto da seção (o cliente é escolhido na gaveta)
 const createBudget = async () => {
   busy.value = 'new';
@@ -235,7 +221,10 @@ const DATE =
         <label
           class="flex items-center flex-1 min-w-[14rem] gap-2 px-3 h-9 rounded-lg bg-n-solid-1 outline outline-1 -outline-offset-1 outline-n-slate-6 focus-within:outline-n-brand"
         >
-          <Icon icon="i-lucide-search" class="size-4 text-n-slate-10 shrink-0" />
+          <Icon
+            icon="i-lucide-search"
+            class="size-4 text-n-slate-10 shrink-0"
+          />
           <input
             v-model="q"
             type="search"
@@ -338,10 +327,7 @@ const DATE =
             @click="load"
           />
         </div>
-        <div
-          v-else-if="!data"
-          class="flex items-center justify-center flex-1"
-        >
+        <div v-else-if="!data" class="flex items-center justify-center flex-1">
           <Spinner class="text-n-slate-10" />
         </div>
         <template v-else>
@@ -380,7 +366,6 @@ const DATE =
       :company="opened.company"
       :number="opened.number"
       @close="close"
-      @jump="jump"
       @changed="load"
     />
     <ErpBudgetDrawer ref="drawerRef" :contact-id="contactId" @changed="load" />

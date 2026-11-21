@@ -54,7 +54,7 @@ class Outsider::Erp::Records::Facets
 
   def view_definitions
     definitions = @kind.views.reject { |view| view[:mine] && @mine.blank? }
-    return definitions unless @kind.is_a?(Outsider::Erp::Records::SaleKind)
+    return definitions unless @kind.status_views?
 
     definitions + statuses.map { |status| { key: "status:#{status}", status_in: [status], label: status } }
   end

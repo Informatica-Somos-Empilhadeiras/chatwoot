@@ -44,7 +44,10 @@ class Outsider::Erp::Settings
     'quote_email_subject' => 'Orçamento Nº {numero}', 'quote_reply_to' => '',
     'quote_email_body' => "Olá, {contato}!\n\nSegue em anexo o orçamento Nº {numero} de peças e serviços, no valor de {total}, " \
                           "com pagamento em {pagamento}.\n\nQualquer dúvida, estou à disposição.\n{vendedor}",
-    'quote_whatsapp_text' => 'Olá, {contato}! Segue o orçamento Nº {numero}, no valor de {total}.'
+    'quote_whatsapp_text' => 'Olá, {contato}! Segue o orçamento Nº {numero}, no valor de {total}.',
+    # cadastro de cliente no ERP pela função do próprio Mais Prático (sp_CadastraCliente, Outsider::Erp::ClientRegistrar):
+    # entra como pré-cadastro, que o escritório completa. Desligado por padrão.
+    'client_write_enabled' => false
   }.freeze
   QUOTE_TEXTS = { 'quote_prazo_entrega' => 255, 'quote_validade' => 255, 'quote_garantia' => 255, 'quote_email_subject' => 200,
                   'quote_email_body' => 4000, 'quote_whatsapp_text' => 2000 }.freeze
@@ -75,6 +78,7 @@ class Outsider::Erp::Settings
   def write_enabled? = orders_enabled? && data['write_enabled'] == true
   def quotes_enabled? = enabled? && data['quotes_enabled'] == true
   def quote_write_enabled? = enabled? && data['quote_write_enabled'] == true
+  def client_write_enabled? = enabled? && data['client_write_enabled'] == true
   def companies = Array(data['companies'])
   def base_url = data['base_url']
   def device_id = data['device_id'].to_s
@@ -100,7 +104,8 @@ class Outsider::Erp::Settings
   def update(params)
     params = params.to_h.deep_stringify_keys
     @errors = []
-    cleaned = %i[clean_connection clean_display clean_cache clean_write clean_quote].reduce(data) { |out, part| out.merge(send(part, params)) }
+    parts = %i[clean_connection clean_display clean_cache clean_write clean_quote clean_client]
+    cleaned = parts.reduce(data) { |out, part| out.merge(send(part, params)) }
     raise Invalid, @errors if @errors.any?
 
     @account.with_lock do
@@ -157,6 +162,10 @@ class Outsider::Erp::Settings
       'quote_discount_total_max' => clamp(params, 'quote_discount_total_max', 0, 100),
       'quote_reply_to' => clean_reply_to(params.fetch('quote_reply_to', data['quote_reply_to']))
     }.merge(QUOTE_TEXTS.to_h { |key, max| [key, params.fetch(key, data[key]).to_s.strip.first(max)] })
+  end
+
+  def clean_client(params)
+    { 'client_write_enabled' => flag(params, 'client_write_enabled') }
   end
 
   def clean_reply_to(value)

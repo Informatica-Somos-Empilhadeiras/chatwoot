@@ -50,6 +50,11 @@ class Api::V1::Accounts::Outsider::Erp::BaseController < Api::V1::Accounts::Base
     settings.quote_write_enabled? && allows_screen?('erp_quotes', 'use')
   end
 
+  # cadastrar cliente no ERP: flag própria (desligada por padrão) + "Usa" no Cadastro de clientes do perfil
+  def can_register_client?
+    settings.client_write_enabled? && allows_screen?('erp_clients', 'use')
+  end
+
   # abas da seção ERP no perfil de acesso (erp_quotes, erp_orders, erp_sales)
   def allows_screen?(screen, level = 'view')
     ::Outsider::Access.for(Current.account_user).allows?(screen, level)

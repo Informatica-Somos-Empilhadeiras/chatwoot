@@ -2,7 +2,8 @@
 // OUTSIDER: o ERP de um contato (painel da conversa e negócio do CRM): o vínculo com os clientes do ERP (empresa +
 // código) e os orçamentos de peças e serviços (os 5 mais novos e "Ver todos no ERP"). As OS ficam na seção ERP: aqui
 // só o atalho "Ver as OS no ERP" com o filtro do contato. Sem vínculo, a lista de clientes do ERP já abre, com os
-// parecidos com o contato (telefone ou nome) no topo, e filtra por nome, código ou CNPJ (ErpPicker).
+// parecidos com o contato (telefone ou nome) no topo, e filtra por nome, código ou CNPJ (ErpPicker). Não achou: "Cadastrar
+// no ERP" abre o pré-cadastro já com os dados do contato, e o cliente novo fica vinculado a ele.
 import { ref, computed, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useI18n } from 'vue-i18n';
@@ -12,6 +13,7 @@ import Icon from 'dashboard/components-next/icon/Icon.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 import ErpBudgets from '../budgets/ErpBudgets.vue';
 import ErpPicker from './ErpPicker.vue';
+import ErpClientDialog from '../clients/ErpClientDialog.vue';
 import { erpTabs } from '../sidebar';
 import {
   ERP_ROUTE,
@@ -38,6 +40,7 @@ const fetchedAt = ref(null);
 const stale = ref(false);
 const searching = ref(false);
 const linking = ref('');
+const clientDialog = ref(null);
 
 const showQuotes = computed(() =>
   erpTabs().some(item => item.name === 'orcamentos')
@@ -115,6 +118,15 @@ const link = async row => {
     linking.value = '';
   }
 };
+
+const registerClient = () =>
+  clientDialog.value?.open({
+    contactId: props.contactId,
+    onCreated: async () => {
+      searching.value = false;
+      await load();
+    },
+  });
 
 const unlink = async row => {
   try {
@@ -221,6 +233,16 @@ const lastUpdate = computed(() =>
           </span>
         </template>
       </ErpPicker>
+      <button
+        v-if="erpState.canRegisterClient && (!links.length || searching)"
+        type="button"
+        class="inline-flex items-center self-start gap-1.5 text-xs font-medium text-n-teal-11 hover:underline"
+        @click="registerClient"
+      >
+        <Icon icon="i-lucide-user-plus" class="size-3.5" />
+        {{ t('OUTSIDER_ERP.CLIENT.REGISTER_CONTACT') }}
+      </button>
+      <ErpClientDialog ref="clientDialog" />
 
       <template v-if="links.length">
         <ErpBudgets
@@ -237,7 +259,9 @@ const lastUpdate = computed(() =>
           <Icon icon="i-lucide-wrench" class="size-3.5" />
           {{
             orderCount
-              ? t('OUTSIDER_ERP.CONTACT.ORDERS_IN_ERP_COUNT', { count: orderCount })
+              ? t('OUTSIDER_ERP.CONTACT.ORDERS_IN_ERP_COUNT', {
+                  count: orderCount,
+                })
               : t('OUTSIDER_ERP.CONTACT.ORDERS_IN_ERP')
           }}
           <Icon icon="i-lucide-arrow-up-right" class="size-3.5" />

@@ -1,6 +1,6 @@
-// OUTSIDER: menu "ERP" no menu lateral (secao Atendimento) com uma aba por modulo: Orcamentos, OS, Pedidos e, para o
-// administrador, as Configuracoes. Cada aba segue o que esta ligado nas Configuracoes e a linha dela no perfil de acesso
-// (erp_quotes, erp_orders, erp_sales, abaixo da tela "erp"); com a integracao desligada so o admin ve.
+// OUTSIDER: menu "ERP" no menu lateral (secao Atendimento) com uma aba por modulo: Orcamentos, OS, Pedidos, Notas fiscais
+// e, para o administrador, as Configuracoes. Cada aba segue o que esta ligado nas Configuracoes e a linha dela no perfil
+// de acesso (erp_quotes, erp_orders, erp_sales, erp_invoices, abaixo da tela "erp"); com a integracao desligada so o admin ve.
 import { allows } from '../access/accessStore';
 import { erpState, ERP_ROUTE } from './erpStore';
 
@@ -17,6 +17,11 @@ export const ERP_TABS = [
     icon: 'i-lucide-shopping-cart',
   },
   {
+    name: 'notas',
+    label: 'OUTSIDER_ERP.TABS.NOTAS',
+    icon: 'i-lucide-receipt-text',
+  },
+  {
     name: 'settings',
     label: 'OUTSIDER_ERP.TABS.SETTINGS',
     icon: 'i-lucide-settings-2',
@@ -31,6 +36,7 @@ export const erpTabs = () => {
       erpState.enabled && erpState.quotesEnabled && allows('erp_quotes'),
     os: erpState.enabled && erpState.ordersEnabled && allows('erp_orders'),
     pedidos: erpState.enabled && allows('erp_sales'),
+    notas: erpState.enabled && allows('erp_invoices'),
     settings: erpState.administrator,
   };
   return ERP_TABS.filter(tab => open[tab.name]);

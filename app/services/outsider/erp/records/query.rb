@@ -114,7 +114,8 @@ class Outsider::Erp::Records::Query
 
   def number_search(digits)
     parts = []
-    parts << "X.numero = #{S.int(digits)}" if digits.size <= 9
+    number = digits.sub(/\A0+(?=\d)/, '') # zeros à esquerda (nº da chave da NF) não viram octal
+    parts += @kind.number_keys.map { |key| "X.#{key} = #{S.int(number)}" } if number.size <= 15
     parts << "REPLACE(REPLACE(REPLACE(REPLACE(IFNULL(X.cnpj, ''), '.', ''), '/', ''), '-', ''), ' ', '') LIKE #{like(digits)}" if digits.size >= 4
     parts.empty? ? '1 = 0' : "(#{parts.join(' OR ')})"
   end

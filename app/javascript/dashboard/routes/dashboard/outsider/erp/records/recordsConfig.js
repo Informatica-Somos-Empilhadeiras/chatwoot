@@ -1,4 +1,4 @@
-// OUTSIDER: o que muda entre as listas da seção ERP (orçamentos, OS e pedidos): aba da rota, rótulos, quem é a pessoa da
+// OUTSIDER: o que muda entre as listas da seção ERP (orçamentos, OS, pedidos e notas): aba da rota, rótulos, quem é a pessoa da
 // linha (vendedor ou técnico) e as ajudas de exibição (pílula de status, data relativa, período). Os dados vêm de
 // /outsider/erp/records/:kind (Outsider::Erp::Records::Lister), com todo o histórico do ERP.
 
@@ -6,7 +6,30 @@ export const KINDS = {
   quotes: { tab: 'orcamentos', key: 'QUOTES', icon: 'i-lucide-file-text' },
   orders: { tab: 'os', key: 'ORDERS', icon: 'i-lucide-wrench' },
   sales: { tab: 'pedidos', key: 'SALES', icon: 'i-lucide-shopping-cart' },
+  // a aba Notas mostra uma das duas (Produtos | Serviços)
+  invoices: { tab: 'notas', key: 'INVOICES', icon: 'i-lucide-receipt-text' },
+  service_invoices: {
+    tab: 'notas',
+    key: 'SERVICE_INVOICES',
+    icon: 'i-lucide-receipt',
+  },
 };
+
+// tela do perfil de acesso de cada tipo (nós da corrente e abas)
+export const SCREENS = {
+  quotes: 'erp_quotes',
+  orders: 'erp_orders',
+  sales: 'erp_sales',
+  invoices: 'erp_invoices',
+  service_invoices: 'erp_invoices',
+};
+
+// número que a pessoa reconhece: a NFS-e mostra o da prefeitura (ou o RPS); sem ele, a sequência interna
+export const displayNumber = record =>
+  record.rotulo ||
+  (record.kind === 'service_invoices'
+    ? `#${record.numero ?? record.number}`
+    : (record.numero ?? record.number));
 
 export const kindForTab = tab =>
   Object.keys(KINDS).find(kind => KINDS[kind].tab === tab) || null;
@@ -54,15 +77,23 @@ export const periodRange = key => {
   }
 };
 
-// cores das situações dos três tipos (orçamento, OS e pedido)
+// cores das situações (orçamento, OS, pedido e notas)
 export const statusClass = status => {
   const text = String(status || '').toUpperCase();
   if (!text) return 'bg-n-alpha-2 text-n-slate-11';
-  if (text.includes('FATURAD')) return 'bg-n-blue-3 text-n-blue-11';
-  if (text.includes('FECHAD')) return 'bg-n-teal-3 text-n-teal-11';
-  if (text.includes('PERD') || text.includes('CANCEL'))
+  if (
+    text.includes('FATURAD') ||
+    text.includes('ENVIAD') ||
+    text.includes('AGUARD')
+  )
+    return 'bg-n-blue-3 text-n-blue-11';
+  if (
+    ['FECHAD', 'FINALIZ', 'IMPRESS', 'ATIVA'].some(word => text.includes(word))
+  )
+    return 'bg-n-teal-3 text-n-teal-11';
+  if (['PERD', 'CANCEL', 'ERRO', 'INUTILIZ'].some(word => text.includes(word)))
     return 'bg-n-ruby-3 text-n-ruby-11';
-  if (text.includes('NEGOC') || text.includes('ABERT'))
+  if (['NEGOC', 'ABERT', 'PAUSAD'].some(word => text.includes(word)))
     return 'bg-n-amber-3 text-n-amber-11';
   if (text.includes('RETIRAD')) return 'bg-n-iris-3 text-n-iris-11';
   return 'bg-n-alpha-2 text-n-slate-11';

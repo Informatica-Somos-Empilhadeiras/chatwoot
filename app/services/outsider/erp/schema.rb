@@ -4,7 +4,7 @@
 class Outsider::Erp::Schema
   S = Outsider::Erp::Sql
   TABLES = %w[clientes produtos formapagto orcamento detalheorcamento empresa funcionarios ac_desconto os detalheos pedido
-              detalhepedido].freeze
+              detalhepedido notafiscal detalhenf notafiscalservico detalhenfservico].freeze
   TTL = 1.day
 
   def initialize(account, client: nil)

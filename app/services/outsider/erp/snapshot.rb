@@ -40,11 +40,15 @@ class Outsider::Erp::Snapshot
 
   # depois de gravar no ERP: a cópia já mostra o valor novo, sem esperar a próxima busca
   def patch
+    update_items { |items| items.map { |item| yield(item) || item } }
+  end
+
+  # troca a lista inteira da cópia (ex.: cliente novo cadastrado pela tela); sem cópia, nada (a próxima busca já traz)
+  def update_items
     snapshot = read
     return unless snapshot
 
-    items = snapshot['items'].map { |item| yield(item) || item }
-    Redis::Alfred.set(key, Zlib.gzip(snapshot.merge('items' => items).to_json), ex: KEEP.to_i)
+    Redis::Alfred.set(key, Zlib.gzip(snapshot.merge('items' => yield(snapshot['items'])).to_json), ex: KEEP.to_i)
   end
 
   def read

@@ -9,7 +9,8 @@
       "ORCAMENTOS": "Quotes",
       "OS": "Service orders",
       "PEDIDOS": "Sales orders",
-      "SETTINGS": "ERP settings"
+      "SETTINGS": "ERP settings",
+      "NOTAS": "Invoices"
     },
     "LIST": {
       "SEARCH": "Search by number or client",
@@ -41,7 +42,8 @@
       "QUOTE_WRITE_DISABLED": "Creating quotes in the ERP is off or your profile is read only.",
       "INVALID": "Could not save: check the chosen value.",
       "NO_PERMISSION": "Your access profile does not allow this.",
-      "GENERIC": "Could not reach the ERP."
+      "GENERIC": "Could not reach the ERP.",
+      "CLIENT_WRITE_DISABLED": "Customer registration in the ERP is turned off in the settings (only an administrator can turn it on)."
     },
     "FIELDS": {
       "SUBSTATUS": "Sub-status",
@@ -192,9 +194,12 @@
       "QUOTE_PLACEHOLDERS": "Use {numero}, {contato}, {cliente}, {total}, {pagamento} and {vendedor}: they are replaced with the quote data.",
       "QUOTE_EMAIL_SUBJECT": "Email subject",
       "QUOTE_REPLY_TO": "Reply to (optional)",
-      "QUOTE_REPLY_TO_PLACEHOLDER": "sales@company.com",
+      "QUOTE_REPLY_TO_PLACEHOLDER": "sales{'@'}company.com",
       "QUOTE_EMAIL_BODY": "Email text",
-      "QUOTE_WHATSAPP_TEXT": "WhatsApp text"
+      "QUOTE_WHATSAPP_TEXT": "WhatsApp text",
+      "CLIENT_WRITE": "Customer registration",
+      "CLIENT_WRITE_HINT": "Lets agents register customers in Mais Prático from the chat, through the ERP's own function. Customers are saved as pre-registrations, and an already registered CPF/CNPJ is never saved again. Off by default; who can use it is set in the access profile (Customer registration).",
+      "CLIENT_WRITE_ENABLED": "Allow registration"
     },
     "BUDGET": {
       "BLOCK": {
@@ -431,12 +436,13 @@
       "RANGE": "{first}–{last} of {total}",
       "PER_PAGE": "per page",
       "SERIES": "Serial",
-      "INVOICE": "Invoice {number}",
       "LATE": "Late",
       "TODAY": "today",
       "YESTERDAY": "yesterday",
       "DAYS_AGO": "{n} days ago",
       "NOT_FOUND": "This record was not found in Mais Prático.",
+      "BACK_TO": "Back to {record}",
+      "NO_ACCESS_NODE": "Your access profile does not open this kind of record",
       "NO_ITEMS": "No items.",
       "ITEMS": "Items ({count})",
       "SERVICE": "SERVICE",
@@ -493,13 +499,41 @@
           "ALL": "All"
         }
       },
+      "INVOICES": {
+        "ONE": "NF-e {number}",
+        "MODE": "Products (NF-e)",
+        "SEARCH": "Search by number, client, tax ID or nature",
+        "PERSON": "Seller",
+        "ALL_PEOPLE": "All sellers",
+        "DATE": "Issued",
+        "EMPTY": "No invoices match these filters.",
+        "SUMMARY": "{count} invoices · {sum}",
+        "VIEWS": {
+          "ALL": "All"
+        }
+      },
+      "SERVICE_INVOICES": {
+        "ONE": "NFS-e {number}",
+        "MODE": "Services (NFS-e)",
+        "SEARCH": "Search by NFS-e number, client or tax ID",
+        "PERSON": "Seller",
+        "ALL_PEOPLE": "All sellers",
+        "DATE": "Issued",
+        "EMPTY": "No service invoices match these filters.",
+        "SUMMARY": "{count} service invoices · {sum}",
+        "VIEWS": {
+          "ALL": "All"
+        }
+      },
       "CHAIN": {
-        "TITLE": "Quote, work order and order",
+        "TITLE": "Quote, service order, sales order and invoices",
         "QUOTES": "Quote",
         "ORDERS": "Work order",
         "SALES": "Order",
-        "INVOICE": "Invoice",
-        "OPEN": "Open"
+        "OPEN": "Open",
+        "INVOICES": "NF-e",
+        "SERVICE_INVOICES": "NFS-e",
+        "INBOUND": "inbound"
       },
       "TIMELINE": {
         "TITLE": "Timeline",
@@ -507,7 +541,7 @@
         "STATUS": "{record}: {status}",
         "AUTHORIZED": "Authorized by {name}",
         "DELIVERED": "Delivered: {record}",
-        "INVOICED": "Invoiced: {record}, invoice {nota}",
+        "INVOICED": "Invoice issued: {record}",
         "CHAT_CREATED": "{name} created it in the chat",
         "CHAT_APPROVED": "Discount approved by {name}",
         "CHAT_EDITED": "{name} edited it in the chat",
@@ -536,11 +570,27 @@
         "EQUIPMENT": "Equipment",
         "SERIES": "Serial",
         "HOURMETER": "Hour meter",
-        "INVOICE_NUMBER": "Invoice",
         "CHAT": "In the chat",
         "DEFECTS": "Defects",
         "ACCESSORIES": "Accessories",
-        "NOTES": "Notes"
+        "NOTES": "Notes",
+        "INVOICED_AT": "Invoiced on",
+        "ISSUED": "Issued",
+        "NATURE": "Operation nature",
+        "DIRECTION": "Type",
+        "DIRECTION_IN": "Inbound",
+        "DIRECTION_OUT": "Outbound",
+        "FISCAL_SERIES": "Series",
+        "CFOP": "CFOP",
+        "OUT_DATE": "Goods out",
+        "PROTOCOL": "Protocol",
+        "CANCELED_AT": "Canceled on",
+        "NFSE_NUMBER": "NFS-e number",
+        "RPS": "RPS",
+        "VERIFICATION": "Verification code",
+        "COMPETENCE": "Competence",
+        "CANCEL_REASON": "Cancellation reason",
+        "ACCESS_KEY": "Access key"
       },
       "EDIT": {
         "BUTTON": "Edit",
@@ -552,6 +602,56 @@
       "ERROR": "This screen failed: {message}",
       "TOMORROW": "tomorrow",
       "IN_DAYS": "in {n} days"
+    },
+    "CLIENT": {
+      "NEW": "New customer",
+      "REGISTER_CONTACT": "Not found? Register this contact in the ERP",
+      "REGISTER_NEW": "New customer? Register in the ERP",
+      "TITLE": "Register customer in the ERP",
+      "HINT": "Saved in Mais Prático as a pre-registration, through the ERP's own function. The office completes the rest (city code, profile and registration).",
+      "UNIT": "Unit",
+      "PERSON": "Type",
+      "COMPANY": "Company",
+      "INDIVIDUAL": "Individual",
+      "CNPJ": "CNPJ",
+      "CPF": "CPF",
+      "BAD_DOCUMENT": "The check digits do not match.",
+      "LEGAL_NAME": "Legal name",
+      "NAME": "Name",
+      "TRADE_NAME": "Trade name",
+      "NICKNAME": "Nickname",
+      "IE": "State registration",
+      "RG": "ID (RG)",
+      "PHONE": "Phone",
+      "MOBILE": "Mobile",
+      "EMAIL": "Email",
+      "ADDRESS": "Address",
+      "CEP": "ZIP (CEP)",
+      "STREET": "Street",
+      "NUMBER": "No.",
+      "DISTRICT": "District",
+      "CITY": "City",
+      "UF": "State",
+      "REFERENCE": "Reference",
+      "COPY_ADDRESS": "Also use this address for billing and delivery",
+      "CONTACT": "Contact and seller",
+      "CONTACT_NAME": "Contact name",
+      "SELLER": "Seller",
+      "NO_SELLER": "No seller",
+      "NOTES": "Notes",
+      "EXISTS": "This document is already registered: #{code} {name} ({company}).",
+      "USE_EXISTING": "Use this customer",
+      "WRITES_TO": "Writes to the real ERP, unit {company}.",
+      "SAVE": "Register in the ERP",
+      "DONE": "Customer #{code} registered in the ERP ({company}) as a pre-registration.",
+      "ALREADY_DONE": "This document was already registered: customer #{code} ({company}).",
+      "ERRORS": {
+        "FIELDS": "Check the fields marked in red.",
+        "EMPRESA": "This unit is not in the ERP settings.",
+        "EM_ANDAMENTO": "Another customer is being saved in this unit. Try again in a few seconds.",
+        "DOCUMENTO": "The ERP refused the CPF/CNPJ.",
+        "SEM_CODIGO": "The ERP did not return the customer code. Check Mais Prático before trying again."
+      }
     }
   }
 }

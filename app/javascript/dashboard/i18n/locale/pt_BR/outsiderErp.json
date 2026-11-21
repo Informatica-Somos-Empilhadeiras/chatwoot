@@ -9,7 +9,8 @@
       "ORCAMENTOS": "Orçamentos",
       "OS": "Ordens de serviço",
       "PEDIDOS": "Pedidos",
-      "SETTINGS": "Configurações do ERP"
+      "SETTINGS": "Configurações do ERP",
+      "NOTAS": "Notas fiscais"
     },
     "LIST": {
       "SEARCH": "Buscar por número ou cliente",
@@ -41,7 +42,8 @@
       "QUOTE_WRITE_DISABLED": "A criação de orçamento no ERP está desligada ou o seu perfil só permite consultar.",
       "INVALID": "Não foi possível gravar: confira o valor escolhido.",
       "NO_PERMISSION": "Seu perfil de acesso não permite isso.",
-      "GENERIC": "Não foi possível falar com o ERP."
+      "GENERIC": "Não foi possível falar com o ERP.",
+      "CLIENT_WRITE_DISABLED": "O cadastro de clientes no ERP está desligado nas Configurações (só um administrador liga)."
     },
     "FIELDS": {
       "SUBSTATUS": "Substatus",
@@ -192,9 +194,12 @@
       "QUOTE_PLACEHOLDERS": "Use {numero}, {contato}, {cliente}, {total}, {pagamento} e {vendedor}: são trocados pelos dados do orçamento.",
       "QUOTE_EMAIL_SUBJECT": "Assunto do e-mail",
       "QUOTE_REPLY_TO": "Responder para (opcional)",
-      "QUOTE_REPLY_TO_PLACEHOLDER": "comercial@empresa.com.br",
+      "QUOTE_REPLY_TO_PLACEHOLDER": "comercial{'@'}empresa.com.br",
       "QUOTE_EMAIL_BODY": "Texto do e-mail",
-      "QUOTE_WHATSAPP_TEXT": "Texto do WhatsApp"
+      "QUOTE_WHATSAPP_TEXT": "Texto do WhatsApp",
+      "CLIENT_WRITE": "Cadastro de clientes",
+      "CLIENT_WRITE_HINT": "Permite cadastrar cliente no Mais Prático pelo chat, pela função do próprio ERP. O cliente entra como pré-cadastro, e um CPF/CNPJ já cadastrado nunca é gravado de novo. Começa desligado; quem pode usar é definido no perfil de acesso (Cadastro de clientes).",
+      "CLIENT_WRITE_ENABLED": "Permitir cadastrar"
     },
     "BUDGET": {
       "BLOCK": {
@@ -431,12 +436,13 @@
       "RANGE": "{first}–{last} de {total}",
       "PER_PAGE": "por página",
       "SERIES": "Série",
-      "INVOICE": "NF {number}",
       "LATE": "Atrasada",
       "TODAY": "hoje",
       "YESTERDAY": "ontem",
       "DAYS_AGO": "há {n} dias",
       "NOT_FOUND": "Não achei este registro no Mais Prático.",
+      "BACK_TO": "Voltar para {record}",
+      "NO_ACCESS_NODE": "Seu perfil de acesso não abre este tipo de registro",
       "NO_ITEMS": "Sem itens.",
       "ITEMS": "Itens ({count})",
       "SERVICE": "SERVIÇO",
@@ -493,13 +499,41 @@
           "ALL": "Todos"
         }
       },
+      "INVOICES": {
+        "ONE": "NF-e {number}",
+        "MODE": "Produtos (NF-e)",
+        "SEARCH": "Buscar por número, cliente, CNPJ ou natureza",
+        "PERSON": "Vendedor",
+        "ALL_PEOPLE": "Todos os vendedores",
+        "DATE": "Emissão",
+        "EMPTY": "Nenhuma nota com esses filtros.",
+        "SUMMARY": "{count} notas · {sum}",
+        "VIEWS": {
+          "ALL": "Todas"
+        }
+      },
+      "SERVICE_INVOICES": {
+        "ONE": "NFS-e {number}",
+        "MODE": "Serviços (NFS-e)",
+        "SEARCH": "Buscar pelo número da NFS-e, cliente ou CNPJ",
+        "PERSON": "Vendedor",
+        "ALL_PEOPLE": "Todos os vendedores",
+        "DATE": "Emissão",
+        "EMPTY": "Nenhuma nota de serviço com esses filtros.",
+        "SUMMARY": "{count} notas de serviço · {sum}",
+        "VIEWS": {
+          "ALL": "Todas"
+        }
+      },
       "CHAIN": {
-        "TITLE": "Orçamento, OS e pedido",
+        "TITLE": "Orçamento, OS, pedido e notas",
         "QUOTES": "Orçamento",
         "ORDERS": "OS",
         "SALES": "Pedido",
-        "INVOICE": "NF",
-        "OPEN": "Abrir"
+        "OPEN": "Abrir",
+        "INVOICES": "NF-e",
+        "SERVICE_INVOICES": "NFS-e",
+        "INBOUND": "entrada"
       },
       "TIMELINE": {
         "TITLE": "Linha do tempo",
@@ -507,7 +541,7 @@
         "STATUS": "{record}: {status}",
         "AUTHORIZED": "Autorização de {name}",
         "DELIVERED": "Entrega: {record}",
-        "INVOICED": "Faturamento: {record}, NF {nota}",
+        "INVOICED": "Nota emitida: {record}",
         "CHAT_CREATED": "{name} criou pelo chat",
         "CHAT_APPROVED": "Desconto liberado por {name}",
         "CHAT_EDITED": "{name} editou pelo chat",
@@ -536,11 +570,27 @@
         "EQUIPMENT": "Equipamento",
         "SERIES": "Série",
         "HOURMETER": "Horímetro",
-        "INVOICE_NUMBER": "Nota fiscal",
         "CHAT": "No chat",
         "DEFECTS": "Defeitos",
         "ACCESSORIES": "Acessórios",
-        "NOTES": "Observações"
+        "NOTES": "Observações",
+        "INVOICED_AT": "Faturado em",
+        "ISSUED": "Emissão",
+        "NATURE": "Natureza da operação",
+        "DIRECTION": "Tipo",
+        "DIRECTION_IN": "Entrada",
+        "DIRECTION_OUT": "Saída",
+        "FISCAL_SERIES": "Série",
+        "CFOP": "CFOP",
+        "OUT_DATE": "Saída da mercadoria",
+        "PROTOCOL": "Protocolo",
+        "CANCELED_AT": "Cancelada em",
+        "NFSE_NUMBER": "Número da NFS-e",
+        "RPS": "RPS",
+        "VERIFICATION": "Código de verificação",
+        "COMPETENCE": "Competência",
+        "CANCEL_REASON": "Motivo do cancelamento",
+        "ACCESS_KEY": "Chave de acesso"
       },
       "EDIT": {
         "BUTTON": "Editar",
@@ -552,6 +602,56 @@
       "ERROR": "Esta tela deu erro: {message}",
       "TOMORROW": "amanhã",
       "IN_DAYS": "em {n} dias"
+    },
+    "CLIENT": {
+      "NEW": "Novo cliente",
+      "REGISTER_CONTACT": "Não achou? Cadastrar este contato no ERP",
+      "REGISTER_NEW": "Cliente novo? Cadastrar no ERP",
+      "TITLE": "Cadastrar cliente no ERP",
+      "HINT": "Entra no Mais Prático como pré-cadastro, pela função do próprio ERP. O escritório completa o resto (município, perfil e cadastro).",
+      "UNIT": "Unidade",
+      "PERSON": "Pessoa",
+      "COMPANY": "Jurídica",
+      "INDIVIDUAL": "Física",
+      "CNPJ": "CNPJ",
+      "CPF": "CPF",
+      "BAD_DOCUMENT": "Os dígitos verificadores não conferem.",
+      "LEGAL_NAME": "Razão social",
+      "NAME": "Nome",
+      "TRADE_NAME": "Nome fantasia",
+      "NICKNAME": "Apelido",
+      "IE": "Inscrição estadual",
+      "RG": "RG",
+      "PHONE": "Telefone",
+      "MOBILE": "Celular",
+      "EMAIL": "E-mail",
+      "ADDRESS": "Endereço",
+      "CEP": "CEP",
+      "STREET": "Rua / avenida",
+      "NUMBER": "Nº",
+      "DISTRICT": "Bairro",
+      "CITY": "Cidade",
+      "UF": "UF",
+      "REFERENCE": "Referência",
+      "COPY_ADDRESS": "Usar este endereço também para cobrança e entrega",
+      "CONTACT": "Contato e vendedor",
+      "CONTACT_NAME": "Nome do contato",
+      "SELLER": "Vendedor",
+      "NO_SELLER": "Sem vendedor",
+      "NOTES": "Observações",
+      "EXISTS": "Este documento já está cadastrado: #{code} {name} ({company}).",
+      "USE_EXISTING": "Usar este cliente",
+      "WRITES_TO": "Grava de verdade no ERP, na unidade {company}.",
+      "SAVE": "Cadastrar no ERP",
+      "DONE": "Cliente #{code} cadastrado no ERP ({company}) como pré-cadastro.",
+      "ALREADY_DONE": "Este documento já estava cadastrado: cliente #{code} ({company}).",
+      "ERRORS": {
+        "FIELDS": "Confira os campos marcados em vermelho.",
+        "EMPRESA": "Esta unidade não está nas Configurações do ERP.",
+        "EM_ANDAMENTO": "Outro cadastro de cliente está sendo gravado nesta unidade. Tente de novo em alguns segundos.",
+        "DOCUMENTO": "O ERP recusou o CPF/CNPJ.",
+        "SEM_CODIGO": "O ERP não devolveu o código do cliente. Confira no Mais Prático antes de tentar de novo."
+      }
     }
   }
 }

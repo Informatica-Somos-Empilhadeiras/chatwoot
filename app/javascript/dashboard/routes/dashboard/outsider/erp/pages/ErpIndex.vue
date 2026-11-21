@@ -1,7 +1,8 @@
 <script setup>
-// OUTSIDER: pagina da secao ERP. A aba vem da rota (erp/:tab): Orcamentos, OS e Pedidos (todo o historico do ERP, com
-// filtros, tabela e o painel de detalhe, ErpRecords) e, para o administrador, as Configuracoes. A OS tambem tem o quadro
-// (espelho). Um erro dentro de uma aba aparece na tela com a mensagem em vez de deixar a pagina em branco.
+// OUTSIDER: pagina da secao ERP. A aba vem da rota (erp/:tab): Orcamentos, OS, Pedidos e Notas fiscais (todo o historico
+// do ERP, com filtros, tabela e o painel de detalhe, ErpRecords) e, para o administrador, as Configuracoes. A OS tambem
+// tem o quadro (espelho); as Notas trocam entre Produtos (NF-e) e Servicos (NFS-e). "Novo cliente" cadastra no ERP (com a
+// gravacao de clientes ligada). Um erro dentro de uma aba aparece na tela com a mensagem em vez de deixar a pagina em branco.
 import { ref, computed, watch, onErrorCaptured } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
@@ -10,6 +11,7 @@ import Button from 'dashboard/components-next/button/Button.vue';
 import ErpBoard from '../components/ErpBoard.vue';
 import ErpSettings from '../components/ErpSettings.vue';
 import ErpRecords from '../records/ErpRecords.vue';
+import ErpClientDialog from '../clients/ErpClientDialog.vue';
 import { kindForTab } from '../records/recordsConfig';
 import { erpTabs } from '../sidebar';
 import { erpState, ERP_ROUTE } from '../erpStore';
@@ -19,11 +21,21 @@ const route = useRoute();
 const router = useRouter();
 
 const MODE_KEY = 'outsider-erp-os-mode';
-const storedMode = () => {
+const NOTES_KEY = 'outsider-erp-notes-mode';
+const NOTE_KINDS = ['invoices', 'service_invoices'];
+const stored = (key, allowed, fallback) => {
   try {
-    return window.localStorage.getItem(MODE_KEY) === 'board' ? 'board' : 'table';
+    const value = window.localStorage.getItem(key);
+    return allowed.includes(value) ? value : fallback;
   } catch {
-    return 'table';
+    return fallback;
+  }
+};
+const remember = (key, value) => {
+  try {
+    window.localStorage.setItem(key, value);
+  } catch {
+    // sem armazenamento: só não lembra
   }
 };
 
@@ -32,19 +44,26 @@ const tab = computed(() => {
   const names = tabs.value.map(item => item.name);
   return names.includes(route.params.tab) ? route.params.tab : names[0] || '';
 });
-const kind = computed(() => kindForTab(tab.value));
-const osMode = ref(storedMode());
-const showBoard = computed(() => tab.value === 'os' && osMode.value === 'board');
+const notesMode = ref(stored(NOTES_KEY, NOTE_KINDS, 'invoices'));
+const kind = computed(() =>
+  tab.value === 'notas' ? notesMode.value : kindForTab(tab.value)
+);
+const osMode = ref(stored(MODE_KEY, ['table', 'board'], 'table'));
+const showBoard = computed(
+  () => tab.value === 'os' && osMode.value === 'board'
+);
 const fills = computed(() => kind.value && !showBoard.value);
 
 const setMode = value => {
   osMode.value = value;
-  try {
-    window.localStorage.setItem(MODE_KEY, value);
-  } catch {
-    // sem armazenamento: só não lembra
-  }
+  remember(MODE_KEY, value);
 };
+const setNotesMode = value => {
+  notesMode.value = value;
+  remember(NOTES_KEY, value);
+};
+
+const clientDialog = ref(null);
 
 const go = name => {
   if (name === tab.value) return;
@@ -75,13 +94,24 @@ watch(tab, () => {
             <span class="text-xs font-medium text-n-slate-11">
               {{ t('OUTSIDER_ERP.TITLE') }}
             </span>
-            <h1 class="mb-0 text-xl font-medium text-n-slate-12">
-              {{
-                tab
-                  ? t(`OUTSIDER_ERP.TABS.${tab.toUpperCase()}`)
-                  : t('OUTSIDER_ERP.SIDEBAR')
-              }}
-            </h1>
+            <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+              <h1 class="mb-0 text-xl font-medium text-n-slate-12">
+                {{
+                  tab
+                    ? t(`OUTSIDER_ERP.TABS.${tab.toUpperCase()}`)
+                    : t('OUTSIDER_ERP.SIDEBAR')
+                }}
+              </h1>
+              <Button
+                v-if="erpState.canRegisterClient"
+                size="xs"
+                variant="faded"
+                color="teal"
+                icon="i-lucide-user-plus"
+                :label="t('OUTSIDER_ERP.CLIENT.NEW')"
+                @click="clientDialog?.open()"
+              />
+            </div>
           </div>
           <div class="flex flex-wrap items-center gap-2">
             <div
@@ -111,6 +141,35 @@ watch(tab, () => {
                 }}
               </button>
             </div>
+            <div
+              v-if="tab === 'notas'"
+              class="flex items-center p-0.5 rounded-lg bg-n-alpha-2"
+            >
+              <button
+                v-for="mode in NOTE_KINDS"
+                :key="mode"
+                type="button"
+                class="flex items-center gap-1.5 h-7 px-2.5 text-xs rounded-md whitespace-nowrap"
+                :class="
+                  notesMode === mode
+                    ? 'bg-n-solid-1 text-n-slate-12 font-medium shadow-sm'
+                    : 'text-n-slate-11 hover:text-n-slate-12'
+                "
+                @click="setNotesMode(mode)"
+              >
+                <Icon
+                  :icon="
+                    mode === 'invoices' ? 'i-lucide-package' : 'i-lucide-hammer'
+                  "
+                  class="size-3.5"
+                />
+                {{
+                  t(
+                    `OUTSIDER_ERP.RECORDS.${mode === 'invoices' ? 'INVOICES' : 'SERVICE_INVOICES'}.MODE`
+                  )
+                }}
+              </button>
+            </div>
             <nav
               v-if="tabs.length > 1"
               class="flex items-center gap-0.5 p-0.5 overflow-x-auto rounded-lg bg-n-alpha-2"
@@ -136,7 +195,9 @@ watch(tab, () => {
       </header>
       <main
         class="flex-1 min-h-0 px-4 sm:px-6"
-        :class="fills ? 'overflow-y-auto md:overflow-hidden' : 'overflow-y-auto'"
+        :class="
+          fills ? 'overflow-y-auto md:overflow-hidden' : 'overflow-y-auto'
+        "
       >
         <div
           class="w-full mx-auto max-w-[110rem]"
@@ -146,7 +207,10 @@ watch(tab, () => {
             v-if="crash"
             class="flex flex-col items-center gap-3 p-10 text-center rounded-xl bg-n-ruby-2"
           >
-            <Icon icon="i-lucide-triangle-alert" class="size-8 text-n-ruby-11" />
+            <Icon
+              icon="i-lucide-triangle-alert"
+              class="size-8 text-n-ruby-11"
+            />
             <p class="max-w-xl mb-0 text-sm break-words text-n-ruby-11">
               {{ t('OUTSIDER_ERP.RECORDS.ERROR', { message: crash }) }}
             </p>
@@ -165,7 +229,10 @@ watch(tab, () => {
             v-else
             class="flex flex-col items-center gap-3 p-10 text-center rounded-xl bg-n-alpha-1"
           >
-            <Icon icon="i-lucide-clipboard-list" class="size-10 text-n-slate-9" />
+            <Icon
+              icon="i-lucide-clipboard-list"
+              class="size-10 text-n-slate-9"
+            />
             <p class="max-w-md mb-0 text-sm text-n-slate-11">
               {{
                 erpState.administrator
@@ -177,5 +244,6 @@ watch(tab, () => {
         </div>
       </main>
     </div>
+    <ErpClientDialog ref="clientDialog" />
   </section>
 </template>

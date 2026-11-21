@@ -20,16 +20,24 @@ Rails.application.routes.prepend do
                 end
               end
               resources :customers, only: [:index]
+              # cadastrar cliente no ERP pela função do Mais Prático (pré-cadastro)
+              resources :clients, only: [:create] do
+                collection do
+                  get :options
+                  get :lookup
+                end
+              end
               resource :contact_link, only: [:create, :destroy]
               resources :lists, only: [:index]
               resources :catalog, only: [:index] do
                 get :technical, on: :collection
               end
               resources :quotes, only: [:index]
-              # seção ERP: listas com todo o histórico e o detalhe (kind: quotes, orders, sales)
-              get 'records/:kind', to: 'records#index', constraints: { kind: /quotes|orders|sales/ }
+              # seção ERP: listas com todo o histórico e o detalhe (kind: quotes, orders, sales, invoices, service_invoices)
+              get 'records/:kind', to: 'records#index', constraints: { kind: /quotes|orders|sales|invoices|service_invoices/ }
               get 'records/:kind/:company/:number', to: 'records#show',
-                                                    constraints: { kind: /quotes|orders|sales/, company: /[a-z0-9_]+/, number: /\d+/ }
+                                                    constraints: { kind: /quotes|orders|sales|invoices|service_invoices/,
+                                                                   company: /[a-z0-9_]+/, number: /\d+/ }
               get 'records/quotes/:company/:number/pdf', to: 'records#pdf', defaults: { kind: 'quotes' },
                                                          constraints: { company: /[a-z0-9_]+/, number: /\d+/ }
               # orçamento de peças e serviços feito no chat (separado da proposta comercial do CRM)

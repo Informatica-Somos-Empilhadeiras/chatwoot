@@ -15,6 +15,8 @@ export const erpState = reactive({
   quotesEnabled: false,
   quoteWriteEnabled: false,
   canCreateQuote: false,
+  // cadastrar cliente no ERP: gravação ligada nas Configurações + "Usa" no Cadastro de clientes do perfil
+  canRegisterClient: false,
   administrator: false,
   fields: [],
   fieldKinds: {},
@@ -37,6 +39,7 @@ export const loadErpStatus = async accountId => {
       quotesEnabled: data.quotes_enabled,
       quoteWriteEnabled: data.quote_write_enabled,
       canCreateQuote: data.can_create_quote,
+      canRegisterClient: data.can_register_client === true,
       administrator: data.administrator,
       fields: data.fields || [],
       fieldKinds: data.field_kinds || {},
@@ -178,6 +181,7 @@ export const erpErrorMessage = (t, error) => {
     no_companies: 'NO_COMPANIES',
     write_disabled: 'WRITE_DISABLED',
     quote_write_disabled: 'QUOTE_WRITE_DISABLED',
+    client_write_disabled: 'CLIENT_WRITE_DISABLED',
     invalid: 'INVALID',
   };
   if (error?.response?.status === 403 && !known[code])

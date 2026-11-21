@@ -6,6 +6,7 @@ class Outsider::Erp::Records::SaleKind < Outsider::Erp::Records::Kind
 
   def table = 'pedido'
   def person = :pessoa_codigo
+  def status_views? = true
 
   def columns
     {

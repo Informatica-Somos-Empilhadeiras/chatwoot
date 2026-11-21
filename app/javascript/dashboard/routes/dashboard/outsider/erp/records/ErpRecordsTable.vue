@@ -9,6 +9,7 @@ import Icon from 'dashboard/components-next/icon/Icon.vue';
 import { formatDate, formatMoney } from '../erpStore';
 import {
   KINDS,
+  displayNumber,
   initials,
   isLate,
   place,
@@ -35,6 +36,7 @@ const { t } = useI18n();
 const cfg = computed(() => KINDS[props.kind]);
 const label = key => t(`OUTSIDER_ERP.RECORDS.${cfg.value.key}.${key}`);
 
+const numberOf = row => displayNumber({ ...row, kind: props.kind });
 const dateOf = row => (props.kind === 'orders' ? row.previsao : row.data);
 const late = row =>
   props.kind === 'orders' &&
@@ -45,15 +47,22 @@ const late = row =>
 
 const subline = row => {
   if (props.kind === 'orders')
-    return [row.equipamento, row.serie && `${t('OUTSIDER_ERP.RECORDS.SERIES')} ${row.serie}`]
-      .filter(Boolean)
-      .join(' · ') || place(row);
+    return (
+      [
+        row.equipamento,
+        row.serie && `${t('OUTSIDER_ERP.RECORDS.SERIES')} ${row.serie}`,
+      ]
+        .filter(Boolean)
+        .join(' · ') || place(row)
+    );
   return place(row);
 };
 
 const arrow = key => {
   if (props.sort !== key) return '';
-  return props.direction === 'asc' ? 'i-lucide-arrow-up' : 'i-lucide-arrow-down';
+  return props.direction === 'asc'
+    ? 'i-lucide-arrow-up'
+    : 'i-lucide-arrow-down';
 };
 
 const TH =
@@ -68,14 +77,22 @@ const TH =
     >
       <thead class="sticky top-0 z-[1] bg-n-solid-1">
         <tr class="border-b border-n-weak">
-          <th :class="TH" class="pl-5 pr-3" :style="{ width: compact ? '5.5rem' : '6.5rem' }">
+          <th
+            :class="TH"
+            class="pl-5 pr-3"
+            :style="{ width: compact ? '5.5rem' : '6.5rem' }"
+          >
             <button
               type="button"
               class="inline-flex items-center gap-1 text-[11px] font-medium tracking-wider uppercase hover:text-n-slate-12"
               @click="emit('sort', 'numero')"
             >
               {{ t('OUTSIDER_ERP.RECORDS.NUMBER') }}
-              <Icon v-if="arrow('numero')" :icon="arrow('numero')" class="size-3" />
+              <Icon
+                v-if="arrow('numero')"
+                :icon="arrow('numero')"
+                class="size-3"
+              />
             </button>
           </th>
           <th :class="TH" class="px-3">
@@ -85,16 +102,28 @@ const TH =
               @click="emit('sort', 'cliente')"
             >
               {{ t('OUTSIDER_ERP.RECORDS.CLIENT') }}
-              <Icon v-if="arrow('cliente')" :icon="arrow('cliente')" class="size-3" />
+              <Icon
+                v-if="arrow('cliente')"
+                :icon="arrow('cliente')"
+                class="size-3"
+              />
             </button>
           </th>
-          <th :class="TH" class="px-3" :style="{ width: compact ? '8.5rem' : '9.5rem' }">
+          <th
+            :class="TH"
+            class="px-3"
+            :style="{ width: compact ? '8.5rem' : '9.5rem' }"
+          >
             {{ t('OUTSIDER_ERP.RECORDS.STATUS') }}
           </th>
           <th v-if="!compact" :class="TH" class="w-[10.5rem] px-3">
             {{ label('PERSON') }}
           </th>
-          <th :class="TH" class="px-3" :style="{ width: compact ? '5.5rem' : '6.5rem' }">
+          <th
+            :class="TH"
+            class="px-3"
+            :style="{ width: compact ? '5.5rem' : '6.5rem' }"
+          >
             <button
               type="button"
               class="inline-flex items-center gap-1 text-[11px] font-medium tracking-wider uppercase hover:text-n-slate-12"
@@ -104,13 +133,21 @@ const TH =
               <Icon v-if="arrow('data')" :icon="arrow('data')" class="size-3" />
             </button>
           </th>
-          <th :class="TH" class="pl-3 pr-5 !text-right" :style="{ width: compact ? '7.5rem' : '8.5rem' }">
+          <th
+            :class="TH"
+            class="pl-3 pr-5 !text-right"
+            :style="{ width: compact ? '7.5rem' : '8.5rem' }"
+          >
             <button
               type="button"
               class="inline-flex items-center gap-1 text-[11px] font-medium tracking-wider uppercase hover:text-n-slate-12"
               @click="emit('sort', 'total')"
             >
-              <Icon v-if="arrow('total')" :icon="arrow('total')" class="size-3" />
+              <Icon
+                v-if="arrow('total')"
+                :icon="arrow('total')"
+                class="size-3"
+              />
               {{ t('OUTSIDER_ERP.RECORDS.TOTAL') }}
             </button>
           </th>
@@ -132,9 +169,11 @@ const TH =
         >
           <td class="py-2.5 pl-5 pr-3 align-top">
             <div class="text-[13px] font-semibold tabular-nums text-n-slate-12">
-              {{ row.numero }}
+              {{ numberOf(row) }}
             </div>
-            <div class="text-[11px] text-n-slate-10 truncate">{{ row.banco }}</div>
+            <div class="text-[11px] text-n-slate-10 truncate">
+              {{ row.banco }}
+            </div>
           </td>
           <td class="py-2.5 px-3 align-top">
             <div
@@ -163,10 +202,13 @@ const TH =
               {{ row.substatus }}
             </div>
             <div
-              v-else-if="kind === 'sales' && row.nota"
-              class="mt-1 text-[11px] text-n-slate-10"
+              v-else-if="kind === 'invoices' && row.natureza"
+              class="mt-1 text-[11px] text-n-slate-10 truncate"
             >
-              {{ t('OUTSIDER_ERP.RECORDS.INVOICE', { number: row.nota }) }}
+              {{ titleCase(row.natureza) }}
+              <template v-if="Number(row.tipo) === 1">
+                · {{ t('OUTSIDER_ERP.RECORDS.CHAIN.INBOUND') }}
+              </template>
             </div>
           </td>
           <td v-if="!compact" class="py-2.5 px-3 align-top">
@@ -188,7 +230,9 @@ const TH =
           <td class="py-2.5 px-3 align-top">
             <div
               class="text-[13px] tabular-nums"
-              :class="late(row) ? 'text-n-ruby-11 font-medium' : 'text-n-slate-11'"
+              :class="
+                late(row) ? 'text-n-ruby-11 font-medium' : 'text-n-slate-11'
+              "
             >
               {{ formatDate(dateOf(row)).slice(0, 5) || '—' }}
             </div>
@@ -228,7 +272,7 @@ const TH =
       >
         <span class="flex items-center w-full gap-2">
           <span class="text-[13px] font-semibold tabular-nums text-n-slate-12">
-            {{ row.numero }}
+            {{ numberOf(row) }}
           </span>
           <span class="text-[11px] text-n-slate-10">{{ row.banco }}</span>
           <span class="flex-1" />
@@ -241,7 +285,9 @@ const TH =
         <span class="w-full text-[13px] font-medium truncate text-n-slate-12">
           {{ titleCase(row.cliente) || `#${row.cliente_codigo}` }}
         </span>
-        <span class="flex items-center w-full min-w-0 gap-2 text-[11px] text-n-slate-10">
+        <span
+          class="flex items-center w-full min-w-0 gap-2 text-[11px] text-n-slate-10"
+        >
           <span
             v-if="row.status"
             class="px-2 py-0.5 font-medium rounded-full truncate max-w-[45%]"

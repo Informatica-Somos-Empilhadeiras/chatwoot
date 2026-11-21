@@ -175,6 +175,25 @@ class ErpAPI extends ApiClient {
     return axios.get(`${this.url}/settings/payment_terms`);
   }
 
+  // cadastrar cliente no ERP (pré-cadastro pela função do Mais Prático): vendedores da unidade e o do agente
+  clientOptions(company) {
+    return axios.get(`${this.url}/clients/options`, { params: { company } });
+  }
+
+  // já existe cliente com este CPF/CNPJ na unidade?
+  clientLookup(company, documento) {
+    return axios.get(`${this.url}/clients/lookup`, {
+      params: { company, documento },
+    });
+  }
+
+  createClient(client, contactId) {
+    return axios.post(`${this.url}/clients`, {
+      client,
+      contact_id: contactId || undefined,
+    });
+  }
+
   link(data) {
     return axios.post(`${this.url}/contact_link`, data);
   }

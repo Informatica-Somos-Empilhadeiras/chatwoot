@@ -1186,6 +1186,14 @@
       "ERP_SALES": {
         "LABEL": "Pedidos de venda",
         "HINT": "Vê: consulta (por enquanto só leitura)."
+      },
+      "ERP_INVOICES": {
+        "LABEL": "Notas fiscais",
+        "HINT": "Vê: consulta as NF-e e NFS-e (só leitura)."
+      },
+      "ERP_CLIENTS": {
+        "LABEL": "Cadastro de clientes",
+        "HINT": "Usa: cadastra cliente novo no ERP (pré-cadastro, como o aplicativo de vendas)."
       }
     },
     "PROFILES": {

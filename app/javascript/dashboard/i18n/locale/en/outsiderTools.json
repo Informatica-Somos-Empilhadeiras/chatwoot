@@ -1186,6 +1186,14 @@
       "ERP_SALES": {
         "LABEL": "Sales orders",
         "HINT": "View: browse (read only for now)."
+      },
+      "ERP_INVOICES": {
+        "LABEL": "Invoices",
+        "HINT": "View: browse NF-e and NFS-e (read only)."
+      },
+      "ERP_CLIENTS": {
+        "LABEL": "Client registration",
+        "HINT": "Use: registers a new client in the ERP (pre-registration, like the sales app)."
       }
     },
     "PROFILES": {

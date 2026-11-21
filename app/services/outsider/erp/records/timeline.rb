@@ -1,6 +1,6 @@
 # OUTSIDER: a linha do tempo do painel de detalhe da seção ERP (como a jornada do CRM): o que aconteceu com o
-# orçamento, as OS e os pedidos da corrente (datas do próprio ERP) e o que foi feito pelo chat (criação, liberação de
-# desconto, edições do orçamento gravado, envios por WhatsApp/e-mail). A tela só traduz o "type".
+# orçamento, as OS, os pedidos e as notas fiscais da corrente (datas do próprio ERP) e o que foi feito pelo chat
+# (criação, liberação de desconto, edições do orçamento gravado, envios por WhatsApp/e-mail). A tela só traduz o "type".
 class Outsider::Erp::Records::Timeline
   def initialize(account)
     @account = account
@@ -13,17 +13,21 @@ class Outsider::Erp::Records::Timeline
 
   private
 
+  NOTES = %w[invoices service_invoices].freeze
+
   def chain_events(chain)
     Array(chain).flat_map do |node|
+      next [event(node['data'], 'invoiced', node).merge('rotulo' => node['rotulo']).compact] if NOTES.include?(node['kind'])
+
       list = [event(node['data'], 'created', node)]
       list << event(node['entrega'], 'delivered', node) if node['kind'] == 'orders' && node['entrega'].present?
-      list << event(node['data'], 'invoiced', node).merge('nota' => node['nota']) if node['kind'] == 'sales' && node['nota']
       list
     end
   end
 
   def header_events(detail)
     header = detail['header'] || {}
+    return cancel_events(detail, header) if NOTES.include?(detail['kind'])
     return [] unless detail['kind'] == 'quotes'
 
     list = []
@@ -31,6 +35,14 @@ class Outsider::Erp::Records::Timeline
     authorized = header['autorizado_por'].to_i.positive?
     list << event(header['data_autorizado'], 'authorized', detail).merge('name' => header['autorizado_por_nome']) if authorized
     list
+  end
+
+  # nota cancelada: o dia do cancelamento e o motivo
+  def cancel_events(detail, header)
+    return [] if header['data_cancelamento'].blank?
+
+    label = header['nfse'].to_i.positive? ? header['nfse'].to_i.to_s : nil
+    [event(header['data_cancelamento'], 'status', detail).merge('status' => header['status'].presence || 'CANCELADA', 'rotulo' => label).compact]
   end
 
   def chat_events(budget)

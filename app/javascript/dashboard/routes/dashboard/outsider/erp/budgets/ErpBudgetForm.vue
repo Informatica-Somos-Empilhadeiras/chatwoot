@@ -1,7 +1,8 @@
 <script setup>
 // OUTSIDER: formulário do rascunho do orçamento de peças e serviços: cliente do ERP (vem do vínculo do contato; "trocar"
 // abre a lista de clientes), A/C e pedido do cliente, peças e serviços, condições e totais. Quem salva é a gaveta
-// (ErpBudgetDrawer), sozinha, a cada mudança. "locked": o que não muda (edição de um orçamento já gravado: cliente,
+// (ErpBudgetDrawer), sozinha, a cada mudança. Cliente que ainda não existe no ERP: "Cadastrar cliente novo" (com a gravação
+// de clientes ligada) e o novo já fica escolhido. "locked": o que não muda (edição de um orçamento já gravado: cliente,
 // pedido do cliente e as condições que só a função de criar do ERP recebe).
 import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -10,7 +11,8 @@ import Icon from 'dashboard/components-next/icon/Icon.vue';
 import ErpPicker from '../components/ErpPicker.vue';
 import ErpBudgetItems from './ErpBudgetItems.vue';
 import ErpBudgetConditions from './ErpBudgetConditions.vue';
-import { withLoadingRetry } from '../erpStore';
+import ErpClientDialog from '../clients/ErpClientDialog.vue';
+import { erpState, withLoadingRetry } from '../erpStore';
 
 const props = defineProps({
   budget: { type: Object, required: true },
@@ -27,7 +29,11 @@ const items = defineModel('items', { type: Array, default: () => [] });
 
 const { t } = useI18n();
 const itemsRef = ref(null);
-const picking = ref(!props.budget.customer_code && !props.readOnly && !props.locked.includes('customer'));
+const picking = ref(
+  !props.budget.customer_code &&
+    !props.readOnly &&
+    !props.locked.includes('customer')
+);
 // cliente de outra unidade com itens já escolhidos: confirma antes (os códigos de produto são de cada unidade)
 const pending = ref(null);
 
@@ -65,6 +71,15 @@ const choose = row => {
   }
   apply(row);
 };
+
+const clientDialog = ref(null);
+// cliente novo, cadastrado agora no ERP: entra no orçamento como se tivesse sido escolhido na lista
+const registerClient = () =>
+  clientDialog.value?.open({
+    company: props.budget.company,
+    contactId: props.contactId,
+    onCreated: customer => choose(customer),
+  });
 
 const INPUT =
   '!mb-0 w-full h-9 px-2.5 text-sm rounded-lg reset-base bg-n-solid-1 text-n-slate-12 outline outline-1 -outline-offset-1 outline-n-slate-6 focus:outline-n-brand disabled:opacity-70';
@@ -165,6 +180,16 @@ defineExpose({ focusSearch: () => itemsRef.value?.focusSearch() });
           </span>
         </template>
       </ErpPicker>
+      <button
+        v-if="erpState.canRegisterClient"
+        type="button"
+        class="inline-flex items-center self-start gap-1.5 text-xs font-medium text-n-teal-11 hover:underline"
+        @click="registerClient"
+      >
+        <Icon icon="i-lucide-user-plus" class="size-3.5" />
+        {{ t('OUTSIDER_ERP.CLIENT.REGISTER_NEW') }}
+      </button>
+      <ErpClientDialog ref="clientDialog" />
       <div
         v-if="pending"
         class="flex flex-wrap items-center gap-3 p-3 text-sm rounded-lg bg-n-amber-2 text-n-amber-11"

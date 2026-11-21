@@ -64,6 +64,14 @@ class Outsider::Erp::Customers
     end
   end
 
+  # cliente que a tela acabou de cadastrar no ERP (Outsider::Erp::ClientRegistrar): entra na cópia na hora
+  def remember(company, data)
+    row = build(company, data)
+    snapshot.update_items do |items|
+      (items.reject { |item| item['empresa'] == company && item['codigo'] == row['codigo'] } + [row]).sort_by { |item| item['busca'] }
+    end
+  end
+
   private
 
   def load(read_timeout)

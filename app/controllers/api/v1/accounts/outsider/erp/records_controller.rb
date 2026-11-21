@@ -1,5 +1,6 @@
-# OUTSIDER: listas e detalhe da seção ERP (orçamentos, OS e pedidos de venda) lidos direto do banco do ERP, com todo o
-# histórico (Outsider::Erp::Records). kind: quotes | orders | sales. Só leitura; a edição continua nas rotas próprias
+# OUTSIDER: listas e detalhe da seção ERP (orçamentos, OS, pedidos de venda e notas fiscais) lidos direto do banco do ERP,
+# com todo o histórico (Outsider::Erp::Records). kind: quotes | orders | sales | invoices (NF-e) | service_invoices
+# (NFS-e). Só leitura; a edição continua nas rotas próprias
 # (orçamento do chat em BudgetsController, OS em ServiceOrdersController). Cada aba segue a linha dela no perfil de acesso.
 class Api::V1::Accounts::Outsider::Erp::RecordsController < Api::V1::Accounts::Outsider::Erp::BaseController
   rescue_from(::Outsider::Erp::Records::Detail::NotFound, ::Outsider::Erp::QuoteReport::NotFound) do
@@ -34,18 +35,19 @@ class Api::V1::Accounts::Outsider::Erp::RecordsController < Api::V1::Accounts::O
 
   def list_params = LIST_PARAMS.index_with { |key| params[key] }
 
-  SCREENS = { 'quotes' => 'erp_quotes', 'orders' => 'erp_orders', 'sales' => 'erp_sales' }.freeze
+  SCREENS = {
+    'quotes' => 'erp_quotes', 'orders' => 'erp_orders', 'sales' => 'erp_sales', 'invoices' => 'erp_invoices', 'service_invoices' => 'erp_invoices'
+  }.freeze
 
-  # a aba precisa estar ligada nas Configurações e aberta no perfil de acesso
+  # a lista pede a aba ligada nas Configurações; o detalhe (aberto também pela corrente, no painel) só o tipo válido.
+  # Os dois pedem a linha da aba aberta no perfil de acesso.
+  LIST_SETTINGS = { 'quotes' => :quotes_enabled?, 'orders' => :orders_enabled? }.freeze
+
   def ensure_kind
-    allowed = case params[:kind]
-              when 'quotes' then settings.quotes_enabled?
-              when 'orders' then settings.orders_enabled?
-              when 'sales' then true
-              end
-    return render json: { error: 'kind_disabled' }, status: :forbidden unless allowed
+    setting = LIST_SETTINGS[params[:kind]]
+    return render json: { error: 'kind_disabled' }, status: :forbidden if action_name == 'index' && setting && !settings.public_send(setting)
 
-    render json: { error: 'erp_forbidden' }, status: :forbidden unless allows_screen?(SCREENS[params[:kind]])
+    render json: { error: 'erp_forbidden' }, status: :forbidden unless allows_screen?(SCREENS.fetch(params[:kind]))
   end
 
   def clients

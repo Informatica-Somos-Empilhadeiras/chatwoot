@@ -92,6 +92,24 @@ RSpec.describe 'Outsider ERP API', type: :request do
     expect(response).to have_http_status(:unprocessable_entity)
   end
 
+  it 'registers a client in the ERP only with the setting on and for who uses the client screen' do
+    client = { company: 'somosemp', documento: '11.222.333/0001-80', nome: 'Oeste' }
+    get "#{url}/status", headers: agent.create_new_auth_token
+    expect(response.parsed_body).to include('client_write_enabled' => false, 'can_register_client' => false)
+    post "#{url}/clients", params: { client: client }, headers: agent.create_new_auth_token, as: :json
+    expect(response.parsed_body['error']).to eq('client_write_disabled')
+
+    Outsider::Erp::Settings.new(account).update('client_write_enabled' => true)
+    post "#{url}/clients", params: { client: client }, headers: viewer.create_new_auth_token, as: :json
+    expect(response).to have_http_status(:forbidden)
+
+    post "#{url}/clients", params: { client: client }, headers: agent.create_new_auth_token, as: :json
+    expect(response).to have_http_status(:unprocessable_entity)
+    expect(response.parsed_body).to include('reason' => 'dados', 'fields' => ['documento'])
+    get "#{url}/clients/options", params: { company: 'outrobanco' }, headers: agent.create_new_auth_token
+    expect(response).to have_http_status(:unprocessable_entity)
+  end
+
   it 'answers disabled when the integration is off' do
     Outsider::Erp::Settings.new(account).update('enabled' => false)
     get "#{url}/service_orders", params: { q: '907' }, headers: agent.create_new_auth_token

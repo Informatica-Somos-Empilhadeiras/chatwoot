@@ -1,48 +1,14 @@
-# OUTSIDER: o detalhe de um orçamento, OS ou pedido do ERP para o painel ao lado da lista: cabeçalho, cliente, pessoas,
-# itens, a corrente orçamento -> OS -> pedido (Outsider::Erp::Records::Chain) e a linha do tempo. Só leitura, sempre no
-# banco da unidade e pelo número. Os campos são candidatos conferidos no information_schema (Outsider::Erp::Schema).
+# OUTSIDER: o detalhe de um orçamento, OS, pedido ou nota fiscal (NF-e de produtos e NFS-e de serviços) do ERP para o
+# painel ao lado da lista: cabeçalho, cliente, pessoas, itens, a corrente orçamento -> OS -> pedido -> notas
+# (Outsider::Erp::Records::Chain) e a linha do tempo. Só leitura, sempre no banco da unidade e pelo número. Os campos
+# são candidatos conferidos no information_schema (Outsider::Erp::Schema).
 class Outsider::Erp::Records::Detail
   S = Outsider::Erp::Sql
   class NotFound < StandardError; end
 
-  COMMON = {
-    'data' => nil, 'status' => nil, 'total' => %w[total Total], 'cliente_codigo' => %w[CodigoCliente], 'contato' => %w[Contato],
-    'telefone' => %w[Telefone], 'observacoes' => %w[Observacoes Observacao], 'pagamento' => %w[FormaPagto]
-  }.freeze
-  DEFINITIONS = {
-    'quotes' => {
-      table: 'orcamento', key: %w[codigoorcamento CodigoOrcamento], items_table: 'detalheorcamento', items_key: %w[CodigoOrcamento],
-      header: {
-        'data' => %w[orcamentoData], 'status' => %w[Status], 'vendedor' => %w[Vendedor], 'iniciado_por' => %w[IDLogado],
-        'validade' => %w[Validade], 'prazo_entrega' => %w[PrazoEntrega], 'garantia' => %w[PrazoGarantia], 'frete' => %w[Frete],
-        'desconto' => %w[descontototal], 'servicos' => %w[totalServicos], 'os' => %w[OrdemServico], 'data_status' => %w[DataStatus],
-        'autorizado_por' => %w[AutorizadoPor], 'data_autorizado' => %w[DataAutorizadoPor], 'chat' => %w[CodigoIntegracaoMobile],
-        'em_uso' => %w[OrcamentoEmUtilizacao], 'em_uso_por' => %w[NomeUserEmUtilizacao], 'em_uso_desde' => %w[DataEmUtilizacao]
-      }
-    },
-    'orders' => {
-      table: 'os', key: %w[CodigoOS], items_table: 'detalheos', items_key: %w[CodigoOS],
-      header: {
-        'data' => %w[DataEntrada], 'status' => %w[Situacao], 'substatus' => %w[SubStatus], 'atendimento' => %w[TipoAtendimento],
-        'tecnico' => %w[Tecnico], 'vendedor' => %w[Vendedor], 'previsao' => %w[DataPrevisao], 'entrega' => %w[DataEntrega],
-        'validade' => %w[DataValidade], 'serie' => %w[NSerie], 'horimetro' => %w[Horimetro], 'garantia' => %w[Garantia],
-        'defeitos' => %w[Defeitos], 'acessorios' => %w[Acessorios], 'equipamento' => %w[Modelo DescricaoMaquina Equipamento],
-        'orcamento' => %w[Orcamento], 'pedido' => %w[Pedido], 'produtos' => %w[TotalProdutos], 'servicos' => %w[TotalServicos]
-      }
-    },
-    'sales' => {
-      table: 'pedido', key: %w[CodigoPedido], items_table: 'detalhepedido', items_key: %w[CodigoPedido],
-      header: {
-        'data' => %w[PedidoData], 'status' => %w[Status Situacao], 'vendedor' => %w[Vendedor], 'orcamento' => %w[orcamento Orcamento],
-        'nota' => %w[NotaFiscal], 'fechado' => %w[fechado], 'entrega' => %w[DataEntrega], 'frete' => %w[Frete],
-        'desconto' => %w[descontototal]
-      }
-    }
-  }.freeze
-  ITEMS = {
-    'quantidade' => %w[Quantidade quantidade], 'unitario' => %w[PrecoUnitario precounitario], 'desconto' => %w[PercDesconto descperc],
-    'total' => %w[TotalLinha]
-  }.freeze
+  COMMON = Outsider::Erp::Records::DetailFields::COMMON
+  DEFINITIONS = Outsider::Erp::Records::DetailFields::DEFINITIONS
+  ITEMS = Outsider::Erp::Records::DetailFields::ITEMS
 
   def initialize(account, kind, client: nil)
     @account = account
@@ -145,8 +111,30 @@ class Outsider::Erp::Records::Detail
 
   def header(company, number)
     row = @client.query_execute(header_sql(company, number)).grep(Hash).first || raise(NotFound, number.to_s)
-    row = row.transform_values { |value| value.is_a?(String) ? value.strip : value }
-    @kind == 'sales' && row['status'].blank? ? row.merge('status' => sale_status(row)) : row
+    adjust(row.transform_values { |value| value.is_a?(String) ? value.strip : value })
+  end
+
+  def adjust(row)
+    case @kind
+    when 'sales' then row['status'].blank? ? row.merge('status' => sale_status(row)) : row
+    when 'invoices' then row.merge(fiscal_key(row['chave']))
+    when 'service_invoices' then service_header(row)
+    else row
+    end
+  end
+
+  # chave de 44 dígitos: série nas posições 23-25 e número nas 26-34
+  def fiscal_key(key)
+    digits = key.to_s.gsub(/\D/, '')
+    return {} unless digits.length == 44
+
+    { 'serie' => digits[22, 3].to_i, 'numero_nf' => digits[25, 9].to_i }
+  end
+
+  # destinatário que não é cliente (fornecedor) não tem cadastro em clientes
+  def service_header(row)
+    row = row.merge('cliente_codigo' => nil) if row.key?('e_cliente') && row['e_cliente'].to_i.zero?
+    row
   end
 
   def header_sql(company, number)
@@ -156,11 +144,7 @@ class Outsider::Erp::Records::Detail
       "FROM #{S.ident(company)}.#{S.ident(table)} O WHERE O.#{S.column(key)} = #{S.int(number)}"
   end
 
-  def sale_status(row)
-    return 'FATURADO' if row['nota'].to_i.positive?
-
-    row['fechado'].to_i.zero? ? 'ABERTO' : 'FECHADO'
-  end
+  def sale_status(row) = row['fechado'].to_i.zero? ? 'ABERTO' : 'FECHADO'
 
   # nomes das pessoas (vendedor, técnico, quem criou) pelo cadastro de funcionários
   def names(company, header)

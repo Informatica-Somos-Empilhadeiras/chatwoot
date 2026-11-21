@@ -516,7 +516,7 @@
         "SPLIT": "{outbound} feitas · {inbound} recebidas · {answered} atendidas",
         "NONE": "Nenhuma",
         "EMPTY": "Nenhuma ligação com cliente no período.",
-        "UNKNOWN": "| 1 ligação sem DDD reconhecido (número curto ou serviço) | {n} ligações sem DDD reconhecido (números curtos ou serviços)",
+        "UNKNOWN": "Nenhuma ligação sem DDD reconhecido | 1 ligação sem DDD reconhecido (número curto ou serviço) | {n} ligações sem DDD reconhecido (números curtos ou serviços)",
         "CREDIT": "Mapa: \"Map of Brazil\", de Victor Cazanave (svg-maps), CC BY 4.0, adaptado."
       },
       "COSTS": {

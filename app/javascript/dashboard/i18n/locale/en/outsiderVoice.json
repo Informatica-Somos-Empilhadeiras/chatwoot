@@ -516,7 +516,7 @@
         "SPLIT": "{outbound} made · {inbound} received · {answered} answered",
         "NONE": "None",
         "EMPTY": "No customer calls in the period.",
-        "UNKNOWN": "| 1 call without a known area code (short number or service) | {n} calls without a known area code (short numbers or services)",
+        "UNKNOWN": "No call without a known area code | 1 call without a known area code (short number or service) | {n} calls without a known area code (short numbers or services)",
         "CREDIT": "Map: \"Map of Brazil\" by Victor Cazanave (svg-maps), CC BY 4.0, adapted."
       },
       "COSTS": {
