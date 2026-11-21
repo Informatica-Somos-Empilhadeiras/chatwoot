@@ -22,6 +22,8 @@ export const erpState = reactive({
   fieldKinds: {},
   companies: [],
   lockedStatuses: [],
+  // NF-e: o PDF da nota espelhado do Nextcloud (conexão nas Configurações)
+  nextcloudInvoices: false,
 });
 
 export const loadErpStatus = async accountId => {
@@ -45,6 +47,7 @@ export const loadErpStatus = async accountId => {
       fieldKinds: data.field_kinds || {},
       companies: data.companies || [],
       lockedStatuses: data.locked_statuses || [],
+      nextcloudInvoices: data.nextcloud_invoices === true,
     });
   } catch {
     // sem acesso pelo perfil (403) ou fora do ar: o ERP some da tela
@@ -188,6 +191,8 @@ export const erpErrorMessage = (t, error) => {
     client_write_disabled: 'CLIENT_WRITE_DISABLED',
     invalid: 'INVALID',
     os_not_found: 'OS_NOT_FOUND',
+    invoice_not_in_nextcloud: 'INVOICE_NOT_IN_NEXTCLOUD',
+    nextcloud_unavailable: 'NEXTCLOUD_UNAVAILABLE',
   };
   if (error?.response?.status === 403 && !known[code])
     return t('OUTSIDER_ERP.ERRORS.NO_PERMISSION');

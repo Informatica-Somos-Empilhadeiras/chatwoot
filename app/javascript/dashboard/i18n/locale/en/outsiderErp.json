@@ -43,6 +43,8 @@
       "INVALID": "Could not save: check the chosen value.",
       "NO_PERMISSION": "Your access profile does not allow this.",
       "OS_NOT_FOUND": "Service order not found in the ERP.",
+      "INVOICE_NOT_IN_NEXTCLOUD": "The PDF of this invoice was not found in the Nextcloud folder.",
+      "NEXTCLOUD_UNAVAILABLE": "Could not reach Nextcloud right now.",
       "GENERIC": "Could not reach the ERP.",
       "CLIENT_WRITE_DISABLED": "Customer registration in the ERP is turned off in the settings (only an administrator can turn it on)."
     },
@@ -212,6 +214,15 @@
       "OS_EMAIL_SUBJECT": "Email subject",
       "OS_EMAIL_BODY": "Email text",
       "OS_WHATSAPP_TEXT": "WhatsApp text",
+      "NEXTCLOUD": "Invoices on Nextcloud",
+      "NEXTCLOUD_HINT": "The chat shows the invoice PDF stored on Nextcloud, found by its number (\"3594 (6102) CUSTOMER.pdf\"). Nothing is stored in the chat.",
+      "NEXTCLOUD_URL": "Nextcloud address",
+      "NEXTCLOUD_URL_PLACEHOLDER": "https://cloud.yourcompany.com",
+      "NEXTCLOUD_FOLDER_PLACEHOLDER": "/Invoices",
+      "NEXTCLOUD_USER": "User",
+      "NEXTCLOUD_PASSWORD": "App password",
+      "NEXTCLOUD_PASSWORD_HINT": "Create it in Nextcloud > Personal settings > Security > App passwords. Use a user that only sees the invoices folder.",
+      "NEXTCLOUD_FOLDER": "Invoices folder for unit {company}",
       "CLIENT_WRITE": "Customer registration",
       "CLIENT_WRITE_HINT": "Lets agents register customers in Mais Prático from the chat, through the ERP's own function. Customers are saved as pre-registrations, and an already registered CPF/CNPJ is never saved again. Off by default; who can use it is set in the access profile (Customer registration).",
       "CLIENT_WRITE_ENABLED": "Allow registration"
@@ -427,6 +438,9 @@
       }
     },
     "RECORDS": {
+      "INVOICE": {
+        "VIEW": "View invoice"
+      },
       "NUMBER": "Number",
       "CLIENT": "Customer",
       "STATUS": "Status",

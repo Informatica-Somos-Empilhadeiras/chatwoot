@@ -341,6 +341,12 @@ const showReport = () =>
     )
   );
 
+// NF-e: o PDF oficial da nota, espelhado do Nextcloud (a prévia já tem o botão de baixar)
+const showInvoice = () =>
+  pdfRef.value?.open(() =>
+    ErpAPI.invoiceDocument(view.value.company, view.value.number)
+  );
+
 // OS: o mesmo relatório, com a prévia e o envio ao cliente por WhatsApp ou e-mail (como o orçamento)
 const orderSendRef = ref(null);
 const sendOrder = () =>
@@ -483,6 +489,19 @@ const LABEL =
         <Icon icon="i-lucide-lock" class="size-3.5 shrink-0" />
         {{ editBlocked }}
       </p>
+      <div
+        v-if="detail && viewKind === 'invoices' && erpState.nextcloudInvoices"
+        class="flex flex-wrap items-center gap-2 mt-3"
+      >
+        <Button
+          size="sm"
+          variant="faded"
+          color="slate"
+          icon="i-lucide-file-text"
+          :label="t('OUTSIDER_ERP.RECORDS.INVOICE.VIEW')"
+          @click="showInvoice"
+        />
+      </div>
       <div
         v-if="detail && viewKind === 'orders'"
         class="flex flex-wrap items-center gap-2 mt-3"

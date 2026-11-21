@@ -7,6 +7,10 @@ class Api::V1::Accounts::Outsider::Erp::RecordsController < Api::V1::Accounts::O
     render json: { error: 'not_found' }, status: :not_found
   end
   rescue_from(ArgumentError) { |error| render json: { error: 'invalid', field: error.message }, status: :unprocessable_entity }
+  rescue_from(::Outsider::Erp::NextcloudInvoices::NotFound) { render json: { error: 'invoice_not_in_nextcloud' }, status: :not_found }
+  rescue_from(::Outsider::Erp::NextcloudInvoices::Error) do |error|
+    render json: { error: 'nextcloud_unavailable', message: error.message }, status: :service_unavailable
+  end
   before_action :ensure_kind
 
   # q, view, company, person (código do vendedor/técnico), from, to (AAAA-MM-DD), page, per, sort, direction;
@@ -27,6 +31,17 @@ class Api::V1::Accounts::Outsider::Erp::RecordsController < Api::V1::Accounts::O
 
     document = ::Outsider::Erp::QuotePdf.new(::Outsider::Erp::QuoteReport.new(Current.account).build(company, params[:number].to_i))
     send_data document.render, filename: document.filename, type: 'application/pdf', disposition: 'inline'
+  end
+
+  # NF-e: o PDF oficial da nota espelhado do Nextcloud (pela pasta da unidade e o número), para ver e baixar
+  def document
+    raise ::Outsider::Erp::NextcloudInvoices::NotFound unless settings.nextcloud_enabled?
+
+    company = params[:company].to_s
+    raise ArgumentError, 'company' unless settings.companies.include?(company)
+
+    file = ::Outsider::Erp::NextcloudInvoices.new(Current.account).fetch(company, params[:number])
+    send_data file['content'], filename: file['filename'], type: 'application/pdf', disposition: 'inline'
   end
 
   private

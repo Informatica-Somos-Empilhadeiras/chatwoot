@@ -46,6 +46,9 @@ Rails.application.routes.prepend do
                                                                    company: /[a-z0-9_]+/, number: /\d+/ }
               get 'records/quotes/:company/:number/pdf', to: 'records#pdf', defaults: { kind: 'quotes' },
                                                          constraints: { company: /[a-z0-9_]+/, number: /\d+/ }
+              # NF-e: o PDF da nota espelhado do Nextcloud
+              get 'records/invoices/:company/:number/document', to: 'records#document', defaults: { kind: 'invoices' },
+                                                                constraints: { company: /[a-z0-9_]+/, number: /\d+/ }
               # orçamento de peças e serviços feito no chat (separado da proposta comercial do CRM)
               resources :budgets, only: [:index, :show, :create, :update, :destroy] do
                 collection do

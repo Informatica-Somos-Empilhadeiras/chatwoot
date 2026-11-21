@@ -8,6 +8,8 @@
 # - o endereço da API precisa ser https num subdomínio inntegra.com.br, e as empresas (bancos) são só as da lista daqui:
 #   a tela nunca escolhe a empresa de uma gravação (vem da própria OS, conferida contra esta lista).
 class Outsider::Erp::Settings
+  include Outsider::Erp::Settings::Nextcloud
+
   KEY = 'outsider_erp'.freeze
   HOST = /\A[a-z0-9-]+(\.[a-z0-9-]+)*\.inntegra\.com\.br\z/
   COMPANY = /\A[a-z0-9_]{2,40}\z/
@@ -45,7 +47,7 @@ class Outsider::Erp::Settings
     # cadastro de cliente no ERP pela função do próprio Mais Prático (sp_CadastraCliente, Outsider::Erp::ClientRegistrar):
     # entra como pré-cadastro, que o escritório completa. Desligado por padrão.
     'client_write_enabled' => false
-  }.merge(Outsider::Erp::SendTexts::DEFAULTS).freeze
+  }.merge(Outsider::Erp::SendTexts::DEFAULTS).merge(Outsider::Erp::Settings::Nextcloud::NEXTCLOUD_DEFAULTS).freeze
   # textos livres e o tamanho máximo: os do formulário do orçamento e os de envio (orçamento e OS, Outsider::Erp::SendTexts)
   TEXTS = { 'quote_prazo_entrega' => 255, 'quote_validade' => 255, 'quote_garantia' => 255 }.merge(Outsider::Erp::SendTexts::LIMITS).freeze
 
@@ -93,15 +95,17 @@ class Outsider::Erp::Settings
   end
 
   def as_json(*)
-    # o x-device-id não volta para a tela, só se existe
-    data.except('device_id').merge('device_id_set' => device_id.present?, 'confirmed_fields' => CONFIRMED_FIELDS,
-                                   'field_kinds' => FIELD_KINDS, 'writable_fields' => writable_fields)
+    # o x-device-id e a senha do Nextcloud não voltam para a tela, só se existem
+    data.except('device_id', 'nextcloud_secret').merge(
+      'device_id_set' => device_id.present?, 'nextcloud_password_set' => nextcloud_password.present?, 'confirmed_fields' => CONFIRMED_FIELDS,
+      'field_kinds' => FIELD_KINDS, 'writable_fields' => writable_fields
+    )
   end
 
   def update(params)
     params = params.to_h.deep_stringify_keys
     @errors = []
-    parts = %i[clean_connection clean_display clean_cache clean_write clean_quote clean_client]
+    parts = %i[clean_connection clean_display clean_cache clean_write clean_quote clean_client clean_nextcloud]
     cleaned = parts.reduce(data) { |out, part| out.merge(send(part, params)) }
     raise Invalid, @errors if @errors.any?
 

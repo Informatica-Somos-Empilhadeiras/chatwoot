@@ -43,6 +43,8 @@
       "INVALID": "Não foi possível gravar: confira o valor escolhido.",
       "NO_PERMISSION": "Seu perfil de acesso não permite isso.",
       "OS_NOT_FOUND": "OS não encontrada no ERP.",
+      "INVOICE_NOT_IN_NEXTCLOUD": "Não achei o PDF desta nota na pasta do Nextcloud.",
+      "NEXTCLOUD_UNAVAILABLE": "Não consegui falar com o Nextcloud agora.",
       "GENERIC": "Não foi possível falar com o ERP.",
       "CLIENT_WRITE_DISABLED": "O cadastro de clientes no ERP está desligado nas Configurações (só um administrador liga)."
     },
@@ -212,6 +214,15 @@
       "OS_EMAIL_SUBJECT": "Assunto do e-mail",
       "OS_EMAIL_BODY": "Texto do e-mail",
       "OS_WHATSAPP_TEXT": "Texto do WhatsApp",
+      "NEXTCLOUD": "Notas fiscais no Nextcloud",
+      "NEXTCLOUD_HINT": "O chat mostra o PDF da nota que está no Nextcloud, achado pelo número (\"3594 (6102) CLIENTE.pdf\"). Nada fica guardado no chat.",
+      "NEXTCLOUD_URL": "Endereço do Nextcloud",
+      "NEXTCLOUD_URL_PLACEHOLDER": "https://nuvem.suaempresa.com.br",
+      "NEXTCLOUD_FOLDER_PLACEHOLDER": "/Notas Fiscais",
+      "NEXTCLOUD_USER": "Usuário",
+      "NEXTCLOUD_PASSWORD": "Senha de app",
+      "NEXTCLOUD_PASSWORD_HINT": "Crie em Nextcloud > Configurações pessoais > Segurança > Senhas de app. Use um usuário que só veja a pasta das notas.",
+      "NEXTCLOUD_FOLDER": "Pasta das notas da unidade {company}",
       "CLIENT_WRITE": "Cadastro de clientes",
       "CLIENT_WRITE_HINT": "Permite cadastrar cliente no Mais Prático pelo chat, pela função do próprio ERP. O cliente entra como pré-cadastro, e um CPF/CNPJ já cadastrado nunca é gravado de novo. Começa desligado; quem pode usar é definido no perfil de acesso (Cadastro de clientes).",
       "CLIENT_WRITE_ENABLED": "Permitir cadastrar"
@@ -427,6 +438,9 @@
       }
     },
     "RECORDS": {
+      "INVOICE": {
+        "VIEW": "Ver nota"
+      },
       "NUMBER": "Número",
       "CLIENT": "Cliente",
       "STATUS": "Situação",
