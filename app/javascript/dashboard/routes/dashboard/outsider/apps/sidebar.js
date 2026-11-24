@@ -4,6 +4,7 @@
 // celular e em qualquer outro lugar ele é um módulo comum, com os aplicativos como opções.
 // O bloco aparece para quem conectou a conta Microsoft (ou já tem conversas do Teams) e para todos quando a empresa
 // já ligou o app da Microsoft: quem ainda não conectou vê na tela o botão para conectar.
+// Google: Gmail, Agenda e Drive, do mesmo jeito (aparece quando a empresa cadastrou o app do Google ou a pessoa entrou).
 import { h } from 'vue';
 import AppLogo from './AppLogo.vue';
 import {
@@ -73,8 +74,51 @@ const microsoftModule = (t, accountScopedRoute) => {
   };
 };
 
+export const googleVisible = () =>
+  appsState.google.connected || appsState.google.configured;
+
+const googleModule = (t, accountScopedRoute) => {
+  const provider = { provider: 'google' };
+  return {
+    name: 'OutsiderGoogle',
+    label: t('OUTSIDER_APPS.GOOGLE'),
+    icon: logo('google'),
+    navSection: 'aplicativos',
+    layout: 'apps',
+    appStatus: appsState.google.connected
+      ? appsState.google.status || 'active'
+      : 'disconnected',
+    countMode: 'sum',
+    children: [
+      {
+        name: 'OutsiderGoogle-gmail',
+        label: t('OUTSIDER_APPS.GMAIL'),
+        icon: logo('gmail'),
+        badgeCount: appsState.google.unreadMail,
+        activeOn: [MAIL_ROUTE],
+        to: accountScopedRoute(MAIL_ROUTE, { ...provider, mailApp: 'gmail' }),
+      },
+      {
+        name: 'OutsiderGoogle-calendar',
+        label: t('OUTSIDER_APPS.CALENDAR'),
+        icon: logo('gcalendar'),
+        activeOn: [CALENDAR_ROUTE],
+        to: accountScopedRoute(CALENDAR_ROUTE, provider),
+      },
+      {
+        name: 'OutsiderGoogle-drive',
+        label: t('OUTSIDER_APPS.GDRIVE'),
+        icon: logo('gdrive'),
+        activeOn: [DRIVE_ROUTE],
+        to: accountScopedRoute(DRIVE_ROUTE, { ...provider, driveApp: 'drive' }),
+      },
+    ],
+  };
+};
+
 export const appsSidebarItems = (t, accountScopedRoute) => {
   const items = [];
   if (microsoftVisible()) items.push(microsoftModule(t, accountScopedRoute));
+  if (googleVisible()) items.push(googleModule(t, accountScopedRoute));
   return items;
 };

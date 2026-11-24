@@ -34,6 +34,7 @@ import {
   makeAllowed,
   toModules,
   itemsOf,
+  paramsMatch,
   countOf as countOfItem,
   moduleCount as moduleCountOf,
 } from '../navigation/navModel';
@@ -110,9 +111,10 @@ const moreModules = computed(() =>
 
 const isItemActive = item => {
   if (!item.to) return false;
-  if (item.activeOn?.includes(route.name)) return true;
   const path = resolvePath(item.to);
-  return route.path === path || route.path.startsWith(`${path}/`);
+  if (route.path === path || route.path.startsWith(`${path}/`)) return true;
+  // a mesma tela pode servir a mais de um menu (Outlook e Gmail): só vale se os parâmetros baterem
+  return !!item.activeOn?.includes(route.name) && paramsMatch(item, route);
 };
 const isModuleActive = module => itemsOf(module).some(isItemActive);
 const activeModule = computed(

@@ -100,7 +100,7 @@ export const moduleCount = (module, getters) =>
     0
   );
 
-const paramsMatch = (item, route) =>
+export const paramsMatch = (item, route) =>
   Object.keys(item.to?.params || {}).every(
     key => String(item.to.params[key]) === String(route.params[key])
   );

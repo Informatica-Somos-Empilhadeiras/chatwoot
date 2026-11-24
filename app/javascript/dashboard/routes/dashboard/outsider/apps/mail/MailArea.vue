@@ -15,7 +15,7 @@ import AppLogo from '../AppLogo.vue';
 import AppsGate from '../AppsGate.vue';
 import MailReader from './MailReader.vue';
 import MailComposer from './MailComposer.vue';
-import { providerOf, gateOf } from '../providers';
+import { providerOf, gateOf, textKey } from '../providers';
 import {
   appsState,
   setUnreadMail,
@@ -39,6 +39,12 @@ const FOLDER_ICONS = {
   archive: 'i-lucide-archive',
   junkemail: 'i-lucide-shield-alert',
   custom: 'i-lucide-folder',
+  // Gmail: as abas da Caixa de entrada e os marcadores da pessoa
+  promotions: 'i-lucide-tag',
+  social: 'i-lucide-users',
+  updates: 'i-lucide-info',
+  forums: 'i-lucide-messages-square',
+  label: 'i-lucide-bookmark',
 };
 const FILTERS = ['all', 'unread', 'attachments', 'flagged'];
 
@@ -342,7 +348,7 @@ onBeforeUnmount(() => emitter.off(APPS_NOTICE, onNotice));
             :disabled="!!searched"
             @click="filter = option"
           >
-            {{ t(`OUTSIDER_APPS.MAIL.FILTER_${option.toUpperCase()}`) }}
+            {{ t(textKey(providerKey, `MAIL.FILTER_${option.toUpperCase()}`)) }}
           </button>
         </div>
         <div class="flex-1 min-h-0 overflow-y-auto" @scroll.passive="onScroll">
@@ -415,8 +421,11 @@ onBeforeUnmount(() => emitter.off(APPS_NOTICE, onNotice));
                   />
                   <Icon
                     v-if="item.flagged"
-                    icon="i-lucide-flag"
-                    class="size-3.5 text-n-ruby-10 shrink-0"
+                    :icon="info.mail.flagIcon || 'i-lucide-flag'"
+                    class="size-3.5 shrink-0"
+                    :class="
+                      info.mail.flagIcon ? 'text-n-amber-10' : 'text-n-ruby-10'
+                    "
                   />
                 </span>
                 <span class="block text-xs truncate text-n-slate-10">{{

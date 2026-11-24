@@ -46,9 +46,14 @@ export const peopleText = list =>
   (list || []).map(person => person.name || person.email).join(', ');
 
 // texto citado para encaminhar/responder no Chatwoot (o servidor já põe o original embaixo; aqui é só o assunto)
-export const replySubject = (mode, subject) => {
+// Outlook em português usa "RE:" e "ENC:"; o Gmail usa "Re:" e "Fwd:"
+export const replySubject = (mode, subject, provider = 'microsoft') => {
   const clean = String(subject || '');
-  if (mode === 'forward')
-    return /^(enc|fw|fwd):/i.test(clean) ? clean : `ENC: ${clean}`;
-  return /^(re|res):/i.test(clean) ? clean : `RE: ${clean}`;
+  const gmail = provider === 'google';
+  if (mode === 'forward') {
+    if (/^(enc|fw|fwd):/i.test(clean)) return clean;
+    return `${gmail ? 'Fwd' : 'ENC'}: ${clean}`;
+  }
+  if (/^(re|res):/i.test(clean)) return clean;
+  return `${gmail ? 'Re' : 'RE'}: ${clean}`;
 };

@@ -1,6 +1,7 @@
-// OUTSIDER: estado dos Aplicativos que aparece fora das telas deles: quem está conectado (Microsoft) e as não lidas do
-// Outlook para o número do menu. Carrega uma vez por conta e acompanha os avisos ao vivo (evento outsider.notice com
-// kind 'apps', mandado só para a própria pessoa). Mudou o login do Teams (kind 'teams', action 'changed'): recarrega.
+// OUTSIDER: estado dos Aplicativos que aparece fora das telas deles: quem está conectado (Microsoft e Google) e as não
+// lidas do Outlook e do Gmail para o número do menu. Carrega uma vez por conta e acompanha os avisos ao vivo (evento
+// outsider.notice com kind 'apps', mandado só para a própria pessoa). Mudou o login do Teams (kind 'teams', action
+// 'changed') ou do Google (kind 'apps' sem número): recarrega.
 import { reactive } from 'vue';
 import { emitter } from 'shared/helpers/mitt';
 import { BUS_EVENTS } from 'shared/constants/busEvents';
@@ -13,20 +14,24 @@ export const CALENDAR_ROUTE = 'outsider_apps_calendar';
 
 const emptyProvider = () => ({
   loaded: false,
-  // a empresa ligou o app (Microsoft: Configurações > Microsoft Teams): o bloco aparece para todos
+  // a empresa ligou o app (Configurações > Microsoft Teams / Configurações > Google): o bloco aparece para todos
   configured: false,
   connected: false,
   status: null,
   email: '',
   mail: false,
   calendar: false,
+  drive: false,
   unreadMail: 0,
 });
 
 export const appsState = reactive({
   accountId: null,
   microsoft: emptyProvider(),
+  google: emptyProvider(),
 });
+
+const PROVIDER_KEYS = ['microsoft', 'google'];
 
 let request = 0;
 let listening = false;
@@ -39,19 +44,25 @@ export const loadAppsSummary = async accountId => {
   try {
     const { data } = await AppsAPI.summary();
     if (mine !== request) return;
-    const ms = data.microsoft || {};
-    Object.assign(appsState.microsoft, {
-      loaded: true,
-      configured: !!ms.configured,
-      connected: !!ms.connected,
-      status: ms.status || null,
-      email: ms.email || '',
-      mail: !!ms.mail,
-      calendar: !!ms.calendar,
-      unreadMail: ms.unread_mail || 0,
+    PROVIDER_KEYS.forEach(key => {
+      const info = data[key] || {};
+      Object.assign(appsState[key], {
+        loaded: true,
+        configured: !!info.configured,
+        connected: !!info.connected,
+        status: info.status || null,
+        email: info.email || '',
+        mail: !!info.mail,
+        calendar: !!info.calendar,
+        // OneDrive vem junto com o login do Teams desde a primeira versão
+        drive: key === 'microsoft' ? !!info.connected : !!info.drive,
+        unreadMail: info.unread_mail || 0,
+      });
     });
   } catch {
-    appsState.microsoft.loaded = true;
+    PROVIDER_KEYS.forEach(key => {
+      appsState[key].loaded = true;
+    });
   }
 };
 

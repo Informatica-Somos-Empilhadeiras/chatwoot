@@ -7,6 +7,8 @@ import {
 } from '../calendar/calendarDates';
 import { initialsOf, replySubject } from '../mail/mailHelpers';
 import { errorText } from '../appsErrors';
+import { textKey } from '../providers';
+import { fileIcon } from '../drive/driveHelpers';
 
 describe('calendarDates', () => {
   it('reads Microsoft local times without changing the time zone', () => {
@@ -52,6 +54,10 @@ describe('mailHelpers', () => {
     expect(replySubject('reply', 'Orçamento')).toBe('RE: Orçamento');
     expect(replySubject('reply_all', 'RE: Orçamento')).toBe('RE: Orçamento');
     expect(replySubject('forward', 'Orçamento')).toBe('ENC: Orçamento');
+    expect(replySubject('reply', 'Orçamento', 'google')).toBe('Re: Orçamento');
+    expect(replySubject('forward', 'Orçamento', 'google')).toBe(
+      'Fwd: Orçamento'
+    );
   });
 });
 
@@ -71,5 +77,45 @@ describe('appsErrors', () => {
       'OUTSIDER_TEAMS_AREA.ERRORS.EMPTY:{"name":""}'
     );
     expect(errorText({}, t)).toBe('OUTSIDER_TEAMS_AREA.ERRORS.GENERIC');
+  });
+
+  it('uses the Google texts for Google requests', () => {
+    const google = code => ({
+      ...fail(code, code),
+      config: { url: '/api/v1/accounts/1/outsider/apps/google/mail/folders' },
+    });
+    expect(errorText(google('reconnect'), t)).toBe(
+      'OUTSIDER_APPS.GERRORS.RECONNECT'
+    );
+    expect(errorText(google('already_linked'), t)).toBe(
+      'OUTSIDER_APPS.GERRORS.ALREADY_LINKED'
+    );
+    expect(errorText(google('no_recipient'), t)).toBe(
+      'OUTSIDER_APPS.ERRORS.NO_RECIPIENT'
+    );
+  });
+});
+
+describe('providers', () => {
+  it('swaps the texts that name the company', () => {
+    expect(textKey('google', 'MAIL.DELETE')).toBe(
+      'OUTSIDER_APPS.G.MAIL_DELETE'
+    );
+    expect(textKey('microsoft', 'MAIL.DELETE')).toBe(
+      'OUTSIDER_APPS.MAIL.DELETE'
+    );
+    expect(textKey('google', 'MAIL.MOVE')).toBe('OUTSIDER_APPS.MAIL.MOVE');
+  });
+});
+
+describe('driveHelpers', () => {
+  it('picks the Google Docs icons by type', () => {
+    expect(
+      fileIcon({
+        name: 'Relatório',
+        mime: 'application/vnd.google-apps.spreadsheet',
+      }).icon
+    ).toBe('i-lucide-file-spreadsheet');
+    expect(fileIcon({ name: 'foto.png' }).icon).toBe('i-lucide-image');
   });
 });

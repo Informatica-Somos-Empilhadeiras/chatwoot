@@ -1,14 +1,14 @@
 <script setup>
 // OUTSIDER: o que a tela de um aplicativo mostra antes de funcionar: carregando, "Conecte sua conta" (nunca entrou),
-// "Entre de novo" (a Microsoft não aceita mais o acesso, ou faltam as permissões novas, ex.: Outlook pede a versão 4).
-// O botão leva para Configurações > Meu Teams, onde a pessoa entra com a própria conta.
+// "Entre de novo" (a Microsoft/o Google não aceita mais o acesso, ou faltam permissões, ex.: Outlook pede a versão 4).
+// O botão leva para Configurações > Microsoft Teams ou Configurações > Google, onde a pessoa entra com a própria conta.
 import { computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 import AppLogo from './AppLogo.vue';
-import { providerOf } from './providers';
+import { providerOf, textKey } from './providers';
 
 const props = defineProps({
   provider: { type: String, required: true },
@@ -39,8 +39,10 @@ const text = computed(
       disconnected: t('OUTSIDER_APPS.GATE.CONNECT_TEXT', {
         company: t(info.value.company),
       }),
-      reconnect: t('OUTSIDER_APPS.GATE.RECONNECT_TEXT'),
-      scope: t('OUTSIDER_APPS.GATE.SCOPE_TEXT', { app: props.appName }),
+      reconnect: t(textKey(props.provider, 'GATE.RECONNECT_TEXT')),
+      scope: t(textKey(props.provider, 'GATE.SCOPE_TEXT'), {
+        app: props.appName,
+      }),
     })[props.state] || ''
 );
 

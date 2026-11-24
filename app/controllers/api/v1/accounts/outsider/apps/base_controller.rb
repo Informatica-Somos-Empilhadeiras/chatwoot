@@ -16,6 +16,19 @@ class Api::V1::Accounts::Outsider::Apps::BaseController < Api::V1::Accounts::Bas
     render_error_code('scope_outdated', :unprocessable_entity)
   end
 
+  def google_link
+    @google_link ||= ::Outsider::GoogleLink.find_by(account_id: Current.account.id, user_id: Current.user.id)
+  end
+
+  # feature: :mail (Gmail), :calendar (Agenda) ou :drive (Drive); a pessoa pode ter desmarcado uma delas na tela do Google
+  def require_google(feature)
+    return render_error_code('not_connected', :unprocessable_entity) if google_link.nil? || google_link.status == 'disconnected'
+    return render_error_code('reconnect', :unprocessable_entity) if google_link.status == 'reconnect'
+
+    render_error_code('scope_outdated', :unprocessable_entity) unless google_link.allows?(feature)
+  end
+
+  # os erros do Google usam as mesmas classes dos da Microsoft (Outsider::Apps::Google::Client)
   def graph_error(error)
     return render_error_code('reconnect', :unprocessable_entity) if error.is_a?(::Outsider::Teams::Graph::Client::Reconnect)
 

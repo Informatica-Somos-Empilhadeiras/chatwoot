@@ -8,9 +8,9 @@ import { useAlert } from 'dashboard/composables';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 import AppsAPI from 'dashboard/api/outsider/apps';
-import TeamsGraphAPI from 'dashboard/api/outsider/teamsGraph';
 import { formatSize } from 'dashboard/components-next/outsider/mediaViewer/mediaHelpers';
 import { errorText } from '../appsErrors';
+import { providerOf, textKey } from '../providers';
 import { peopleText, replySubject } from './mailHelpers';
 
 const props = defineProps({
@@ -31,7 +31,9 @@ const to = ref([]);
 const cc = ref([]);
 const showCc = ref(false);
 const subject = ref(
-  props.source ? replySubject(props.mode, props.source.subject) : ''
+  props.source
+    ? replySubject(props.mode, props.source.subject, props.provider)
+    : ''
 );
 const text = ref('');
 const files = ref([]);
@@ -41,7 +43,8 @@ const fileInput = ref(null);
 const people = ref([]);
 const query = ref({ to: '', cc: '' });
 
-TeamsGraphAPI.people()
+providerOf(props.provider)
+  .calendar.people()
   .then(({ data }) => {
     people.value = (data.payload || []).filter(person => person.email);
   })
@@ -283,7 +286,7 @@ const send = async () => {
         data-apps-mail-text
       />
       <p v-if="source" class="mb-0 text-xs text-n-slate-10">
-        {{ t('OUTSIDER_APPS.MAIL.QUOTED_NOTE') }}
+        {{ t(textKey(provider, 'MAIL.QUOTED_NOTE')) }}
       </p>
 
       <div v-if="files.length" class="flex flex-wrap gap-1.5">

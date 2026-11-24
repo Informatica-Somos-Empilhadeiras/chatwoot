@@ -188,7 +188,7 @@ const save = async () => {
           v-model="personQuery"
           type="text"
           class="!mb-0 text-sm"
-          :placeholder="t('OUTSIDER_APPS.CAL.INVITE')"
+          :placeholder="t(api.invite || 'OUTSIDER_APPS.CAL.INVITE')"
           @keydown.enter.prevent="
             suggestions.length ? addPerson(suggestions[0]) : addEmail()
           "

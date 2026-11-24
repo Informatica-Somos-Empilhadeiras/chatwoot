@@ -12,7 +12,7 @@ class AppsAPI extends ApiClient {
     return axios.get(`${this.url}/summary`);
   }
 
-  // ---------- e-mail (provider: microsoft) ----------
+  // ---------- e-mail (provider: microsoft | google) ----------
   mailFolders(provider) {
     return axios.get(`${this.url}/${provider}/mail/folders`);
   }
@@ -112,6 +112,51 @@ class AppsAPI extends ApiClient {
     return axios.post(`${this.url}/${provider}/drive/items`, form, {
       onUploadProgress,
     });
+  }
+
+  // ---------- Google: a conta de cada pessoa (Configurações > Google) e a agenda ----------
+  googleAccount() {
+    return axios.get(`${this.url}/google/account`);
+  }
+
+  saveGoogleApp(data) {
+    return axios.put(`${this.url}/google/account/app`, data);
+  }
+
+  googleAuthorize() {
+    return axios.post(`${this.url}/google/account/authorize`);
+  }
+
+  googleFinish(params) {
+    return axios.post(`${this.url}/google/account/finish`, params);
+  }
+
+  googleDisconnect() {
+    return axios.delete(`${this.url}/google/account`);
+  }
+
+  googleRemoveLink(id) {
+    return axios.delete(`${this.url}/google/account/links/${id}`);
+  }
+
+  googleEvents({ from, to, timeZone }) {
+    return axios.get(`${this.url}/google/calendar/events`, {
+      params: { from, to, time_zone: timeZone },
+    });
+  }
+
+  googleCreateEvent(data) {
+    return axios.post(`${this.url}/google/calendar/events`, data);
+  }
+
+  googleDeleteEvent(id) {
+    return axios.delete(
+      `${this.url}/google/calendar/events/${encodeURIComponent(id)}`
+    );
+  }
+
+  googlePeople() {
+    return axios.get(`${this.url}/google/calendar/people`);
   }
 }
 

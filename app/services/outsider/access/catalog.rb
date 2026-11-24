@@ -18,6 +18,8 @@ module Outsider::Access::Catalog
     { key: 'contacts', group: 'atendimento', levels: %w[none view use], agent: 'use', technician: 'view' },
     { key: 'whatsapp_status', group: 'atendimento', levels: %w[none view use], agent: 'use', technician: 'none' },
     { key: 'teams', group: 'atendimento', levels: %w[none use], agent: 'use', technician: 'use' },
+    # OUTSIDER (Aplicativos): Gmail, Agenda e Drive com a conta Google de cada pessoa
+    { key: 'google', group: 'atendimento', levels: %w[none use], agent: 'use', technician: 'use' },
     { key: 'crm', group: 'vendas', levels: %w[none view use], agent: 'use', technician: 'none' },
     # OUTSIDER (ERP): a seção ERP Mais Prático (menu e API) e uma linha por aba. Orçamentos: Usa cria, edita e envia;
     # OS: Usa muda substatus e campos e envia o relatório; Pedidos: Usa informa o técnico e a OS (só no chat);
@@ -53,6 +55,7 @@ module Outsider::Access::Catalog
     [%r{\Aapi/v1/accounts/outsider/whatsapp_statuses\z}, 'whatsapp_status'],
     [%r{\Aapi/v1/accounts/outsider/teams_}, 'teams'],
     [%r{\Aapi/v1/accounts/outsider/apps/microsoft_}, 'teams'], # Outlook e OneDrive seguem o Teams
+    [%r{\Aapi/v1/accounts/outsider/apps/google_}, 'google'],
     [%r{\Aapi/v1/accounts/outsider/erp/}, 'erp'],
     [%r{\Aapi/v1/accounts/outsider/reports/}, 'reports']
   ].freeze

@@ -12,6 +12,7 @@ import BotFlowEditor from '../bot/BotFlowEditor.vue';
 import TeamsSettings from '../teams/TeamsSettings.vue';
 import TeamsArea from '../teams/TeamsArea.vue';
 import PushSettings from '../push/PushSettings.vue';
+import GoogleSettings from '../apps/GoogleSettings.vue';
 // perfis de acesso por tela (Administrador, Agente, Técnico e os criados) e o cadastro de pessoas com ramal
 import AccessSettings from '../access/AccessSettings.vue';
 // Aplicativos: Outlook, OneDrive e Agenda (blocos Microsoft e Google do menu)
@@ -47,6 +48,13 @@ export const routes = [
         path: 'teams',
         name: 'outsider_teams_settings',
         component: TeamsSettings,
+        meta: { permissions: ['administrator', 'agent'] },
+      },
+      // Google (Gmail, Agenda e Drive): cada um conecta a própria conta; o app da empresa só para administradores
+      {
+        path: 'google',
+        name: 'outsider_google_settings',
+        component: GoogleSettings,
         meta: { permissions: ['administrator', 'agent'] },
       },
       // aviso novo no navegador e no celular (cada pessoa escolhe o que recebe)

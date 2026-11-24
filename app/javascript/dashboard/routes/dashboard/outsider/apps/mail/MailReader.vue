@@ -13,6 +13,7 @@ import AppsAPI from 'dashboard/api/outsider/apps';
 import { openFileViewer } from 'dashboard/components-next/outsider/fileViewer/fileViewerStore';
 import { formatSize } from 'dashboard/components-next/outsider/mediaViewer/mediaHelpers';
 import { errorText } from '../appsErrors';
+import { providerOf, textKey } from '../providers';
 import { initialsOf, avatarTone, fullDate, peopleText } from './mailHelpers';
 
 const props = defineProps({
@@ -33,8 +34,15 @@ const frameHeight = ref(320);
 const showMove = ref(false);
 
 const accountId = computed(() => route.params.accountId);
+// o Gmail não deixa pôr e-mail em Enviados (movable: false); rascunho também não é destino
 const moveTargets = computed(() =>
-  props.folders.filter(folder => !['drafts'].includes(folder.kind))
+  props.folders.filter(
+    folder => !['drafts'].includes(folder.kind) && folder.movable !== false
+  )
+);
+const tk = path => textKey(props.provider, path);
+const flagIcon = computed(
+  () => providerOf(props.provider).mail.flagIcon || 'i-lucide-flag'
 );
 
 const load = async () => {
@@ -103,7 +111,7 @@ const move = async destination => {
     await AppsAPI.moveMail(props.provider, props.messageId, destination);
     useAlert(
       destination === 'deleteditems'
-        ? t('OUTSIDER_APPS.MAIL.DELETED')
+        ? t(tk('MAIL.DELETED'))
         : t('OUTSIDER_APPS.MAIL.MOVED')
     );
     emit('changed', { id: props.messageId, removed: true });
@@ -238,16 +246,10 @@ load();
           type="button"
           class="oa-ghost"
           :class="{ '!text-n-ruby-11': message.flagged }"
-          :title="
-            t(
-              message.flagged
-                ? 'OUTSIDER_APPS.MAIL.UNFLAG'
-                : 'OUTSIDER_APPS.MAIL.FLAG'
-            )
-          "
+          :title="t(tk(message.flagged ? 'MAIL.UNFLAG' : 'MAIL.FLAG'))"
           @click="update({ flagged: !message.flagged })"
         >
-          <Icon icon="i-lucide-flag" class="size-4" />
+          <Icon :icon="flagIcon" class="size-4" />
         </button>
         <span class="relative">
           <button
@@ -276,7 +278,7 @@ load();
         <button
           type="button"
           class="oa-ghost is-danger"
-          :title="t('OUTSIDER_APPS.MAIL.DELETE')"
+          :title="t(tk('MAIL.DELETE'))"
           data-apps-mail-delete
           @click="move('deleteditems')"
         >
@@ -288,7 +290,7 @@ load();
           target="_blank"
           rel="noopener noreferrer"
           class="oa-ghost"
-          :title="t('OUTSIDER_APPS.MAIL.OPEN_WEB')"
+          :title="t(tk('MAIL.OPEN_WEB'))"
         >
           <Icon icon="i-lucide-external-link" class="size-4" />
         </a>

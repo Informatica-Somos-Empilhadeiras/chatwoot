@@ -14,10 +14,10 @@ import { openFileViewerWith } from 'dashboard/components-next/outsider/fileViewe
 import { formatSize } from 'dashboard/components-next/outsider/mediaViewer/mediaHelpers';
 import AppLogo from '../AppLogo.vue';
 import AppsGate from '../AppsGate.vue';
-import { providerOf, gateOf } from '../providers';
+import { providerOf, gateOf, textKey } from '../providers';
 import { listTime } from '../../teams/helpers';
 import { errorText } from '../appsErrors';
-import { fileIcon } from './driveHelpers';
+import { fileIcon, canDownload } from './driveHelpers';
 import '../apps.css';
 
 const { t } = useI18n();
@@ -148,9 +148,20 @@ const clearSearch = () => {
 };
 
 const open = item => {
-  const ext = String(item.name).split('.').pop().toLowerCase();
+  // Documento do Google não tem extensão no nome
+  const name = String(item.name);
+  const ext = name.includes('.') ? name.split('.').pop().toLowerCase() : '';
+  const editLabel = info.value.texts['DRIVE.EDIT']
+    ? t(info.value.texts['DRIVE.EDIT'])
+    : '';
   openFileViewerWith(
-    { name: item.name, extension: ext, size: item.size, editUrl: item.web_url },
+    {
+      name: item.name,
+      extension: ext,
+      size: item.size,
+      editUrl: item.web_url,
+      editLabel,
+    },
     async () => {
       const { data } = await AppsAPI.drivePreview(providerKey.value, item);
       return {
@@ -190,7 +201,7 @@ const remove = async item => {
   // eslint-disable-next-line no-alert
   if (
     !window.confirm(
-      t('OUTSIDER_APPS.DRIVE.CONFIRM_DELETE', { name: item.name })
+      t(textKey(providerKey.value, 'DRIVE.CONFIRM_DELETE'), { name: item.name })
     )
   )
     return;
@@ -486,7 +497,9 @@ onMounted(load);
                             count: item.child_count,
                           })
                         : '—'
-                      : formatSize(item.size)
+                      : item.size != null
+                        ? formatSize(item.size)
+                        : '—'
                   }}
                 </td>
                 <td
@@ -503,6 +516,7 @@ onMounted(load);
                     class="flex justify-end gap-1 opacity-60 group-hover:opacity-100"
                   >
                     <button
+                      v-if="canDownload(item)"
                       type="button"
                       class="grid rounded size-7 !p-0 place-items-center hover:bg-n-alpha-2"
                       :title="t('OUTSIDER_APPS.DOWNLOAD')"
@@ -583,10 +597,14 @@ onMounted(load);
           />
         </button>
         <dl class="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1.5 text-xs mb-0">
-          <dt class="text-n-slate-11">{{ t('OUTSIDER_APPS.DRIVE.SIZE') }}</dt>
-          <dd class="mb-0 text-right text-n-slate-12">
-            {{ formatSize(selected.size) }}
-          </dd>
+          <template v-if="selected.size != null">
+            <dt class="text-n-slate-11">
+              {{ t('OUTSIDER_APPS.DRIVE.SIZE') }}
+            </dt>
+            <dd class="mb-0 text-right text-n-slate-12">
+              {{ formatSize(selected.size) }}
+            </dd>
+          </template>
           <dt class="text-n-slate-11">
             {{ t('OUTSIDER_APPS.DRIVE.MODIFIED_BY') }}
           </dt>
@@ -612,7 +630,12 @@ onMounted(load);
             <Icon icon="i-lucide-eye" class="size-4" />
             {{ t('OUTSIDER_APPS.DRIVE.OPEN') }}
           </button>
-          <button type="button" class="oa-ghost" @click="download(selected)">
+          <button
+            v-if="canDownload(selected)"
+            type="button"
+            class="oa-ghost"
+            @click="download(selected)"
+          >
             <Icon icon="i-lucide-download" class="size-4" />
             {{ t('OUTSIDER_APPS.DOWNLOAD') }}
           </button>

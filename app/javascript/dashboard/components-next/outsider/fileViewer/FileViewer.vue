@@ -1,7 +1,8 @@
 <script setup>
 // OUTSIDER: janela que mostra um documento dentro do Chatwoot, só para ler: PDF e texto no navegador, Word, Excel
 // e PowerPoint pelo visualizador do Office na web (anexos das conversas) ou pela visualização do OneDrive/SharePoint
-// (arquivos do Teams). Para editar, "Editar no Office" abre o arquivo em outra aba. Esc ou clique fora fecha.
+// (arquivos do Teams). Para editar, "Editar no Office" abre o arquivo em outra aba (editLabel troca o texto, ex.:
+// "Abrir no Google Drive"). Esc ou clique fora fecha.
 // No celular o PDF abre no visualizador do aparelho (o navegador do celular não mostra PDF dentro da página).
 import { computed, ref, watch, onBeforeUnmount } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -111,7 +112,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey, true));
             class="flex items-center gap-2 px-3 h-9 rounded-full text-sm font-medium bg-white/10 hover:bg-white/20"
           >
             <span class="i-lucide-pencil size-4" />
-            {{ t('OUTSIDER_WHATSAPP.FILE_VIEWER.EDIT') }}
+            {{ file.editLabel || t('OUTSIDER_WHATSAPP.FILE_VIEWER.EDIT') }}
           </a>
           <a
             v-if="file.downloadUrl"
@@ -211,7 +212,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey, true));
               class="flex items-center gap-2 px-4 h-10 rounded-full text-sm font-medium bg-white/10 hover:bg-white/20"
             >
               <span class="i-lucide-pencil size-4" />
-              {{ t('OUTSIDER_WHATSAPP.FILE_VIEWER.EDIT') }}
+              {{ file.editLabel || t('OUTSIDER_WHATSAPP.FILE_VIEWER.EDIT') }}
             </a>
             <a
               v-if="file.downloadUrl"

@@ -10,8 +10,46 @@ const TYPES = [
   [/^(zip|rar|7z|tar|gz)$/, 'i-lucide-file-archive', 'text-n-slate-11'],
 ];
 
+// Documentos, Planilhas e Apresentações do Google não têm extensão no nome: vale o tipo
+const GOOGLE_TYPES = {
+  'application/vnd.google-apps.document': [
+    'i-lucide-file-text',
+    'text-n-blue-10',
+  ],
+  'application/vnd.google-apps.spreadsheet': [
+    'i-lucide-file-spreadsheet',
+    'text-n-teal-10',
+  ],
+  'application/vnd.google-apps.presentation': [
+    'i-lucide-presentation',
+    'text-n-amber-10',
+  ],
+  'application/vnd.google-apps.form': [
+    'i-lucide-list-checks',
+    'text-n-iris-10',
+  ],
+  'application/vnd.google-apps.drawing': [
+    'i-lucide-pen-tool',
+    'text-n-ruby-10',
+  ],
+};
+
+// Formulários, Sites, Mapas e afins do Google não viram arquivo: só abrem no próprio Google
+const GOOGLE_EXPORTABLE = [
+  'application/vnd.google-apps.document',
+  'application/vnd.google-apps.spreadsheet',
+  'application/vnd.google-apps.presentation',
+  'application/vnd.google-apps.drawing',
+];
+export const canDownload = item =>
+  !item.folder &&
+  (!String(item.mime || '').startsWith('application/vnd.google-apps.') ||
+    GOOGLE_EXPORTABLE.includes(item.mime));
+
 export const fileIcon = item => {
   if (item.folder) return { icon: 'i-lucide-folder', tone: 'text-n-amber-10' };
+  const google = GOOGLE_TYPES[item.mime];
+  if (google) return { icon: google[0], tone: google[1] };
   const ext = String(item.name || '')
     .split('.')
     .pop()

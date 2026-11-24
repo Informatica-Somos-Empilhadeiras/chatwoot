@@ -19,6 +19,8 @@ export const SCREEN_PATHS = [
   ['whatsapp_status', path('whatsapp-status(/|$)')],
   // os aplicativos da Microsoft (Outlook, OneDrive, Agenda) seguem a permissão do Teams
   ['teams', path('(teams|apps/microsoft)(/|$)')],
+  // Gmail, Agenda e Drive (a conta Google de cada pessoa)
+  ['google', path('apps/google(/|$)')],
   ['crm', path('crm(/|$)')],
   ['erp', path('erp(/|$)')],
 ];

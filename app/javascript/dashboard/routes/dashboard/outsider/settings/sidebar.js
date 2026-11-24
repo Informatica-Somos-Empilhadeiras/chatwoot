@@ -28,6 +28,13 @@ export const outsiderSettingsItems = (t, accountScopedRoute) => [
     icon: 'i-lucide-messages-square',
     to: accountScopedRoute('outsider_teams_settings'),
   },
+  // Aplicativos: a conta Google de cada pessoa (Gmail, Agenda e Drive) e o app da empresa no Google Cloud
+  {
+    name: 'Settings Outsider Google',
+    label: t('OUTSIDER_APPS.GSET.SIDEBAR'),
+    icon: 'i-logos-google-icon',
+    to: accountScopedRoute('outsider_google_settings'),
+  },
   // aviso novo no navegador e no celular (todos)
   {
     name: 'Settings Outsider Push',
