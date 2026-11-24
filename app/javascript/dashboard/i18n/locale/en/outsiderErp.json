@@ -72,7 +72,8 @@
       "OS": "Service orders",
       "PEDIDOS": "Sales orders",
       "SETTINGS": "ERP settings",
-      "NOTAS": "Invoices"
+      "NOTAS": "Invoices",
+      "MODELOS": "Report templates"
     },
     "LIST": {
       "SEARCH": "Search by number or client",
@@ -791,6 +792,266 @@
         "EM_ANDAMENTO": "Another customer is being saved in this unit. Try again in a few seconds.",
         "DOCUMENTO": "The ERP refused the CPF/CNPJ.",
         "SEM_CODIGO": "The ERP did not return the customer code. Check Mais Prático before trying again."
+      }
+    },
+    "PRINTS": {
+      "KINDS": {
+        "OS": "Service order",
+        "QUOTE": "Quote"
+      },
+      "BLOCKS": {
+        "HEADER": "Header",
+        "HEADING": "Heading",
+        "TEXT": "Text",
+        "FIELDS": "Field group",
+        "TABLE": "Table",
+        "LONG_TEXT": "ERP text",
+        "SIGNATURES": "Signatures",
+        "IMAGE": "Image",
+        "DIVIDER": "Divider",
+        "SPACER": "Space",
+        "PAGE_BREAK": "Page break",
+        "CHECKLIST": "Checklist",
+        "TOTALS": "Totals"
+      },
+      "OPTIONS": {
+        "LOGO": "Logo",
+        "IMAGE_ID": "Image",
+        "COMPANY": "Show company details",
+        "TITLE": "Section title",
+        "SUBTITLE": "Badge beside the title",
+        "STYLE": "Style",
+        "TEXT": "Text",
+        "SIZE": "Size",
+        "ALIGN": "Alignment",
+        "COLOR": "Color",
+        "GROUP": "Group",
+        "COLUMNS": "Columns",
+        "HIDE_EMPTY": "Hide when empty",
+        "TABLE": "Table",
+        "STRIPED": "Striped rows",
+        "FIELD": "ERP text",
+        "BOXED": "Boxed",
+        "LINES": "Signature lines",
+        "NAMES": "Signer name above the line",
+        "DATE": "Date line",
+        "WIDTH": "Width",
+        "THICKNESS": "Thickness",
+        "HEIGHT": "Height",
+        "PHOTOS": "Photos",
+        "SECTIONS": "Checklist sections",
+        "SHOW_SECTIONS": "Show section names",
+        "ANSWERS": "Answers as",
+        "GRID_COLUMNS": "Grid columns",
+        "TITLE_STYLE": "Item title",
+        "ARRANGEMENT": "Photo arrangement",
+        "SHOW_COUNT": "Show photo count",
+        "SHOW_READING": "Show answer (arrival and departure)",
+        "NUMBERING": "Number photos (1/3)",
+        "SHOW_EMPTY": "Show items without photo or answer",
+        "MAX": "Max photos per item",
+        "HIDE_ZERO": "Hide zero values",
+        "HEADER_TITLE": "Report title",
+        "HEADER_STYLE": "Finish",
+        "HEADING_TEXT": "Heading text",
+        "CHECKLIST_SIZE": "Photo size",
+        "IMAGE_WIDTH": "Width (% of page)"
+      },
+      "HELP": {
+        "CHECKLIST_SECTIONS": "None selected = all. Select some to move the other sections to another block.",
+        "CHECKLIST_PHOTOS": "Without photos: only the checklist answers, as a table, list or grid.",
+        "HEADER_LOGO": "From ERP: the logo Mais Prático uses for this unit.",
+        "SIGNATURES_NAMES": "Technician, Customer, Seller and Responsible bring the name from the order or quote."
+      },
+      "VALUES": {
+        "LOGO": {
+          "ERP": "From ERP",
+          "UPLOAD": "Upload",
+          "NONE": "No logo"
+        },
+        "HEADER_STYLE": {
+          "LINE": "Line",
+          "BAND": "Band",
+          "PLAIN": "Plain"
+        },
+        "STYLE": {
+          "BOXES": "Boxes",
+          "LABELS": "Label above",
+          "INLINE": "Label: value"
+        },
+        "SIZE": {
+          "LG": "Large",
+          "MD": "Medium",
+          "SM": "Small"
+        },
+        "CHECKLIST_SIZE": {
+          "S": "Small",
+          "M": "Medium",
+          "L": "Large"
+        },
+        "ALIGN": {
+          "LEFT": "Left",
+          "CENTER": "Center",
+          "RIGHT": "Right"
+        },
+        "COLOR": {
+          "PRIMARY": "Primary",
+          "ACCENT": "Accent",
+          "TEXT": "Text",
+          "MUTED": "Muted",
+          "LINE": "Line"
+        },
+        "PHOTOS": {
+          "WITH": "With photos",
+          "WITHOUT": "Without photos"
+        },
+        "ANSWERS": {
+          "TABLE": "Table",
+          "LIST": "List",
+          "GRID": "Grid"
+        },
+        "TITLE_STYLE": {
+          "BAND": "Band",
+          "SIDE": "Side",
+          "CARD": "Card",
+          "COMPACT": "Compact"
+        },
+        "ARRANGEMENT": {
+          "AUTO": "Automatic",
+          "GRID2": "2 columns",
+          "GRID3": "3 columns",
+          "ONE": "1 per row"
+        },
+        "WIDTH": {
+          "HALF": "Half",
+          "FULL": "Full"
+        }
+      },
+      "CANVAS": {
+        "EMPTY_TEXT": "Type the text in the block settings",
+        "HIDDEN_EMPTY": "No data here: the block is left out of the PDF",
+        "PICK_IMAGE": "Upload the image in the block settings",
+        "SPACE": "{size} pt space",
+        "PAGE_BREAK": "Page break",
+        "NO_ITEMS": "No items",
+        "CHECKLIST_EMPTY": "Nothing from the checklist to show with these settings",
+        "DRAG": "Drag",
+        "UP": "Move up",
+        "DOWN": "Move down",
+        "DUPLICATE": "Duplicate",
+        "REMOVE": "Remove",
+        "EMPTY_SHEET": "Drag blocks from the left or click one",
+        "SIGN_DATE": "Date: ____/____/______"
+      },
+      "STUDIO": {
+        "BACK": "Back",
+        "UNSAVED": "Unsaved changes",
+        "SAMPLE": "Sample data",
+        "REAL_OS": "Real order",
+        "REAL_QUOTE": "Real quote",
+        "NUMBER": "Number",
+        "LOAD": "Load",
+        "PREVIEW": "Preview PDF",
+        "SAVE": "Save",
+        "SAVED": "Template saved",
+        "NAME_REQUIRED": "Give the template a name",
+        "TABS": {
+          "BLOCKS": "Blocks",
+          "FIELDS": "Fields",
+          "THEME": "Identity"
+        },
+        "SELECT_HINT": "Click a block on the sheet to see its settings",
+        "LEAVE_TITLE": "Leave without saving?",
+        "LEAVE_TEXT": "Changes to this template will be lost.",
+        "LEAVE": "Leave without saving",
+        "PALETTE_HELP": "Drag a block onto the sheet or click to add it after the selected block.",
+        "PALETTE_CONTEXT_OS": "Service order",
+        "PALETTE_CONTEXT_QUOTE": "Quote",
+        "PALETTE_GENERIC": "General",
+        "FULL": "Limit of {max} blocks per template",
+        "ADD_LINE": "Add line",
+        "CHANGE_IMAGE": "Change image",
+        "SEND_IMAGE": "Upload image",
+        "INVALID_IMAGE": "Use a PNG or JPG image",
+        "EDIT_FIELDS": "Choose fields and order",
+        "FIELDS_HELP": "Which fields show and in what order (drag). Applies to every block of that group or table.",
+        "FIELDS_COUNT": "{on} of {total}",
+        "NOT_FOUND_OS": "Order not found in this unit",
+        "NOT_FOUND_QUOTE": "Quote not found in this unit"
+      },
+      "THEME": {
+        "SIZE_VALUE": "{size} pt",
+        "PALETTES": "Ready palettes",
+        "PALETTE": {
+          "SOMOS": "Somos (green)",
+          "AZUL": "Blue",
+          "GRAFITE": "Graphite",
+          "VINHO": "Wine"
+        },
+        "COLORS": "Colors",
+        "COLOR": {
+          "PRIMARY": "Primary",
+          "ACCENT": "Accent",
+          "TEXT": "Text",
+          "MUTED": "Muted text",
+          "ROW": "Stripe",
+          "BOX": "Box background",
+          "LINE": "Lines and borders"
+        },
+        "COLOR_USE": {
+          "PRIMARY": "Titles, bands and table headers",
+          "ACCENT": "Underline of titles",
+          "TEXT": "Report text",
+          "MUTED": "Labels and answers",
+          "ROW": "Alternate table rows",
+          "BOX": "Boxed texts and the total",
+          "LINE": "Field and table borders"
+        },
+        "TYPOGRAPHY": "Typography",
+        "HEADING_FONT": "Heading font",
+        "BODY_FONT": "Body font",
+        "FONT": {
+          "HELVETICA": "Helvetica (sans serif)",
+          "TIMES": "Times (serif)",
+          "COURIER": "Courier (typewriter)"
+        },
+        "SIZE": "Base text size",
+        "PAGE": "Page",
+        "MARGIN": "Margins",
+        "MARGINS": {
+          "S": "Narrow",
+          "M": "Normal",
+          "L": "Wide"
+        },
+        "PAGE_NUMBERS": "Number pages"
+      },
+      "LIST": {
+        "BINDINGS_TITLE": "Which template is used in each case",
+        "BINDINGS_HELP": "The order report uses the template of its attendance type; types without a choice use the default. \"Mais Prático original\" is today's report: nothing changes until you pick another template.",
+        "SAVE_BINDINGS": "Save choices",
+        "BINDINGS_SAVED": "Choices saved",
+        "ATTENDANCE_TYPE": "Attendance type",
+        "OS_TEMPLATE": "Order template",
+        "OS_DEFAULT": "Default (types without a choice)",
+        "USE_DEFAULT": "Use the default",
+        "ORIGINAL": "Mais Prático original",
+        "NO_TYPES": "The ERP attendance types did not load. Reload the page to try again.",
+        "QUOTE_DEFAULT": "Quote template",
+        "QUOTE_HELP": "Applies to the PDF of ERP quotes, quotes made in the chat and draft previews.",
+        "TEMPLATES_OS": "Order templates",
+        "TEMPLATES_QUOTE": "Quote templates",
+        "NEW": "New template",
+        "BUILTIN": "Ready-made",
+        "WITH_PHOTOS": "With photos",
+        "WITHOUT_PHOTOS": "Without photos",
+        "IN_USE": "In use ({count})",
+        "EDIT": "Edit",
+        "COPY": "Copy",
+        "RESTORE": "Restore this template",
+        "RESTORED": "Template restored",
+        "DELETE": "Delete",
+        "DELETE_TITLE": "Delete \"{name}\"?",
+        "DELETE_TEXT": "Cases using this template go back to the default (or the Mais Prático original)."
       }
     }
   }

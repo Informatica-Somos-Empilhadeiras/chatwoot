@@ -2,7 +2,8 @@
 // OUTSIDER: pagina da secao ERP. A aba vem da rota (erp/:tab): Orcamentos, OS, Pedidos e Notas fiscais (todo o historico
 // do ERP, com filtros, tabela e o painel de detalhe, ErpRecords) e, para o administrador, as Configuracoes. A OS tambem
 // tem o quadro (espelho); as Notas trocam entre Produtos (NF-e) e Servicos (NFS-e). "Novo cliente" cadastra no ERP (com a
-// gravacao de clientes ligada). Produtos: consulta do cadastro com as fotos (ErpProducts). Um erro dentro de uma aba aparece na tela com a mensagem em vez de deixar a pagina em branco.
+// gravacao de clientes ligada). Produtos: consulta do cadastro com as fotos (ErpProducts). Modelos de relatorio: o estudio
+// dos relatorios da OS e do orcamento (ErpPrints, administrador). Um erro dentro de uma aba aparece na tela com a mensagem em vez de deixar a pagina em branco.
 import { ref, computed, watch, onErrorCaptured } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
@@ -12,6 +13,7 @@ import ErpBoard from '../components/ErpBoard.vue';
 import ErpSettings from '../components/ErpSettings.vue';
 import ErpProducts from '../products/ErpProducts.vue';
 import ErpRecords from '../records/ErpRecords.vue';
+import ErpPrints from '../prints/ErpPrints.vue';
 import ErpClientDialog from '../clients/ErpClientDialog.vue';
 import { kindForTab } from '../records/recordsConfig';
 import { erpTabs } from '../sidebar';
@@ -264,6 +266,7 @@ watch(tab, () => {
             v-else-if="currentReport"
             :key="currentReport.name"
           />
+          <ErpPrints v-else-if="tab === 'modelos'" />
           <ErpSettings v-else-if="tab === 'settings'" />
           <div
             v-else

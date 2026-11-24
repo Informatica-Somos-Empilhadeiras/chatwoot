@@ -333,6 +333,68 @@ class ErpAPI extends ApiClient {
       params: { contact_id: contactId },
     });
   }
+
+  // Modelos de relatório (OS e orçamento): lista, estúdio, pré-visualização e qual modelo cada tipo de atendimento usa
+  printTemplates() {
+    return axios.get(`${this.url}/print_templates`);
+  }
+
+  printTemplate(id) {
+    return axios.get(`${this.url}/print_templates/${id}`);
+  }
+
+  // { kind } para um modelo novo; { source_id } para copiar
+  createPrintTemplate(data) {
+    return axios.post(`${this.url}/print_templates`, data);
+  }
+
+  savePrintTemplate(id, data) {
+    return axios.patch(`${this.url}/print_templates/${id}`, data);
+  }
+
+  deletePrintTemplate(id) {
+    return axios.delete(`${this.url}/print_templates/${id}`);
+  }
+
+  restorePrintTemplate(id) {
+    return axios.post(`${this.url}/print_templates/${id}/restore`);
+  }
+
+  uploadPrintImage(id, file) {
+    const data = new FormData();
+    data.append('image', file);
+    return axios.post(`${this.url}/print_templates/${id}/upload_image`, data);
+  }
+
+  // PDF do modelo como está na tela; real = { company, number } para usar uma OS / orçamento de verdade
+  printPreview(id, content, real = {}) {
+    return axios.post(
+      `${this.url}/print_templates/${id}/preview`,
+      { content, ...real },
+      { responseType: 'blob' }
+    );
+  }
+
+  printSample(kind, real = {}) {
+    return axios.get(`${this.url}/print_templates/sample`, {
+      params: { kind, ...real },
+    });
+  }
+
+  // foto do checklist de uma OS de verdade para a folha do estúdio (blob: a rota pede o login da API)
+  printPhoto(company, number, ref) {
+    return axios.get(`${this.url}/print_templates/photo`, {
+      params: { company, number, ref },
+      responseType: 'blob',
+    });
+  }
+
+  savePrintBindings(kind, data) {
+    return axios.put(`${this.url}/print_templates/bindings`, {
+      kind,
+      ...data,
+    });
+  }
 }
 
 export default new ErpAPI();

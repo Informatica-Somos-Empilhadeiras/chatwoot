@@ -1,13 +1,13 @@
 # OUTSIDER: o PDF do orçamento que vai para o cliente. Cada versão enviada vira um único arquivo (blob do Active Storage),
 # reconhecido pelo SHA-256 do conteúdo: mandar o mesmo orçamento de novo (outro contato, outro canal) reaproveita o
 # arquivo; se o orçamento mudou no ERP, o conteúdo muda e sai um arquivo novo (o Prawn monta os mesmos bytes para os
-# mesmos dados). Como nas propostas do CRM (Outsider::Crm::ProposalDocument).
+# mesmos dados). Como nas propostas do CRM (Outsider::Crm::ProposalDocument). Sai no modelo de orçamento escolhido, se houver.
 class Outsider::Erp::BudgetDocument
   attr_reader :digest
 
   def initialize(budget, report)
     @budget = budget
-    @pdf = Outsider::Erp::QuotePdf.new(report)
+    @pdf = Outsider::Erp::Prints::Document.quote(budget.account, report)
   end
 
   def filename = @pdf.filename

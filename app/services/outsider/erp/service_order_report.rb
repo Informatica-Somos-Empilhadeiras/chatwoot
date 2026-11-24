@@ -13,7 +13,9 @@ class Outsider::Erp::ServiceOrderReport
     @client = client || Outsider::Erp::Client.new(Outsider::Erp::Settings.new(account))
   end
 
-  def build(company, code)
+  # photos: false devolve só a referência de cada foto ("<OS>_<n>") em vez dos bytes (a tela do estúdio busca uma a uma)
+  def build(company, code, photos: true)
+    @photos = photos
     order = part('DadosOS_PDF', company, code).first
     raise NotFound unless order
 
@@ -25,6 +27,21 @@ class Outsider::Erp::ServiceOrderReport
       'produtos' => part('DadosProdutosOS_PDF', company, code).map { |row| product(row) },
       'checklist' => sections(company, code, part('DadosCheckList_PDF', company, code))
     }
+  end
+
+  # relatório montado com photos: false -> busca os bytes das fotos agora, só das seções que o bloco pede (sem bloco: todas)
+  # (Outsider::Erp::Prints::Document: a escolha do modelo depende do tipo de atendimento, que só se sabe com a OS lida)
+  def with_photos(report, &wanted)
+    @photos = true
+    company = report['empresa'].to_s
+    code = report['numero'].to_i
+    checklist = Array(report['checklist']).map do |section|
+      keep = wanted.nil? || yield(section['nome'])
+      section.merge('itens' => Array(section['itens']).map do |item|
+        item.merge('fotos' => keep ? fetch_photos(company, code, item['fotos']) : [])
+      end)
+    end
+    report.merge('checklist' => checklist)
   end
 
   # só o que o envio precisa antes de gerar o PDF (textos e nome do arquivo): número, cliente e serviço, sem as fotos
@@ -46,7 +63,7 @@ class Outsider::Erp::ServiceOrderReport
   # o cabeçalho do relatório deles vem da própria OS (colunas *Impressao) e o logo do CNPJ do emitente
   def emitter(row)
     { 'nome' => text(row['NomeImpressao']), 'fone' => text(row['TelefoneImpressao']), 'email' => text(row['EmailImpressao']),
-      'logo' => image(-> { @client.company_logo(row['CPF_CNPJ']) }) }
+      'logo' => image(-> { @client.company_logo(row['CPF_CNPJ']) }), 'cnpj' => text(row['CPF_CNPJ']) }
   end
 
   def customer(row)
@@ -100,8 +117,15 @@ class Outsider::Erp::ServiceOrderReport
 
   # só as fotos desta OS, em JPEG/PNG (o que o Prawn desenha); a que faltar no ERP fica de fora e o relatório sai assim mesmo
   def photos_for(company, code, refs)
-    refs.uniq.select { |ref| ref.match?(PHOTO_REF) && ref.start_with?("#{code.to_i}_") }
-        .index_with { |ref| image(-> { @client.checklist_photo(company, ref) }) }.compact
+    refs = refs.uniq.select { |ref| ref.match?(PHOTO_REF) && ref.start_with?("#{code.to_i}_") }
+    return refs.index_with { |ref| ref } if @photos == false
+
+    refs.index_with { |ref| image(-> { @client.checklist_photo(company, ref) }) }.compact
+  end
+
+  def fetch_photos(company, code, refs)
+    found = photos_for(company, code, Array(refs).select { |ref| ref.is_a?(String) })
+    Array(refs).filter_map { |ref| ref.is_a?(String) ? found[ref] : ref }
   end
 
   # imagem do ERP só se vier JPEG/PNG (o que o Prawn desenha); a que faltar fica de fora e o relatório sai assim mesmo

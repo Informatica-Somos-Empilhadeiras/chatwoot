@@ -21,11 +21,12 @@ class Api::V1::Accounts::Outsider::Erp::ServiceOrdersController < Api::V1::Accou
     render json: orders.meta.merge(data).merge(options: data[:companies].index_with { |company| orders.substatus_options(company) })
   end
 
-  # relatório da OS com as fotos do checklist (PDF no modelo do kanban de KPI do Mais Prático), lido direto do ERP: serve ao
-  # quadro e ao histórico (OS fora da janela do espelho). Como o PDF do orçamento, só confere a unidade; a OS o ERP confirma.
+  # relatório da OS com as fotos do checklist, lido direto do ERP: serve ao quadro e ao histórico (OS fora da janela do
+  # espelho). Sai no modelo escolhido para o tipo de atendimento (Modelos de relatório) ou, sem escolha, no do kanban de KPI
+  # do Mais Prático. Como o PDF do orçamento, só confere a unidade; a OS o ERP confirma.
   def report
     company, code = report_target
-    document = ::Outsider::Erp::ServiceOrderPdf.new(::Outsider::Erp::ServiceOrderReport.new(Current.account).build(company, code))
+    document = ::Outsider::Erp::Prints::Document.service_order(Current.account, company, code)
     send_data document.render, filename: document.filename, type: 'application/pdf', disposition: 'inline'
   end
 
@@ -44,7 +45,7 @@ class Api::V1::Accounts::Outsider::Erp::ServiceOrdersController < Api::V1::Accou
   def deliver
     company, code = report_target
     document = lambda do
-      pdf = ::Outsider::Erp::ServiceOrderPdf.new(::Outsider::Erp::ServiceOrderReport.new(Current.account).build(company, code))
+      pdf = ::Outsider::Erp::Prints::Document.service_order(Current.account, company, code)
       { 'filename' => pdf.filename, 'content' => pdf.render }
     end
     deliver_document(document, "OS Nº #{code}")

@@ -72,7 +72,8 @@
       "OS": "Ordens de serviço",
       "PEDIDOS": "Pedidos",
       "SETTINGS": "Configurações do ERP",
-      "NOTAS": "Notas fiscais"
+      "NOTAS": "Notas fiscais",
+      "MODELOS": "Modelos de relatório"
     },
     "LIST": {
       "SEARCH": "Buscar por número ou cliente",
@@ -793,6 +794,266 @@
         "EM_ANDAMENTO": "Outro cadastro de cliente está sendo gravado nesta unidade. Tente de novo em alguns segundos.",
         "DOCUMENTO": "O ERP recusou o CPF/CNPJ.",
         "SEM_CODIGO": "O ERP não devolveu o código do cliente. Confira no Mais Prático antes de tentar de novo."
+      }
+    },
+    "PRINTS": {
+      "KINDS": {
+        "OS": "OS",
+        "QUOTE": "Orçamento"
+      },
+      "BLOCKS": {
+        "HEADER": "Cabeçalho",
+        "HEADING": "Título",
+        "TEXT": "Texto",
+        "FIELDS": "Grupo de campos",
+        "TABLE": "Tabela",
+        "LONG_TEXT": "Texto do ERP",
+        "SIGNATURES": "Assinaturas",
+        "IMAGE": "Imagem",
+        "DIVIDER": "Linha",
+        "SPACER": "Espaço",
+        "PAGE_BREAK": "Nova página",
+        "CHECKLIST": "Checklist",
+        "TOTALS": "Totais"
+      },
+      "OPTIONS": {
+        "LOGO": "Logo",
+        "IMAGE_ID": "Imagem",
+        "COMPANY": "Mostrar os dados da empresa",
+        "TITLE": "Título da seção",
+        "SUBTITLE": "Selo ao lado do título",
+        "STYLE": "Estilo",
+        "TEXT": "Texto",
+        "SIZE": "Tamanho",
+        "ALIGN": "Alinhamento",
+        "COLOR": "Cor",
+        "GROUP": "Grupo",
+        "COLUMNS": "Colunas",
+        "HIDE_EMPTY": "Esconder o que vier vazio",
+        "TABLE": "Tabela",
+        "STRIPED": "Linhas zebradas",
+        "FIELD": "Texto do ERP",
+        "BOXED": "Em caixa",
+        "LINES": "Linhas de assinatura",
+        "NAMES": "Nome de quem assina em cima da linha",
+        "DATE": "Linha para a data",
+        "WIDTH": "Largura",
+        "THICKNESS": "Espessura",
+        "HEIGHT": "Altura",
+        "PHOTOS": "Fotos",
+        "SECTIONS": "Seções do checklist",
+        "SHOW_SECTIONS": "Mostrar o nome das seções",
+        "ANSWERS": "Respostas em",
+        "GRID_COLUMNS": "Colunas da grade",
+        "TITLE_STYLE": "Título de cada item",
+        "ARRANGEMENT": "Arranjo das fotos",
+        "SHOW_COUNT": "Mostrar a quantidade de fotos",
+        "SHOW_READING": "Mostrar a resposta (chegada e saída)",
+        "NUMBERING": "Numerar as fotos (1/3)",
+        "SHOW_EMPTY": "Mostrar itens sem foto ou sem resposta",
+        "MAX": "Máximo de fotos por item",
+        "HIDE_ZERO": "Esconder valores zerados",
+        "HEADER_TITLE": "Título do relatório",
+        "HEADER_STYLE": "Acabamento",
+        "HEADING_TEXT": "Texto do título",
+        "CHECKLIST_SIZE": "Tamanho das fotos",
+        "IMAGE_WIDTH": "Largura (% da página)"
+      },
+      "HELP": {
+        "CHECKLIST_SECTIONS": "Nenhuma marcada = todas. Marque só algumas para levar as outras seções para outro bloco do relatório.",
+        "CHECKLIST_PHOTOS": "Sem fotos: só o que foi respondido no checklist, em tabela, lista ou grade.",
+        "HEADER_LOGO": "Do ERP: o logo que o Mais Prático usa para esta unidade.",
+        "SIGNATURES_NAMES": "Técnico, Cliente, Vendedor e Responsável trazem o nome da OS ou do orçamento."
+      },
+      "VALUES": {
+        "LOGO": {
+          "ERP": "Do ERP",
+          "UPLOAD": "Enviar",
+          "NONE": "Sem logo"
+        },
+        "HEADER_STYLE": {
+          "LINE": "Linha",
+          "BAND": "Faixa",
+          "PLAIN": "Simples"
+        },
+        "STYLE": {
+          "BOXES": "Caixas",
+          "LABELS": "Rótulo em cima",
+          "INLINE": "Rótulo: valor"
+        },
+        "SIZE": {
+          "LG": "Grande",
+          "MD": "Médio",
+          "SM": "Pequeno"
+        },
+        "CHECKLIST_SIZE": {
+          "S": "Pequenas",
+          "M": "Médias",
+          "L": "Grandes"
+        },
+        "ALIGN": {
+          "LEFT": "Esquerda",
+          "CENTER": "Centro",
+          "RIGHT": "Direita"
+        },
+        "COLOR": {
+          "PRIMARY": "Principal",
+          "ACCENT": "Destaque",
+          "TEXT": "Texto",
+          "MUTED": "Suave",
+          "LINE": "Linha"
+        },
+        "PHOTOS": {
+          "WITH": "Com fotos",
+          "WITHOUT": "Sem fotos"
+        },
+        "ANSWERS": {
+          "TABLE": "Tabela",
+          "LIST": "Lista",
+          "GRID": "Grade"
+        },
+        "TITLE_STYLE": {
+          "BAND": "Faixa",
+          "SIDE": "Ao lado",
+          "CARD": "Cartão",
+          "COMPACT": "Compacto"
+        },
+        "ARRANGEMENT": {
+          "AUTO": "Automático",
+          "GRID2": "2 colunas",
+          "GRID3": "3 colunas",
+          "ONE": "1 por linha"
+        },
+        "WIDTH": {
+          "HALF": "Metade",
+          "FULL": "Inteira"
+        }
+      },
+      "CANVAS": {
+        "EMPTY_TEXT": "Escreva o texto nos ajustes do bloco",
+        "HIDDEN_EMPTY": "Sem dados aqui: o bloco não sai no PDF",
+        "PICK_IMAGE": "Envie a imagem nos ajustes do bloco",
+        "SPACE": "Espaço de {size} pt",
+        "PAGE_BREAK": "Nova página",
+        "NO_ITEMS": "Nenhum item",
+        "CHECKLIST_EMPTY": "Nada do checklist para mostrar com estes ajustes",
+        "DRAG": "Arrastar",
+        "UP": "Subir",
+        "DOWN": "Descer",
+        "DUPLICATE": "Duplicar",
+        "REMOVE": "Remover",
+        "EMPTY_SHEET": "Arraste blocos da esquerda para cá ou clique num deles",
+        "SIGN_DATE": "Data: ____/____/______"
+      },
+      "STUDIO": {
+        "BACK": "Voltar",
+        "UNSAVED": "Alterações não salvas",
+        "SAMPLE": "Dados de exemplo",
+        "REAL_OS": "OS de verdade",
+        "REAL_QUOTE": "Orçamento de verdade",
+        "NUMBER": "Número",
+        "LOAD": "Carregar",
+        "PREVIEW": "Pré-visualizar PDF",
+        "SAVE": "Salvar",
+        "SAVED": "Modelo salvo",
+        "NAME_REQUIRED": "Dê um nome ao modelo",
+        "TABS": {
+          "BLOCKS": "Blocos",
+          "FIELDS": "Campos",
+          "THEME": "Identidade"
+        },
+        "SELECT_HINT": "Clique num bloco da folha para ver os ajustes dele",
+        "LEAVE_TITLE": "Sair sem salvar?",
+        "LEAVE_TEXT": "As alterações deste modelo serão perdidas.",
+        "LEAVE": "Sair sem salvar",
+        "PALETTE_HELP": "Arraste um bloco para a folha ou clique para pôr depois do bloco selecionado.",
+        "PALETTE_CONTEXT_OS": "Da OS",
+        "PALETTE_CONTEXT_QUOTE": "Do orçamento",
+        "PALETTE_GENERIC": "Gerais",
+        "FULL": "Limite de {max} blocos por modelo",
+        "ADD_LINE": "Adicionar linha",
+        "CHANGE_IMAGE": "Trocar imagem",
+        "SEND_IMAGE": "Enviar imagem",
+        "INVALID_IMAGE": "Use uma imagem PNG ou JPG",
+        "EDIT_FIELDS": "Escolher os campos e a ordem",
+        "FIELDS_HELP": "Quais campos aparecem e em que ordem (arraste). Vale para todos os blocos daquele grupo ou tabela.",
+        "FIELDS_COUNT": "{on} de {total}",
+        "NOT_FOUND_OS": "OS não encontrada nesta unidade",
+        "NOT_FOUND_QUOTE": "Orçamento não encontrado nesta unidade"
+      },
+      "THEME": {
+        "SIZE_VALUE": "{size} pt",
+        "PALETTES": "Paletas prontas",
+        "PALETTE": {
+          "SOMOS": "Somos (verde)",
+          "AZUL": "Azul",
+          "GRAFITE": "Grafite",
+          "VINHO": "Vinho"
+        },
+        "COLORS": "Cores",
+        "COLOR": {
+          "PRIMARY": "Principal",
+          "ACCENT": "Destaque",
+          "TEXT": "Texto",
+          "MUTED": "Texto suave",
+          "ROW": "Zebra",
+          "BOX": "Fundo das caixas",
+          "LINE": "Linhas e bordas"
+        },
+        "COLOR_USE": {
+          "PRIMARY": "Títulos, faixas e cabeçalho das tabelas",
+          "ACCENT": "Traço embaixo dos títulos",
+          "TEXT": "Texto do relatório",
+          "MUTED": "Rótulos e respostas",
+          "ROW": "Linhas alternadas das tabelas",
+          "BOX": "Textos em caixa e o total",
+          "LINE": "Bordas dos campos e das tabelas"
+        },
+        "TYPOGRAPHY": "Tipografia",
+        "HEADING_FONT": "Fonte dos títulos",
+        "BODY_FONT": "Fonte do texto",
+        "FONT": {
+          "HELVETICA": "Helvetica (sem serifa)",
+          "TIMES": "Times (com serifa)",
+          "COURIER": "Courier (máquina de escrever)"
+        },
+        "SIZE": "Tamanho base do texto",
+        "PAGE": "Página",
+        "MARGIN": "Margens",
+        "MARGINS": {
+          "S": "Estreitas",
+          "M": "Normais",
+          "L": "Largas"
+        },
+        "PAGE_NUMBERS": "Numerar as páginas"
+      },
+      "LIST": {
+        "BINDINGS_TITLE": "Qual modelo sai em cada caso",
+        "BINDINGS_HELP": "O relatório da OS sai no modelo do Tipo de Atendimento dela; tipo sem escolha usa o padrão. \"Original do Mais Prático\" é o relatório de hoje: nada muda até você escolher outro modelo.",
+        "SAVE_BINDINGS": "Salvar escolhas",
+        "BINDINGS_SAVED": "Escolhas salvas",
+        "ATTENDANCE_TYPE": "Tipo de atendimento",
+        "OS_TEMPLATE": "Modelo da OS",
+        "OS_DEFAULT": "Padrão (tipos sem escolha)",
+        "USE_DEFAULT": "Usar o padrão",
+        "ORIGINAL": "Original do Mais Prático",
+        "NO_TYPES": "Os tipos de atendimento do ERP não vieram agora. Recarregue a página para tentar de novo.",
+        "QUOTE_DEFAULT": "Modelo dos orçamentos",
+        "QUOTE_HELP": "Vale para o PDF do orçamento do ERP, do feito no chat e da prévia do rascunho.",
+        "TEMPLATES_OS": "Modelos de OS",
+        "TEMPLATES_QUOTE": "Modelos de orçamento",
+        "NEW": "Novo modelo",
+        "BUILTIN": "Pronto",
+        "WITH_PHOTOS": "Com fotos",
+        "WITHOUT_PHOTOS": "Sem fotos",
+        "IN_USE": "Em uso ({count})",
+        "EDIT": "Editar",
+        "COPY": "Copiar",
+        "RESTORE": "Voltar ao original deste modelo",
+        "RESTORED": "Modelo restaurado",
+        "DELETE": "Apagar",
+        "DELETE_TITLE": "Apagar \"{name}\"?",
+        "DELETE_TEXT": "Os casos que usam este modelo voltam para o padrão (ou para o original do Mais Prático)."
       }
     }
   }

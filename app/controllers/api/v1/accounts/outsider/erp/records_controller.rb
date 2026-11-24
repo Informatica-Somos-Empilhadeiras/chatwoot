@@ -32,7 +32,8 @@ class Api::V1::Accounts::Outsider::Erp::RecordsController < Api::V1::Accounts::O
     company = params[:company].to_s
     raise ArgumentError, 'company' unless settings.companies.include?(company)
 
-    document = ::Outsider::Erp::QuotePdf.new(::Outsider::Erp::QuoteReport.new(Current.account).build(company, params[:number].to_i))
+    report = ::Outsider::Erp::QuoteReport.new(Current.account).build(company, params[:number].to_i)
+    document = ::Outsider::Erp::Prints::Document.quote(Current.account, report)
     send_data document.render, filename: document.filename, type: 'application/pdf', disposition: 'inline'
   end
 

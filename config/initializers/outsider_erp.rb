@@ -25,6 +25,19 @@ Rails.application.routes.prepend do
                 end
               end
               resources :customers, only: [:index]
+              # Modelos de relatório: estúdio dos modelos de impressão da OS e do orçamento (só administradores)
+              resources :print_templates, only: [:index, :show, :create, :update, :destroy] do
+                collection do
+                  get :sample
+                  get :photo
+                  put :bindings, action: :bindings_update
+                end
+                member do
+                  post :restore
+                  post :preview
+                  post :upload_image
+                end
+              end
               # cadastrar cliente no ERP pela função do Mais Prático (pré-cadastro)
               resources :clients, only: [:create] do
                 collection do

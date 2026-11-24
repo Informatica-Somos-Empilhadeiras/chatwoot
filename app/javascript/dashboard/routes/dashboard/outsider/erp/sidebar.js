@@ -1,5 +1,5 @@
 // OUTSIDER: menu "ERP" no menu lateral (secao Atendimento) com uma aba por modulo: Orcamentos, OS, Pedidos, Notas fiscais,
-// Produtos (consulta, com as fotos) e, para o administrador, as Configuracoes. Cada aba segue o que esta ligado nas Configuracoes e a linha dela no perfil
+// Produtos (consulta, com as fotos) e, para o administrador, os Modelos de relatorio e as Configuracoes. Cada aba segue o que esta ligado nas Configuracoes e a linha dela no perfil
 // de acesso (erp_quotes, erp_orders, erp_sales, erp_invoices, erp_products, abaixo da tela "erp"); com a integracao desligada so o admin ve.
 // Depois dos modulos, os relatorios (reports/reportsCatalog.js), cada um com a linha dele no perfil.
 import { allows } from '../access/accessStore';
@@ -28,6 +28,12 @@ export const ERP_TABS = [
     label: 'OUTSIDER_ERP.TABS.PRODUTOS',
     icon: 'i-lucide-package-search',
   },
+  // modelos de relatório da OS e do orçamento (estúdio), só para o administrador
+  {
+    name: 'modelos',
+    label: 'OUTSIDER_ERP.TABS.MODELOS',
+    icon: 'i-lucide-printer',
+  },
   {
     name: 'settings',
     label: 'OUTSIDER_ERP.TABS.SETTINGS',
@@ -45,6 +51,7 @@ export const erpTabs = () => {
     pedidos: erpState.enabled && allows('erp_sales'),
     notas: erpState.enabled && allows('erp_invoices'),
     produtos: erpState.enabled && allows('erp_products'),
+    modelos: erpState.enabled && erpState.administrator,
     settings: erpState.administrator,
   };
   return ERP_TABS.filter(tab => open[tab.name]);

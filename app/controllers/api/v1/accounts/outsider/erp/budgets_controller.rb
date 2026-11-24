@@ -68,7 +68,8 @@ class Api::V1::Accounts::Outsider::Erp::BudgetsController < Api::V1::Accounts::O
     render json: { budget: serializer.full(@budget) }
   end
 
-  # PDF no modelo do relatório do Mais Prático: o oficial (do ERP) quando já gravado, senão a prévia do rascunho (também
+  # PDF no modelo de orçamento escolhido (Modelos de relatório) ou no do relatório do Mais Prático: o oficial (do ERP)
+  # quando já gravado, senão a prévia do rascunho (também
   # na edição de um orçamento gravado, para ver como fica antes de salvar)
   def pdf
     report = if @budget.in_erp? && !@budget.revising?
@@ -76,7 +77,7 @@ class Api::V1::Accounts::Outsider::Erp::BudgetsController < Api::V1::Accounts::O
              else
                ::Outsider::Erp::BudgetPreview.new(@budget).build
              end
-    document = ::Outsider::Erp::QuotePdf.new(report)
+    document = ::Outsider::Erp::Prints::Document.quote(Current.account, report)
     send_data document.render, filename: document.filename, type: 'application/pdf', disposition: 'inline'
   end
 
