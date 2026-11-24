@@ -58,6 +58,10 @@ RSpec.describe 'Outsider Conectar meu Teams (Microsoft Graph)', type: :request d
     expect(response).to have_http_status(:unprocessable_entity)
 
     stub_request(:get, %r{graph.microsoft.com/v1.0/me/joinedTeams}).to_return(graph_json(value: []))
+    # versão 4: aviso de e-mail novo do Outlook (bloco Microsoft dos aplicativos)
+    mail_notice = stub_request(:post, 'https://graph.microsoft.com/v1.0/subscriptions')
+                  .with(body: hash_including('resource' => "/users/ms-agent/mailFolders('inbox')/messages", 'changeType' => 'created'))
+                  .to_return(graph_json(id: 'sub-mail', expirationDateTime: 2.days.from_now.iso8601))
     perform_enqueued_jobs(only: Outsider::Teams::Graph::SyncJob) do
       post "/api/v1/accounts/#{account.id}/outsider/teams_graph/finish",
            params: { code: 'codigo-1', state: query['state'] }, headers: agent.create_new_auth_token, as: :json
@@ -66,10 +70,12 @@ RSpec.describe 'Outsider Conectar meu Teams (Microsoft Graph)', type: :request d
     expect(Outsider::Teams::Graph::HistoryJob).to have_been_enqueued
     expect(token).to have_been_requested
     expect(subscribe).to have_been_requested
+    expect(mail_notice).to have_been_requested
     created = Outsider::TeamsLink.find_by!(user: agent)
     expect(created).to have_attributes(ms_user_id: 'ms-agent', email: 'agente@empresa.com', status: 'active', access_token: 'novo-token',
                                        refresh_token: 'novo-refresh')
-    expect(created.subscriptions.sole).to have_attributes(kind: 'chats', subscription_id: 'sub-chats')
+    expect(created.subscriptions.find_by!(kind: 'chats')).to have_attributes(subscription_id: 'sub-chats')
+    expect(created.subscriptions.find_by!(kind: 'mail')).to have_attributes(subscription_id: 'sub-mail')
     expect(created.access_token_encrypted).not_to include('novo-token')
 
     # a mesma conta Microsoft não liga em outra pessoa

@@ -9,6 +9,7 @@ class Outsider::Teams::Graph::RenewJob < ApplicationJob
       # "Todos os canais": canal novo (ou que saiu) nas equipes da pessoa -> acerta avisos e traz as mensagens antigas
       Outsider::Teams::Graph::SyncJob.perform_later(link.id) if Outsider::Teams::Graph::AutoChannels.new(link).refresh!
       subscriptions = Outsider::Teams::Graph::Subscriptions.new(link)
+      subscriptions.ensure_mail!
       link.subscriptions.each do |subscription|
         next if subscription.subscription_id.present? && subscription.expires_at.present? &&
                 subscription.expires_at > Outsider::Teams::Graph::Subscriptions::RENEW_BEFORE.from_now

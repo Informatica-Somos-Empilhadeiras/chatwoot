@@ -4,7 +4,8 @@
 class Outsider::TeamsSubscription < ApplicationRecord
   self.table_name = 'outsider_teams_subscriptions'
 
-  KINDS = %w[chats channel].freeze
+  # 'mail': e-mail novo na Caixa de entrada do Outlook (bloco Microsoft dos aplicativos; só avisa, nada é gravado)
+  KINDS = %w[chats channel mail].freeze
 
   belongs_to :link, class_name: 'Outsider::TeamsLink', inverse_of: :subscriptions
 

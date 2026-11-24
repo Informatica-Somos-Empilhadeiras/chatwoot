@@ -9,13 +9,13 @@ export const NAV_SECTIONS = [
   {
     key: 'atendimento',
     label: 'OUTSIDER_NAV.SECTIONS.SERVICE',
-    items: [
-      'Conversation',
-      'OutsiderTeams',
-      'Inbox',
-      'WhatsappStatus',
-      'OutsiderErp',
-    ],
+    items: ['Conversation', 'Inbox', 'WhatsappStatus', 'OutsiderErp'],
+  },
+  // blocos por empresa (Microsoft, Google), cada um com os aplicativos dela
+  {
+    key: 'aplicativos',
+    label: 'OUTSIDER_NAV.SECTIONS.APPS',
+    items: ['OutsiderMicrosoft', 'OutsiderGoogle'],
   },
   {
     key: 'vendas',

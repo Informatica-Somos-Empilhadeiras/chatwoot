@@ -39,8 +39,7 @@ class Api::V1::Accounts::Outsider::TeamsThreadsController < Api::V1::Accounts::B
   # [{ id, availability, activity }]; unavailable: entrou com permissões antigas (sem Presence.Read.All)
   def presence
     link = my_link
-    return render json: { payload: [], unavailable: true } unless link&.status == 'active' &&
-                                                                  link.scope_version >= ::Outsider::Teams::Graph::Login::SCOPE_VERSION
+    return render json: { payload: [], unavailable: true } unless ::Outsider::Teams::Graph::Login.allows?(link, :presence)
 
     ids = Array(params[:ids]).map(&:to_s).grep(/\A[0-9a-f-]{36}\z/i).uniq.first(650)
     return render json: { payload: [] } if ids.empty?
@@ -274,7 +273,7 @@ class Api::V1::Accounts::Outsider::TeamsThreadsController < Api::V1::Accounts::B
 
   # no canal: todo mundo da equipe (permissão da versão 2), somado a quem já escreveu no canal
   def refresh_team_members
-    return if my_link.scope_version < ::Outsider::Teams::Graph::Login::SCOPE_VERSION
+    return unless ::Outsider::Teams::Graph::Login.allows?(my_link, :members)
     return if @thread.members_refreshed_recently?
 
     data = ::Outsider::Teams::Graph::Client.new(my_link).get("/teams/#{::Outsider::Teams::Graph::Client.enc(@thread.team_id)}/members?$top=200")

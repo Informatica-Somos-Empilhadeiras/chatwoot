@@ -1087,3 +1087,132 @@
   border: 0;
   background: transparent;
 }
+
+/* ---------------------------------------------------------------- aplicativos (NavApps.vue) */
+.onav-apps {
+  margin: 2px 10px 6px;
+  padding: 6px;
+  border: 1px solid var(--onav-card-border);
+  border-radius: 14px;
+  background: var(--onav-card);
+}
+
+.onav-apps-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 6px 6px;
+  color: var(--onav-text);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.onav-apps-logo {
+  width: 16px;
+  height: 16px;
+}
+
+.onav-apps-st {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--onav-muted);
+  white-space: nowrap;
+}
+
+.onav-apps-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--onav-muted);
+}
+
+.onav-apps-st.is-active {
+  color: #15803d;
+}
+
+.onav-apps-st.is-active .onav-apps-dot {
+  background: #16a34a;
+}
+
+.onav-apps-st.is-reconnect {
+  color: #b45309;
+}
+
+.onav-apps-st.is-reconnect .onav-apps-dot {
+  background: #f59e0b;
+}
+
+.onav-apps-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.onav-app {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 7px 2px 6px;
+  border-radius: 10px;
+  color: var(--onav-text-3);
+  font-size: 11px;
+  line-height: 1.1;
+  text-decoration: none;
+}
+
+.onav-app:hover {
+  background: var(--onav-hover);
+  color: var(--onav-text);
+}
+
+.onav-app.on {
+  background: var(--onav-sub-on-bg);
+  color: var(--onav-sub-on-text);
+  font-weight: 600;
+}
+
+.onav-app-ico {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  background: var(--onav-box);
+}
+
+.onav-app-ico svg {
+  width: 20px;
+  height: 20px;
+}
+
+.onav-app-label {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.onav-app-badge {
+  position: absolute;
+  top: 2px;
+  right: 6px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: #dc2626;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
+  box-shadow: 0 0 0 2px var(--onav-ring);
+}

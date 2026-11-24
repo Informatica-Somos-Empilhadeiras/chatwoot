@@ -193,7 +193,6 @@ const goTab = routeKind =>
         v-for="tab in [
           { key: 'chats', icon: 'i-lucide-message-circle', count: unreadChats },
           { key: 'channels', icon: 'i-lucide-hash', count: unreadChannels },
-          { key: 'calendar', icon: 'i-lucide-calendar-days', count: 0 },
         ]"
         :key="tab.key"
         type="button"

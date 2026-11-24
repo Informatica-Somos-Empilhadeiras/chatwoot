@@ -16,6 +16,8 @@ import { useAccessGuard } from './access/useAccessGuard';
 import { watch } from 'vue';
 import { useMapGetter } from 'dashboard/composables/store';
 import { startTeamsUpdates } from './teams/teamsStore';
+// blocos Microsoft e Google do menu (Outlook, OneDrive, Agenda): quem está conectado e as não lidas do e-mail
+import { startAppsUpdates } from './apps/appsStore';
 // o que a pessoa pode fazer com o ERP (menu Ordens de serviço e bloco ERP na conversa)
 import { loadErpStatus } from './erp/erpStore';
 // visual das conversas no estilo WhatsApp/Telegram (balões com rabinho, modo seleção)
@@ -32,6 +34,7 @@ useAccessGuard();
 
 const currentAccountId = useMapGetter('getCurrentAccountId');
 watch(currentAccountId, id => id && startTeamsUpdates(id), { immediate: true });
+watch(currentAccountId, id => id && startAppsUpdates(id), { immediate: true });
 watch(currentAccountId, id => id && loadErpStatus(id), { immediate: true });
 </script>
 

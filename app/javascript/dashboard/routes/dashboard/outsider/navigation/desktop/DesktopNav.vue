@@ -36,6 +36,8 @@ import { useSidebarContext } from 'dashboard/components-next/sidebar/provider';
 import ComposeConversation from 'dashboard/components-next/NewConversation/ComposeConversation.vue';
 import NavProfile from './NavProfile.vue';
 import NavModule from './NavModule.vue';
+// blocos dos aplicativos (Microsoft, Google) em grade de ícones
+import NavApps from './NavApps.vue';
 import NavChannels from './NavChannels.vue';
 import NavSettings from './NavSettings.vue';
 import {
@@ -310,7 +312,14 @@ const clickOutsideOptions = {
           <h3 v-if="!collapsed" class="onav-sec">{{ t(section.label) }}</h3>
           <ul class="onav-list">
             <template v-for="module in section.modules" :key="module.name">
+              <NavApps
+                v-if="module.layout === 'apps' && !collapsed"
+                :module="module"
+                :active-item="activeItem"
+                :count-of="countOf"
+              />
               <NavModule
+                v-else
                 :module="module"
                 :collapsed="collapsed"
                 :open="openModule === module.name"

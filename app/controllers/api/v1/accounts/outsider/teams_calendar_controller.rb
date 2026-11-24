@@ -55,7 +55,7 @@ class Api::V1::Accounts::Outsider::TeamsCalendarController < Api::V1::Accounts::
   def require_link
     return render_error_code('not_connected', :unprocessable_entity) unless my_link&.status == 'active'
 
-    render_error_code('scope_outdated', :unprocessable_entity) if my_link.scope_version < ::Outsider::Teams::Graph::Login::SCOPE_VERSION
+    render_error_code('scope_outdated', :unprocessable_entity) unless ::Outsider::Teams::Graph::Login.allows?(my_link, :calendar)
   end
 
   def client

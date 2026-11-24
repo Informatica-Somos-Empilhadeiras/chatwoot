@@ -14,6 +14,8 @@ import TeamsArea from '../teams/TeamsArea.vue';
 import PushSettings from '../push/PushSettings.vue';
 // perfis de acesso por tela (Administrador, Agente, Técnico e os criados) e o cadastro de pessoas com ramal
 import AccessSettings from '../access/AccessSettings.vue';
+// Aplicativos: Outlook, OneDrive e Agenda (blocos Microsoft e Google do menu)
+import { routes as appsRoutes } from '../apps/routes';
 
 const meta = { permissions: ['administrator'] };
 
@@ -70,4 +72,5 @@ export const routes = [
     component: TeamsArea,
     meta: { permissions: ['administrator', 'agent'] },
   },
+  ...appsRoutes,
 ];

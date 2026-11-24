@@ -39,6 +39,12 @@ const SECTIONS = [
     items: ['teams_chats', 'teams_mentions', 'teams_replies', 'teams_groups'],
   },
   {
+    key: 'apps',
+    icon: 'i-lucide-mail',
+    tone: 'slate',
+    items: ['apps_mail'],
+  },
+  {
     key: 'chatwoot',
     icon: 'i-lucide-bell',
     tone: 'purple',
@@ -68,6 +74,7 @@ const WITH_HELP = new Set([
   'teams_replies',
   'hide_content',
   'calls_missed',
+  'apps_mail',
 ]);
 
 const isLoading = ref(true);

@@ -3,7 +3,8 @@
 // nada daqui entra em Minhas, Esperando, Grupos ou Todas as conversas. Cada pessoa vê só o próprio
 // Teams. À esquerda a lista (abas Chats e Canais); à direita o chat ou o canal aberto. No celular
 // aparece uma coisa de cada vez. O canal abre no modo que a pessoa escolheu (Conversa, o padrão, ou
-// Publicações); a escolha fica guardada na conexão dela.
+// Publicações); a escolha fica guardada na conexão dela. A Agenda saiu do Teams: agora é um aplicativo do bloco
+// Microsoft (apps/calendar), e o endereço antigo /teams/calendar leva para lá.
 import { computed, ref, watch, onMounted, onBeforeUnmount } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
@@ -17,8 +18,8 @@ import TeamsLogo from './TeamsLogo.vue';
 import TeamsList from './TeamsList.vue';
 import TeamsChatView from './TeamsChatView.vue';
 import TeamsChannelView from './TeamsChannelView.vue';
-import TeamsCalendar from './TeamsCalendar.vue';
 import { teamsState, TEAMS_NOTICE, TEAMS_ROUTE } from './teamsStore';
+import { CALENDAR_ROUTE } from '../apps/appsStore';
 import { errorText } from './helpers';
 import './teams.css';
 
@@ -30,14 +31,11 @@ const threads = ref([]);
 const isLoading = ref(true);
 
 const routeKind = computed(() =>
-  ['channels', 'calendar'].includes(route.params.kind)
-    ? route.params.kind
-    : 'chats'
+  route.params.kind === 'channels' ? 'channels' : 'chats'
 );
 const kind = computed(() =>
   routeKind.value === 'channels' ? 'channel' : 'chat'
 );
-const isCalendar = computed(() => routeKind.value === 'calendar');
 const threadId = computed(() => Number(route.params.threadId) || null);
 const selected = computed(
   () => threads.value.find(thread => thread.id === threadId.value) || null
@@ -45,9 +43,7 @@ const selected = computed(
 // celular: mostra uma coisa de cada vez. Chat que não está na lista (saiu da lista, link antigo do aviso) volta para a
 // lista em vez de deixar a tela vazia sem saída
 const isOpen = computed(
-  () =>
-    isCalendar.value ||
-    (!!threadId.value && (!!selected.value || isLoading.value))
+  () => !!threadId.value && (!!selected.value || isLoading.value)
 );
 const canWrite = computed(() => teamsState.status === 'active');
 const channelView = computed(() =>
@@ -129,6 +125,19 @@ const onNotice = data => {
 watch(kind, load);
 watch(selected, thread => markRead(thread), { immediate: true });
 
+// link antigo da Agenda do Teams (aviso, favorito): vai para a Agenda do bloco Microsoft
+watch(
+  () => route.params.kind,
+  value => {
+    if (value === 'calendar')
+      router.replace({
+        name: CALENDAR_ROUTE,
+        params: { accountId: route.params.accountId, provider: 'microsoft' },
+      });
+  },
+  { immediate: true }
+);
+
 onMounted(() => {
   load();
   emitter.on(TEAMS_NOTICE, onNotice);
@@ -182,13 +191,9 @@ onBeforeUnmount(() => {
         @open="open"
         @settings="goSettings"
       />
-      <div
-        class="flex-1 min-w-0"
-        :class="isOpen ? 'flex' : 'hidden md:flex'"
-      >
-        <TeamsCalendar v-if="isCalendar" @back="back" />
+      <div class="flex-1 min-w-0" :class="isOpen ? 'flex' : 'hidden md:flex'">
         <TeamsChannelView
-          v-else-if="
+          v-if="
             selected &&
             selected.kind === 'channel' &&
             channelView === 'publicacoes'

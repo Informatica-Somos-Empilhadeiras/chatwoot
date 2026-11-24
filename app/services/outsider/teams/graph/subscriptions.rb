@@ -52,6 +52,14 @@ class Outsider::Teams::Graph::Subscriptions
     @link.subscriptions.reload
   end
 
+  # quem entrou de novo com a versão 4 ganha o aviso do Outlook na próxima renovação (RenewJob, de hora em hora)
+  def ensure_mail!
+    return unless Outsider::Teams::Graph::Login.allows?(@link, :mail)
+    return if @link.subscriptions.exists?(kind: 'mail')
+
+    create(@link.subscriptions.new(desired['mail']))
+  end
+
   def remove_all!
     @link.subscriptions.each { |subscription| remove(subscription) }
   end
@@ -96,16 +104,21 @@ class Outsider::Teams::Graph::Subscriptions
         resource: "/teams/#{channel['team_id']}/channels/#{channel['channel_id']}/messages"
       }
     end
+    # Outlook (aplicativos): e-mail novo na Caixa de entrada, para o número do menu e o aviso; só com a versão 4
+    wanted['mail'] = { kind: 'mail', resource: "/users/#{@link.ms_user_id}/mailFolders('inbox')/messages" } if
+      Outsider::Teams::Graph::Login.allows?(@link, :mail)
     wanted
   end
 
   def key_of(subscription)
-    subscription.kind == 'chats' ? 'chats' : "channel:#{subscription.team_id}:#{subscription.channel_id}"
+    return subscription.kind if %w[chats mail].include?(subscription.kind)
+
+    "channel:#{subscription.team_id}:#{subscription.channel_id}"
   end
 
   def body(subscription)
     site = Outsider::Teams::Graph::Login.site
-    { changeType: 'created,updated,deleted', notificationUrl: "#{site}#{NOTIFICATIONS_PATH}",
+    { changeType: subscription.kind == 'mail' ? 'created' : 'created,updated,deleted', notificationUrl: "#{site}#{NOTIFICATIONS_PATH}",
       lifecycleNotificationUrl: "#{site}#{LIFECYCLE_PATH}", resource: subscription.resource,
       expirationDateTime: expiration, clientState: subscription.client_state, includeResourceData: false }
   end

@@ -52,6 +52,7 @@ module Outsider::Access::Catalog
     [%r{\Aapi/v1/accounts/(contacts|companies)(/|\z)}, 'contacts'],
     [%r{\Aapi/v1/accounts/outsider/whatsapp_statuses\z}, 'whatsapp_status'],
     [%r{\Aapi/v1/accounts/outsider/teams_}, 'teams'],
+    [%r{\Aapi/v1/accounts/outsider/apps/microsoft_}, 'teams'], # Outlook e OneDrive seguem o Teams
     [%r{\Aapi/v1/accounts/outsider/erp/}, 'erp'],
     [%r{\Aapi/v1/accounts/outsider/reports/}, 'reports']
   ].freeze

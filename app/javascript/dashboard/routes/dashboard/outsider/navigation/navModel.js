@@ -70,6 +70,9 @@ export const toModule = (item, allowed) => {
     to: null,
     navSection: item.navSection,
     countMode: item.countMode,
+    // aplicativos (apps/sidebar.js): o menu do computador mostra os itens como grade de ícones
+    layout: item.layout,
+    appStatus: item.appStatus,
     groups,
   };
 };

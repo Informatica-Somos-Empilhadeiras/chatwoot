@@ -15,13 +15,21 @@ class Outsider::Teams::Graph::Login
   # agenda (ver e marcar reunião do Teams). Mudou a lista: suba SCOPE_VERSION; o administrador aprova de novo e cada
   # pessoa entra de novo (as telas avisam; o que já funcionava continua até lá).
   # Versão 3: User.ReadBasic.All, para mostrar a foto do perfil das pessoas (Outsider::Teams::Graph::Photo).
-  SCOPE_VERSION = 3
+  # Versão 4: Mail.ReadWrite e Mail.Send, para o Outlook no bloco Microsoft (ler, responder, mandar e mover e-mails).
+  SCOPE_VERSION = 4
+  # a partir de qual versão cada parte funciona: quem ainda não entrou de novo continua com o que já tinha
+  FEATURE_VERSIONS = { presence: 2, calendar: 2, members: 2, photo: 3, mail: 4 }.freeze
   PERMISSIONS = %w[User.Read Chat.ReadWrite ChatMessage.Send Team.ReadBasic.All Channel.ReadBasic.All ChannelMessage.Read.All
                    ChannelMessage.Send Files.ReadWrite.All TeamMember.Read.All ChannelMember.Read.All Presence.Read.All
-                   Calendars.ReadWrite User.ReadBasic.All].freeze
+                   Calendars.ReadWrite User.ReadBasic.All Mail.ReadWrite Mail.Send].freeze
   SCOPES = (%w[offline_access openid profile email] + PERMISSIONS).freeze
   STATE_PURPOSE = 'outsider_teams_oauth'.freeze
   TIMEOUT = 15
+
+  # a ligação ativa já tem as permissões desta parte (ver FEATURE_VERSIONS)?
+  def self.allows?(link, feature)
+    link.present? && link.status == 'active' && link.scope_version.to_i >= FEATURE_VERSIONS.fetch(feature)
+  end
 
   def self.site
     ENV.fetch('FRONTEND_URL', '').to_s.chomp('/')

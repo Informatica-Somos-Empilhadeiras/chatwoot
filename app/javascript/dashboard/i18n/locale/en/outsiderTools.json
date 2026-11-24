@@ -997,6 +997,7 @@
     "SHOW_LESS": "Show less",
     "SECTIONS": {
       "SERVICE": "Service",
+      "APPS": "Apps",
       "SALES": "Sales",
       "MANAGE": "Management",
       "MORE": "More"
@@ -1011,6 +1012,7 @@
     "SECTIONS": {
       "WHATSAPP": "WhatsApp and other customer channels",
       "TEAMS": "Teams",
+      "APPS": "Outlook (email)",
       "CHATWOOT": "Chatwoot",
       "PHONE": "Phone",
       "PRIVACY": "Privacy"
@@ -1030,6 +1032,8 @@
       "TEAMS_REPLIES": "Replies to my posts",
       "TEAMS_REPLIES_HELP": "And to posts I replied to",
       "TEAMS_GROUPS": "Every message in group chats",
+      "APPS_MAIL": "New emails in the Inbox",
+      "APPS_MAIL_HELP": "Sender and subject. Needs Outlook connected",
       "CHATWOOT": "Conversation assigned to me and mention in a private note",
       "HIDE_CONTENT": "Hide the message text on the lock screen",
       "HIDE_CONTENT_HELP": "Shows only \"New message from Someone\"",

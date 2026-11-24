@@ -8,6 +8,7 @@ class Outsider::Teams::Graph::ReceiveJob < ApplicationJob
     subscription = Outsider::TeamsSubscription.includes(:link).find_by(id: subscription_id)
     link = subscription&.link
     return if link.nil? || link.status != 'active'
+    return Outsider::Apps::Microsoft::MailNotice.new(link, resource).perform if subscription.kind == 'mail'
 
     ref = Outsider::Teams::Graph::Inbound.parse(resource)
     return if ref.nil?

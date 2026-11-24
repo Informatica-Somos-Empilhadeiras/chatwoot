@@ -997,6 +997,7 @@
     "SHOW_LESS": "Ver menos",
     "SECTIONS": {
       "SERVICE": "Atendimento",
+      "APPS": "Aplicativos",
       "SALES": "Vendas",
       "MANAGE": "Gestão",
       "MORE": "Mais"
@@ -1011,6 +1012,7 @@
     "SECTIONS": {
       "WHATSAPP": "WhatsApp e outros canais de cliente",
       "TEAMS": "Teams",
+      "APPS": "Outlook (e-mail)",
       "CHATWOOT": "Chatwoot",
       "PHONE": "Telefone",
       "PRIVACY": "Privacidade"
@@ -1030,6 +1032,8 @@
       "TEAMS_REPLIES": "Respostas às minhas publicações",
       "TEAMS_REPLIES_HELP": "E às publicações em que eu respondi",
       "TEAMS_GROUPS": "Todas as mensagens dos chats em grupo",
+      "APPS_MAIL": "E-mails novos na Caixa de Entrada",
+      "APPS_MAIL_HELP": "Quem mandou e o assunto. Precisa do Outlook conectado",
       "CHATWOOT": "Conversa atribuída a mim e citação em nota privada",
       "HIDE_CONTENT": "Esconder o texto da mensagem na tela bloqueada",
       "HIDE_CONTENT_HELP": "Mostra só \"Nova mensagem de Fulano\"",
