@@ -3,8 +3,6 @@
 // Relatorios e desempenho (os relatorios de reports/reportsCatalog.js e os Modelos de relatorio) e Configuracoes. Cada
 // aba segue o que esta ligado nas Configuracoes e a linha dela no perfil de acesso (erp_quotes, erp_orders, erp_sales,
 // erp_invoices, erp_products, abaixo da tela "erp"); com a integracao desligada so o admin ve. Grupo sem aba some.
-// No menu do computador os grupos usam o titulo em destaque (groupStyle 'strong', NavGroups.vue): maior que as abas,
-// e as abas recuadas embaixo, na linha da arvore.
 import { allows } from '../access/accessStore';
 import { erpState, ERP_ROUTE } from './erpStore';
 import { reportTabs } from '../reports/reportsCatalog';
@@ -112,7 +110,6 @@ export const erpSidebarItems = (t, accountScopedRoute) => {
     name: `OutsiderErp-group-${group.key}`,
     label: t(group.label),
     icon: group.icon,
-    groupStyle: 'strong',
     children: group.items.map(leaf),
   }));
   if (!children.length) return [];

@@ -400,51 +400,63 @@ const setButton = (name, el) => {
             <span :class="action.icon" class="size-5 shrink-0" />
             <span class="truncate">{{ action.label }}</span>
           </button>
+          <!-- grupo com título (Pastas, Times, Etiquetas, os do ERP...): o título é maior e mais forte que
+               as opções, que ficam recuadas embaixo dele, na linha da árvore (como no menu do computador) -->
           <template v-for="group in sheet.groups" :key="group.name">
             <div
               v-if="group.label"
-              class="flex items-center gap-2 px-3 pt-2 pb-1 text-[11px] font-semibold tracking-wide uppercase text-n-slate-10"
+              class="flex items-center gap-2 px-3 pt-2 pb-0.5 text-sm font-semibold text-n-slate-12"
             >
               {{ group.label }}
             </div>
-            <button
-              v-for="item in group.items"
-              :key="item.name"
-              type="button"
-              role="menuitem"
-              class="flex items-center gap-3 px-3 text-sm text-left rounded-xl min-h-11 shrink-0 text-n-slate-12 active:bg-n-alpha-3"
+            <div
               :class="
-                isItemActive(item) ||
-                (item.module && isModuleActive(item.module))
-                  ? 'bg-n-brand/10 text-n-brand font-semibold dark:text-n-slate-12'
-                  : 'hover:bg-n-alpha-2'
+                group.label
+                  ? 'flex flex-col gap-1 ms-5 ps-2 border-s border-n-weak'
+                  : 'contents'
               "
-              @click="onSheetItem(item)"
             >
-              <span
-                class="grid size-5 shrink-0 place-content-center text-n-slate-11 [&_span]:size-[18px]"
-              >
-                <component :is="renderIcon(item.icon)" v-if="item.icon" />
-                <span v-else class="rounded-full !size-1.5 bg-n-slate-8" />
-              </span>
-              <span class="flex-1 min-w-0 py-2 truncate">{{ item.label }}</span>
-              <span
-                v-if="
-                  (item.module ? moduleCount(item.module) : countOf(item)) > 0
+              <button
+                v-for="item in group.items"
+                :key="item.name"
+                type="button"
+                role="menuitem"
+                class="flex items-center gap-3 px-3 text-sm text-left rounded-xl min-h-11 shrink-0 text-n-slate-12 active:bg-n-alpha-3"
+                :class="
+                  isItemActive(item) ||
+                  (item.module && isModuleActive(item.module))
+                    ? 'bg-n-brand/10 text-n-brand font-semibold dark:text-n-slate-12'
+                    : 'hover:bg-n-alpha-2'
                 "
-                class="inline-grid place-items-center h-5 min-w-5 px-1.5 rounded-full text-[11px] font-bold leading-none outsider-brand-badge"
+                @click="onSheetItem(item)"
               >
-                {{ item.module ? moduleCount(item.module) : countOf(item) }}
-              </span>
-              <span
-                v-if="
-                  item.module &&
-                  !item.module.to &&
-                  itemsOf(item.module).length > 1
-                "
-                class="i-lucide-chevron-right size-4 shrink-0 text-n-slate-10"
-              />
-            </button>
+                <span
+                  class="grid size-5 shrink-0 place-content-center text-n-slate-11 [&_span]:size-[18px]"
+                >
+                  <component :is="renderIcon(item.icon)" v-if="item.icon" />
+                  <span v-else class="rounded-full !size-1.5 bg-n-slate-8" />
+                </span>
+                <span class="flex-1 min-w-0 py-2 truncate">{{
+                  item.label
+                }}</span>
+                <span
+                  v-if="
+                    (item.module ? moduleCount(item.module) : countOf(item)) > 0
+                  "
+                  class="inline-grid place-items-center h-5 min-w-5 px-1.5 rounded-full text-[11px] font-bold leading-none outsider-brand-badge"
+                >
+                  {{ item.module ? moduleCount(item.module) : countOf(item) }}
+                </span>
+                <span
+                  v-if="
+                    item.module &&
+                    !item.module.to &&
+                    itemsOf(item.module).length > 1
+                  "
+                  class="i-lucide-chevron-right size-4 shrink-0 text-n-slate-10"
+                />
+              </button>
+            </div>
           </template>
           <button
             v-for="action in sheet.actions.filter(a => a.key === 'menu')"

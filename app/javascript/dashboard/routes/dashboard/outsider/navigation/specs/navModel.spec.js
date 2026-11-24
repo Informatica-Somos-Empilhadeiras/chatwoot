@@ -33,31 +33,6 @@ describe('navModel', () => {
     expect(itemsOf(conversation)).toHaveLength(3);
   });
 
-  it('keeps the group style, so the ERP groups get the strong title', () => {
-    const [erp] = toModules(
-      [
-        {
-          name: 'OutsiderErp',
-          label: 'ERP',
-          children: [
-            {
-              name: 'vendas',
-              label: 'Orçamentos e OS',
-              groupStyle: 'strong',
-              children: [{ name: 'os', label: 'OS', to: '/erp/os' }],
-            },
-          ],
-        },
-      ],
-      allowed
-    );
-    expect(erp.groups.map(g => [g.name, g.style])).toEqual([
-      ['vendas', 'strong'],
-    ]);
-    const [conversation] = toModules(menu, allowed);
-    expect(conversation.groups[1].style).toBeUndefined();
-  });
-
   it('uses the biggest count of the module, since the options overlap', () => {
     const [conversation] = toModules(menu, allowed);
     expect(moduleCount(conversation, {})).toBe(12);
