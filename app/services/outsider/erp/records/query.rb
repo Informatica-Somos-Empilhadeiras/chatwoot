@@ -8,7 +8,10 @@ class Outsider::Erp::Records::Query
     cliente: %w[Nome RazaoSocial], fantasia: %w[Apelido Fantasia NomeFantasia], cidade: %w[Cidade], uf: %w[UF Estado],
     cnpj: %w[CPF_CNPJ CNPJ CPF]
   }.freeze
-  SORTS = { 'data' => 'X.data', 'numero' => 'X.numero', 'total' => 'X.total', 'cliente' => 'X.cliente' }.freeze
+  SORTS = { 'data' => 'X.data', 'numero' => 'X.numero', 'total' => 'X.total', 'cliente' => 'X.cliente', 'pessoa' => 'X.pessoa' }.freeze
+  # ordenações por texto (e a previsão da OS): linha sem o valor vai para o fim, nos dois sentidos
+  TEXT_SORTS = %w[cliente pessoa atendimento vendedor].freeze
+  DATE_SORTS = %w[previsao].freeze
   TEXT_KEYS = %i[cliente fantasia cidade].freeze
 
   def initialize(kind, schema)
@@ -16,16 +19,31 @@ class Outsider::Erp::Records::Query
     @schema = schema
   end
 
-  # linhas da página (filtros: q, from, to, clients, view, person, mine)
+  # linhas da página (filtros: q, from, to, clients, dimensions, view, person, mine)
   # options: sort, direction, per, offset
   def page_sql(companies, filters, options)
     union = union(companies)
     return unless union
 
-    order = SORTS.fetch(options[:sort].to_s, 'X.data')
     direction = options[:direction].to_s == 'asc' ? 'ASC' : 'DESC'
     "SELECT X.* FROM (#{union}) X WHERE #{where(filters, full: true)} " \
-      "ORDER BY #{order} #{direction}, X.numero #{direction}, X.banco LIMIT #{Integer(options[:per])} OFFSET #{Integer(options[:offset])}"
+      "ORDER BY #{order(options[:sort].to_s, direction)}, X.numero #{direction}, X.banco " \
+      "LIMIT #{Integer(options[:per])} OFFSET #{Integer(options[:offset])}"
+  end
+
+  # contagem de cada valor dos filtros extras do tipo (na OS: tipo de atendimento e vendedor). Cada filtro conta com os
+  # outros aplicados, menos ele mesmo, para a lista dele não encolher para um item só.
+  def dimensions_sql(companies, filters)
+    union = union(companies)
+    return unless union && @kind.dimensions.any?
+
+    @kind.dimensions.map do |key, definition|
+      value = dimension_value(definition)
+      name = definition[:name] ? "MAX(X.#{definition[:name]})" : 'NULL'
+      others = filters.merge(dimensions: filters[:dimensions].to_h.except(key))
+      "SELECT #{S.str(key.to_s)} AS dim, #{value} AS valor, #{name} AS nome, COUNT(*) AS qtd FROM (#{union}) X " \
+        "WHERE #{where(others, full: true)} AND #{value} IS NOT NULL GROUP BY #{value}"
+    end.join(' UNION ALL ')
   end
 
   # contagens por unidade x situação x pessoa x atrasada, com os filtros de base (busca, período, cliente); as visões,
@@ -41,6 +59,14 @@ class Outsider::Erp::Records::Query
 
   private
 
+  def order(key, direction)
+    column = SORTS.merge(@kind.extra_sorts).fetch(key, 'X.data')
+    return "(#{column} IS NULL OR #{column} = '') ASC, #{column} #{direction}" if TEXT_SORTS.include?(key)
+    return "(#{column} IS NULL) ASC, #{column} #{direction}" if DATE_SORTS.include?(key)
+
+    "#{column} #{direction}"
+  end
+
   def union(companies)
     selects = companies.filter_map { |company| bank_select(company) }
     selects.empty? ? nil : selects.join(' UNION ALL ')
@@ -52,8 +78,9 @@ class Outsider::Erp::Records::Query
     return if @kind.required.any? { |key| picked[key].nil? }
 
     bank = S.ident(company)
-    "SELECT #{S.str(company)} AS banco, #{fields(picked).join(', ')}, #{client_fields(company)}, #{person_field(company)} " \
-      "FROM #{bank}.#{S.ident(@kind.table)} O #{client_join(company, picked)} #{person_join(company, picked)}"
+    "SELECT #{S.str(company)} AS banco, #{fields(picked).join(', ')}, #{client_fields(company)}, #{person_field(company)}" \
+      "#{seller_field(company, picked)} FROM #{bank}.#{S.ident(@kind.table)} O #{client_join(company, picked)} " \
+      "#{person_join(company, picked)}#{seller_join(company, picked)}"
   end
 
   def fields(picked)
@@ -95,8 +122,24 @@ class Outsider::Erp::Records::Query
 
   def person_code(company) = @schema.pick(company, 'funcionarios', Outsider::Erp::SellerName::CODE)
 
+  # nome do vendedor quando a pessoa da linha é outra (OS: técnico); toda unidade devolve a coluna, mesmo vazia
+  def seller_field(company, picked)
+    return '' unless @kind.seller
+
+    name = person_code(company) && picked[@kind.seller] && @schema.pick(company, 'funcionarios', Outsider::Erp::SellerName::NAME)
+    name ? ", V.#{S.column(name)} AS vendedor" : ', NULL AS vendedor'
+  end
+
+  def seller_join(company, picked)
+    code = @kind.seller && person_code(company)
+    column = code && picked[@kind.seller]
+    return '' unless column
+
+    " LEFT JOIN #{S.ident(company)}.funcionarios V ON V.#{S.column(code)} = O.#{S.column(column)}"
+  end
+
   def where(filters, full:)
-    parts = [search(filters[:q]), period(filters[:from], filters[:to]), clients(filters[:clients])]
+    parts = [search(filters[:q]), period(filters[:from], filters[:to]), clients(filters[:clients]), dimensions(filters[:dimensions])]
     parts += [view(filters[:view], filters[:mine]), person(filters[:person])] if full
     parts.compact.presence&.join(' AND ') || '1 = 1'
   end
@@ -154,5 +197,23 @@ class Outsider::Erp::Records::Query
 
   def person(code)
     "X.pessoa_codigo = #{S.int(code)}" if code.to_i.positive?
+  end
+
+  # { atendimento: 'GARANTIA', vendedor: 7 }: só os filtros que o tipo tem; texto compara sem espaço nas pontas
+  def dimensions(values)
+    parts = values.to_h.filter_map do |key, value|
+      definition = @kind.dimensions[key.to_sym]
+      next unless definition && value.present?
+      next "#{dimension_value(definition)} = #{S.int(value)}" if definition[:numeric]
+
+      "#{dimension_value(definition)} = #{S.str(value.to_s.strip.first(80))}"
+    end
+    parts.presence&.join(' AND ')
+  end
+
+  # código (vendedor sem código não conta) ou texto sem espaço nas pontas (vazio não conta)
+  def dimension_value(definition)
+    column = "X.#{definition[:column]}"
+    definition[:numeric] ? "NULLIF(#{column}, 0)" : "NULLIF(TRIM(#{column}), '')"
   end
 end

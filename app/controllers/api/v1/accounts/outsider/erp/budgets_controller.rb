@@ -149,10 +149,11 @@ class Api::V1::Accounts::Outsider::Erp::BudgetsController < Api::V1::Accounts::O
     company = params.require(:company).to_s
     raise ArgumentError, 'company' unless settings.companies.include?(company)
 
+    terms = ::Outsider::Erp::PaymentTerms.new(Current.account)
     render json: {
-      payment_terms: optional { ::Outsider::Erp::PaymentTerms.new(Current.account).list },
+      payment_terms: optional { terms.list }, payment_terms_errors: terms.errors,
       sellers: optional { ::Outsider::Erp::Sellers.new(Current.account).list(company) },
-      generos: ::Outsider::Erp::BudgetForm::GENEROS, fretes: ::Outsider::Erp::BudgetForm::FRETES,
+      generos: ::Outsider::Erp::BudgetForm::GENEROS_PERMITIDOS, fretes: ::Outsider::Erp::BudgetForm::FRETES,
       services_direct: settings.data['quote_services_direct'] == true, can_create: can_create_quote?,
       discount: ::Outsider::Erp::DiscountPolicy.limits(settings)
     }

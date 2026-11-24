@@ -1,7 +1,7 @@
 <script setup>
 // OUTSIDER: uma aba da seção ERP (orçamentos, OS ou pedidos) com TODO o histórico lido direto do banco do ERP: visões
-// rápidas com contagem, busca (número, cliente, CNPJ), unidade, vendedor/técnico, período, tabela paginada e o painel
-// de detalhe ao lado. O registro aberto fica na rota (?open=empresa:número); os nós da corrente orçamento -> OS ->
+// rápidas com contagem, busca (número, cliente, CNPJ), unidade, vendedor/técnico (na OS também tipo de atendimento e
+// vendedor), período, ordenação, tabela paginada e o painel de detalhe ao lado. O registro aberto fica na rota (?open=empresa:número); os nós da corrente orçamento -> OS ->
 // pedido trocam o painel sem sair da aba. ?contact=<id> mostra só os clientes do ERP ligados àquele contato.
 import { ref, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
@@ -24,6 +24,7 @@ import {
 } from '../erpStore';
 import { budgetErrorMessage } from '../budgets/budgetHelpers';
 import {
+  DIMENSIONS,
   KINDS,
   PER_PAGE,
   PERIODS,
@@ -31,6 +32,8 @@ import {
   parseKey,
   recordKey,
   shortName,
+  sortOptions,
+  titleCase,
 } from './recordsConfig';
 
 const props = defineProps({
@@ -62,6 +65,8 @@ const page = ref(1);
 const per = ref(storedPer());
 const sort = ref('data');
 const direction = ref('desc');
+// filtros extras do tipo (OS: atendimento, vendedor), valor escolhido por filtro
+const picked = ref({});
 const data = ref(null);
 const loading = ref(false);
 const failure = ref('');
@@ -74,7 +79,12 @@ const label = key => t(`OUTSIDER_ERP.RECORDS.${cfg.value.key}.${key}`);
 const opened = computed(() => parseKey(route.query.open));
 const contactId = computed(() => Number(route.query.contact) || null);
 
+const dimensionKeys = computed(() => DIMENSIONS[props.kind] || []);
+
 const params = computed(() => ({
+  ...Object.fromEntries(
+    dimensionKeys.value.map(key => [key, picked.value[key] || undefined])
+  ),
   q: q.value || undefined,
   view: view.value || undefined,
   company: company.value || undefined,
@@ -112,7 +122,9 @@ const reload = () => {
 const searchLater = debounce(reload, 350);
 
 watch(q, searchLater);
-watch([view, company, person, from, to, contactId], reload);
+watch([view, company, person, from, to, contactId, picked], reload, {
+  deep: true,
+});
 watch([page, per, sort, direction], load);
 watch(per, value => {
   try {
@@ -137,13 +149,44 @@ const viewLabel = item => {
   return text === key ? item.key : text;
 };
 
+const TEXT_SORTS = ['cliente', 'pessoa', 'atendimento', 'vendedor'];
 const toggleSort = key => {
   if (sort.value === key) {
     direction.value = direction.value === 'desc' ? 'asc' : 'desc';
   } else {
     sort.value = key;
-    direction.value = key === 'cliente' ? 'asc' : 'desc';
+    direction.value = TEXT_SORTS.includes(key) ? 'asc' : 'desc';
   }
+};
+
+const sorts = computed(() => sortOptions(props.kind));
+const sortValue = computed({
+  get: () => `${sort.value}:${direction.value}`,
+  set: value => {
+    const [key, dir] = String(value).split(':');
+    sort.value = key;
+    direction.value = dir;
+  },
+});
+const sortLabel = item =>
+  item.key === 'PERSON_AZ'
+    ? t('OUTSIDER_ERP.RECORDS.SORTS.PERSON_AZ', { person: label('PERSON') })
+    : t(`OUTSIDER_ERP.RECORDS.SORTS.${item.key}`);
+
+// opções de cada filtro extra (com contagem); a escolha atual fica mesmo se a lista nova não a tiver
+const dimensionOptions = key => {
+  const list = data.value?.dimensions?.[key] || [];
+  const current = picked.value[key];
+  if (!current || list.some(item => String(item.value) === String(current)))
+    return list;
+  return [{ value: current, name: null, count: 0 }, ...list];
+};
+const dimensionText = (key, item) =>
+  key === 'vendedor'
+    ? shortName(item.name) || `#${item.value}`
+    : titleCase(item.value);
+const setDimension = (key, value) => {
+  picked.value = { ...picked.value, [key]: value };
 };
 
 const setQuery = changes => {
@@ -264,6 +307,28 @@ const DATE =
           </option>
         </select>
         <select
+          v-for="key in dimensionKeys"
+          :key="key"
+          :value="picked[key] || ''"
+          :class="SELECT"
+          :aria-label="
+            t(`OUTSIDER_ERP.RECORDS.DIMENSIONS.${key.toUpperCase()}.LABEL`)
+          "
+          :data-dimension="key"
+          @change="setDimension(key, $event.target.value)"
+        >
+          <option value="">
+            {{ t(`OUTSIDER_ERP.RECORDS.DIMENSIONS.${key.toUpperCase()}.ALL`) }}
+          </option>
+          <option
+            v-for="item in dimensionOptions(key)"
+            :key="item.value"
+            :value="String(item.value)"
+          >
+            {{ dimensionText(key, item) }} ({{ item.count }})
+          </option>
+        </select>
+        <select
           v-model="period"
           :class="SELECT"
           :aria-label="t('OUTSIDER_ERP.RECORDS.PERIOD')"
@@ -286,6 +351,19 @@ const DATE =
             :aria-label="t('OUTSIDER_ERP.RECORDS.TO')"
           />
         </template>
+        <label class="flex items-center gap-1.5 text-xs text-n-slate-10">
+          <Icon icon="i-lucide-arrow-down-up" class="size-3.5 shrink-0" />
+          <select
+            v-model="sortValue"
+            :class="SELECT"
+            :aria-label="t('OUTSIDER_ERP.RECORDS.SORT')"
+            data-sort
+          >
+            <option v-for="item in sorts" :key="item.value" :value="item.value">
+              {{ sortLabel(item) }}
+            </option>
+          </select>
+        </label>
       </div>
 
       <div

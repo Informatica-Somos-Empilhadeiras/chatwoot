@@ -60,7 +60,9 @@
         "ORIGIN_ERP": "ERP",
         "ORIGIN_ERP_HINT": "Técnico da OS que o ERP liga ao pedido",
         "ORIGIN_CHAT": "chat",
-        "ORIGIN_CHAT_HINT": "Técnico informado pelo vendedor no pedido"
+        "ORIGIN_CHAT_HINT": "Técnico informado pelo vendedor no pedido",
+        "ATTENDANCE_TYPE": "Tipo de atendimento",
+        "LINK_OS": "Vincular OS"
       },
       "LISTS": {
         "WITHOUT_TECH": "Faturados sem técnico informado",
@@ -82,7 +84,9 @@
         "PARTE": "Parte (%)",
         "VALOR": "Valor creditado",
         "PECAS": "Peças",
-        "SERVICOS": "Serviços"
+        "SERVICOS": "Serviços",
+        "ATENDIMENTO": "Tipo de atendimento",
+        "FORA_DA_SOMA": "Fora da soma"
       },
       "CONFIG": {
         "TITLE": "Comissão e metas dos técnicos",
@@ -90,7 +94,16 @@
         "COMMISSION_HINT": "Sobre o valor faturado creditado a cada técnico.",
         "GOALS": "Meta do mês (R$)",
         "GOALS_HINT": "Vazio: sem meta. A meta vale pelo nome do técnico.",
-        "SAVE": "Salvar"
+        "SAVE": "Salvar",
+        "EXCLUDED": "Tipos de atendimento que não somam",
+        "EXCLUDED_HINT": "A OS desses tipos aparece no pedido, mas não entra no valor nem na comissão do técnico. Vale pelo pedaço do nome: FROTAS pega MANUT. FROTA.",
+        "EXCLUDED_ADD": "Adicionar",
+        "EXCLUDED_PLACEHOLDER": "Ex.: GARANTIA"
+      },
+      "EXCLUDED": {
+        "NOTE": "{value} em {count} pedido(s) com OS de {types} ficaram fora da soma dos técnicos (Configurações).",
+        "BADGE": "não soma",
+        "BADGE_HINT": "Tipo de atendimento fora da soma dos técnicos (Configurações)"
       }
     }
   }

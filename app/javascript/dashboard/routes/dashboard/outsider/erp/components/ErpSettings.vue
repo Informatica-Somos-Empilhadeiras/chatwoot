@@ -35,6 +35,7 @@ const testResult = ref(null);
 const loadError = ref('');
 // formas de pagamento do ERP (lista para escolher a padrão do orçamento; sem lista, o campo vira número)
 const paymentTerms = ref([]);
+const paymentTermsError = ref('');
 // gêneros da operação e tipos de frete (listas fixas do servidor) para os padrões do orçamento
 const quoteLists = ref({});
 const QUOTE_SELECTS = [
@@ -80,8 +81,12 @@ const loadPaymentTerms = async () => {
   try {
     const { data } = await ErpAPI.paymentTerms();
     paymentTerms.value = data.payment_terms || [];
-  } catch {
+    paymentTermsError.value = paymentTerms.value.length
+      ? ''
+      : (data.errors || [])[0] || '';
+  } catch (error) {
     paymentTerms.value = [];
+    paymentTermsError.value = error?.response?.data?.error || '';
   }
 };
 
@@ -587,7 +592,12 @@ const removeField = index => form.value.extra_fields.splice(index, 1);
             min="0"
             :class="INPUT"
           />
-          <span class="text-xs text-n-slate-10">{{
+          <span v-if="paymentTermsError" class="text-xs text-n-amber-11">{{
+            t('OUTSIDER_ERP.SETTINGS.QUOTE_FORMA_PAGTO_ERROR', {
+              error: paymentTermsError,
+            })
+          }}</span>
+          <span v-else class="text-xs text-n-slate-10">{{
             t('OUTSIDER_ERP.SETTINGS.QUOTE_FORMA_PAGTO_HINT')
           }}</span>
         </label>
@@ -631,6 +641,15 @@ const removeField = index => form.value.extra_fields.splice(index, 1);
           {{ t('OUTSIDER_ERP.SETTINGS.QUOTE_SERVICES_DIRECT') }}
           <span class="text-xs text-n-slate-10">
             {{ t('OUTSIDER_ERP.SETTINGS.QUOTE_SERVICES_DIRECT_HINT') }}
+          </span>
+        </span>
+      </label>
+      <label class="flex items-start gap-2 text-sm text-n-slate-12">
+        <Switch v-model="form.quote_parts_direct" class="mt-0.5" />
+        <span class="flex flex-col">
+          {{ t('OUTSIDER_ERP.SETTINGS.QUOTE_PARTS_DIRECT') }}
+          <span class="text-xs text-n-slate-10">
+            {{ t('OUTSIDER_ERP.SETTINGS.QUOTE_PARTS_DIRECT_HINT') }}
           </span>
         </span>
       </label>

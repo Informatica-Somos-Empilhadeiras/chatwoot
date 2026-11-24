@@ -10,7 +10,8 @@ RSpec.describe 'Outsider ERP records section' do # rubocop:disable RSpec/Describ
     {
       'orcamento' => %w[codigoorcamento CodigoCliente orcamentoData Status total Vendedor OrdemServico CodigoIntegracaoMobile IDLogado Validade
                         DataStatus OrcamentoEmUtilizacao NomeUserEmUtilizacao DataEmUtilizacao Contato],
-      'os' => %w[CodigoOS CodigoCliente DataEntrada Situacao Total Tecnico DataPrevisao DataEntrega NSerie Orcamento Pedido Defeitos],
+      'os' => %w[CodigoOS CodigoCliente DataEntrada Situacao Total Tecnico DataPrevisao DataEntrega NSerie Orcamento Pedido Defeitos
+                 TipoAtendimento Vendedor],
       'pedido' => %w[CodigoPedido CodigoCliente PedidoData Vendedor total orcamento NotaFiscal fechado OS],
       'notafiscal' => %w[CodigoNF Emissao Status TotalNF Pedido TipoNota],
       'notafiscalservico' => %w[SeqNFSe Emissao Status TotalNF Pedido CodigoNFS CodigoRps],
@@ -40,6 +41,7 @@ RSpec.describe 'Outsider ERP records section' do # rubocop:disable RSpec/Describ
 
   def answer(sql)
     return columns.fetch(sql[/LOWER\(TABLE_NAME\) = '(\w+)'/, 1], []).map { |name| { 'COLUMN_NAME' => name } } if sql.include?('information_schema')
+    return dimension_rows if sql.include?(' AS dim, ')
     return facet_rows if sql.include?('COUNT(*) AS qtd')
     return page_rows if sql.start_with?('SELECT X.*')
 
@@ -52,6 +54,12 @@ RSpec.describe 'Outsider ERP records section' do # rubocop:disable RSpec/Describ
       { 'banco' => 'somosemp', 'status' => 'FECHADO', 'pessoa_codigo' => 11, 'pessoa' => 'ALICE', 'atrasada' => 0, 'qtd' => 5, 'soma' => '500.5' },
       { 'banco' => 'somosfilial', 'status' => 'PERDIDO', 'pessoa_codigo' => 6, 'pessoa' => 'CRISTIANE', 'atrasada' => 0, 'qtd' => 2, 'soma' => 20 }
     ]
+  end
+
+  def dimension_rows
+    [{ 'dim' => 'atendimento', 'valor' => 'GARANTIA', 'nome' => nil, 'qtd' => 4 },
+     { 'dim' => 'vendedor', 'valor' => 11, 'nome' => ' ALICE ', 'qtd' => 2 },
+     { 'dim' => 'atendimento', 'valor' => 'ENTREGA TÉCNICA', 'nome' => nil, 'qtd' => 3 }]
   end
 
   def page_rows
@@ -128,6 +136,31 @@ RSpec.describe 'Outsider ERP records section' do # rubocop:disable RSpec/Describ
       page = erp_sqls.find { |sql| sql.start_with?('SELECT X.*') }
       expect(page).to include('FROM somosemp.os O', "NOT IN ('FECHADA', 'CANCELADA', 'PERDIDA')")
       expect(erp_sqls.find { |sql| sql.include?('COUNT(*)') }).to include('X.previsao < CURDATE()')
+    end
+
+    it 'filters service orders by attendance type and seller, counts each one without its own filter, and sorts blanks last' do
+      result = lister('orders').page({ view: 'all', atendimento: " garantia'", vendedor: '11', sort: 'atendimento', direction: 'desc' })
+
+      page = erp_sqls.find { |sql| sql.start_with?('SELECT X.*') }
+      expect(page).to include("NULLIF(TRIM(X.atendimento), '') = 'garantia\\''", 'NULLIF(X.vendedor_codigo, 0) = 11',
+                              'LEFT JOIN somosemp.funcionarios V ON V.`CodigoFuncionario` = O.`Vendedor`', 'V.`Nome` AS vendedor',
+                              "ORDER BY (X.atendimento IS NULL OR X.atendimento = '') ASC, X.atendimento DESC")
+      attendance, seller = erp_sqls.find { |sql| sql.include?(' AS dim, ') }.split("UNION ALL SELECT 'vendedor' AS dim")
+      expect(attendance).to include('NULLIF(X.vendedor_codigo, 0) = 11')
+      expect(attendance).not_to include("= 'garantia")
+      expect(seller).to include("= 'garantia\\''")
+      expect(seller).not_to include('NULLIF(X.vendedor_codigo, 0) = 11')
+      expect(result[:dimensions]).to eq(atendimento: [{ value: 'ENTREGA TÉCNICA', name: nil, count: 3 }, { value: 'GARANTIA', name: nil, count: 4 }],
+                                        vendedor: [{ value: 11, name: 'ALICE', count: 2 }])
+    end
+
+    it 'only sorts by what the list knows and ignores filters the kind does not have' do
+      lister('quotes').page({ sort: 'X.total; DROP', atendimento: 'GARANTIA' })
+
+      page = erp_sqls.find { |sql| sql.start_with?('SELECT X.*') }
+      expect(page).to include('ORDER BY X.data DESC')
+      expect(page).not_to include('GARANTIA')
+      expect(erp_sqls.grep(/ AS dim, /)).to be_empty
     end
 
     it 'derives the sales order status when the bank has no status column' do

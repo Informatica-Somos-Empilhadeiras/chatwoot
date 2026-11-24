@@ -7,7 +7,7 @@ RSpec.describe 'Outsider ERP lists to pick from' do # rubocop:disable RSpec/Desc
   let(:settings) { Outsider::Erp::Settings.new(account) }
   let(:columns) do
     { 'clientes' => %w[CodigoCliente Nome Fantasia CPF_CNPJ Cidade UF Fone Celular Email],
-      'produtos' => %w[CodigoProduto Descricao ClasFiscal] }
+      'produtos' => %w[CodigoProduto Descricao ClasFiscal], 'formapagto' => %w[Codigo Descricao Parcelas] }
   end
   let(:customers) do
     {
@@ -37,9 +37,9 @@ RSpec.describe 'Outsider ERP lists to pick from' do # rubocop:disable RSpec/Desc
   end
 
   def payment_terms(bank)
-    return [{ 'Codigo' => 3, 'Descricao' => 'BOLETO 28' }] unless bank == 'somosemp'
+    return [{ 'codigo' => 3, 'descricao' => 'BOLETO 28' }] unless bank == 'somosemp'
 
-    [{ 'Codigo' => 3, 'Descricao' => 'BOLETO' }, { 'Codigo' => 1, 'Descricao' => 'A VISTA' }]
+    [{ 'codigo' => 3, 'descricao' => 'BOLETO' }, { 'codigo' => 1, 'descricao' => 'A VISTA' }]
   end
 
   before do
@@ -94,6 +94,24 @@ RSpec.describe 'Outsider ERP lists to pick from' do # rubocop:disable RSpec/Desc
 
   it 'joins the payment terms of every unit, showing different names for the same code' do
     expect(Outsider::Erp::PaymentTerms.new(account).list).to eq([{ codigo: 1, descricao: 'A VISTA' }, { codigo: 3, descricao: 'BOLETO / BOLETO 28' }])
+    expect(a_request(:put, %r{/query_execute}).with { |req| req.body.include?('F.`Descricao` AS descricao FROM somosemp.formapagto F') })
+      .to have_been_made.once
+  end
+
+  it 'keeps the payment terms of the other units when one unit fails, and names a code' do
+    columns['formapagto'] = %w[CodigoFormaPagto Nome]
+    stub_request(:put, %r{/dashboard/api/query_execute}).to_return do |request|
+      sql = JSON.parse(request.body)['SQL_Execute']
+      next { status: 500, body: 'erro' } if sql.include?('somosfilial.formapagto')
+
+      { status: 200, body: answer(sql).to_json }
+    end
+    terms = Outsider::Erp::PaymentTerms.new(account)
+
+    expect(terms.list).to eq([{ codigo: 1, descricao: 'A VISTA' }, { codigo: 3, descricao: 'BOLETO' }])
+    expect(terms.errors.join).to include('somosfilial')
+    expect(terms.name(3)).to eq('BOLETO')
+    expect(a_request(:put, %r{/query_execute}).with { |req| req.body.include?('F.`CodigoFormaPagto` AS codigo') }).to have_been_made.at_least_once
   end
 
   it 'refuses column names that do not look like columns' do

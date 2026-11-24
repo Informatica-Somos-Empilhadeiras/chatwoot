@@ -134,7 +134,8 @@
       "LOCKED": "Closed service order — read only.",
       "NOTE_HINT": "Each change is logged as a private note in this conversation.",
       "VIEW_ONLY": "Your profile can only view service orders.",
-      "REPORT": "Report with photos",
+      "REPORT": "Print report",
+      "REPORT_TYPE": "Print {type} report",
       "SEND": {
         "BUTTON": "Send",
         "TITLE": "Send the report of SO {code} to the customer",
@@ -255,6 +256,7 @@
       "QUOTE_WRITE_ENABLED": "Recording in the ERP on",
       "QUOTE_FORMA_PAGTO": "Default payment term",
       "QUOTE_FORMA_PAGTO_HINT": "The ERP's own list. Preselected on every new quote.",
+      "QUOTE_FORMA_PAGTO_ERROR": "Could not read the ERP list ({error}). Type the code.",
       "QUOTE_TIPO_FRETE": "Default freight",
       "QUOTE_GENERO": "Default operation type",
       "SAVE": "Save",
@@ -265,6 +267,8 @@
       "QUOTE_DEFAULT_PLACEHOLDER": "default for new quotes",
       "QUOTE_SERVICES_DIRECT": "Record services directly in the quote",
       "QUOTE_SERVICES_DIRECT_HINT": "The ERP function drops items without NCM, and services have none. When on, the service line is written directly with the same math as the function.",
+      "QUOTE_PARTS_DIRECT": "Record directly the parts the ERP function rejects",
+      "QUOTE_PARTS_DIRECT_HINT": "Parts with no NCM or no tax rule for the customer's state are rejected by the ERP function (\"check NCM or unit\"). When on, the part goes into the quote anyway, without tax. Tax counts on the work order and the sales order.",
       "QUOTE_DISCOUNT": "Ask for approval when the discount is above the limit",
       "QUOTE_DISCOUNT_HINT": "Somos's Mais Prático has no discount limit filled in. Above these limits, someone with discount permission in the ERP (or a manager) approves with their ERP code and password. 0 = any discount needs approval.",
       "QUOTE_DISCOUNT_LINE": "Free discount per item up to (%)",
@@ -403,6 +407,7 @@
         "PICK": "Pick…",
         "CODE": "Code {code}",
         "CODE_PLACEHOLDER": "ERP code",
+        "PAYMENT_ERROR": "Could not read the payment term names from the ERP ({error}), so the code is shown.",
         "PRAZO_ENTREGA": "Delivery time",
         "VALIDADE": "Validity",
         "GARANTIA": "Warranty",
@@ -735,7 +740,35 @@
       },
       "ERROR": "This screen failed: {message}",
       "TOMORROW": "tomorrow",
-      "IN_DAYS": "in {n} days"
+      "IN_DAYS": "in {n} days",
+      "SORT": "Sort",
+      "SORTS": {
+        "NEWEST": "Newest first",
+        "OLDEST": "Oldest first",
+        "DUE_SOON": "Due soonest",
+        "DUE_LATE": "Due latest",
+        "NUMBER_DESC": "Number (highest first)",
+        "NUMBER_ASC": "Number (lowest first)",
+        "CLIENT_AZ": "Customer (A to Z)",
+        "CLIENT_ZA": "Customer (Z to A)",
+        "TOTAL_DESC": "Highest value",
+        "TOTAL_ASC": "Lowest value",
+        "PERSON_AZ": "{person} (A to Z)",
+        "ATTENDANCE_AZ": "Service type (A to Z)",
+        "SELLER_AZ": "Salesperson (A to Z)"
+      },
+      "DIMENSIONS": {
+        "ATENDIMENTO": {
+          "LABEL": "Service type",
+          "ALL": "All service types"
+        },
+        "VENDEDOR": {
+          "LABEL": "Salesperson",
+          "ALL": "All salespeople"
+        }
+      },
+      "ATTENDANCE": "Service type",
+      "SELLER_LINE": "Sales {name}"
     },
     "CLIENT": {
       "NEW": "New customer",
@@ -745,11 +778,6 @@
       "HINT": "Saved in Mais Prático as a pre-registration, through the ERP's own function. The office completes the rest (city code, profile and registration).",
       "UNIT": "Unit",
       "PERSON": "Type",
-      "COMPANY": "Company",
-      "INDIVIDUAL": "Individual",
-      "CNPJ": "CNPJ",
-      "CPF": "CPF",
-      "BAD_DOCUMENT": "The check digits do not match.",
       "COMPANY": {
         "SEARCHING": "Looking up the company by CNPJ…",
         "FILLED": "Filled with the company registry data. Please check.",
@@ -757,6 +785,10 @@
         "NOT_FOUND": "CNPJ not found in the public registry. Fill in by hand.",
         "UNAVAILABLE": "The CNPJ lookup is unavailable right now. Fill in by hand."
       },
+      "INDIVIDUAL": "Individual",
+      "CNPJ": "CNPJ",
+      "CPF": "CPF",
+      "BAD_DOCUMENT": "The check digits do not match.",
       "LEGAL_NAME": "Legal name",
       "NAME": "Name",
       "TRADE_NAME": "Trade name",
@@ -1026,6 +1058,8 @@
         "PAGE_NUMBERS": "Number pages"
       },
       "LIST": {
+        "ADD_TYPE": "Add type",
+        "ADD_TYPE_PLACEHOLDER": "Another service type, spelled as in the ERP",
         "BINDINGS_TITLE": "Which template is used in each case",
         "BINDINGS_HELP": "The order report uses the template of its attendance type; types without a choice use the default. \"Mais Prático original\" is today's report: nothing changes until you pick another template.",
         "SAVE_BINDINGS": "Save choices",
@@ -1035,7 +1069,7 @@
         "OS_DEFAULT": "Default (types without a choice)",
         "USE_DEFAULT": "Use the default",
         "ORIGINAL": "Mais Prático original",
-        "NO_TYPES": "The ERP attendance types did not load. Reload the page to try again.",
+        "NO_TYPES": "No service types came from the ERP. Add one below, spelled as in the ERP.",
         "QUOTE_DEFAULT": "Quote template",
         "QUOTE_HELP": "Applies to the PDF of ERP quotes, quotes made in the chat and draft previews.",
         "TEMPLATES_OS": "Order templates",

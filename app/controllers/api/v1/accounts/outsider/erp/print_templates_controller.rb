@@ -18,7 +18,7 @@ class Api::V1::Accounts::Outsider::Erp::PrintTemplatesController < Api::V1::Acco
     ::Outsider::Erp::PrintTemplate::KINDS.each { |kind| defaults.ensure!(Current.account, kind, user: Current.user) }
     render json: {
       templates: scope.with_attached_images.ordered.map { |template| summary(template) },
-      bindings: bindings.to_h, attendance_types: attendance_types,
+      bindings: bindings.to_h, attendance_types: attendance_types, attendance_labels: attendance_labels,
       catalog: ::Outsider::Erp::PrintTemplate::KINDS.index_with { |kind| ::Outsider::Erp::Prints::Catalog.to_h(kind) },
       builtins: defaults::TEMPLATES.transform_values { |data| data.slice('kind', 'name') }
     }
@@ -121,14 +121,20 @@ class Api::V1::Accounts::Outsider::Erp::PrintTemplatesController < Api::V1::Acco
     raw.respond_to?(:to_unsafe_h) ? raw.to_unsafe_h : raw.to_h
   end
 
-  # os tipos de atendimento do ERP (lista do kanban) mais os que já têm escolha (tipo que saiu da lista continua visível)
+  # os tipos de atendimento do ERP (lista do kanban e os que as OS usam) mais os que já têm escolha (tipo que saiu da lista
+  # continua visível). A chave é a forma normalizada (sem acento); attendance_labels traz o nome como o ERP escreve.
   def attendance_types
-    listed = begin
+    (listed_types.keys + bindings.to_h.dig('os', 'types').to_h.keys).uniq.sort
+  end
+
+  def attendance_labels = listed_types.reject { |key, name| key == name }
+
+  def listed_types
+    @listed_types ||= begin
       ::Outsider::Erp::Lists.new(Current.account).attendance_types
     rescue ::Outsider::Erp::Client::Error
       []
-    end
-    (listed.map { |type| ::Outsider::Erp::Prints::Bindings.normalize_type(type) } + bindings.to_h.dig('os', 'types').to_h.keys).uniq.sort
+    end.each_with_object({}) { |type, map| map[::Outsider::Erp::Prints::Bindings.normalize_type(type)] ||= type.to_s.squish }
   end
 
   def starter_content(kind)

@@ -1,6 +1,7 @@
 # OUTSIDER: os números de cada técnico no relatório (Outsider::Erp::TechnicianReport) a partir dos pedidos faturados com
 # vínculo: valor creditado (a parte dele do faturado, separado em peças e serviços), pedidos, OS, clientes, ticket médio,
 # participação, prazo médio da abertura da OS até a nota, tipos de atendimento, comissão (% das Configurações) e meta.
+# A linha marcada fora da soma (tipo de atendimento da OS, ver Outsider::Erp::Settings::Reports) não conta.
 # O mesmo técnico em unidades diferentes (códigos diferentes) é somado pelo nome.
 class Outsider::Erp::TechnicianReport::Totals
   def initialize(settings)
@@ -9,7 +10,7 @@ class Outsider::Erp::TechnicianReport::Totals
 
   def technicians(sales)
     groups = Hash.new { |hash, key| hash[key] = blank }
-    sales.each { |sale| sale['linhas'].each { |line| add(groups[key(line)], sale, line) } }
+    sales.each { |sale| sale['linhas'].each { |line| add(groups[key(line)], sale, line) unless line['fora_da_soma'] } }
     total = groups.values.sum { |row| row[:faturado] }
     groups.map { |name, row| finish(name, row, total) }.sort_by { |row| -row['faturado'] }
   end

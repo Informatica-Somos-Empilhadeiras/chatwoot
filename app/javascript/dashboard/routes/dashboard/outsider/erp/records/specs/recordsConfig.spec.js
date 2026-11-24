@@ -5,6 +5,7 @@ import {
   recordKey,
   relativeDay,
   shortName,
+  sortOptions,
   statusClass,
   titleCase,
 } from '../recordsConfig';
@@ -70,5 +71,21 @@ describe('recordsConfig', () => {
     expect(shortName('LUCAS FERREIRA RORIZ')).toBe('Lucas Roriz');
     expect(statusClass('FATURADO')).toContain('blue');
     expect(statusClass('CANCELADA')).toContain('ruby');
+  });
+
+  it('offers the service order sorts only on the service order list', () => {
+    const orders = sortOptions('orders').map(item => item.value);
+    const quotes = sortOptions('quotes').map(item => item.value);
+    expect(orders).toEqual(
+      expect.arrayContaining([
+        'previsao:asc',
+        'atendimento:asc',
+        'vendedor:asc',
+        'cliente:asc',
+        'total:desc',
+      ])
+    );
+    expect(quotes).not.toContain('atendimento:asc');
+    expect(quotes[0]).toBe('data:desc');
   });
 });

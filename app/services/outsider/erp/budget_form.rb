@@ -19,6 +19,9 @@ class Outsider::Erp::BudgetForm
     [0, 'VENDA CONSUMO'], [1, 'REVENDA'], [4, 'CONSIGNAÇÃO'], [5, 'DEMONSTRAÇÃO'], [6, 'AMOSTRA'], [7, 'TROCA'], [8, 'DOAÇÃO'],
     [9, 'REMESSA'], [10, 'OUTRAS SAÍDAS'], [12, 'VENDA DE CONSIGNAÇÃO'], [13, 'EMPRESTIMO']
   ].map { |code, name| { codigo: code, descricao: name } }.freeze
+  # orçamento do chat sai sempre como REVENDA (decisão do dono em 24/11/2026); a lista acima fica para ler os já gravados
+  GENERO = 1
+  GENEROS_PERMITIDOS = GENEROS.select { |row| row[:codigo] == GENERO }.freeze
   # tipo de frete (TipoFrete do orçamento, um dígito), como o modFrete da NF-e; no banco da Somos aparecem 0 (quase
   # todos, ex.: orçamento 3309 "EMITENTE"), 9, 3 e 1
   FRETES = [[0, 'Emitente (CIF)'], [1, 'Destinatário (FOB)'], [2, 'Terceiros'], [3, 'Próprio do emitente'],
@@ -66,10 +69,12 @@ class Outsider::Erp::BudgetForm
   def editable_terms(terms) = @budget.revising? ? terms.slice(*Outsider::Erp::QuoteRevision::TERMS) : terms
 
   def clean_terms(terms)
-    terms.slice(*TERMS.keys).to_h do |key, value|
+    cleaned = terms.slice(*TERMS.keys).to_h do |key, value|
       kind = TERMS[key]
       [key, clean_value(kind, value)]
     end
+    cleaned['genero'] = GENERO if cleaned.key?('genero')
+    cleaned
   end
 
   def clean_value(kind, value)

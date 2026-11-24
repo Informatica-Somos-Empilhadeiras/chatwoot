@@ -27,8 +27,12 @@ class Outsider::Erp::Prints::Bindings
   # escolha para um caso: id do modelo ou 'original'
   def choice(kind, attendance_type = nil)
     data = to_h[kind.to_s]
-    type = normalize_type(attendance_type)
-    (type.present? && data.fetch('types', {})[type]) || data['default']
+    type_choice(data, attendance_type) || data['default']
+  end
+
+  # os tipos de atendimento com modelo próprio (o botão da OS mostra o tipo: "Emitir relatório Entrega Técnica")
+  def own_types(kind = 'os')
+    to_h[kind.to_s].fetch('types', {}).reject { |_, choice| choice == ORIGINAL }.keys
   end
 
   # algum caso deste tipo usa um modelo? (não: o relatório sai pelo caminho original, sem ler nada a mais)
@@ -53,11 +57,19 @@ class Outsider::Erp::Prints::Bindings
     to_h
   end
 
-  def self.normalize_type(value) = value.to_s.squish.upcase.first(80)
+  # maiúsculas, sem acento e sem espaço sobrando: "Entrega técnica" e "ENTREGA TECNICA" são o mesmo tipo
+  def self.normalize_type(value) = value.to_s.unicode_normalize(:nfkd).gsub(/\p{Mn}/, '').squish.upcase.first(80)
 
   private
 
   def normalize_type(value) = self.class.normalize_type(value)
+
+  def type_choice(data, attendance_type)
+    type = normalize_type(attendance_type)
+    return if type.blank?
+
+    data.fetch('types', {}).find { |name, _| normalize_type(name) == type }&.last
+  end
 
   def stored = fresh_attributes[KEY].to_h
 

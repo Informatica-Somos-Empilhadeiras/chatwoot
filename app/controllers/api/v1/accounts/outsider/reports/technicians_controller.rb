@@ -16,13 +16,14 @@ class Api::V1::Accounts::Outsider::Reports::TechniciansController < Api::V1::Acc
     from = date(:from, Date.current.beginning_of_month)
     to = date(:to, Date.current)
     report = ::Outsider::Erp::TechnicianReport.new(Current.account).build(from: from, to: to, companies: Array(params[:companies]).map(&:to_s))
-    render json: report.merge('pode_configurar' => Current.account_user.administrator?, 'metas' => settings.report_goals)
+    render json: report.merge('pode_configurar' => Current.account_user.administrator?, 'metas' => settings.report_goals,
+                              'tipos_fora_da_soma' => settings.report_excluded_types)
   end
 
-  # report_commission_pct e report_goals ({ "NOME" => meta em R$ })
+  # report_commission_pct, report_goals ({ "NOME" => meta em R$ }) e report_excluded_types (tipos de atendimento fora da soma)
   def update
-    settings.update(params.permit(:report_commission_pct, report_goals: {}).to_h)
-    render json: { comissao_pct: settings.report_commission_pct, metas: settings.report_goals }
+    settings.update(params.permit(:report_commission_pct, report_goals: {}, report_excluded_types: []).to_h)
+    render json: { comissao_pct: settings.report_commission_pct, metas: settings.report_goals, tipos_fora_da_soma: settings.report_excluded_types }
   end
 
   private

@@ -12,7 +12,13 @@ import ErpOrderEditor from './ErpOrderEditor.vue';
 import ErpPdfDialog from '../budgets/ErpPdfDialog.vue';
 import ErpDocumentSendDialog from './ErpDocumentSendDialog.vue';
 import { allows } from '../../access/accessStore';
-import { erpState, formatDate, dotClass, substatusClass } from '../erpStore';
+import {
+  erpState,
+  formatDate,
+  dotClass,
+  substatusClass,
+  reportTypeName,
+} from '../erpStore';
 
 const props = defineProps({
   order: { type: Object, required: true },
@@ -43,6 +49,12 @@ const openReport = () =>
   );
 
 const late = computed(() => Number(props.order.DiasAtraso) > 0);
+const reportLabel = computed(() => {
+  const type = reportTypeName(props.order.TipoAtendimento);
+  return type
+    ? t('OUTSIDER_ERP.ORDER.REPORT_TYPE', { type })
+    : t('OUTSIDER_ERP.ORDER.REPORT');
+});
 
 const details = computed(() =>
   [
@@ -148,7 +160,7 @@ const details = computed(() =>
           variant="faded"
           color="slate"
           icon="i-lucide-file-text"
-          :label="t('OUTSIDER_ERP.ORDER.REPORT')"
+          :label="reportLabel"
           @click="openReport"
         />
         <Button

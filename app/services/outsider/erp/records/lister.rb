@@ -15,21 +15,28 @@ class Outsider::Erp::Records::Lister
     @query = Outsider::Erp::Records::Query.new(@kind, Outsider::Erp::Schema.new(account, client: @client))
   end
 
-  # params: q, from, to, view, company, person, clients ([[empresa, código]]), page, per, sort, direction
+  # params: q, from, to, view, company, person, clients ([[empresa, código]]), page, per, sort, direction e os filtros
+  # extras do tipo (OS: atendimento, vendedor)
   def page(params)
     view = @kind.view(params[:view])
     company = company(params[:company])
-    base = { q: params[:q], from: params[:from], to: params[:to], clients: clients(params[:clients]) }
+    base = base_filters(params)
     counts = facets(base).as_json(view: view, company: company, person: params[:person])
     per = per(params[:per])
     page = [params[:page].to_i, 1].max
-    items = rows(company, base.merge(view: view, person: params[:person], mine: mine), params, per, page)
-    counts.merge(view: view[:key], page: page, per: per, items: enrich(items))
+    filters = base.merge(view: view, person: params[:person], mine: mine)
+    items = rows(company, filters, params, per, page)
+    counts.merge(view: view[:key], page: page, per: per, items: enrich(items), dimensions: dimensions(company, filters))
   end
 
   private
 
   def company(value) = @settings.companies.include?(value.to_s) ? value.to_s : nil
+
+  def base_filters(params)
+    { q: params[:q], from: params[:from], to: params[:to], clients: clients(params[:clients]),
+      dimensions: @kind.dimensions.keys.index_with { |key| params[key].presence }.compact }
+  end
 
   def facets(base)
     Outsider::Erp::Records::Facets.new(@kind, run(@query.facets_sql(@settings.companies, base)), mine: mine)
@@ -39,6 +46,21 @@ class Outsider::Erp::Records::Lister
     options = { sort: params[:sort], direction: params[:direction], per: per, offset: (page - 1) * per }
     sql = @query.page_sql(company ? [company] : @settings.companies, filters, options)
     run(sql).map { |row| item(row) }
+  end
+
+  # { atendimento: [{ value:, count: }], vendedor: [{ value:, name:, count: }] } em ordem alfabética
+  def dimensions(company, filters)
+    return {} if @kind.dimensions.empty?
+
+    rows = run(@query.dimensions_sql(company ? [company] : @settings.companies, filters)).group_by { |row| row['dim'].to_s }
+    @kind.dimensions.keys.index_with do |key|
+      rows.fetch(key.to_s, []).map { |row| dimension_item(row) }.sort_by { |item| (item[:name] || item[:value]).to_s }
+    end
+  end
+
+  def dimension_item(row)
+    value = row['valor']
+    { value: value.is_a?(String) ? value.squish : value, name: row['nome'].to_s.squish.presence, count: row['qtd'].to_i }
   end
 
   def run(sql)

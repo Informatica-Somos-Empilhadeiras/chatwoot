@@ -1,15 +1,19 @@
 <script setup>
 // OUTSIDER: o que ficou fora do relatório dos técnicos: pedidos faturados no período sem técnico informado (com o link
 // para informar no pedido) e pedidos com técnico informado que ainda não têm nota válida (entram quando faturarem).
+// Pedido e nota abrem o painel de detalhe por cima do relatório (evento open, quem abre é o TechnicianReport).
 import { useI18n } from 'vue-i18n';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
 import { formatMoney, formatDate, companyName } from '../../erp/erpStore';
-import { saleLink, notesText } from './reportHelpers';
 
 defineProps({
   data: { type: Object, required: true },
-  accountId: { type: [String, Number], required: true },
 });
+
+const emit = defineEmits(['open']);
+
+const noteKind = note =>
+  note.kind || (note.tipo === 'NF-e' ? 'invoices' : 'service_invoices');
 
 const { t } = useI18n();
 const label = (key, values) =>
@@ -63,20 +67,40 @@ const TD = 'px-3 py-2 align-middle';
               class="border-b last:border-b-0 border-n-weak"
             >
               <td :class="TD" class="whitespace-nowrap">
-                <router-link
-                  :to="saleLink(accountId, sale)"
-                  class="inline-flex items-center gap-1 font-medium text-n-blue-11 hover:underline"
+                <button
+                  type="button"
+                  class="inline-flex items-center gap-1 p-0 font-medium text-n-blue-11 hover:underline"
+                  @click="emit('open', 'sales', sale.unidade, sale.pedido)"
                 >
                   {{ label('DETAIL.ORDER_NUMBER', { number: sale.pedido }) }}
-                  <Icon icon="i-lucide-arrow-up-right" class="size-3.5" />
-                </router-link>
+                  <Icon icon="i-lucide-link" class="size-3.5" />
+                </button>
                 <span class="block text-[11px] text-n-slate-10">
                   {{ companyName(sale.unidade) }}
                 </span>
               </td>
-              <td :class="TD" class="text-xs whitespace-nowrap text-n-slate-11">
-                {{ notesText(sale) }}
-                <span class="block">{{ formatDate(sale.data_nota) }}</span>
+              <td :class="TD" class="text-xs text-n-slate-11">
+                <span class="flex flex-wrap gap-1">
+                  <button
+                    v-for="note in sale.notas"
+                    :key="`${note.tipo}:${note.numero}`"
+                    type="button"
+                    class="px-1.5 py-0.5 text-[11px] rounded bg-n-alpha-2 text-n-slate-12 hover:bg-n-alpha-3 whitespace-nowrap"
+                    @click="
+                      emit(
+                        'open',
+                        noteKind(note),
+                        sale.unidade,
+                        note.codigo || note.numero
+                      )
+                    "
+                  >
+                    {{ note.tipo }} {{ note.numero }}
+                  </button>
+                </span>
+                <span class="block mt-0.5">{{
+                  formatDate(sale.data_nota)
+                }}</span>
               </td>
               <td :class="TD" class="text-n-slate-12">{{ sale.cliente }}</td>
               <td :class="TD" class="text-n-slate-11">{{ sale.vendedor }}</td>
@@ -129,12 +153,13 @@ const TD = 'px-3 py-2 align-middle';
               class="border-b last:border-b-0 border-n-weak"
             >
               <td :class="TD" class="whitespace-nowrap">
-                <router-link
-                  :to="saleLink(accountId, sale)"
-                  class="font-medium text-n-blue-11 hover:underline"
+                <button
+                  type="button"
+                  class="p-0 font-medium text-n-blue-11 hover:underline"
+                  @click="emit('open', 'sales', sale.unidade, sale.pedido)"
                 >
                   {{ label('DETAIL.ORDER_NUMBER', { number: sale.pedido }) }}
-                </router-link>
+                </button>
                 <span class="block text-[11px] text-n-slate-10">
                   {{ companyName(sale.unidade) }}
                 </span>

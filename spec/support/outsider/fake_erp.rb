@@ -47,7 +47,7 @@ class OutsiderFakeErp
   def writes(sql)
     if sql.include?('sp_CadastraOrcamento') then [{ 'codigo' => @number }]
     elsif sql.include?('sp_CadastraItemOrcamento') then item(sql[/sp_CadastraItemOrcamento\(\d+, (\d+),/, 1].to_i)
-    elsif sql.start_with?('INSERT INTO') then service(sql[/P\.CodigoProduto = (\d+) AND P\.Tipo = 1/, 1].to_i)
+    elsif sql.start_with?('INSERT INTO') then direct(sql)
     elsif sql.include?('sp_FinalizaOrcamento') then [{ 'resultado' => 'OK' }]
     elsif sql.start_with?('UPDATE ') then []
     end
@@ -64,8 +64,11 @@ class OutsiderFakeErp
     [{ 'codigo' => 1 }]
   end
 
-  def service(code)
-    @lines << code if PRODUCTS[code] == 1
+  # linha gravada direto: serviço (só produto Tipo = 1) ou peça que a função descartou (qualquer produto que existe)
+  def direct(sql)
+    code = sql[/P\.CodigoProduto = (\d+)/, 1].to_i
+    service_only = sql.include?("P.CodigoProduto = #{code} AND P.Tipo = 1")
+    @lines << code if PRODUCTS.key?(code) && (!service_only || PRODUCTS[code] == 1)
     []
   end
 
@@ -78,7 +81,7 @@ class OutsiderFakeErp
       '.empresa E' => -> { [{ 'nome__0' => 'SOMOS EMPILHADEIRAS LTDA', 'cnpj__0' => '52346349000183' }] },
       '.funcionarios L' => -> { approver(sql) },
       '.funcionarios F' => -> { [{ 'nome' => 'CRISTIANE', 'codigo' => 7 }] },
-      '.formapagto F' => -> { [{ 'Codigo' => 3, 'Descricao' => '28/56/84 DIAS' }] }
+      '.formapagto F' => -> { [{ 'codigo' => 3, 'descricao' => '28/56/84 DIAS' }] }
     }.find { |marker, _| sql.include?(marker) }&.last&.call
   end
 

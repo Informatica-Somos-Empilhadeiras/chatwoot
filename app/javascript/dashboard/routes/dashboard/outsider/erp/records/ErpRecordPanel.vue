@@ -29,6 +29,7 @@ import {
   formatDate,
   formatMoney,
   isOrderLocked,
+  reportTypeName,
 } from '../erpStore';
 import {
   KINDS,
@@ -43,6 +44,8 @@ const props = defineProps({
   kind: { type: String, required: true },
   company: { type: String, required: true },
   number: { type: Number, required: true },
+  // aberto por cima de outra tela (relatório dos técnicos): gaveta fixa à direita em qualquer largura
+  floating: { type: Boolean, default: false },
 });
 
 const emit = defineEmits(['close', 'changed']);
@@ -337,6 +340,14 @@ const showPdf = () =>
       );
   });
 
+// OS: o relatório montado na hora pelo servidor, no modelo do Tipo de Atendimento dela (ERP > Modelos de relatório);
+// o botão diz o tipo quando ele tem modelo próprio
+const reportLabel = computed(() => {
+  const type = reportTypeName(header.value.atendimento);
+  return type
+    ? t('OUTSIDER_ERP.ORDER.REPORT_TYPE', { type })
+    : t('OUTSIDER_ERP.ORDER.REPORT');
+});
 // OS: relatório com as fotos do checklist (o mesmo do kanban de KPI), montado na hora pelo servidor
 const showReport = () =>
   run('report', () =>
@@ -397,7 +408,12 @@ const LABEL =
 
 <template>
   <aside
-    class="fixed inset-y-0 right-0 z-40 flex flex-col w-full max-w-[32rem] border-l shadow-xl xl:shadow-none xl:static xl:z-auto xl:w-[30rem] xl:ml-4 xl:mb-4 xl:rounded-xl xl:border shrink-0 bg-n-solid-2 border-n-weak"
+    class="flex flex-col w-full max-w-[32rem] shrink-0 bg-n-solid-2 border-n-weak"
+    :class="
+      floating
+        ? 'fixed inset-y-0 right-0 z-50 border-l shadow-2xl'
+        : 'fixed inset-y-0 right-0 z-40 border-l shadow-xl xl:shadow-none xl:static xl:z-auto xl:w-[30rem] xl:ml-4 xl:mb-4 xl:rounded-xl xl:border'
+    "
   >
     <header class="px-5 pt-4 pb-3 border-b border-n-weak">
       <button
@@ -542,7 +558,7 @@ const LABEL =
           variant="faded"
           color="slate"
           icon="i-lucide-file-text"
-          :label="t('OUTSIDER_ERP.ORDER.REPORT')"
+          :label="reportLabel"
           :is-loading="busy === 'report'"
           @click="showReport"
         />

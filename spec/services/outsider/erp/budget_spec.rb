@@ -83,10 +83,33 @@ RSpec.describe 'Outsider ERP parts and services budget' do # rubocop:disable RSp
       expect(erp.sqls.grep(/\AUPDATE/).first).to include('O.`totalServicos` = 500.0')
     end
 
-    it 'reports a part the ERP function dropped (no NCM for the customer state)' do
+    it 'writes directly, without tax, a part the ERP function dropped (no NCM for the customer state)' do
       erp.drop = [491]
       creator.call
+
+      expect(erp.lines).to eq([923, 503, 491])
+      direct = erp.sqls.grep(/\AINSERT INTO/).find { |sql| sql.include?('P.CodigoProduto = 491') }
+      expect(direct).to include("O.CodigoIntegracaoMobile = 'CWO-#{budget.id}'")
+      expect(direct).not_to include('P.Tipo = 1')
+      expect(budget.reload.erp_result['skipped']).to be_empty
+      expect(erp.sqls.index(direct)).to be < erp.sqls.index(erp.sqls.grep(/sp_FinalizaOrcamento/).first)
+    end
+
+    it 'reports a dropped part when writing parts directly is off' do
+      settings.update('quote_parts_direct' => false)
+      erp.drop = [491]
+      creator.call
+      expect(erp.lines).to eq([923, 503])
       expect(budget.reload.erp_result['skipped']).to include(include('codigo' => 491, 'motivo' => 'ncm'))
+    end
+
+    it 'always records REVENDA as the operation gender' do
+      Outsider::Erp::BudgetForm.new(budget, settings).apply('terms' => budget.terms.merge('genero' => 7))
+      expect(budget.terms['genero']).to eq(1)
+      budget.update!(terms: budget.terms.merge('genero' => 5))
+
+      creator.call
+      expect(erp.sqls.grep(/sp_CadastraOrcamento/).first).to include(', 7, 0, 0, 1, ')
     end
 
     it 'resumes after the ERP fails mid-way without repeating the header or the lines already in' do

@@ -42,8 +42,11 @@ class Outsider::Erp::Settings
     # orçamento e da OS ficam em Outsider::Erp::SendTexts). Desconto acima do limite (% por linha e no total)
     # pede o código e a senha de quem tem a permissão de desconto do ERP (Outsider::Erp::DiscountPolicy); o ERP da Somos
     # não tem limite preenchido, então ele fica aqui (0 = qualquer desconto pede liberação).
-    'quote_write_enabled' => false, 'quote_forma_pagto' => 0, 'quote_tipo_frete' => 0, 'quote_genero_operacao' => 0,
-    'quote_services_direct' => true, 'quote_discount_approval' => true, 'quote_discount_line_max' => 0, 'quote_discount_total_max' => 0,
+    # Peça que a função descarta (sem NCM para a UF/gênero do cliente) também vai direto, sem imposto (24/11/2026: orçamento
+    # é rascunho de venda; imposto conta na OS e no pedido). Gênero: sempre REVENDA (Outsider::Erp::BudgetForm::GENERO).
+    'quote_write_enabled' => false, 'quote_forma_pagto' => 0, 'quote_tipo_frete' => 0, 'quote_genero_operacao' => 1,
+    'quote_services_direct' => true, 'quote_parts_direct' => true, 'quote_discount_approval' => true,
+    'quote_discount_line_max' => 0, 'quote_discount_total_max' => 0,
     'quote_prazo_entrega' => '', 'quote_validade' => '', 'quote_garantia' => '',
     'quote_reply_to' => '',
     # cadastro de cliente no ERP pela função do próprio Mais Prático (sp_CadastraCliente, Outsider::Erp::ClientRegistrar):
@@ -159,7 +162,7 @@ class Outsider::Erp::Settings
       'quote_write_enabled' => flag(params, 'quote_write_enabled'), 'quote_services_direct' => flag(params, 'quote_services_direct'),
       'quote_forma_pagto' => clamp(params, 'quote_forma_pagto', 0, 999_999),
       'quote_tipo_frete' => clamp(params, 'quote_tipo_frete', 0, 9),
-      'quote_genero_operacao' => clamp(params, 'quote_genero_operacao', 0, 999),
+      'quote_genero_operacao' => Outsider::Erp::BudgetForm::GENERO, 'quote_parts_direct' => flag(params, 'quote_parts_direct'),
       'quote_discount_approval' => flag(params, 'quote_discount_approval'),
       'quote_discount_line_max' => clamp(params, 'quote_discount_line_max', 0, 100),
       'quote_discount_total_max' => clamp(params, 'quote_discount_total_max', 0, 100),

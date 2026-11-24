@@ -59,7 +59,7 @@ class Outsider::Erp::BudgetPreview
   def payment_name(code)
     return '' unless code.to_i.positive?
 
-    Outsider::Erp::PaymentTerms.new(@account).list.find { |row| row[:codigo] == code.to_i }&.dig(:descricao).to_s
+    Outsider::Erp::PaymentTerms.new(@account).name(code)
   rescue Outsider::Erp::Client::Error
     ''
   end

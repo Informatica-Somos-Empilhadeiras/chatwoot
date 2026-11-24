@@ -2,9 +2,10 @@
 // OUTSIDER: relatório de desempenho dos técnicos (Outsider::Erp::TechnicianReport). Só pedidos de venda FATURADOS no
 // período (nota de saída válida emitida entre as datas); o técnico é o informado pelo vendedor no pedido (ErpSaleAttribution).
 // Números do período no topo, uma linha por técnico (clique abre os pedidos dele) e, embaixo, o que ficou de fora:
-// pedidos faturados sem técnico e pedidos com técnico ainda sem nota. Exporta o detalhe em CSV.
+// pedidos faturados sem técnico e pedidos com técnico ainda sem nota. Exporta o detalhe em CSV. Pedido, OS e nota abrem
+// o painel de detalhe da seção ERP por cima do relatório (sem sair da página); OS de garantia, entrega técnica e frotas
+// (Configurações) aparecem marcadas e não somam para o técnico.
 import { ref, computed, watch } from 'vue';
-import { useRoute } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import ReportsAPI from 'dashboard/api/outsider/reports';
 import Button from 'dashboard/components-next/button/Button.vue';
@@ -12,6 +13,7 @@ import Icon from 'dashboard/components-next/icon/Icon.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 import TechnicianReportLists from './TechnicianReportLists.vue';
 import TechnicianReportSettings from './TechnicianReportSettings.vue';
+import ErpRecordPanel from '../../erp/records/ErpRecordPanel.vue';
 import {
   erpState,
   erpErrorMessage,
@@ -20,17 +22,9 @@ import {
   companyName,
 } from '../../erp/erpStore';
 import { formatNumber } from '../../erp/budgets/budgetHelpers';
-import {
-  PERIODS,
-  periodRange,
-  saleLink,
-  notesText,
-  detailCsv,
-  download,
-} from './reportHelpers';
+import { PERIODS, periodRange, detailCsv, download } from './reportHelpers';
 
 const { t } = useI18n();
-const route = useRoute();
 const label = (key, values) =>
   t(`OUTSIDER_REPORTS.TECHNICIANS.${key}`, values || {});
 
@@ -91,6 +85,19 @@ const salesOf = name =>
       linha: sale.linhas.find(line => line.tecnico === name),
     }));
 
+// o registro aberto no painel da direita: pedido (técnico e OS informados nele), OS ou nota
+const opened = ref(null);
+const openRecord = (kind, company, number) => {
+  if (!company || !Number(number)) return;
+  opened.value = { kind, company, number: Number(number) };
+};
+
+const excludedTypes = computed(() =>
+  (summary.value.fora_da_soma_tipos || [])
+    .map(type => type.charAt(0) + type.slice(1).toLowerCase())
+    .join(', ')
+);
+
 const toggle = name => {
   expanded.value = expanded.value === name ? '' : name;
 };
@@ -104,7 +111,9 @@ const exportCsv = () => {
     'DATA_NOTA',
     'CLIENTE',
     'VENDEDOR',
+    'ATENDIMENTO',
     'OS',
+    'FORA_DA_SOMA',
     'PARTE',
     'VALOR',
     'PECAS',
@@ -116,7 +125,6 @@ const exportCsv = () => {
   );
 };
 
-const accountId = computed(() => route.params.accountId);
 const percent = value => `${formatNumber(value, 1)}%`;
 
 const INPUT =
@@ -338,6 +346,21 @@ const TD = 'px-3 py-2.5 align-middle whitespace-nowrap tabular-nums';
         </a>
       </div>
 
+      <p
+        v-if="summary.fora_da_soma_pedidos"
+        class="flex items-start gap-2 px-3 py-2 mb-0 text-xs rounded-lg bg-n-alpha-1 text-n-slate-11"
+        data-excluded-note
+      >
+        <Icon icon="i-lucide-circle-slash" class="mt-0.5 size-3.5 shrink-0" />
+        {{
+          label('EXCLUDED.NOTE', {
+            value: formatMoney(summary.fora_da_soma_valor),
+            count: summary.fora_da_soma_pedidos,
+            types: excludedTypes,
+          })
+        }}
+      </p>
+
       <section
         class="overflow-hidden border rounded-xl border-n-weak bg-n-solid-1"
       >
@@ -509,11 +532,17 @@ const TD = 'px-3 py-2.5 align-middle whitespace-nowrap tabular-nums';
                         }}
                       </span>
                     </div>
-                    <table class="w-full text-xs">
+                    <table class="w-full text-xs" data-tech-orders>
                       <thead>
                         <tr class="text-left text-n-slate-10">
                           <th class="py-1 pr-3 font-medium">
                             {{ label('DETAIL.ORDER') }}
+                          </th>
+                          <th class="py-1 pr-3 font-medium">
+                            {{ label('DETAIL.ATTENDANCE_TYPE') }}
+                          </th>
+                          <th class="py-1 pr-3 font-medium">
+                            {{ label('DETAIL.OS') }}
                           </th>
                           <th class="py-1 pr-3 font-medium">
                             {{ label('DETAIL.NOTES') }}
@@ -523,9 +552,6 @@ const TD = 'px-3 py-2.5 align-middle whitespace-nowrap tabular-nums';
                           </th>
                           <th class="py-1 pr-3 font-medium">
                             {{ label('DETAIL.SELLER') }}
-                          </th>
-                          <th class="py-1 pr-3 font-medium">
-                            {{ label('DETAIL.OS') }}
                           </th>
                           <th class="py-1 font-medium text-right">
                             {{ label('DETAIL.CREDIT') }}
@@ -537,27 +563,113 @@ const TD = 'px-3 py-2.5 align-middle whitespace-nowrap tabular-nums';
                           v-for="sale in salesOf(row.tecnico)"
                           :key="`${sale.unidade}:${sale.pedido}`"
                           class="border-t border-n-weak"
+                          :class="sale.linha.fora_da_soma && 'text-n-slate-10'"
                         >
                           <td class="py-1.5 pr-3 whitespace-nowrap">
-                            <router-link
-                              :to="saleLink(accountId, sale)"
-                              class="font-medium text-n-blue-11 hover:underline"
+                            <button
+                              type="button"
+                              class="p-0 font-medium text-n-blue-11 hover:underline"
+                              @click.stop="
+                                openRecord('sales', sale.unidade, sale.pedido)
+                              "
                             >
                               {{
                                 label('DETAIL.ORDER_NUMBER', {
                                   number: sale.pedido,
                                 })
                               }}
-                            </router-link>
+                            </button>
                             <span class="text-n-slate-10">
                               · {{ companyName(sale.unidade) }}
                             </span>
                           </td>
-                          <td
-                            class="py-1.5 pr-3 whitespace-nowrap text-n-slate-11"
-                          >
-                            {{ notesText(sale) }} ·
-                            {{ formatDate(sale.data_nota) }}
+                          <td class="py-1.5 pr-3 whitespace-nowrap">
+                            <span class="text-n-slate-12">
+                              {{ sale.linha.atendimento || '—' }}
+                            </span>
+                            <span
+                              v-if="sale.linha.fora_da_soma"
+                              class="px-1 ml-1 text-[10px] font-medium rounded bg-n-alpha-2 text-n-slate-11"
+                              :title="label('EXCLUDED.BADGE_HINT')"
+                            >
+                              {{ label('EXCLUDED.BADGE') }}
+                            </span>
+                          </td>
+                          <td class="py-1.5 pr-3 whitespace-nowrap">
+                            <template v-if="sale.linha.os">
+                              <span
+                                class="px-1 mr-1 text-[10px] font-medium rounded"
+                                :class="
+                                  sale.origem === 'erp'
+                                    ? 'bg-n-alpha-2 text-n-slate-11'
+                                    : 'bg-n-amber-3 text-n-amber-11'
+                                "
+                                :title="
+                                  label(
+                                    `DETAIL.ORIGIN_${sale.origem === 'erp' ? 'ERP' : 'CHAT'}_HINT`
+                                  )
+                                "
+                              >
+                                {{
+                                  label(
+                                    `DETAIL.ORIGIN_${sale.origem === 'erp' ? 'ERP' : 'CHAT'}`
+                                  )
+                                }}
+                              </span>
+                              <button
+                                type="button"
+                                class="p-0 font-medium text-n-blue-11 hover:underline"
+                                @click.stop="
+                                  openRecord(
+                                    'orders',
+                                    sale.unidade,
+                                    sale.linha.os
+                                  )
+                                "
+                              >
+                                {{ sale.linha.os }}
+                              </button>
+                              <template v-if="sale.linha.parte < 100">
+                                · {{ percent(sale.linha.parte) }}
+                              </template>
+                            </template>
+                            <button
+                              v-else
+                              type="button"
+                              class="inline-flex items-center gap-1 px-1.5 py-0.5 text-[11px] font-medium rounded bg-n-amber-3 text-n-amber-11 hover:bg-n-amber-4"
+                              @click.stop="
+                                openRecord('sales', sale.unidade, sale.pedido)
+                              "
+                            >
+                              <Icon icon="i-lucide-link" class="size-3" />
+                              {{ label('DETAIL.LINK_OS') }}
+                            </button>
+                          </td>
+                          <td class="py-1.5 pr-3">
+                            <span class="flex flex-wrap items-center gap-1">
+                              <button
+                                v-for="note in sale.notas"
+                                :key="`${note.tipo}:${note.numero}`"
+                                type="button"
+                                class="px-1.5 py-0.5 text-[11px] rounded bg-n-alpha-2 text-n-slate-12 hover:bg-n-alpha-3 whitespace-nowrap"
+                                :title="formatMoney(note.total)"
+                                @click.stop="
+                                  openRecord(
+                                    note.kind ||
+                                      (note.tipo === 'NF-e'
+                                        ? 'invoices'
+                                        : 'service_invoices'),
+                                    sale.unidade,
+                                    note.codigo || note.numero
+                                  )
+                                "
+                              >
+                                {{ note.tipo }} {{ note.numero }}
+                              </button>
+                              <span class="text-n-slate-10 whitespace-nowrap">
+                                {{ formatDate(sale.data_nota) }}
+                              </span>
+                            </span>
                           </td>
                           <td class="py-1.5 pr-3 text-n-slate-12">
                             {{ sale.cliente }}
@@ -566,34 +678,12 @@ const TD = 'px-3 py-2.5 align-middle whitespace-nowrap tabular-nums';
                             {{ sale.vendedor }}
                           </td>
                           <td
-                            class="py-1.5 pr-3 whitespace-nowrap text-n-slate-11"
-                          >
-                            <span
-                              class="px-1 mr-1 text-[10px] font-medium rounded"
-                              :class="
-                                sale.origem === 'erp'
-                                  ? 'bg-n-alpha-2 text-n-slate-11'
-                                  : 'bg-n-amber-3 text-n-amber-11'
-                              "
-                              :title="
-                                label(
-                                  `DETAIL.ORIGIN_${sale.origem === 'erp' ? 'ERP' : 'CHAT'}_HINT`
-                                )
-                              "
-                            >
-                              {{
-                                label(
-                                  `DETAIL.ORIGIN_${sale.origem === 'erp' ? 'ERP' : 'CHAT'}`
-                                )
-                              }}
-                            </span>
-                            {{ sale.linha.os }}
-                            <template v-if="sale.linha.parte < 100">
-                              · {{ percent(sale.linha.parte) }}
-                            </template>
-                          </td>
-                          <td
-                            class="py-1.5 text-right tabular-nums text-n-slate-12"
+                            class="py-1.5 text-right tabular-nums"
+                            :class="
+                              sale.linha.fora_da_soma
+                                ? 'line-through text-n-slate-10'
+                                : 'text-n-slate-12'
+                            "
                           >
                             {{
                               formatMoney((sale.total * sale.linha.parte) / 100)
@@ -610,8 +700,18 @@ const TD = 'px-3 py-2.5 align-middle whitespace-nowrap tabular-nums';
         </div>
       </section>
 
-      <TechnicianReportLists :data="data" :account-id="accountId" />
+      <TechnicianReportLists :data="data" @open="openRecord" />
     </template>
     <TechnicianReportSettings ref="settingsRef" @saved="load" />
+    <ErpRecordPanel
+      v-if="opened"
+      :key="`${opened.kind}:${opened.company}:${opened.number}`"
+      floating
+      :kind="opened.kind"
+      :company="opened.company"
+      :number="opened.number"
+      @close="opened = null"
+      @changed="load"
+    />
   </div>
 </template>

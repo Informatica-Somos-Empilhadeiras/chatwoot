@@ -39,6 +39,12 @@ class Outsider::Erp::Records::Kind
   def status_sql(picked) = picked[:status] && "O.#{Outsider::Erp::Sql.column(picked[:status])}"
   # expressão SQL de "atrasada" sobre a linha já montada (X.*); só as OS têm
   def late_sql = '0'
+  # chave (em columns) do código do vendedor quando a pessoa da linha é outra (na OS, o técnico); a linha ganha "vendedor"
+  def seller = nil
+  # filtros extras com contagem: filtro => { column: chave em columns, name: chave do nome (opcional), numeric: código }
+  def dimensions = {}
+  # ordenações além das comuns (data, número, total, cliente, pessoa)
+  def extra_sorts = {}
 
   def view(key)
     key = key.to_s

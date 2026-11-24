@@ -134,7 +134,8 @@
       "LOCKED": "OS fechada — somente leitura.",
       "NOTE_HINT": "Cada mudança fica numa nota privada desta conversa.",
       "VIEW_ONLY": "Seu perfil só permite consultar as OS.",
-      "REPORT": "Relatório com fotos",
+      "REPORT": "Emitir relatório",
+      "REPORT_TYPE": "Emitir relatório {type}",
       "SEND": {
         "BUTTON": "Enviar",
         "TITLE": "Enviar o relatório da OS {code} ao cliente",
@@ -255,6 +256,7 @@
       "QUOTE_WRITE_ENABLED": "Gravação no ERP ligada",
       "QUOTE_FORMA_PAGTO": "Forma de pagamento padrão",
       "QUOTE_FORMA_PAGTO_HINT": "Lista do próprio ERP. Já vem marcada em cada orçamento novo.",
+      "QUOTE_FORMA_PAGTO_ERROR": "Não consegui ler a lista do ERP ({error}). Digite o código.",
       "QUOTE_TIPO_FRETE": "Frete padrão",
       "QUOTE_GENERO": "Gênero da operação padrão",
       "SAVE": "Salvar",
@@ -265,6 +267,8 @@
       "QUOTE_DEFAULT_PLACEHOLDER": "padrão do orçamento novo",
       "QUOTE_SERVICES_DIRECT": "Gravar os serviços direto no orçamento",
       "QUOTE_SERVICES_DIRECT_HINT": "A função do ERP descarta item sem NCM, e serviço não tem NCM. Ligado, a linha do serviço é gravada direto, com as mesmas contas da função.",
+      "QUOTE_PARTS_DIRECT": "Gravar direto as peças que a função do ERP recusa",
+      "QUOTE_PARTS_DIRECT_HINT": "Peça sem NCM ou sem regra fiscal para o estado do cliente é recusada pela função do ERP (\"verificar NCM ou unidade\"). Ligado, a peça entra no orçamento mesmo assim, sem imposto. O imposto conta na OS e no pedido.",
       "QUOTE_DISCOUNT": "Pedir liberação para desconto acima do limite",
       "QUOTE_DISCOUNT_HINT": "O Mais Prático da Somos não tem limite de desconto preenchido. Acima destes limites, quem tem permissão de desconto no ERP (ou é gerente) libera com o código e a senha do ERP. 0 = qualquer desconto pede liberação.",
       "QUOTE_DISCOUNT_LINE": "Desconto livre por item até (%)",
@@ -403,6 +407,7 @@
         "PICK": "Escolha…",
         "CODE": "Código {code}",
         "CODE_PLACEHOLDER": "código no ERP",
+        "PAYMENT_ERROR": "Não consegui ler os nomes das formas de pagamento no ERP ({error}), por isso aparece o código.",
         "PRAZO_ENTREGA": "Prazo de entrega",
         "VALIDADE": "Validade",
         "GARANTIA": "Garantia",
@@ -483,8 +488,6 @@
         "PARTES": "A soma das partes das OS precisa dar o valor do pedido.",
         "SEM_TECNICO": "Esta OS não tem técnico no ERP. Preencha o técnico na OS e tente de novo.",
         "OS_NAO_ENCONTRADA": "Não achei esta OS nesta unidade.",
-        "OS_ABERTA": "A OS ainda não está fechada. Feche a OS no Mais Prático e tente de novo.",
-        "OS_CANCELADA": "A OS está cancelada/perdida e não conta para a premiação.",
         "OS_ABERTA": "A OS ainda não está fechada. Feche a OS no Mais Prático e tente de novo.",
         "OS_CANCELADA": "A OS está cancelada/perdida e não conta para a premiação.",
         "NOT_DRAFT": "Este orçamento já foi gravado e não muda mais. Use \"Copiar\" para fazer outro.",
@@ -737,7 +740,35 @@
       },
       "ERROR": "Esta tela deu erro: {message}",
       "TOMORROW": "amanhã",
-      "IN_DAYS": "em {n} dias"
+      "IN_DAYS": "em {n} dias",
+      "SORT": "Ordenar",
+      "SORTS": {
+        "NEWEST": "Mais recentes primeiro",
+        "OLDEST": "Mais antigos primeiro",
+        "DUE_SOON": "Previsão mais próxima",
+        "DUE_LATE": "Previsão mais distante",
+        "NUMBER_DESC": "Número (maior primeiro)",
+        "NUMBER_ASC": "Número (menor primeiro)",
+        "CLIENT_AZ": "Cliente (A a Z)",
+        "CLIENT_ZA": "Cliente (Z a A)",
+        "TOTAL_DESC": "Maior valor",
+        "TOTAL_ASC": "Menor valor",
+        "PERSON_AZ": "{person} (A a Z)",
+        "ATTENDANCE_AZ": "Tipo de atendimento (A a Z)",
+        "SELLER_AZ": "Vendedor (A a Z)"
+      },
+      "DIMENSIONS": {
+        "ATENDIMENTO": {
+          "LABEL": "Tipo de atendimento",
+          "ALL": "Todos os atendimentos"
+        },
+        "VENDEDOR": {
+          "LABEL": "Vendedor",
+          "ALL": "Todos os vendedores"
+        }
+      },
+      "ATTENDANCE": "Atendimento",
+      "SELLER_LINE": "Vend. {name}"
     },
     "CLIENT": {
       "NEW": "Novo cliente",
@@ -747,11 +778,6 @@
       "HINT": "Entra no Mais Prático como pré-cadastro, pela função do próprio ERP. O escritório completa o resto (município, perfil e cadastro).",
       "UNIT": "Unidade",
       "PERSON": "Pessoa",
-      "COMPANY": "Jurídica",
-      "INDIVIDUAL": "Física",
-      "CNPJ": "CNPJ",
-      "CPF": "CPF",
-      "BAD_DOCUMENT": "Os dígitos verificadores não conferem.",
       "COMPANY": {
         "SEARCHING": "Buscando a empresa pelo CNPJ…",
         "FILLED": "Preenchido com os dados do cadastro da empresa. Confira.",
@@ -759,6 +785,10 @@
         "NOT_FOUND": "CNPJ não encontrado no cadastro público. Preencha à mão.",
         "UNAVAILABLE": "A consulta do CNPJ não respondeu agora. Preencha à mão."
       },
+      "INDIVIDUAL": "Física",
+      "CNPJ": "CNPJ",
+      "CPF": "CPF",
+      "BAD_DOCUMENT": "Os dígitos verificadores não conferem.",
       "LEGAL_NAME": "Razão social",
       "NAME": "Nome",
       "TRADE_NAME": "Nome fantasia",
@@ -1028,6 +1058,8 @@
         "PAGE_NUMBERS": "Numerar as páginas"
       },
       "LIST": {
+        "ADD_TYPE": "Adicionar tipo",
+        "ADD_TYPE_PLACEHOLDER": "Outro tipo de atendimento, escrito como no ERP",
         "BINDINGS_TITLE": "Qual modelo sai em cada caso",
         "BINDINGS_HELP": "O relatório da OS sai no modelo do Tipo de Atendimento dela; tipo sem escolha usa o padrão. \"Original do Mais Prático\" é o relatório de hoje: nada muda até você escolher outro modelo.",
         "SAVE_BINDINGS": "Salvar escolhas",
@@ -1037,7 +1069,7 @@
         "OS_DEFAULT": "Padrão (tipos sem escolha)",
         "USE_DEFAULT": "Usar o padrão",
         "ORIGINAL": "Original do Mais Prático",
-        "NO_TYPES": "Os tipos de atendimento do ERP não vieram agora. Recarregue a página para tentar de novo.",
+        "NO_TYPES": "Nenhum tipo de atendimento veio do ERP agora. Adicione abaixo, escrito como aparece no ERP.",
         "QUOTE_DEFAULT": "Modelo dos orçamentos",
         "QUOTE_HELP": "Vale para o PDF do orçamento do ERP, do feito no chat e da prévia do rascunho.",
         "TEMPLATES_OS": "Modelos de OS",

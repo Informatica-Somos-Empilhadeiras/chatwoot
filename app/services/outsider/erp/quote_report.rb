@@ -36,10 +36,20 @@ class Outsider::Erp::QuoteReport
     lines = lines(company, number)
     {
       'numero' => number.to_i, 'data' => header['data'].to_s.first(10), 'company' => company, 'previa' => false,
-      'itens' => lines, 'pagamento' => header['pagamento'].to_s.strip, 'condicoes' => conditions(header),
+      'itens' => lines, 'pagamento' => payment(header['pagamento']), 'condicoes' => conditions(header),
       'totais' => totals(header, lines), 'total' => header['total'].to_f.round(2), 'status' => header['status'],
       'observacoes' => header['observacoes'].to_s.strip
     }.merge(people(company, header))
+  end
+
+  # o ERP guarda o nome da forma de pagamento; quando guardou só o código ("1"), sai o nome da tabela formapagto
+  def payment(value)
+    text = value.to_s.strip
+    return text unless text.match?(/\A\d+\z/)
+
+    Outsider::Erp::PaymentTerms.new(@account).name(text).presence || text
+  rescue Outsider::Erp::Client::Error
+    text
   end
 
   # cabeçalho cru do orçamento (as chaves do HEADER); também serve para o "Copiar" de um orçamento feito no ERP

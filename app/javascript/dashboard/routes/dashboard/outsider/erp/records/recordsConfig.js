@@ -45,6 +45,43 @@ export const parseKey = value => {
 
 export const PER_PAGE = [25, 50, 100];
 
+// filtros extras que o servidor conta (Outsider::Erp::Records::OrderKind#dimensions); a OS filtra por tipo de atendimento
+// e vendedor
+export const DIMENSIONS = { orders: ['atendimento', 'vendedor'] };
+
+// "Ordenar": campo + sentido (o servidor só aceita os da lista dele; texto vazio vai para o fim)
+export const sortOptions = kind => {
+  const orders = kind === 'orders';
+  return [
+    ['data', 'desc', 'NEWEST'],
+    ['data', 'asc', 'OLDEST'],
+    ...(orders
+      ? [
+          ['previsao', 'asc', 'DUE_SOON'],
+          ['previsao', 'desc', 'DUE_LATE'],
+        ]
+      : []),
+    ['numero', 'desc', 'NUMBER_DESC'],
+    ['numero', 'asc', 'NUMBER_ASC'],
+    ['cliente', 'asc', 'CLIENT_AZ'],
+    ['cliente', 'desc', 'CLIENT_ZA'],
+    ['total', 'desc', 'TOTAL_DESC'],
+    ['total', 'asc', 'TOTAL_ASC'],
+    ['pessoa', 'asc', 'PERSON_AZ'],
+    ...(orders
+      ? [
+          ['atendimento', 'asc', 'ATTENDANCE_AZ'],
+          ['vendedor', 'asc', 'SELLER_AZ'],
+        ]
+      : []),
+  ].map(([sort, direction, key]) => ({
+    value: `${sort}:${direction}`,
+    sort,
+    direction,
+    key,
+  }));
+};
+
 // presets do período (de/até em AAAA-MM-DD no dia de Brasília); "custom" abre as duas datas
 const iso = date =>
   date.toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });

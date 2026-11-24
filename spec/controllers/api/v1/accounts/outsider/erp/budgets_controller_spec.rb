@@ -82,7 +82,8 @@ RSpec.describe 'Outsider ERP budgets API', type: :request do
     get "#{url}/options", params: { company: 'somosemp' }, headers: agent.create_new_auth_token, as: :json
     expect(response.parsed_body['sellers']).to eq([{ 'codigo' => 7, 'nome' => 'CRISTIANE' }])
     expect(response.parsed_body['payment_terms']).to eq([{ 'codigo' => 3, 'descricao' => '28/56/84 DIAS' }])
-    expect(response.parsed_body['generos'].first).to eq('codigo' => 0, 'descricao' => 'VENDA CONSUMO')
+    expect(response.parsed_body['generos']).to eq([{ 'codigo' => 1, 'descricao' => 'REVENDA' }])
+    expect(response.parsed_body['payment_terms_errors']).to eq([])
 
     get "#{url}/options", params: { company: 'outrobanco' }, headers: agent.create_new_auth_token, as: :json
     expect(response).to have_http_status(:unprocessable_entity)

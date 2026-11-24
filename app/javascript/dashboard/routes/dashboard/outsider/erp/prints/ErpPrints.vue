@@ -12,7 +12,7 @@ import Dialog from 'dashboard/components-next/dialog/Dialog.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 import PrintStudio from './PrintStudio.vue';
 import PrintThumb from './PrintThumb.vue';
-import { erpErrorMessage } from '../erpStore';
+import { erpState, erpErrorMessage, normalizeAttendance } from '../erpStore';
 
 const { t } = useI18n();
 
@@ -23,6 +23,8 @@ const isLoading = ref(true);
 const templates = ref([]);
 const catalog = ref({});
 const attendanceTypes = ref([]);
+// nome de cada tipo como o ERP escreve (com acento); a chave da escolha é a forma sem acento
+const attendanceLabels = ref({});
 const bindings = ref({});
 const savedBindings = ref('');
 const isSavingBindings = ref(false);
@@ -43,6 +45,7 @@ const load = async () => {
     templates.value = data.templates;
     catalog.value = data.catalog;
     attendanceTypes.value = data.attendance_types || [];
+    attendanceLabels.value = data.attendance_labels || {};
     remember(data.bindings);
   } catch (error) {
     useAlert(erpErrorMessage(t, error));
@@ -84,6 +87,15 @@ const setDefault = (kind, value) => {
   };
 };
 
+// tipo que ainda não aparece na lista (nenhuma OS com ele): entra na mão, escrito como no ERP
+const newType = ref('');
+const addType = () => {
+  const type = normalizeAttendance(newType.value);
+  newType.value = '';
+  if (!type || attendanceTypes.value.includes(type)) return;
+  attendanceTypes.value = [...attendanceTypes.value, type].sort();
+};
+
 const bindingsDirty = computed(
   () => JSON.stringify(bindings.value) !== savedBindings.value
 );
@@ -103,6 +115,10 @@ const saveBindings = async () => {
       latest = data.bindings;
     }
     remember(latest);
+    // o botão da OS passa a dizer o tipo na hora, sem recarregar
+    erpState.reportTypes = Object.entries(latest.os?.types || {})
+      .filter(([, choice]) => choice !== ORIGINAL)
+      .map(([type]) => type);
     useAlert(t('OUTSIDER_ERP.PRINTS.LIST.BINDINGS_SAVED'));
   } catch (error) {
     useAlert(erpErrorMessage(t, error));
@@ -262,7 +278,9 @@ const SELECT =
                   class="border-t border-n-weak"
                   :data-attendance-type="type"
                 >
-                  <td class="px-3 py-1 text-n-slate-12">{{ type }}</td>
+                  <td class="px-3 py-1 text-n-slate-12">
+                    {{ attendanceLabels[type] || type }}
+                  </td>
                   <td class="px-3 py-1">
                     <select
                       :class="SELECT"
@@ -285,6 +303,33 @@ const SELECT =
                 >
                   <td colspan="2" class="px-3 py-3 text-n-slate-10">
                     {{ t('OUTSIDER_ERP.PRINTS.LIST.NO_TYPES') }}
+                  </td>
+                </tr>
+                <tr class="border-t border-n-weak">
+                  <td colspan="2" class="px-3 py-2">
+                    <form
+                      class="flex items-center gap-2"
+                      @submit.prevent="addType"
+                    >
+                      <input
+                        v-model="newType"
+                        type="text"
+                        maxlength="80"
+                        class="reset-base flex-1 min-w-0 px-2.5 py-1.5 text-sm rounded-lg bg-n-alpha-black2 outline outline-1 outline-n-weak focus:outline-n-brand text-n-slate-12"
+                        :placeholder="
+                          t('OUTSIDER_ERP.PRINTS.LIST.ADD_TYPE_PLACEHOLDER')
+                        "
+                      />
+                      <Button
+                        type="submit"
+                        size="sm"
+                        variant="faded"
+                        color="slate"
+                        icon="i-lucide-plus"
+                        :disabled="!newType.trim()"
+                        :label="t('OUTSIDER_ERP.PRINTS.LIST.ADD_TYPE')"
+                      />
+                    </form>
                   </td>
                 </tr>
               </tbody>

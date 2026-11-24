@@ -63,9 +63,22 @@ const totals = computed(() =>
   budgetTotals(props.items, terms.value.frete_valor)
 );
 
+// formas de pagamento que o ERP não deixou ler: o motivo aparece embaixo, no lugar de só "Código 1"
+const paymentError = computed(() =>
+  (props.options.payment_terms || []).length
+    ? ''
+    : (props.options.payment_terms_errors || [])[0] || ''
+);
+
+// gênero só tem REVENDA: fica fixo na tela (o servidor grava sempre REVENDA)
+const generos = computed(() => props.options.generos || []);
+const fixedGenero = computed(() =>
+  generos.value.length === 1 ? generos.value[0].codigo : null
+);
+
 const SELECTS = computed(() => [
   { key: 'forma_pagto', list: payments.value, pick: true },
-  { key: 'genero', list: props.options.generos || [] },
+  { key: 'genero', list: generos.value, fixed: fixedGenero.value },
   { key: 'tipo_frete', list: props.options.fretes || [] },
   { key: 'vendedor', list: sellers.value, pick: true },
 ]);
@@ -90,8 +103,10 @@ const LABEL =
           {{ t(`OUTSIDER_ERP.BUDGET.TERMS.${field.key.toUpperCase()}`) }}
           <select
             v-if="field.list.length"
-            :value="terms[field.key] ?? (field.pick ? 0 : '')"
-            :disabled="readOnly || locked.includes(field.key)"
+            :value="field.fixed ?? terms[field.key] ?? (field.pick ? 0 : '')"
+            :disabled="
+              readOnly || locked.includes(field.key) || field.fixed != null
+            "
             :class="INPUT"
             class="normal-case !pr-7 bg-[right_-1.25rem_center]"
             @change="set(field.key, Number($event.target.value))"
@@ -120,6 +135,15 @@ const LABEL =
           />
         </label>
       </div>
+      <p
+        v-if="paymentError"
+        class="mb-0 -mt-1 text-xs text-n-amber-11"
+        data-payment-error
+      >
+        {{
+          t('OUTSIDER_ERP.BUDGET.TERMS.PAYMENT_ERROR', { error: paymentError })
+        }}
+      </p>
 
       <div class="grid grid-cols-2 gap-3 md:grid-cols-4">
         <label

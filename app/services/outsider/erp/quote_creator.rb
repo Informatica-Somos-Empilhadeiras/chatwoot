@@ -30,6 +30,7 @@ class Outsider::Erp::QuoteCreator
       plan = plan_lines
       number = @budget.erp_number || create_header(customer, plan)
       insert_lines(number, plan)
+      insert_lost_parts(number, plan, Outsider::Erp::QuoteBuilder.new(@budget, document: nil, seller: nil))
       @client.query_execute(builder(customer, plan).finalize_sql(number))
       write_conditions(number, customer, plan)
       finish(number, plan)
@@ -131,6 +132,16 @@ class Outsider::Erp::QuoteCreator
     sql_builder = Outsider::Erp::QuoteBuilder.new(@budget, document: nil, seller: nil)
     sql = line[:kind] == :service ? sql_builder.service_sql(number, line[:item]) : sql_builder.item_sql(number, line[:item])
     @client.query_execute(sql)
+  end
+
+  # peças que a função do ERP descartou em silêncio (sem NCM para a UF/gênero do cliente): entram direto, sem imposto
+  # (Configurações, ligado por padrão). Conta repetidas; rodar de novo só grava o que ainda falta.
+  def insert_lost_parts(number, plan, sql_builder)
+    return unless @settings.data['quote_parts_direct'] == true
+
+    lost_lines(number, plan).select { |line| line[:kind] == :part }.each do |line|
+      @client.query_execute(sql_builder.part_direct_sql(number, line[:item]))
+    end
   end
 
   # Demais Condições e total de serviços: texto do orçamento que as funções não recebem. Falhar aqui não desfaz o

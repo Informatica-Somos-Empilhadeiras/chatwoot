@@ -20,9 +20,10 @@ class Api::V1::Accounts::Outsider::Erp::SettingsController < Api::V1::Accounts::
     render json: payload
   end
 
-  # formas de pagamento do ERP para escolher a padrão do orçamento numa lista
+  # formas de pagamento do ERP para escolher a padrão do orçamento numa lista (errors: unidade que não deu para ler)
   def payment_terms
-    render json: { payment_terms: ::Outsider::Erp::PaymentTerms.new(Current.account).list }
+    terms = ::Outsider::Erp::PaymentTerms.new(Current.account)
+    render json: { payment_terms: terms.list, errors: terms.errors }
   end
 
   def test
@@ -43,7 +44,7 @@ class Api::V1::Accounts::Outsider::Erp::SettingsController < Api::V1::Accounts::
       settings: settings.as_json,
       people: Current.account.users.order(:name).map { |user| { id: user.id, name: user.name, thumbnail: user.avatar_url } },
       # seletores do orçamento (gênero da operação e tipo de frete padrão)
-      quote_lists: { generos: ::Outsider::Erp::BudgetForm::GENEROS, fretes: ::Outsider::Erp::BudgetForm::FRETES }
+      quote_lists: { generos: ::Outsider::Erp::BudgetForm::GENEROS_PERMITIDOS, fretes: ::Outsider::Erp::BudgetForm::FRETES }
     }
   end
 end

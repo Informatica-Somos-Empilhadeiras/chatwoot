@@ -1,6 +1,7 @@
 <script setup>
 // OUTSIDER: a tabela de uma aba da seção ERP. Linha fixa (o hover só muda o fundo), número + unidade, cliente + cidade
-// (na OS, a máquina), situação, vendedor/técnico, data (na OS, a previsão, em vermelho quando atrasada) e total.
+// (na OS, a máquina), situação, tipo de atendimento (só OS), vendedor/técnico (na OS, o vendedor embaixo), data (na
+// OS, a previsão, em vermelho quando atrasada) e total.
 // Clicar abre o painel de detalhe; os títulos com seta ordenam. Com o painel aberto (compact) some a coluna da pessoa
 // e a tabela cabe sem rolar de lado.
 import { computed } from 'vue';
@@ -36,8 +37,11 @@ const { t } = useI18n();
 const cfg = computed(() => KINDS[props.kind]);
 const label = key => t(`OUTSIDER_ERP.RECORDS.${cfg.value.key}.${key}`);
 
+const orders = computed(() => props.kind === 'orders');
 const numberOf = row => displayNumber({ ...row, kind: props.kind });
-const dateOf = row => (props.kind === 'orders' ? row.previsao : row.data);
+const dateOf = row => (orders.value ? row.previsao : row.data);
+// na OS o título "Previsão" ordena pela previsão
+const dateSort = computed(() => (orders.value ? 'previsao' : 'data'));
 const late = row =>
   props.kind === 'orders' &&
   row.previsao &&
@@ -73,7 +77,9 @@ const TH =
   <div class="relative overflow-auto">
     <table
       class="hidden w-full table-fixed md:table"
-      :class="compact ? 'min-w-[30rem]' : 'min-w-[46rem]'"
+      :class="
+        compact ? 'min-w-[30rem]' : orders ? 'min-w-[55rem]' : 'min-w-[46rem]'
+      "
     >
       <thead class="sticky top-0 z-[1] bg-n-solid-1">
         <tr class="border-b border-n-weak">
@@ -116,6 +122,25 @@ const TH =
           >
             {{ t('OUTSIDER_ERP.RECORDS.STATUS') }}
           </th>
+          <th
+            v-if="orders && !compact"
+            :class="TH"
+            class="w-[9rem] px-3"
+            data-col="atendimento"
+          >
+            <button
+              type="button"
+              class="inline-flex items-center gap-1 text-[11px] font-medium tracking-wider uppercase hover:text-n-slate-12"
+              @click="emit('sort', 'atendimento')"
+            >
+              {{ t('OUTSIDER_ERP.RECORDS.ATTENDANCE') }}
+              <Icon
+                v-if="arrow('atendimento')"
+                :icon="arrow('atendimento')"
+                class="size-3"
+              />
+            </button>
+          </th>
           <th v-if="!compact" :class="TH" class="w-[10.5rem] px-3">
             {{ label('PERSON') }}
           </th>
@@ -127,10 +152,14 @@ const TH =
             <button
               type="button"
               class="inline-flex items-center gap-1 text-[11px] font-medium tracking-wider uppercase hover:text-n-slate-12"
-              @click="emit('sort', 'data')"
+              @click="emit('sort', dateSort)"
             >
               {{ label('DATE') }}
-              <Icon v-if="arrow('data')" :icon="arrow('data')" class="size-3" />
+              <Icon
+                v-if="arrow(dateSort)"
+                :icon="arrow(dateSort)"
+                class="size-3"
+              />
             </button>
           </th>
           <th
@@ -195,7 +224,14 @@ const TH =
               {{ row.status }}
             </span>
             <div
-              v-if="kind === 'orders' && row.substatus"
+              v-if="orders && compact && row.atendimento"
+              class="mt-1 text-[11px] font-medium truncate text-n-slate-11"
+              :title="row.atendimento"
+            >
+              {{ titleCase(row.atendimento) }}
+            </div>
+            <div
+              v-if="orders && row.substatus"
               class="mt-1 text-[11px] truncate text-n-slate-10"
               :title="row.substatus"
             >
@@ -210,6 +246,16 @@ const TH =
                 · {{ t('OUTSIDER_ERP.RECORDS.CHAIN.INBOUND') }}
               </template>
             </div>
+          </td>
+          <td v-if="orders && !compact" class="py-2.5 px-3 align-top">
+            <span
+              v-if="row.atendimento"
+              class="inline-flex max-w-full px-2 py-0.5 text-[11px] font-medium rounded-md truncate bg-n-alpha-2 text-n-slate-11"
+              :title="row.atendimento"
+            >
+              {{ titleCase(row.atendimento) }}
+            </span>
+            <span v-else class="text-[13px] text-n-slate-9">—</span>
           </td>
           <td v-if="!compact" class="py-2.5 px-3 align-top">
             <div
@@ -226,6 +272,17 @@ const TH =
               </span>
             </div>
             <span v-else class="text-[13px] text-n-slate-9">—</span>
+            <div
+              v-if="orders && row.vendedor"
+              class="mt-1 pl-8 text-[11px] truncate text-n-slate-10"
+              :title="row.vendedor"
+            >
+              {{
+                t('OUTSIDER_ERP.RECORDS.SELLER_LINE', {
+                  name: shortName(row.vendedor),
+                })
+              }}
+            </div>
           </td>
           <td class="py-2.5 px-3 align-top">
             <div
@@ -296,6 +353,9 @@ const TH =
             :class="statusClass(row.status)"
           >
             {{ row.status }}
+          </span>
+          <span v-if="orders && row.atendimento" class="truncate">
+            {{ titleCase(row.atendimento) }}
           </span>
           <span v-if="row.pessoa" class="truncate">
             {{ shortName(row.pessoa) }}

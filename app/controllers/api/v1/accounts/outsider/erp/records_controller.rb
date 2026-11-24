@@ -78,7 +78,7 @@ class Api::V1::Accounts::Outsider::Erp::RecordsController < Api::V1::Accounts::O
     render json: { error: 'invoice_not_in_nextcloud' }, status: :not_found unless settings.nextcloud_enabled?
   end
 
-  LIST_PARAMS = %i[q view company person from to page per sort direction].freeze
+  LIST_PARAMS = %i[q view company person from to page per sort direction atendimento vendedor].freeze
 
   def list_params = LIST_PARAMS.index_with { |key| params[key] }
 

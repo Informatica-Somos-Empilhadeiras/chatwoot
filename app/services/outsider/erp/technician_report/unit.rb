@@ -96,7 +96,7 @@ class Outsider::Erp::TechnicianReport::Unit
 
   def note_label(note)
     { 'tipo' => note['kind'] == 'invoices' ? 'NF-e' : 'NFS-e', 'numero' => (note['rotulo'].to_i.nonzero? || note['numero']).to_i,
-      'total' => note['total'].to_f.round(2) }
+      'total' => note['total'].to_f.round(2), 'kind' => note['kind'], 'codigo' => note['numero'].to_i }
   end
 
   def lines(link, context)

@@ -157,9 +157,18 @@ class Outsider::Erp::Records::Detail
   # nomes das pessoas (vendedor, técnico, quem criou) pelo cadastro de funcionários
   def names(company, header)
     seller = Outsider::Erp::SellerName.new(@account, client: @client)
-    %w[vendedor tecnico iniciado_por autorizado_por].each_with_object({}) do |key, map|
+    names = %w[vendedor tecnico iniciado_por autorizado_por].each_with_object({}) do |key, map|
       map["#{key}_nome"] = seller.for_code(company, header[key]) if header[key].to_i.positive?
     end
+    names.merge(payment_name(header['pagamento']))
+  end
+
+  # o ERP guarda a forma de pagamento como texto: em geral o nome, às vezes só o código ("1"); o código vira o nome
+  def payment_name(value)
+    return {} unless value.to_s.strip.match?(/\A\d+\z/)
+
+    name = Outsider::Erp::PaymentTerms.new(@account).name(value)
+    name.present? ? { 'pagamento' => name } : {}
   end
 
   def items(company, number)

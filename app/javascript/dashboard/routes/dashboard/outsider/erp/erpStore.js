@@ -28,6 +28,8 @@ export const erpState = reactive({
   nextcloudInvoices: false,
   // fotos dos produtos (Nextcloud, pasta das fotos nas Configurações)
   productPhotos: false,
+  // tipos de atendimento com modelo de relatório próprio (ERP > Modelos de relatório)
+  reportTypes: [],
 });
 
 // o nome da unidade para as telas; sem nome nas Configurações, o próprio banco
@@ -58,11 +60,34 @@ export const loadErpStatus = async accountId => {
       lockedStatuses: data.locked_statuses || [],
       nextcloudInvoices: data.nextcloud_invoices === true,
       productPhotos: data.product_photos === true,
+      reportTypes: data.report_types || [],
     });
   } catch {
     // sem acesso pelo perfil (403) ou fora do ar: o ERP some da tela
     Object.assign(erpState, { loaded: true, accountId, enabled: false });
   }
+};
+
+// mesmo formato do servidor (Outsider::Erp::Prints::Bindings.normalize_type): maiúsculas, sem acento
+export const normalizeAttendance = value =>
+  String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toUpperCase()
+    .slice(0, 80);
+
+// o tipo da OS, para o botão do relatório, quando ele tem modelo próprio ("Emitir relatório Entrega Técnica")
+export const reportTypeName = value => {
+  if (!erpState.reportTypes.includes(normalizeAttendance(value))) return '';
+  return String(value)
+    .trim()
+    .toLowerCase()
+    .replace(
+      /(^|[\s/(-])(\S)/g,
+      (match, before, letter) => before + letter.toUpperCase()
+    );
 };
 
 // OS em status terminal (FECHADA/CANCELADA/PERDIDA): so leitura; reabrir e no desktop do ERP

@@ -1,6 +1,7 @@
 <script setup>
 // OUTSIDER: comissão (% sobre o valor faturado) e meta do mês de cada técnico, só para o administrador
-// (Outsider::Erp::Settings::Reports). A meta vale pelo nome do técnico; vazia tira a meta dele.
+// (Outsider::Erp::Settings::Reports). A meta vale pelo nome do técnico; vazia tira a meta dele. Também os tipos de
+// atendimento da OS que não somam para o técnico (garantia, entrega técnica, frotas).
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useAlert } from 'dashboard/composables';
@@ -17,10 +18,33 @@ const isOpen = ref(false);
 const saving = ref(false);
 const commission = ref('');
 const goals = ref([]);
+const excluded = ref([]);
+const newExcluded = ref('');
+
+const normalizeType = value =>
+  String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toUpperCase()
+    .slice(0, 80);
+
+const addExcluded = () => {
+  const type = normalizeType(newExcluded.value);
+  newExcluded.value = '';
+  if (type && !excluded.value.includes(type))
+    excluded.value = [...excluded.value, type];
+};
+const removeExcluded = type => {
+  excluded.value = excluded.value.filter(item => item !== type);
+};
 
 // data: o relatório aberto (técnicos do período + todas as metas já gravadas, para não perder as de quem não aparece)
 const open = data => {
   commission.value = formatNumber(data.comissao_pct);
+  excluded.value = [...(data.tipos_fora_da_soma || [])];
+  newExcluded.value = '';
   const saved = data.metas || {};
   const names = [
     ...new Set([
@@ -43,6 +67,7 @@ const save = async () => {
       report_goals: Object.fromEntries(
         goals.value.map(goal => [goal.name, parseNumber(goal.value, 0)])
       ),
+      report_excluded_types: excluded.value,
     });
     isOpen.value = false;
     emit('saved');
@@ -90,6 +115,44 @@ defineExpose({ open });
               class="w-24"
             />
           </label>
+          <div class="flex flex-col gap-2" data-excluded-types>
+            <span class="text-sm text-n-slate-12">{{ label('EXCLUDED') }}</span>
+            <span class="text-xs text-n-slate-10">
+              {{ label('EXCLUDED_HINT') }}
+            </span>
+            <div class="flex flex-wrap gap-1.5">
+              <span
+                v-for="type in excluded"
+                :key="type"
+                class="flex items-center gap-1 py-1 pl-2 pr-1 text-xs rounded-full bg-n-alpha-2 text-n-slate-12"
+              >
+                {{ type }}
+                <button
+                  type="button"
+                  class="p-0 rounded-full i-lucide-x size-3.5 text-n-slate-10 hover:text-n-slate-12"
+                  @click="removeExcluded(type)"
+                />
+              </span>
+            </div>
+            <form class="flex items-center gap-2" @submit.prevent="addExcluded">
+              <input
+                v-model="newExcluded"
+                maxlength="80"
+                :class="INPUT"
+                class="flex-1 !text-left"
+                :placeholder="label('EXCLUDED_PLACEHOLDER')"
+              />
+              <Button
+                type="submit"
+                size="sm"
+                variant="faded"
+                color="slate"
+                icon="i-lucide-plus"
+                :disabled="!newExcluded.trim()"
+                :label="label('EXCLUDED_ADD')"
+              />
+            </form>
+          </div>
           <div class="flex flex-col gap-2">
             <span class="text-sm text-n-slate-12">{{ label('GOALS') }}</span>
             <span class="text-xs text-n-slate-10">{{

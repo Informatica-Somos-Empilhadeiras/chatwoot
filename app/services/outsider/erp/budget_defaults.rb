@@ -39,7 +39,7 @@ class Outsider::Erp::BudgetDefaults
     data = @settings.data
     {
       'forma_pagto' => data['quote_forma_pagto'].to_i.positive? ? data['quote_forma_pagto'].to_i : nil,
-      'genero' => data['quote_genero_operacao'].to_i, 'tipo_frete' => data['quote_tipo_frete'].to_i,
+      'genero' => Outsider::Erp::BudgetForm::GENERO, 'tipo_frete' => data['quote_tipo_frete'].to_i,
       'vendedor' => seller_code, 'contato' => contact&.name.to_s.first(50),
       'prazo_entrega' => data['quote_prazo_entrega'], 'validade' => data['quote_validade'], 'garantia' => data['quote_garantia']
     }.compact

@@ -60,7 +60,9 @@
         "ORIGIN_ERP": "ERP",
         "ORIGIN_ERP_HINT": "Technician from the service order linked by the ERP",
         "ORIGIN_CHAT": "chat",
-        "ORIGIN_CHAT_HINT": "Technician set by the seller on the order"
+        "ORIGIN_CHAT_HINT": "Technician set by the seller on the order",
+        "ATTENDANCE_TYPE": "Service type",
+        "LINK_OS": "Link work order"
       },
       "LISTS": {
         "WITHOUT_TECH": "Invoiced without technician",
@@ -82,7 +84,9 @@
         "PARTE": "Share (%)",
         "VALOR": "Credited value",
         "PECAS": "Parts",
-        "SERVICOS": "Services"
+        "SERVICOS": "Services",
+        "ATENDIMENTO": "Service type",
+        "FORA_DA_SOMA": "Not counted"
       },
       "CONFIG": {
         "TITLE": "Technicians commission and goals",
@@ -90,7 +94,16 @@
         "COMMISSION_HINT": "On the invoiced value credited to each technician.",
         "GOALS": "Monthly goal (R$)",
         "GOALS_HINT": "Empty: no goal. The goal matches the technician name.",
-        "SAVE": "Save"
+        "SAVE": "Save",
+        "EXCLUDED": "Service types not counted",
+        "EXCLUDED_HINT": "Work orders of these types show in the order but do not count for the technician value or commission. Matches part of the name: FLEETS also matches FLEET.",
+        "EXCLUDED_ADD": "Add",
+        "EXCLUDED_PLACEHOLDER": "E.g. WARRANTY"
+      },
+      "EXCLUDED": {
+        "NOTE": "{value} in {count} order(s) with {types} work orders were left out of the technicians totals (Settings).",
+        "BADGE": "not counted",
+        "BADGE_HINT": "Service type left out of the technicians totals (Settings)"
       }
     }
   }

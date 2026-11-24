@@ -17,6 +17,7 @@ class Outsider::Erp::QuoteUpdater < Outsider::Erp::QuoteCreator
       raise Invalid, 'em_uso' if current_codes(number).any?
 
       plan.reject { |line| line[:kind] == :skip }.each { |line| insert_revision_line(number, line) }
+      insert_lost_parts(number, plan, Outsider::Erp::QuoteBuilder.new(@budget, document: nil, seller: nil, revision: { columns: quote_columns }))
       @client.query_execute(revision_builder(customer, plan).finalize_sql(number))
       write_revision_conditions(number, customer, plan)
       finish_revision(number, plan)

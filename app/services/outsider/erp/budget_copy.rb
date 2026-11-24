@@ -36,6 +36,7 @@ class Outsider::Erp::BudgetCopy
   # o ERP guarda o nome da forma de pagamento no orçamento; o rascunho guarda o código
   def payment_code(name)
     return if name.blank?
+    return name.to_i if name.match?(/\A\d+\z/)
 
     Outsider::Erp::PaymentTerms.new(@account).list.find { |row| row[:descricao].split(' / ').include?(name) }&.dig(:codigo)
   rescue Outsider::Erp::Client::Error

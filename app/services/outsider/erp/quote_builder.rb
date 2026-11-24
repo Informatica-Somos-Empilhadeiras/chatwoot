@@ -51,7 +51,13 @@ class Outsider::Erp::QuoteBuilder
   # serviço: a função do ERP descarta item sem NCM (LEFT JOIN filtrado no WHERE), e serviço não tem NCM. Grava a linha
   # com as mesmas colunas e contas da função, sem imposto, só se o produto for serviço (Tipo = 1) e o orçamento for o
   # deste rascunho. O próximo CodigoItem sai de uma tabela derivada (o MySQL não deixa subconsulta na própria tabela).
-  def service_sql(number, item)
+  def service_sql(number, item) = direct_sql(number, item, service: true)
+
+  # peça que a função descartou (sem NCM para a UF/gênero do cliente): a mesma linha direta, sem imposto. O orçamento é
+  # rascunho de venda (não mexe em estoque); imposto conta na OS e no pedido.
+  def part_direct_sql(number, item) = direct_sql(number, item, service: false)
+
+  def direct_sql(number, item, service:)
     quantity = S.dec(item['quantidade'])
     price = S.dec(item['preco'])
     total = S.dec(Outsider::Erp::Budget.line_total(item))
@@ -59,7 +65,7 @@ class Outsider::Erp::QuoteBuilder
       'PercDesconto, TotalLinha, ClasFiscal, VrTotalTributosLinha) ' \
       "SELECT O.codigoorcamento, M.proximo, P.CodigoProduto, #{quantity}, #{price}, ((#{price} * #{quantity}) - #{total}) / #{quantity}, " \
       "#{S.dec(item['desconto'])}, #{total}, P.ClasFiscal, 0 " \
-      "FROM #{bank}.orcamento O JOIN #{bank}.produtos P ON P.CodigoProduto = #{S.int(item['codigo'])} AND P.Tipo = 1 " \
+      "FROM #{bank}.orcamento O JOIN #{bank}.produtos P ON P.CodigoProduto = #{S.int(item['codigo'])}#{' AND P.Tipo = 1' if service} " \
       "JOIN (SELECT IFNULL(MAX(CodigoItem), 0) + 1 AS proximo FROM #{bank}.detalheorcamento WHERE CodigoOrcamento = #{S.int(number)}) M " \
       "WHERE O.codigoorcamento = #{S.int(number)} AND #{guard}"
   end
@@ -152,7 +158,7 @@ class Outsider::Erp::QuoteBuilder
     terms = @budget.terms
     [S.int(@budget.customer_code), S.str(@document.to_s.first(14)), S.int(terms['forma_pagto']), S.dec(terms['frete_valor']),
      text(terms, 'contato', 50), '0', text(terms, 'observacoes', 2000), S.int(@seller), '0',
-     S.int(terms['tipo_frete'].to_i), S.int(terms['genero'].to_i), text(terms, 'pedido_cliente', 20), key, S.date(Time.zone.today)]
+     S.int(terms['tipo_frete'].to_i), S.int(Outsider::Erp::BudgetForm::GENERO), text(terms, 'pedido_cliente', 20), key, S.date(Time.zone.today)]
   end
 
   def text(terms, key, limit) = S.str(terms[key].to_s.first(limit))

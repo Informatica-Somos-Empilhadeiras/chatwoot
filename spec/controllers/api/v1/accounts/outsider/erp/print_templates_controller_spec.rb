@@ -15,6 +15,11 @@ RSpec.describe 'Outsider ERP print templates', type: :request do
     stub_request(:get, %r{/KanbanOrdemServico/api/ListaTipoAtendimento}).to_return(
       status: 200, body: [{ 'TipoAtendimento' => 'MANUT. CORRETIVA' }, { 'TipoAtendimento' => 'PREVENTIVA' }].to_json
     )
+    stub_request(:put, %r{/dashboard/api/query_execute}).to_return do |request|
+      sql = JSON.parse(request.body)['SQL_Execute']
+      rows = sql.include?('DISTINCT X.tipo') ? [{ 'tipo' => 'ENTREGA TÉCNICA' }, { 'tipo' => 'preventiva' }] : []
+      { status: 200, body: rows.to_json }
+    end
   end
 
   def call(verb, path, user: admin, **params)
@@ -32,7 +37,8 @@ RSpec.describe 'Outsider ERP print templates', type: :request do
     call(:get, 'print_templates')
     body = response.parsed_body
     expect(body['templates'].pluck('builtin')).to include('os_fotos', 'os_respostas', 'quote_padrao')
-    expect(body['attendance_types']).to eq(['MANUT. CORRETIVA', 'PREVENTIVA'])
+    expect(body['attendance_types']).to eq(['ENTREGA TECNICA', 'MANUT. CORRETIVA', 'PREVENTIVA'])
+    expect(body['attendance_labels']).to eq('ENTREGA TECNICA' => 'ENTREGA TÉCNICA')
     expect(body['bindings']).to eq('os' => { 'default' => 'original', 'types' => {} }, 'quote' => { 'default' => 'original' })
     expect(body['catalog']['os']['blocks'].pluck('type')).to include('checklist')
     expect(body['catalog']['quote']['blocks'].pluck('type')).to include('totals')
@@ -55,6 +61,24 @@ RSpec.describe 'Outsider ERP print templates', type: :request do
     expect(response.media_type).to eq('application/pdf')
     expect(response.body).to start_with('%PDF')
     expect(source.reload.blocks.pluck('type')).to eq(['checklist'])
+  end
+
+  it 'still lists the attendance types the orders use when the kanban list changes format or fails' do
+    stub_request(:get, %r{/KanbanOrdemServico/api/ListaTipoAtendimento}).to_return(status: 200, body: [{ 'Descricao' => 'Frotas' }].to_json)
+    expect(Outsider::Erp::Lists.new(account).attendance_types).to eq(['ENTREGA TÉCNICA', 'Frotas', 'preventiva'])
+    expect(a_request(:put, %r{/query_execute}).with { |req| req.body.include?('FROM somosemp.`os` O') }).to have_been_made
+
+    Rails.cache.clear
+    stub_request(:get, %r{/KanbanOrdemServico/api/ListaTipoAtendimento}).to_return(status: 500)
+    expect(Outsider::Erp::Lists.new(account).attendance_types).to eq(['ENTREGA TÉCNICA', 'preventiva'])
+  end
+
+  it 'tells the status which attendance types have their own template' do
+    chosen = Outsider::Erp::PrintTemplate.create!(account: account, kind: 'os', name: 'Entrega', content: { 'blocks' => [] })
+    call(:put, 'print_templates/bindings', kind: 'os', default: 'original', types: { 'Entrega Técnica' => chosen.id, 'FROTAS' => 'original' })
+    get "#{base}/status", headers: admin.create_new_auth_token, as: :json
+    expect(response.parsed_body['report_types']).to eq(['ENTREGA TECNICA'])
+    expect(Outsider::Erp::Prints::Bindings.new(account).choice('os', 'entrega tecnica')).to eq(chosen.id)
   end
 
   it 'gives the studio the sample data with photo addresses' do
