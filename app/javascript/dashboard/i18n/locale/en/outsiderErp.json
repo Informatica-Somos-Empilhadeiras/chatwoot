@@ -1087,6 +1087,12 @@
         "DELETE_TITLE": "Delete \"{name}\"?",
         "DELETE_TEXT": "Cases using this template go back to the default (or the Mais Prático original)."
       }
+    },
+    "GROUPS": {
+      "SALES": "Quotes and work orders",
+      "FISCAL": "Tax and finance",
+      "REPORTS": "Reports and performance",
+      "SETTINGS": "Settings"
     }
   }
 }

@@ -4,6 +4,8 @@
 // tem o quadro (espelho); as Notas trocam entre Produtos (NF-e) e Servicos (NFS-e). "Novo cliente" cadastra no ERP (com a
 // gravacao de clientes ligada). Produtos: consulta do cadastro com as fotos (ErpProducts). Modelos de relatorio: o estudio
 // dos relatorios da OS e do orcamento (ErpPrints, administrador). Um erro dentro de uma aba aparece na tela com a mensagem em vez de deixar a pagina em branco.
+// Navegacao em dois niveis: os grupos (Orcamentos e OS, Fiscal e financeiro, Relatorios e desempenho, Configuracoes,
+// sidebar.js ERP_GROUPS) em cima e as abas do grupo embaixo; Lista/Quadro (OS) e Produtos/Servicos (notas) na linha das abas.
 import { ref, computed, watch, onErrorCaptured } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
@@ -16,7 +18,7 @@ import ErpRecords from '../records/ErpRecords.vue';
 import ErpPrints from '../prints/ErpPrints.vue';
 import ErpClientDialog from '../clients/ErpClientDialog.vue';
 import { kindForTab } from '../records/recordsConfig';
-import { erpTabs } from '../sidebar';
+import { erpTabs, erpGroups } from '../sidebar';
 import { reportTabs } from '../../reports/reportsCatalog';
 import { erpState, ERP_ROUTE } from '../erpStore';
 
@@ -50,6 +52,34 @@ const tab = computed(() => {
   const names = [...tabs.value, ...reports.value].map(item => item.name);
   return names.includes(route.params.tab) ? route.params.tab : names[0] || '';
 });
+const go = name => {
+  if (name === tab.value) return;
+  router.push({ name: ERP_ROUTE, params: { ...route.params, tab: name } });
+};
+
+const groups = computed(() => erpGroups());
+const currentGroup = computed(
+  () =>
+    groups.value.find(group =>
+      group.items.some(item => item.name === tab.value)
+    ) || null
+);
+// a última aba aberta em cada grupo: voltar ao grupo volta nela
+const lastInGroup = ref({});
+watch(
+  [tab, currentGroup],
+  ([name, group]) => {
+    if (group) lastInGroup.value = { ...lastInGroup.value, [group.key]: name };
+  },
+  { immediate: true }
+);
+const goGroup = group => {
+  const last = lastInGroup.value[group.key];
+  const target = group.items.some(item => item.name === last)
+    ? last
+    : group.items[0].name;
+  go(target);
+};
 const notesMode = ref(stored(NOTES_KEY, NOTE_KINDS, 'invoices'));
 const currentReport = computed(() =>
   reports.value.find(item => item.name === tab.value)
@@ -76,11 +106,6 @@ const setNotesMode = value => {
 
 const clientDialog = ref(null);
 
-const go = name => {
-  if (name === tab.value) return;
-  router.push({ name: ERP_ROUTE, params: { ...route.params, tab: name } });
-};
-
 // erro numa aba: mostra o motivo (antes a aba ficava em branco)
 const crash = ref('');
 onErrorCaptured(error => {
@@ -98,139 +123,158 @@ watch(tab, () => {
   <section class="flex w-full h-full overflow-hidden bg-n-surface-1">
     <div class="flex flex-col w-full h-full min-w-0">
       <header class="px-4 shrink-0 sm:px-6">
-        <div
-          class="flex flex-wrap items-end justify-between gap-3 pt-5 pb-4 mx-auto max-w-[110rem]"
-        >
-          <div class="flex flex-col gap-0.5 min-w-0">
-            <span class="text-xs font-medium text-n-slate-11">
-              {{ t('OUTSIDER_ERP.TITLE') }}
-            </span>
-            <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
-              <h1 class="mb-0 text-xl font-medium text-n-slate-12">
-                {{
-                  currentReport
-                    ? t(currentReport.label)
-                    : tab
-                      ? t(`OUTSIDER_ERP.TABS.${tab.toUpperCase()}`)
-                      : t('OUTSIDER_ERP.SIDEBAR')
-                }}
-              </h1>
-              <Button
-                v-if="erpState.canRegisterClient"
-                size="xs"
-                variant="faded"
-                color="teal"
-                icon="i-lucide-user-plus"
-                :label="t('OUTSIDER_ERP.CLIENT.NEW')"
-                @click="clientDialog?.open()"
-              />
-            </div>
-          </div>
-          <div class="flex flex-wrap items-center gap-2">
-            <div
-              v-if="tab === 'os'"
-              class="flex items-center p-0.5 rounded-lg bg-n-alpha-2"
-            >
-              <button
-                v-for="mode in ['table', 'board']"
-                :key="mode"
-                type="button"
-                class="flex items-center gap-1.5 h-7 px-2.5 text-xs rounded-md"
-                :class="
-                  osMode === mode
-                    ? 'bg-n-solid-1 text-n-slate-12 font-medium shadow-sm'
-                    : 'text-n-slate-11 hover:text-n-slate-12'
-                "
-                @click="setMode(mode)"
-              >
-                <Icon
-                  :icon="mode === 'board' ? 'i-lucide-kanban' : 'i-lucide-list'"
-                  class="size-3.5"
+        <div class="pt-5 mx-auto max-w-[110rem]">
+          <div class="flex flex-wrap items-end justify-between gap-3">
+            <div class="flex flex-col gap-0.5 min-w-0">
+              <span class="text-xs font-medium text-n-slate-11">
+                {{ t('OUTSIDER_ERP.TITLE') }}
+                <template v-if="currentGroup">
+                  · {{ t(currentGroup.label) }}
+                </template>
+              </span>
+              <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+                <h1 class="mb-0 text-xl font-medium text-n-slate-12">
+                  {{
+                    currentReport
+                      ? t(currentReport.label)
+                      : tab
+                        ? t(`OUTSIDER_ERP.TABS.${tab.toUpperCase()}`)
+                        : t('OUTSIDER_ERP.SIDEBAR')
+                  }}
+                </h1>
+                <Button
+                  v-if="erpState.canRegisterClient"
+                  size="xs"
+                  variant="faded"
+                  color="teal"
+                  icon="i-lucide-user-plus"
+                  :label="t('OUTSIDER_ERP.CLIENT.NEW')"
+                  @click="clientDialog?.open()"
                 />
-                {{
-                  t(
-                    `OUTSIDER_ERP.RECORDS.ORDERS.${mode === 'board' ? 'BOARD' : 'TABLE'}`
-                  )
-                }}
-              </button>
-            </div>
-            <div
-              v-if="tab === 'notas'"
-              class="flex items-center p-0.5 rounded-lg bg-n-alpha-2"
-            >
-              <button
-                v-for="mode in NOTE_KINDS"
-                :key="mode"
-                type="button"
-                class="flex items-center gap-1.5 h-7 px-2.5 text-xs rounded-md whitespace-nowrap"
-                :class="
-                  notesMode === mode
-                    ? 'bg-n-solid-1 text-n-slate-12 font-medium shadow-sm'
-                    : 'text-n-slate-11 hover:text-n-slate-12'
-                "
-                @click="setNotesMode(mode)"
-              >
-                <Icon
-                  :icon="
-                    mode === 'invoices' ? 'i-lucide-package' : 'i-lucide-hammer'
-                  "
-                  class="size-3.5"
-                />
-                {{
-                  t(
-                    `OUTSIDER_ERP.RECORDS.${mode === 'invoices' ? 'INVOICES' : 'SERVICE_INVOICES'}.MODE`
-                  )
-                }}
-              </button>
+              </div>
             </div>
             <nav
-              v-if="tabs.length + reports.length > 1"
-              class="flex items-center gap-0.5 p-0.5 overflow-x-auto rounded-lg bg-n-alpha-2"
+              v-if="groups.length > 1"
+              class="flex items-center max-w-full gap-1 p-1 overflow-x-auto rounded-xl bg-n-alpha-2"
+              data-erp-groups
             >
               <button
-                v-for="item in tabs"
-                :key="item.name"
+                v-for="group in groups"
+                :key="group.key"
                 type="button"
-                class="flex items-center gap-1.5 h-8 px-3 text-[13px] rounded-md whitespace-nowrap"
+                class="flex items-center gap-2 h-9 px-3.5 text-[13px] rounded-lg whitespace-nowrap"
                 :class="
-                  tab === item.name
+                  currentGroup?.key === group.key
                     ? 'bg-n-solid-1 text-n-slate-12 font-medium shadow-sm'
                     : 'text-n-slate-11 hover:text-n-slate-12'
+                "
+                :title="t(group.label)"
+                @click="goGroup(group)"
+              >
+                <Icon :icon="group.icon" class="size-4" />
+                <span
+                  :class="
+                    currentGroup?.key === group.key
+                      ? 'inline'
+                      : 'hidden md:inline'
+                  "
+                >
+                  {{ t(group.label) }}
+                </span>
+              </button>
+            </nav>
+          </div>
+          <div
+            v-if="currentGroup"
+            class="flex flex-wrap items-center justify-between mt-3 border-b gap-x-3 border-n-weak"
+          >
+            <nav
+              class="flex items-center gap-1 -mb-px overflow-x-auto"
+              data-erp-tabs
+            >
+              <button
+                v-for="item in currentGroup.items"
+                :key="item.name"
+                type="button"
+                class="flex items-center gap-1.5 h-10 px-3 text-[13px] border-b-2 whitespace-nowrap"
+                :class="
+                  tab === item.name
+                    ? 'border-n-brand text-n-slate-12 font-medium'
+                    : 'border-transparent text-n-slate-11 hover:text-n-slate-12'
                 "
                 @click="go(item.name)"
               >
                 <Icon :icon="item.icon" class="size-4" />
-                <span class="hidden md:inline">{{ t(item.label) }}</span>
+                {{ t(item.label) }}
               </button>
-              <template v-if="reports.length">
-                <span class="w-px h-5 mx-1 bg-n-strong shrink-0" />
-                <span
-                  class="hidden px-1.5 text-[11px] font-medium uppercase tracking-wide text-n-slate-10 lg:inline"
-                >
-                  {{ t('OUTSIDER_ERP.TABS.REPORTS') }}
-                </span>
+            </nav>
+            <div class="flex items-center gap-2 py-1.5">
+              <div
+                v-if="tab === 'os'"
+                class="flex items-center p-0.5 rounded-lg bg-n-alpha-2"
+              >
                 <button
-                  v-for="item in reports"
-                  :key="item.name"
+                  v-for="mode in ['table', 'board']"
+                  :key="mode"
                   type="button"
-                  class="flex items-center gap-1.5 h-8 px-3 text-[13px] rounded-md whitespace-nowrap"
+                  class="flex items-center gap-1.5 h-7 px-2.5 text-xs rounded-md"
                   :class="
-                    tab === item.name
+                    osMode === mode
                       ? 'bg-n-solid-1 text-n-slate-12 font-medium shadow-sm'
                       : 'text-n-slate-11 hover:text-n-slate-12'
                   "
-                  @click="go(item.name)"
+                  @click="setMode(mode)"
                 >
-                  <Icon :icon="item.icon" class="size-4" />
-                  <span class="hidden md:inline">{{ t(item.label) }}</span>
+                  <Icon
+                    :icon="
+                      mode === 'board' ? 'i-lucide-kanban' : 'i-lucide-list'
+                    "
+                    class="size-3.5"
+                  />
+                  {{
+                    t(
+                      `OUTSIDER_ERP.RECORDS.ORDERS.${mode === 'board' ? 'BOARD' : 'TABLE'}`
+                    )
+                  }}
                 </button>
-              </template>
-            </nav>
+              </div>
+              <div
+                v-if="tab === 'notas'"
+                class="flex items-center p-0.5 rounded-lg bg-n-alpha-2"
+              >
+                <button
+                  v-for="mode in NOTE_KINDS"
+                  :key="mode"
+                  type="button"
+                  class="flex items-center gap-1.5 h-7 px-2.5 text-xs rounded-md whitespace-nowrap"
+                  :class="
+                    notesMode === mode
+                      ? 'bg-n-solid-1 text-n-slate-12 font-medium shadow-sm'
+                      : 'text-n-slate-11 hover:text-n-slate-12'
+                  "
+                  @click="setNotesMode(mode)"
+                >
+                  <Icon
+                    :icon="
+                      mode === 'invoices'
+                        ? 'i-lucide-package'
+                        : 'i-lucide-hammer'
+                    "
+                    class="size-3.5"
+                  />
+                  {{
+                    t(
+                      `OUTSIDER_ERP.RECORDS.${mode === 'invoices' ? 'INVOICES' : 'SERVICE_INVOICES'}.MODE`
+                    )
+                  }}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </header>
       <main
-        class="flex-1 min-h-0 px-4 sm:px-6"
+        class="flex-1 min-h-0 px-4 pt-4 sm:px-6"
         :class="
           fills ? 'overflow-y-auto md:overflow-hidden' : 'overflow-y-auto'
         "

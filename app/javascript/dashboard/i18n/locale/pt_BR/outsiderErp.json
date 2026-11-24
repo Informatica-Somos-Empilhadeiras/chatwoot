@@ -1087,6 +1087,12 @@
         "DELETE_TITLE": "Apagar \"{name}\"?",
         "DELETE_TEXT": "Os casos que usam este modelo voltam para o padrão (ou para o original do Mais Prático)."
       }
+    },
+    "GROUPS": {
+      "SALES": "Orçamentos e OS",
+      "FISCAL": "Fiscal e financeiro",
+      "REPORTS": "Relatórios e desempenho",
+      "SETTINGS": "Configurações"
     }
   }
 }

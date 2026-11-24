@@ -24,7 +24,7 @@ export const makeAllowed = (isAllowed, resolvePath) => to => {
   }
 };
 
-// item do menu -> { name, label, icon, to, groups: [{ name, label, icon, items }] } ou null
+// item do menu -> { name, label, icon, to, groups: [{ name, label, icon, style, items }] } ou null
 // - item sem filhos: um destino só (to)
 // - filhos soltos viram o primeiro grupo (sem título)
 // - filhos com filhos (Canais, Pastas, Times, Etiquetas...) viram grupos com título
@@ -54,6 +54,8 @@ export const toModule = (item, allowed) => {
           name: child.name,
           label: child.label,
           icon: child.icon,
+          // 'strong': título em destaque e opções recuadas (NavGroups.vue); sem nada, o título pequeno
+          style: child.groupStyle,
           items,
         });
     } else if (allowed(child.to)) {

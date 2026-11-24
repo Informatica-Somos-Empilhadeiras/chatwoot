@@ -3,6 +3,8 @@
 // (Pastas, Times, Etiquetas, Segmentos...) ficam num grupo que abre e fecha, com o total de não lidas
 // no título quando fechado. Listas longas mostram as primeiras e "Ver todos".
 // variant: "sub" (árvore do módulo aberto) ou "fly" (quadro do recolhido e lista das Configurações).
+// Grupo com style "strong" (os do ERP): o título é maior e mais forte que as opções, e as opções
+// ficam recuadas embaixo dele, na linha da árvore. Sem style, o título pequeno de sempre.
 import { useI18n } from 'vue-i18n';
 import NavLeaf from './NavLeaf.vue';
 import { navState, isShowingAll, toggleShowAll } from './navState';
@@ -21,6 +23,7 @@ const LIMIT = 8;
 const { t } = useI18n();
 
 const hasActive = group => group.items.includes(props.activeItem);
+const isStrong = group => group.style === 'strong';
 // a escolha da pessoa vale; sem escolha, o grupo do destino ativo começa aberto
 const opened = group => navState.groups[group.name] ?? hasActive(group);
 const toggleGroup = group => {
@@ -60,6 +63,7 @@ const canShowAll = group => group.items.length > LIMIT + 1;
         <button
           type="button"
           class="onav-gh"
+          :class="{ 'onav-gh--strong': isStrong(group) }"
           :aria-expanded="opened(group)"
           @click="toggleGroup(group)"
         >
@@ -73,11 +77,17 @@ const canShowAll = group => group.items.length > LIMIT + 1;
           <span
             class="onav-chev"
             :class="
-              opened(group) ? 'i-lucide-chevron-down' : 'i-lucide-chevron-right is-closed'
+              opened(group)
+                ? 'i-lucide-chevron-down'
+                : 'i-lucide-chevron-right is-closed'
             "
           />
         </button>
-        <ul v-if="opened(group)" class="onav-gl">
+        <ul
+          v-if="opened(group)"
+          class="onav-gl"
+          :class="{ 'onav-gl--tree': isStrong(group) }"
+        >
           <NavLeaf
             v-for="item in shownItems(group)"
             :key="item.name"
