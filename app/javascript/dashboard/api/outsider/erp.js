@@ -58,6 +58,29 @@ class ErpAPI extends ApiClient {
     return axios.post(`${this.url}/service_orders/deliver`, data);
   }
 
+  // agendar a OS nas agendas conectadas (Microsoft/Google) e avisar por WhatsApp
+  orderSchedule(params) {
+    return axios.get(`${this.url}/service_orders/schedule`, { params });
+  }
+
+  createOrderSchedule(data) {
+    return axios.post(`${this.url}/service_orders/schedule`, data);
+  }
+
+  cancelOrderSchedule(id) {
+    return axios.delete(`${this.url}/service_orders/schedule/${id}`);
+  }
+
+  // só um texto pelo WhatsApp sobre a OS (até 5 contatos)
+  orderMessage(data) {
+    return axios.post(`${this.url}/service_orders/message`, data);
+  }
+
+  // contatos (e-mail/WhatsApp) e colegas (e-mail) para convidar
+  orderPeople(q) {
+    return axios.get(`${this.url}/service_orders/people`, { params: { q } });
+  }
+
   setSubstatus(data) {
     return axios.put(`${this.url}/service_orders/substatus`, data);
   }

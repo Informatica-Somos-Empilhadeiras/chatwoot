@@ -29,11 +29,14 @@ class Outsider::Erp::DocumentSender
 
   private
 
+  # uma ou mais pessoas (até MAX_WHATSAPP), o mesmo PDF para todas, cada uma na conversa dela
   def whatsapp(params, document)
-    contact = whatsapp_ready!(@account.contacts.find_by(id: params[:contact_id]))
+    contacts = whatsapp_contacts!(params)
     inbox = whatsapp_inbox(params[:inbox_id])
     text = clean(params[:message], MAX_MESSAGE)
-    post(whatsapp_conversation(inbox, contact), text, attachments: [blob(document).signed_id])
+    whatsapp_quota!(contacts.size)
+    file = blob(document)
+    contacts.each { |contact| post(whatsapp_conversation(inbox, contact), personalize(text, contact), attachments: [file.signed_id]) }
   end
 
   def email(params, document, label, conversation)

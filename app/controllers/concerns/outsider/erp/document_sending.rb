@@ -41,7 +41,7 @@ module Outsider::Erp::DocumentSending
   end
 
   def deliver_params
-    params.permit(:channel, :contact_id, :inbox_id, :subject, :message, to: [])
+    params.permit(:channel, :contact_id, :inbox_id, :subject, :message, to: [], contact_ids: [])
   end
 
   def conversation

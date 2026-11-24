@@ -29,11 +29,17 @@ class Outsider::Erp::BudgetSender
 
   private
 
+  # uma ou mais pessoas (até MAX_WHATSAPP; sem escolha, o contato do orçamento), um registro de envio por pessoa
   def whatsapp(budget, params)
-    contact = whatsapp_contact(budget, params[:contact_id])
+    contacts = whatsapp_contacts!(params, fallback: budget.contact)
     inbox = whatsapp_inbox(params[:inbox_id])
     text = clean(params[:message], MAX_MESSAGE)
+    whatsapp_quota!(contacts.size)
     document = document(budget)
+    contacts.map { |contact| whatsapp_one(budget, document, inbox, contact, personalize(text, contact)) }.first
+  end
+
+  def whatsapp_one(budget, document, inbox, contact, text)
     Outsider::Erp::Budget.transaction do
       record = create_send(budget, document, channel: :whatsapp, recipients: [contact.phone_number])
       conversation = whatsapp_conversation(inbox, contact)
@@ -41,11 +47,6 @@ class Outsider::Erp::BudgetSender
       record.update!(conversation_id: conversation.id, message_id: message.id, status: :delivered)
       record
     end
-  end
-
-  # outro contato escolhido na busca, senão o do orçamento; precisa ter telefone e não ser grupo
-  def whatsapp_contact(budget, contact_id)
-    whatsapp_ready!(contact_id.present? ? @account.contacts.find_by(id: contact_id) : budget.contact)
   end
 
   def email(budget, params)

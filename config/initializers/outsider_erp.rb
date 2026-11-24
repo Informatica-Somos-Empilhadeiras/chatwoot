@@ -22,6 +22,12 @@ Rails.application.routes.prepend do
                   get :contacts
                   post :deliver
                   %i[substatus field status technician attendance_type].each { |action| put action }
+                  # agendar a OS nas agendas conectadas (Microsoft/Google) e avisar por WhatsApp
+                  get :schedule, to: 'order_schedules#show'
+                  post :schedule, to: 'order_schedules#create'
+                  delete 'schedule/:id', to: 'order_schedules#destroy', constraints: { id: /\d+/ }
+                  post :message, to: 'order_schedules#message'
+                  get :people, to: 'order_schedules#people'
                 end
               end
               resources :customers, only: [:index]

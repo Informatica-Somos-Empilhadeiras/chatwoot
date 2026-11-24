@@ -131,6 +131,15 @@ const KNOWN_REASONS = [
   'status',
   'em_edicao',
   'not_revising',
+  'too_many_whatsapp',
+  'whatsapp_limit',
+  'no_calendar',
+  'calendar_not_ready',
+  'invalid_time',
+  'title_required',
+  'too_many_attendees',
+  'message_required',
+  'not_owner',
 ];
 
 // motivo do servidor (gravação, envio, formulário) em texto; o resto cai na mensagem geral do ERP

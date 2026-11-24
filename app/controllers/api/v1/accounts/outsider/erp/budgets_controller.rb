@@ -218,7 +218,7 @@ class Api::V1::Accounts::Outsider::Erp::BudgetsController < Api::V1::Accounts::O
   end
 
   def deliver_params
-    params.permit(:channel, :contact_id, :inbox_id, :subject, :message, to: [])
+    params.permit(:channel, :contact_id, :inbox_id, :subject, :message, to: [], contact_ids: [])
   end
 
   # no dev a fila vai para o Redis da produção (outro código): grava na hora

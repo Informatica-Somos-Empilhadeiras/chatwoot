@@ -21,6 +21,7 @@ import ErpOrderEditor from '../components/ErpOrderEditor.vue';
 import ErpBudgetDrawer from '../budgets/ErpBudgetDrawer.vue';
 import ErpPdfDialog from '../budgets/ErpPdfDialog.vue';
 import ErpDocumentSendDialog from '../components/ErpDocumentSendDialog.vue';
+import ErpOrderScheduleDialog from '../components/ErpOrderScheduleDialog.vue';
 import { budgetErrorMessage } from '../budgets/budgetHelpers';
 import { allows } from '../../access/accessStore';
 import {
@@ -375,6 +376,19 @@ const sendOrder = () =>
     contactId: detail.value?.contact_id,
   });
 
+// OS: agendar nas agendas conectadas (Microsoft/Google) com convidados e aviso no WhatsApp, ou só um texto no WhatsApp
+const scheduleRef = ref(null);
+const scheduleOrder = (mode = 'schedule') =>
+  scheduleRef.value?.open(
+    { company: view.value.company, code: view.value.number },
+    mode
+  );
+const scheduledLabel = row => {
+  const [day, time] = String(row.start).split('T');
+  const [, m, d] = day.split('-');
+  return `${d}/${m}${row.all_day ? '' : ` ${time.slice(0, 5)}`}`;
+};
+
 // NF-e e NFS-e: a nota do Nextcloud enviada ao cliente por WhatsApp ou e-mail (como a OS)
 const sendInvoice = () =>
   sendDialogRef.value?.open({
@@ -571,6 +585,36 @@ const LABEL =
           :label="t('OUTSIDER_ERP.ORDER.SEND.BUTTON')"
           @click="sendOrder"
         />
+        <Button
+          v-if="canUseOrders"
+          size="sm"
+          variant="faded"
+          color="slate"
+          icon="i-lucide-calendar-plus"
+          :label="t('OUTSIDER_ERP.ORDER.SCHEDULE_BUTTON')"
+          data-erp-order-schedule
+          @click="scheduleOrder('schedule')"
+        />
+        <Button
+          v-if="canUseOrders"
+          size="sm"
+          variant="faded"
+          color="slate"
+          icon="i-lucide-message-circle"
+          :label="t('OUTSIDER_ERP.ORDER.MESSAGE_BUTTON')"
+          data-erp-order-message
+          @click="scheduleOrder('message')"
+        />
+        <button
+          v-for="row in detail.schedules || []"
+          :key="row.start"
+          type="button"
+          class="flex items-center gap-1 px-2 py-1 text-xs rounded-full bg-n-teal-3 text-n-teal-11"
+          @click="scheduleOrder('schedule')"
+        >
+          <Icon icon="i-lucide-calendar-check" class="size-3.5" />
+          {{ t('OUTSIDER_ERP.ORDER.SCHEDULED', { when: scheduledLabel(row) }) }}
+        </button>
       </div>
     </header>
 
@@ -826,5 +870,6 @@ const LABEL =
     />
     <ErpPdfDialog ref="pdfRef" />
     <ErpDocumentSendDialog ref="sendDialogRef" />
+    <ErpOrderScheduleDialog ref="scheduleRef" @changed="load" />
   </aside>
 </template>

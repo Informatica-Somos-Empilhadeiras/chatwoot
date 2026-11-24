@@ -11,6 +11,7 @@ import Icon from 'dashboard/components-next/icon/Icon.vue';
 import ErpOrderEditor from './ErpOrderEditor.vue';
 import ErpPdfDialog from '../budgets/ErpPdfDialog.vue';
 import ErpDocumentSendDialog from './ErpDocumentSendDialog.vue';
+import ErpOrderScheduleDialog from './ErpOrderScheduleDialog.vue';
 import { allows } from '../../access/accessStore';
 import {
   erpState,
@@ -46,6 +47,14 @@ const openSend = () =>
 const openReport = () =>
   pdfRef.value?.open(() =>
     ErpAPI.serviceOrderReport(props.order.Empresa, props.order.CodigoOS)
+  );
+
+// agendar nas agendas conectadas (Microsoft/Google) ou só mandar um texto no WhatsApp
+const scheduleRef = ref(null);
+const openSchedule = mode =>
+  scheduleRef.value?.open(
+    { company: props.order.Empresa, code: props.order.CodigoOS },
+    mode
   );
 
 const late = computed(() => Number(props.order.DiasAtraso) > 0);
@@ -173,7 +182,26 @@ const details = computed(() =>
           @click="openSend"
         />
         <ErpPdfDialog ref="pdfRef" />
+        <Button
+          v-if="canSend"
+          size="sm"
+          variant="faded"
+          color="slate"
+          icon="i-lucide-calendar-plus"
+          :label="t('OUTSIDER_ERP.ORDER.SCHEDULE_BUTTON')"
+          @click="openSchedule('schedule')"
+        />
+        <Button
+          v-if="canSend"
+          size="sm"
+          variant="faded"
+          color="slate"
+          icon="i-lucide-message-circle"
+          :label="t('OUTSIDER_ERP.ORDER.MESSAGE_BUTTON')"
+          @click="openSchedule('message')"
+        />
         <ErpDocumentSendDialog ref="sendRef" />
+        <ErpOrderScheduleDialog ref="scheduleRef" />
       </div>
       <p v-if="order.Nome" class="mb-0 text-xs font-medium text-n-slate-12">
         {{ order.Nome }}

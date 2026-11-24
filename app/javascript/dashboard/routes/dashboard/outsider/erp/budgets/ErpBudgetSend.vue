@@ -3,7 +3,8 @@
 // o ERP calculou, e o histórico de envios) ou de outra fonte, como o relatório da OS e a nota fiscal (ErpDocumentSendDialog), que passa
 // source = { pdf, delivery, contacts(q), deliver(payload), labels }. E-mail: vários endereços (já vêm o do contato e,
 // no orçamento, os do cliente no ERP), assunto e mensagem com o texto padrão das Configurações. WhatsApp: na conversa
-// do contato (ou de outro, pela busca) numa caixa de WhatsApp, com a mensagem.
+// do contato (ou de outros, pela busca: até 5 pessoas, cada uma na conversa dela e chamada pelo primeiro nome) numa
+// caixa de WhatsApp, com a mensagem.
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useAlert } from 'dashboard/composables';
@@ -40,7 +41,10 @@ const emailDraft = ref('');
 const subject = ref('');
 const emailBody = ref('');
 const whatsappText = ref('');
-const contact = ref(null);
+// WhatsApp: uma ou mais pessoas (o servidor limita a MAX_WHATSAPP por envio e a 30 mensagens por hora)
+const MAX_WHATSAPP = 5;
+const contacts = ref([]);
+const contact = computed(() => contacts.value[0] || null);
 const inboxId = ref(null);
 const searching = ref(false);
 const contactQuery = ref('');
@@ -99,7 +103,11 @@ const autoTexts = { body: '', whatsapp: '' };
 const applyGreeting = () => {
   const { templates, contact_fallback: fallback } = delivery.value?.texts || {};
   if (!templates) return;
-  const name = firstName(contact.value?.name) || fallback || '';
+  // várias pessoas: o {contato} fica no texto e o servidor troca pelo nome de cada uma
+  const name =
+    contacts.value.length > 1
+      ? '{contato}'
+      : firstName(contact.value?.name) || fallback || '';
   if (emailBody.value === autoTexts.body) {
     emailBody.value = greet(templates.body, name);
     autoTexts.body = emailBody.value;
@@ -122,7 +130,7 @@ const loadDelivery = async () => {
     whatsappText.value = data.texts.whatsapp;
     autoTexts.body = emailBody.value;
     autoTexts.whatsapp = whatsappText.value;
-    contact.value = data.recipients.contact;
+    contacts.value = data.recipients.contact ? [data.recipients.contact] : [];
     applyGreeting();
     inboxId.value = data.recipients.inbox_id || data.recipients.inboxes[0]?.id;
     const canWhatsapp =
@@ -172,12 +180,23 @@ const searchContacts = debounce(async () => {
 }, 300);
 
 const pickContact = row => {
-  contact.value = row;
+  if (!contacts.value.some(item => item.id === row.id)) {
+    if (contacts.value.length >= MAX_WHATSAPP) {
+      useAlert(t('OUTSIDER_ERP.BUDGET.REASONS.TOO_MANY_WHATSAPP'));
+      return;
+    }
+    contacts.value.push(row);
+  }
   applyGreeting();
   if (row.default_inbox_id) inboxId.value = row.default_inbox_id;
   searching.value = false;
   contactQuery.value = '';
   contactResults.value = [];
+};
+
+const removeContact = index => {
+  contacts.value.splice(index, 1);
+  applyGreeting();
 };
 
 const canSend = computed(() => {
@@ -187,7 +206,11 @@ const canSend = computed(() => {
       (emails.value.length || EMAIL.test(emailDraft.value.trim())) &&
       subject.value.trim()
     );
-  return contact.value?.phone_number && inboxId.value;
+  return (
+    contacts.value.length &&
+    contacts.value.every(item => item.phone_number) &&
+    inboxId.value
+  );
 });
 
 const send = async () => {
@@ -204,7 +227,7 @@ const send = async () => {
           }
         : {
             channel: 'whatsapp',
-            contact_id: contact.value.id,
+            contact_ids: contacts.value.map(item => item.id),
             inbox_id: inboxId.value,
             message: whatsappText.value,
           };
@@ -374,35 +397,55 @@ const TEXTAREA =
 
       <template v-else>
         <div :class="LABEL">
-          {{ t('OUTSIDER_ERP.BUDGET.SEND.CONTACT') }}
+          {{ t('OUTSIDER_ERP.BUDGET.SEND.CONTACTS') }}
           <div
+            v-for="(row, index) in contacts"
+            :key="row.id"
             class="flex items-center gap-3 px-3 py-2 normal-case rounded-lg bg-n-alpha-1"
+            data-erp-send-contact
           >
             <Icon icon="i-lucide-user" class="size-4 text-n-slate-10" />
             <span class="flex flex-col flex-1 min-w-0">
               <span class="text-sm font-medium truncate text-n-slate-12">
-                {{ contact?.name || t('OUTSIDER_ERP.BUDGET.SEND.NO_CONTACT') }}
+                {{ row.name }}
               </span>
               <span
                 class="text-xs font-normal"
-                :class="
-                  contact?.phone_number ? 'text-n-slate-10' : 'text-n-ruby-11'
-                "
+                :class="row.phone_number ? 'text-n-slate-10' : 'text-n-ruby-11'"
               >
-                {{
-                  contact?.phone_number ||
-                  t('OUTSIDER_ERP.BUDGET.SEND.NO_PHONE')
-                }}
+                {{ row.phone_number || t('OUTSIDER_ERP.BUDGET.SEND.NO_PHONE') }}
               </span>
             </span>
             <button
               type="button"
-              class="text-sm font-medium text-n-brand hover:underline"
-              @click="searching = !searching"
+              class="grid rounded-md size-7 place-items-center text-n-slate-11 hover:bg-n-alpha-2"
+              :aria-label="t('OUTSIDER_ERP.BUDGET.SEND.REMOVE_CONTACT')"
+              @click="removeContact(index)"
             >
-              {{ t('OUTSIDER_ERP.BUDGET.CUSTOMER.CHANGE') }}
+              <Icon icon="i-lucide-x" class="size-4" />
             </button>
           </div>
+          <p
+            v-if="!contacts.length"
+            class="px-3 py-2 mb-0 text-sm font-normal normal-case rounded-lg bg-n-alpha-1 text-n-slate-11"
+          >
+            {{ t('OUTSIDER_ERP.BUDGET.SEND.NO_CONTACT') }}
+          </p>
+          <button
+            v-if="contacts.length < MAX_WHATSAPP"
+            type="button"
+            class="self-start text-sm font-medium normal-case text-n-brand hover:underline"
+            data-erp-send-add-contact
+            @click="searching = !searching"
+          >
+            {{ t('OUTSIDER_ERP.BUDGET.SEND.ADD_CONTACT') }}
+          </button>
+          <span
+            v-if="contacts.length > 1"
+            class="text-xs font-normal normal-case text-n-slate-10"
+          >
+            {{ t('OUTSIDER_ERP.BUDGET.SEND.MANY_HINT', { max: MAX_WHATSAPP }) }}
+          </span>
           <div v-if="searching" class="flex flex-col gap-1 normal-case">
             <input
               v-model="contactQuery"

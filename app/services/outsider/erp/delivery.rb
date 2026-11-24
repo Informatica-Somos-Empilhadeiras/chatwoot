@@ -8,8 +8,41 @@ module Outsider::Erp::Delivery
   MAX_EMAILS = 10
   MAX_MESSAGE = 4_000
   MAX_SUBJECT = 200
+  # WhatsApp (Evolution) bane número que manda muita mensagem igual para muita gente: no máximo 5 pessoas por envio e
+  # 30 mensagens por hora por agente, somando relatório, orçamento, nota e aviso de agendamento
+  MAX_WHATSAPP = 5
+  WHATSAPP_PER_HOUR = 30
 
   private
+
+  # contact_ids (vários) ou contact_id (um): cada um com telefone e que não seja grupo
+  def whatsapp_contacts!(params, fallback: nil)
+    ids = Array(params[:contact_ids]).map(&:to_i).select(&:positive?).uniq
+    ids = [params[:contact_id].to_i] if ids.empty? && params[:contact_id].present?
+    raise Blocked, 'too_many_whatsapp' if ids.size > MAX_WHATSAPP
+
+    contacts = ids.empty? ? [fallback] : ids.map { |id| @account.contacts.find_by(id: id) }
+    contacts.map { |contact| whatsapp_ready!(contact) }
+  end
+
+  # conta as mensagens da hora antes de mandar; passou do limite, nada sai
+  def whatsapp_quota!(count)
+    key = "outsider:erp:whatsapp:#{@account.id}:#{@user.id}:#{Time.current.strftime('%Y%m%d%H')}"
+    used = Redis::Alfred.get(key).to_i
+    raise Blocked, 'whatsapp_limit' if used + count > WHATSAPP_PER_HOUR
+
+    count.times { Redis::Alfred.incr(key) }
+    Redis::Alfred.expire(key, 2.hours.to_i)
+  end
+
+  # "Olá, {contato}!" vira o primeiro nome de cada pessoa (sem nome, "Olá!")
+  def personalize(text, contact)
+    name = contact&.name.to_s.strip.split(/\s+/).first.to_s
+    name = name[0].to_s.upcase + name[1..].to_s.downcase
+    return text.gsub('{contato}', name) if name.present?
+
+    text.gsub(/,?[ \t]*\{contato\}/, '')
+  end
 
   def whatsapp_ready!(contact)
     raise Blocked, 'no_phone' if contact.nil? || contact.phone_number.blank? || Outsider::Crm::ContactSummary.group?(contact)

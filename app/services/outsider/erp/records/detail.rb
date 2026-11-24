@@ -88,8 +88,18 @@ class Outsider::Erp::Records::Detail
     when 'quotes'
       in_use = self.class.in_use?(header)
       { 'edit' => { 'allowed' => header['status'] == 'NEGOCIAÇÃO' && !in_use, 'in_use_by' => (header['em_uso_por'] if in_use) } }
-    when 'orders' then { 'editor' => editor(data), 'substatus_options' => substatus_options(data['company']) }
+    when 'orders' then { 'editor' => editor(data), 'substatus_options' => substatus_options(data['company']), 'schedules' => schedules(data) }
     else {}
+    end
+  end
+
+  # os próximos agendamentos da OS nas agendas (Outsider::Erp::OrderScheduler), para o painel mostrar
+  def schedules(data)
+    Outsider::Erp::OrderSchedule.where(account_id: @account.id).for_order(data['company'], data['numero'])
+                                .where(ends_at: Time.current..).order(:starts_at).limit(3).map do |row|
+      zone = ActiveSupport::TimeZone[row.time_zone.to_s] || ActiveSupport::TimeZone['America/Sao_Paulo']
+      { 'start' => row.starts_at.in_time_zone(zone).strftime('%Y-%m-%dT%H:%M:%S'), 'all_day' => row.all_day,
+        'providers' => row.providers }
     end
   end
 
