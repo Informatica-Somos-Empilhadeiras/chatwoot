@@ -67,6 +67,9 @@ class Outsider::Erp::Writer
     raise Invalid, 'tecnico'
   end
 
+  # os substatus que valem para a OS (Configurações, ERP e espelho): o agendamento procura o "AGENDADO" da filial aqui
+  def substatus_choices(company) = substatus_options(company)
+
   # campos simples (texto ou data) liberados nas Configurações; data vai como AAAA-MM-DD
   def field(company:, code:, field:, value:, conversation: nil)
     order = writable_order(company, code)

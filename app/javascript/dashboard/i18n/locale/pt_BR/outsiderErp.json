@@ -162,6 +162,7 @@
       "SCHEDULE_BUTTON": "Agendar",
       "MESSAGE_BUTTON": "Mensagem no WhatsApp",
       "SCHEDULED": "Agendada: {when}",
+      "NOT_SYNCED": "A OS ainda não foi sincronizada. Emitir relatório e Enviar liberam quando ela estiver Concluída e com o checklist respondido.",
       "SCHEDULE": {
         "TITLE": "Agendar a OS {code}",
         "MESSAGE_TITLE": "Mensagem no WhatsApp sobre a OS {code}",
@@ -208,6 +209,8 @@
         "SAVE": "Agendar",
         "DONE": "OS agendada: {calendars}.",
         "WHATSAPP_DONE": "WhatsApp enviado para {count} pessoa(s).",
+        "SUBSTATUS_DONE": "Substatus: {value}.",
+        "SUBSTATUS_SKIPPED": "O substatus não mudou para Agendado (escrita no ERP desligada ou sem esse substatus).",
         "PARTIAL": "Não deu em: {calendars}."
       }
     },
@@ -385,6 +388,7 @@
         "NEW": "Orçamento de peças e serviços",
         "RECORDED": "Orçamento Nº {number}",
         "RECORDED_SUB": "Mais Prático · unidade {company} · {customer}",
+        "GOES_TO_PICK": "Vai para o Mais Prático · escolha a unidade e o cliente",
         "GOES_TO": "Vai para o Mais Prático · unidade {company}",
         "SUBMITTING": "Gravando no ERP…",
         "SUBMITTING_HINT": "Gravando no Mais Prático. Pode fechar: a gravação continua e a lista mostra quando terminar.",
@@ -423,6 +427,10 @@
         "UNIT": "Unidade {company}",
         "CHANGE": "trocar",
         "OTHER_UNIT": "Este cliente é da unidade {company}. Os códigos dos produtos mudam de uma unidade para outra, então os itens já escolhidos saem.",
+        "STEP_UNIT": "1. Unidade",
+        "PICK_UNIT": "Escolha a unidade",
+        "STEP_CUSTOMER": "2. Cliente",
+        "UNIT_FIRST": "Escolha a unidade primeiro",
         "OTHER_UNIT_OK": "Trocar e tirar os itens"
       },
       "ITEMS": {
@@ -833,7 +841,11 @@
         }
       },
       "ATTENDANCE": "Atendimento",
-      "SELLER_LINE": "Vend. {name}"
+      "SELLER_LINE": "Vend. {name}",
+      "CLOUD": {
+        "MISSING": "Fora da nuvem",
+        "MISSING_HINT": "A nota fiscal ainda não foi inserida na nuvem (Nextcloud)."
+      }
     },
     "CLIENT": {
       "NEW": "Novo cliente",

@@ -12,6 +12,7 @@ import ErpOrderEditor from './ErpOrderEditor.vue';
 import ErpPdfDialog from '../budgets/ErpPdfDialog.vue';
 import ErpDocumentSendDialog from './ErpDocumentSendDialog.vue';
 import ErpOrderScheduleDialog from './ErpOrderScheduleDialog.vue';
+import { useOrderReady } from './orderReady';
 import { allows } from '../../access/accessStore';
 import {
   erpState,
@@ -19,6 +20,9 @@ import {
   dotClass,
   substatusClass,
   reportTypeName,
+  companyName,
+  orderConcluded,
+  orderSchedulable,
 } from '../erpStore';
 
 const props = defineProps({
@@ -56,6 +60,29 @@ const openSchedule = mode =>
     { company: props.order.Empresa, code: props.order.CodigoOS },
     mode
   );
+
+// Agendar fica à vista no cartão (verde) até a OS ir para o substatus AGENDADO, que o próprio agendamento grava
+const schedulable = computed(() =>
+  orderSchedulable(props.order.Situacao, props.order.SubStatus)
+);
+const onScheduled = result => {
+  if (result?.substatus?.ok)
+    emit('updated', { ...props.order, SubStatus: result.substatus.value });
+};
+
+// Emitir relatório e Enviar: só com a OS concluída e o checklist já respondido (sincronizado)
+const { ready: reportReady, checking: reportChecking } = useOrderReady(
+  () => ({
+    company: props.order.Empresa,
+    code: props.order.CodigoOS,
+    concluded: orderConcluded(
+      props.order.Situacao,
+      props.order.SubStatus,
+      props.order.StatusKanban
+    ),
+  }),
+  () => open.value
+);
 
 const late = computed(() => Number(props.order.DiasAtraso) > 0);
 const reportLabel = computed(() => {
@@ -111,7 +138,7 @@ const details = computed(() =>
           />
           {{ t('OUTSIDER_ERP.ORDER.CODE', { code: order.CodigoOS }) }}
           <span class="text-xs font-normal text-n-slate-10">
-            {{ order.Empresa }}
+            {{ companyName(order.Empresa) }}
           </span>
         </span>
         <span
@@ -162,6 +189,17 @@ const details = computed(() =>
       </span>
     </button>
 
+    <div v-if="canSend && schedulable" class="flex">
+      <Button
+        size="sm"
+        color="blue"
+        icon="i-lucide-calendar-plus"
+        :label="t('OUTSIDER_ERP.ORDER.SCHEDULE_BUTTON')"
+        data-erp-card-schedule
+        @click="openSchedule('schedule')"
+      />
+    </div>
+
     <div v-if="open" class="flex flex-col gap-3 pt-2 border-t border-n-weak">
       <div class="flex flex-wrap gap-2">
         <Button
@@ -170,6 +208,9 @@ const details = computed(() =>
           color="slate"
           icon="i-lucide-file-text"
           :label="reportLabel"
+          :disabled="!reportReady"
+          :is-loading="reportChecking"
+          data-erp-card-report
           @click="openReport"
         />
         <Button
@@ -179,18 +220,11 @@ const details = computed(() =>
           color="slate"
           icon="i-lucide-send"
           :label="t('OUTSIDER_ERP.ORDER.SEND.BUTTON')"
+          :disabled="!reportReady"
+          data-erp-card-send
           @click="openSend"
         />
         <ErpPdfDialog ref="pdfRef" />
-        <Button
-          v-if="canSend"
-          size="sm"
-          variant="faded"
-          color="slate"
-          icon="i-lucide-calendar-plus"
-          :label="t('OUTSIDER_ERP.ORDER.SCHEDULE_BUTTON')"
-          @click="openSchedule('schedule')"
-        />
         <Button
           v-if="canSend"
           size="sm"
@@ -201,8 +235,15 @@ const details = computed(() =>
           @click="openSchedule('message')"
         />
         <ErpDocumentSendDialog ref="sendRef" />
-        <ErpOrderScheduleDialog ref="scheduleRef" />
       </div>
+      <p
+        v-if="!reportReady && !reportChecking"
+        class="flex items-start gap-1.5 mb-0 text-xs text-n-amber-11"
+        data-erp-card-not-synced
+      >
+        <Icon icon="i-lucide-refresh-cw-off" class="size-3.5 shrink-0 mt-px" />
+        {{ t('OUTSIDER_ERP.ORDER.NOT_SYNCED') }}
+      </p>
       <p v-if="order.Nome" class="mb-0 text-xs font-medium text-n-slate-12">
         {{ order.Nome }}
         <span class="font-normal text-n-slate-10">
@@ -257,5 +298,6 @@ const details = computed(() =>
         </p>
       </template>
     </div>
+    <ErpOrderScheduleDialog ref="scheduleRef" @changed="onScheduled" />
   </article>
 </template>

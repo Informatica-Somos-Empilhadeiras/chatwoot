@@ -41,8 +41,24 @@ class Api::V1::Accounts::Outsider::Erp::RecordsController < Api::V1::Accounts::O
   def document
     raise ::Outsider::Erp::NextcloudInvoices::NotFound unless settings.nextcloud_enabled?
 
-    file = nextcloud.fetch(params[:company].to_s, params[:number], params[:kind])
+    company = params[:company].to_s
+    # a nota existe no ERP (senão o locate já dá NotFound) e o arquivo não veio: o aviso de "não está na nuvem" decide se
+    # confia nesta busca ou se busca de novo mais tarde (Outsider::Erp::InvoiceCloud)
+    href = nextcloud.locate(company, params[:number], params[:kind])
+    unless href
+      invoice_cloud.open_failed(params[:kind], company, params[:number])
+      raise ::Outsider::Erp::NextcloudInvoices::NotFound
+    end
+    invoice_cloud.opened(params[:kind], company, params[:number])
+    file = nextcloud.file(href)
     send_data file['content'], filename: file['filename'], type: 'application/pdf', disposition: 'inline'
+  end
+
+  # NF-e e NFS-e: se o PDF já está na nuvem, para o aviso nas linhas da lista e no painel.
+  # keys[]=invoices:somosemp:123 => { statuses: { chave => ok | missing | unknown } }
+  def cloud
+    cloud = invoice_cloud
+    render json: { statuses: cloud.enabled? ? cloud.statuses(Array(params[:keys]).first(::Outsider::Erp::InvoiceCloud::MAX_KEYS)) : {} }
   end
 
   # NF-e e NFS-e: envio do PDF do Nextcloud ao cliente por WhatsApp/e-mail, como o relatório da OS (Outsider::Erp::DocumentSending)
@@ -65,6 +81,8 @@ class Api::V1::Accounts::Outsider::Erp::RecordsController < Api::V1::Accounts::O
   end
 
   private
+
+  def invoice_cloud = @invoice_cloud ||= ::Outsider::Erp::InvoiceCloud.new(Current.account)
 
   def nextcloud = @nextcloud ||= ::Outsider::Erp::NextcloudInvoices.new(Current.account)
 

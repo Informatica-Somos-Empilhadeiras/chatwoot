@@ -3,6 +3,7 @@
 class Api::V1::Accounts::Outsider::Erp::CustomersController < Api::V1::Accounts::Outsider::Erp::BaseController
   def index
     customer_contact = Current.account.contacts.find(params[:contact_id]) if params[:contact_id].present?
-    render json: { customers: ::Outsider::Erp::Customers.new(Current.account).list(params[:q], contact: customer_contact) }
+    customers = ::Outsider::Erp::Customers.new(Current.account).list(params[:q], contact: customer_contact, company: params[:company].presence)
+    render json: { customers: customers }
   end
 end

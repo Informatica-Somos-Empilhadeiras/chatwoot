@@ -68,6 +68,7 @@ RSpec.describe 'Outsider ERP order schedules', type: :request do
     expect(response).to have_http_status(:created)
     expect(created).to have_been_requested
     expect(body['whatsapp']).to eq(2)
+    expect(body['substatus']).to eq('ok' => false, 'reason' => 'write_disabled')
     expect(body['schedule']).to include('start' => '2026-11-26T09:00:00', 'mine' => true, 'whatsapp_count' => 2,
                                         'calendars' => [{ 'provider' => 'google', 'web_link' => 'https://calendar.google.com/ev1' }])
     expect(Message.where(account_id: account.id).order(:id).pluck(:content)).to eq(['Olá, Marcos! Agendado.', 'Olá, Júlia! Agendado.'])
@@ -80,6 +81,29 @@ RSpec.describe 'Outsider ERP order schedules', type: :request do
     expect(response).to have_http_status(:no_content)
     expect(removed).to have_been_requested
     expect(Outsider::Erp::OrderSchedule.count).to eq(0)
+  end
+
+  it 'moves the OS to the AGENDADO substatus of its unit after booking' do
+    allow_any_instance_of(Outsider::Erp::Settings).to receive(:write_enabled?).and_return(true) # rubocop:disable RSpec/AnyInstance
+    allow_any_instance_of(Outsider::Erp::Writer).to receive(:substatus_choices).and_return(['1-AGENDAR (DF)', '2-AGENDADO (DF)']) # rubocop:disable RSpec/AnyInstance
+    allow_any_instance_of(Outsider::Erp::Writer).to receive(:substatus) # rubocop:disable RSpec/AnyInstance
+      .with(company: 'somosemp', code: 850, value: '2-AGENDADO (DF)').and_return('SubStatus' => '2-AGENDADO (DF)')
+    stub_request(:post, %r{googleapis.com/calendar/v3/calendars/primary/events})
+      .to_return(status: 200, headers: { 'Content-Type' => 'application/json' },
+                 body: { id: 'ev2', status: 'confirmed', start: { dateTime: '2026-11-26T09:00:00-03:00' } }.to_json)
+    body = call(:post, 'schedule', company: 'somosemp', code: 850, title: 'OS 850', start: '2026-11-26T09:00', end: '2026-11-26T10:00',
+                                   calendars: %w[google])
+    expect(body['substatus']).to eq('ok' => true, 'value' => '2-AGENDADO (DF)')
+  end
+
+  it 'tells whether the checklist of the OS already came back answered' do
+    Rails.cache.clear
+    allow_any_instance_of(Outsider::Erp::Client).to receive(:service_order_report) # rubocop:disable RSpec/AnyInstance
+      .with('DadosCheckList_PDF', 'somosemp', 850).and_return([{ 'VALOR_INI' => '', 'CaminhoIMG' => '' }])
+    expect(call(:get, 'checklist', company: 'somosemp', code: 850)['answered']).to be(false)
+    allow_any_instance_of(Outsider::Erp::Client).to receive(:service_order_report) # rubocop:disable RSpec/AnyInstance
+      .with('DadosCheckList_PDF', 'somosemp', 851).and_return([{ 'VALOR_INI' => '', 'CaminhoIMG' => '851_1' }])
+    expect(call(:get, 'checklist', company: 'somosemp', code: 851)['answered']).to be(true)
   end
 
   it 'refuses a calendar that is not connected and a WhatsApp list over the limit, before booking anything' do

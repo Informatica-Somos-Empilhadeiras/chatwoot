@@ -77,6 +77,19 @@ class ErpAPI extends ApiClient {
   }
 
   // contatos (e-mail/WhatsApp) e colegas (e-mail) para convidar
+  // NF-e/NFS-e: quais já estão na nuvem (keys: "invoices:somosemp:123")
+  invoiceCloud(kind, keys) {
+    return axios.get(`${this.url}/records/${kind}/cloud`, {
+      params: { keys },
+    });
+  }
+
+  orderChecklist(company, code) {
+    return axios.get(`${this.url}/service_orders/checklist`, {
+      params: { company, code },
+    });
+  }
+
   orderPeople(q) {
     return axios.get(`${this.url}/service_orders/people`, { params: { q } });
   }
@@ -308,9 +321,13 @@ class ErpAPI extends ApiClient {
   }
 
   // clientes do ERP para vincular: sem q e com o contato, os parecidos com ele vêm primeiro
-  customers(q, contactId) {
+  customers(q, contactId, company) {
     return axios.get(`${this.url}/customers`, {
-      params: { q, contact_id: contactId || undefined },
+      params: {
+        q,
+        contact_id: contactId || undefined,
+        company: company || undefined,
+      },
     });
   }
 

@@ -13,6 +13,7 @@ import Icon from 'dashboard/components-next/icon/Icon.vue';
 import Button from 'dashboard/components-next/button/Button.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 import ErpRecordsTable from './ErpRecordsTable.vue';
+import { fetchCloud, cloudKey } from './invoiceCloud';
 import ErpRecordsPager from './ErpRecordsPager.vue';
 import ErpRecordPanel from './ErpRecordPanel.vue';
 import ErpBudgetDrawer from '../budgets/ErpBudgetDrawer.vue';
@@ -98,6 +99,16 @@ const params = computed(() => ({
   contact_id: contactId.value || undefined,
 }));
 
+// NF-e/NFS-e: aviso das que ainda não estão na nuvem (só as linhas desta página)
+const cloud = ref({});
+const loadCloud = async rows => {
+  const kind = props.kind;
+  const keys = rows.map(row => cloudKey(kind, row.banco, row.numero));
+  cloud.value = {};
+  const statuses = await fetchCloud(kind, keys);
+  if (kind === props.kind) cloud.value = statuses;
+};
+
 const load = async () => {
   sequence += 1;
   const mine = sequence;
@@ -108,6 +119,7 @@ const load = async () => {
     if (mine !== sequence) return;
     data.value = response.data;
     if (!view.value) view.value = response.data.view;
+    loadCloud(response.data.items || []);
   } catch (error) {
     if (mine === sequence) failure.value = erpErrorMessage(t, error);
   } finally {
@@ -424,6 +436,7 @@ const DATE =
             class="flex-1 min-h-0"
             :kind="kind"
             :rows="data.items || []"
+            :cloud="cloud"
             :sort="sort"
             :direction="direction"
             :selected="opened ? `${opened.company}:${opened.number}` : ''"

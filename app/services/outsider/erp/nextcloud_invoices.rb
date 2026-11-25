@@ -35,10 +35,20 @@ class Outsider::Erp::NextcloudInvoices
 
   # kind: invoices (NF-e) ou service_invoices (NFS-e); number: a chave da nota no ERP. { 'filename', 'content' }
   def fetch(company, number, kind)
+    file(locate(company, number, kind) || raise(NotFound))
+  end
+
+  # o arquivo de um href que o locate achou
+  def file(href)
+    { 'filename' => File.basename(URI.decode_uri_component(href)), 'content' => @nextcloud.download(href) }
+  end
+
+  # o href do PDF desta nota no Nextcloud, sem baixar (nil se ainda não está lá); Outsider::Erp::InvoiceCloud usa para
+  # avisar das notas que ainda não foram para a nuvem
+  def locate(company, number, kind)
     note = summary(company, number, kind)
     found = @nextcloud.search(@settings.nextcloud_folder, @kind[:search].call(note['numero']))
-    href = pick(this_number(found, note['numero']), note) || raise(NotFound)
-    { 'filename' => File.basename(URI.decode_uri_component(href)), 'content' => @nextcloud.download(href) }
+    pick(this_number(found, note['numero']), note)
   end
 
   # a nota no ERP: { 'numero' (o que vai no nome do arquivo), 'cfop', 'pedido', 'cliente' (nome) }

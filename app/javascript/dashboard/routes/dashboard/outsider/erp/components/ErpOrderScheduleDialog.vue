@@ -348,8 +348,16 @@ const schedule = async () => {
         : '') +
       (failed.length
         ? ` ${t('OUTSIDER_ERP.ORDER.SCHEDULE.PARTIAL', { calendars: calendarNames(failed) })}`
-        : '')
+        : '') +
+      ` ${
+        data.substatus?.ok
+          ? t('OUTSIDER_ERP.ORDER.SCHEDULE.SUBSTATUS_DONE', {
+              value: data.substatus.value,
+            })
+          : t('OUTSIDER_ERP.ORDER.SCHEDULE.SUBSTATUS_SKIPPED')
+      }`
   );
+  return data;
 };
 
 const sendMessage = async () => {
@@ -375,9 +383,8 @@ const errorText = error => {
 const save = async () => {
   saving.value = true;
   try {
-    if (isSchedule.value) await schedule();
-    else await sendMessage();
-    emit('changed');
+    const result = isSchedule.value ? await schedule() : await sendMessage();
+    emit('changed', result);
     close();
   } catch (error) {
     useAlert(errorText(error));

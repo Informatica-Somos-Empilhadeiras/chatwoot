@@ -209,7 +209,7 @@ const save = async () => {
         customer.existente
           ? 'OUTSIDER_ERP.CLIENT.ALREADY_DONE'
           : 'OUTSIDER_ERP.CLIENT.DONE',
-        { code: customer.codigo, company: customer.empresa }
+        { code: customer.codigo, company: companyName(customer.empresa) }
       )
     );
     saving.value = false;
@@ -395,7 +395,7 @@ defineExpose({ open, isOpen });
                   t('OUTSIDER_ERP.CLIENT.EXISTS', {
                     code: existing.codigo,
                     name: existing.nome,
-                    company: existing.empresa,
+                    company: companyName(existing.empresa),
                   })
                 }}
               </span>
@@ -573,7 +573,11 @@ defineExpose({ open, isOpen });
         >
           <span class="flex items-center gap-1.5 text-xs text-n-slate-11">
             <Icon icon="i-lucide-database" class="size-3.5 shrink-0" />
-            {{ t('OUTSIDER_ERP.CLIENT.WRITES_TO', { company }) }}
+            {{
+              t('OUTSIDER_ERP.CLIENT.WRITES_TO', {
+                company: companyName(company),
+              })
+            }}
           </span>
           <div class="flex items-center gap-2 ms-auto">
             <Button

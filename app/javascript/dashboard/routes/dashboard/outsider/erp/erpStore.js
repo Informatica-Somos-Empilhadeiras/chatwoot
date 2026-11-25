@@ -204,6 +204,23 @@ export const substatusClass = value => {
   return 'bg-n-alpha-2 text-n-slate-11';
 };
 
+// OS: "Concluída" na situação, no substatus ou na coluna do kanban (sem acento e sem caixa)
+const plain = value =>
+  String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toUpperCase();
+export const orderConcluded = (...values) =>
+  values.some(value => plain(value).includes('CONCLU'));
+// "Agendar" só some depois de agendada (substatus AGENDADO) ou com a OS encerrada
+export const orderSchedulable = (situacao, substatus) =>
+  !['AGENDADO', 'CONCLU', 'CANCEL'].some(word =>
+    plain(substatus).includes(word)
+  ) &&
+  !['CONCLU', 'CANCEL', 'FECHAD', 'PERDID'].some(word =>
+    plain(situacao).includes(word)
+  );
+
 export const quoteClass = status => {
   const text = String(status || '').toUpperCase();
   if (text.includes('FECHAD')) return 'bg-n-teal-3 text-n-teal-11';

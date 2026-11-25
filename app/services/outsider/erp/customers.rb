@@ -32,10 +32,15 @@ class Outsider::Erp::Customers
     @snapshot ||= Outsider::Erp::Snapshot.new(@account, 'customers', ttl: TTL.to_i, loader: method(:load), sync: false)
   end
 
-  def rows = snapshot.fetch['items']
+  def rows
+    items = snapshot.fetch['items']
+    @only_company ? items.select { |row| row['empresa'] == @only_company } : items
+  end
 
-  # a lista da tela: sem filtro e com um contato, os parecidos com ele vêm primeiro (marcados com o motivo)
-  def list(query, contact: nil)
+  # a lista da tela: sem filtro e com um contato, os parecidos com ele vêm primeiro (marcados com o motivo).
+  # company: só os clientes dessa unidade (o orçamento escolhe a unidade antes do cliente)
+  def list(query, contact: nil, company: nil)
+    @only_company = company.presence
     return search(query) if query.present? || contact.nil?
 
     top = suggestions(contact)

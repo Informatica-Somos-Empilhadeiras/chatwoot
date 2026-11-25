@@ -29,6 +29,8 @@ const props = defineProps({
   selected: { type: String, default: '' },
   loading: { type: Boolean, default: false },
   compact: { type: Boolean, default: false },
+  // NF-e/NFS-e: { "invoices:banco:numero": ok | missing | unknown } (aviso de nota fora da nuvem)
+  cloud: { type: Object, default: () => ({}) },
 });
 
 const emit = defineEmits(['select', 'sort']);
@@ -39,6 +41,8 @@ const label = key => t(`OUTSIDER_ERP.RECORDS.${cfg.value.key}.${key}`);
 
 const orders = computed(() => props.kind === 'orders');
 const numberOf = row => displayNumber({ ...row, kind: props.kind });
+const outOfCloud = row =>
+  props.cloud[`${props.kind}:${row.banco}:${Number(row.numero)}`] === 'missing';
 const dateOf = row => (orders.value ? row.previsao : row.data);
 // na OS o título "Previsão" ordena pela previsão
 const dateSort = computed(() => (orders.value ? 'previsao' : 'data'));
@@ -203,6 +207,15 @@ const TH =
             <div class="text-[11px] text-n-slate-10 truncate">
               {{ companyName(row.banco) }}
             </div>
+            <span
+              v-if="outOfCloud(row)"
+              class="inline-flex items-center gap-1 mt-1 px-1.5 whitespace-nowrap py-0.5 text-[10px] font-medium rounded-full bg-n-amber-3 text-n-amber-11"
+              :title="t('OUTSIDER_ERP.RECORDS.CLOUD.MISSING_HINT')"
+              data-erp-cloud-missing
+            >
+              <Icon icon="i-lucide-cloud-off" class="size-3" />
+              {{ t('OUTSIDER_ERP.RECORDS.CLOUD.MISSING') }}
+            </span>
           </td>
           <td class="py-2.5 px-3 align-top">
             <div
@@ -334,6 +347,12 @@ const TH =
           <span class="text-[11px] text-n-slate-10">{{
             companyName(row.banco)
           }}</span>
+          <Icon
+            v-if="outOfCloud(row)"
+            icon="i-lucide-cloud-off"
+            class="size-3.5 text-n-amber-11"
+            :title="t('OUTSIDER_ERP.RECORDS.CLOUD.MISSING_HINT')"
+          />
           <span class="flex-1" />
           <span
             class="text-[13px] font-medium tabular-nums whitespace-nowrap text-n-slate-12"

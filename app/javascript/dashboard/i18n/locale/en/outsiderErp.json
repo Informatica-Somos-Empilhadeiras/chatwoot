@@ -162,6 +162,7 @@
       "SCHEDULE_BUTTON": "Schedule",
       "MESSAGE_BUTTON": "WhatsApp message",
       "SCHEDULED": "Scheduled: {when}",
+      "NOT_SYNCED": "This work order has not been synced yet. Report and Send unlock once it is Completed and the checklist is answered.",
       "SCHEDULE": {
         "TITLE": "Schedule work order {code}",
         "MESSAGE_TITLE": "WhatsApp message about work order {code}",
@@ -208,6 +209,8 @@
         "SAVE": "Schedule",
         "DONE": "Work order scheduled: {calendars}.",
         "WHATSAPP_DONE": "WhatsApp sent to {count} person(s).",
+        "SUBSTATUS_DONE": "Substatus: {value}.",
+        "SUBSTATUS_SKIPPED": "The substatus was not changed to Scheduled (ERP writing is off or there is no such substatus).",
         "PARTIAL": "Failed in: {calendars}."
       }
     },
@@ -385,6 +388,7 @@
         "NEW": "Parts and services quote",
         "RECORDED": "Quote No. {number}",
         "RECORDED_SUB": "Mais Prático · unit {company} · {customer}",
+        "GOES_TO_PICK": "Goes to Mais Prático · choose the unit and the customer",
         "GOES_TO": "Goes to Mais Prático · unit {company}",
         "SUBMITTING": "Recording in the ERP…",
         "SUBMITTING_HINT": "Recording in Mais Prático. You can close this: it keeps going and the list shows when it is done.",
@@ -423,6 +427,10 @@
         "UNIT": "Unit {company}",
         "CHANGE": "change",
         "OTHER_UNIT": "This customer belongs to unit {company}. Product codes differ between units, so the items already picked are removed.",
+        "STEP_UNIT": "1. Unit",
+        "PICK_UNIT": "Choose the unit",
+        "STEP_CUSTOMER": "2. Customer",
+        "UNIT_FIRST": "Choose the unit first",
         "OTHER_UNIT_OK": "Change and remove the items"
       },
       "ITEMS": {
@@ -833,7 +841,11 @@
         }
       },
       "ATTENDANCE": "Service type",
-      "SELLER_LINE": "Sales {name}"
+      "SELLER_LINE": "Sales {name}",
+      "CLOUD": {
+        "MISSING": "Not in cloud",
+        "MISSING_HINT": "This invoice has not been added to the cloud (Nextcloud) yet."
+      }
     },
     "CLIENT": {
       "NEW": "New customer",

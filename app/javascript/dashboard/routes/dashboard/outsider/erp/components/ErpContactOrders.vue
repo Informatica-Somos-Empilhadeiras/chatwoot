@@ -172,7 +172,7 @@ const lastUpdate = computed(() =>
           class="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-n-alpha-2 text-n-slate-12"
           :title="
             t('OUTSIDER_ERP.CONTACT.LINK_TITLE', {
-              company: row.empresa,
+              company: companyName(row.empresa),
               code: row.codigo,
             })
           "

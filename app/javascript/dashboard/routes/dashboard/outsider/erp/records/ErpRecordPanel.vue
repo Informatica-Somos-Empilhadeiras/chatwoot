@@ -5,7 +5,7 @@
 // (ErpOrderEditor), travada quando a OS está fechada. Pedido: técnico e OS informados no chat (ErpSaleAttribution, só
 // no Chatwoot). Notas (NF-e, NFS-e): só leitura. Um nó da corrente troca o
 // painel aqui mesmo (sem mudar de aba), com "Voltar" para o registro anterior.
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { useAlert } from 'dashboard/composables';
@@ -22,6 +22,8 @@ import ErpBudgetDrawer from '../budgets/ErpBudgetDrawer.vue';
 import ErpPdfDialog from '../budgets/ErpPdfDialog.vue';
 import ErpDocumentSendDialog from '../components/ErpDocumentSendDialog.vue';
 import ErpOrderScheduleDialog from '../components/ErpOrderScheduleDialog.vue';
+import { useOrderReady } from '../components/orderReady';
+import { fetchCloud, cloudKey, CLOUD_KINDS } from './invoiceCloud';
 import { budgetErrorMessage } from '../budgets/budgetHelpers';
 import { allows } from '../../access/accessStore';
 import {
@@ -31,6 +33,9 @@ import {
   formatMoney,
   isOrderLocked,
   reportTypeName,
+  orderConcluded,
+  orderSchedulable,
+  companyName,
 } from '../erpStore';
 import {
   KINDS,
@@ -357,15 +362,35 @@ const showReport = () =>
     )
   );
 
-// NF-e e NFS-e: o PDF oficial da nota, espelhado do Nextcloud (a prévia já tem o botão de baixar)
+// NF-e e NFS-e: aviso de nota que ainda não está na nuvem (Nextcloud)
+const cloudStatus = ref('');
+const loadCloud = async () => {
+  const { kind, company, number } = view.value;
+  cloudStatus.value = '';
+  if (!CLOUD_KINDS.includes(kind)) return;
+  const key = cloudKey(kind, company, number);
+  const statuses = await fetchCloud(kind, [key]);
+  if (cloudKey(view.value.kind, view.value.company, view.value.number) === key)
+    cloudStatus.value = statuses[key] || '';
+};
+watch(
+  () => [view.value.kind, view.value.company, view.value.number],
+  loadCloud,
+  { immediate: true }
+);
+
+// NF-e e NFS-e: o PDF oficial da nota, espelhado do Nextcloud (a prévia já tem o botão de baixar); depois de abrir, o
+// aviso de nuvem é lido de novo (abrir já conta como verificação)
 const showInvoice = () =>
-  pdfRef.value?.open(() =>
-    ErpAPI.invoiceDocument(
-      viewKind.value,
-      view.value.company,
-      view.value.number
+  pdfRef.value
+    ?.open(() =>
+      ErpAPI.invoiceDocument(
+        viewKind.value,
+        view.value.company,
+        view.value.number
+      )
     )
-  );
+    ?.finally?.(loadCloud);
 
 // OS: o mesmo relatório, com a prévia e o envio ao cliente por WhatsApp ou e-mail (como o orçamento)
 const sendDialogRef = ref(null);
@@ -383,6 +408,18 @@ const scheduleOrder = (mode = 'schedule') =>
     { company: view.value.company, code: view.value.number },
     mode
   );
+// Agendar só até a OS ir para AGENDADO (o agendamento grava esse substatus); relatório e envio só com a OS concluída
+// e o checklist respondido
+const schedulable = computed(() =>
+  orderSchedulable(header.value.status, header.value.substatus)
+);
+const { ready: reportReady, checking: reportChecking } = useOrderReady(() => ({
+  company: view.value.company,
+  code: view.value.number,
+  concluded:
+    viewKind.value === 'orders' &&
+    orderConcluded(header.value.status, header.value.substatus),
+}));
 const scheduledLabel = row => {
   const [day, time] = String(row.start).split('T');
   const [, m, d] = day.split('-');
@@ -463,7 +500,7 @@ const LABEL =
                 titleCase(client.nome) ||
                   (header.cliente_codigo && `#${header.cliente_codigo}`),
                 place(client),
-                view.company,
+                companyName(view.company),
               ]
                 .filter(Boolean)
                 .join(' · ')
@@ -537,6 +574,14 @@ const LABEL =
         <Icon icon="i-lucide-lock" class="size-3.5 shrink-0" />
         {{ editBlocked }}
       </p>
+      <p
+        v-if="detail && cloudStatus === 'missing'"
+        class="flex items-center gap-1.5 mt-3 mb-0 text-xs font-medium text-n-amber-11"
+        data-erp-panel-cloud-missing
+      >
+        <Icon icon="i-lucide-cloud-off" class="size-3.5 shrink-0" />
+        {{ t('OUTSIDER_ERP.RECORDS.CLOUD.MISSING_HINT') }}
+      </p>
       <div
         v-if="
           detail &&
@@ -573,7 +618,8 @@ const LABEL =
           color="slate"
           icon="i-lucide-file-text"
           :label="reportLabel"
-          :is-loading="busy === 'report'"
+          :is-loading="busy === 'report' || reportChecking"
+          :disabled="!reportReady"
           @click="showReport"
         />
         <Button
@@ -583,13 +629,13 @@ const LABEL =
           color="slate"
           icon="i-lucide-send"
           :label="t('OUTSIDER_ERP.ORDER.SEND.BUTTON')"
+          :disabled="!reportReady"
           @click="sendOrder"
         />
         <Button
-          v-if="canUseOrders"
+          v-if="canUseOrders && schedulable"
           size="sm"
-          variant="faded"
-          color="slate"
+          color="blue"
           icon="i-lucide-calendar-plus"
           :label="t('OUTSIDER_ERP.ORDER.SCHEDULE_BUTTON')"
           data-erp-order-schedule
@@ -615,6 +661,17 @@ const LABEL =
           <Icon icon="i-lucide-calendar-check" class="size-3.5" />
           {{ t('OUTSIDER_ERP.ORDER.SCHEDULED', { when: scheduledLabel(row) }) }}
         </button>
+        <p
+          v-if="!reportReady && !reportChecking"
+          class="flex items-start w-full gap-1.5 mb-0 text-xs text-n-amber-11"
+          data-erp-order-not-synced
+        >
+          <Icon
+            icon="i-lucide-refresh-cw-off"
+            class="size-3.5 shrink-0 mt-px"
+          />
+          {{ t('OUTSIDER_ERP.ORDER.NOT_SYNCED') }}
+        </p>
       </div>
     </header>
 

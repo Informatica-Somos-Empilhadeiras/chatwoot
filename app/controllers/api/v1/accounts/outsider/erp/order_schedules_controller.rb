@@ -5,6 +5,7 @@
 #   DELETE service_orders/schedule/:id    cancelar (só quem marcou)
 #   POST   service_orders/message         só um texto pelo WhatsApp sobre a OS (até 5 contatos)
 #   GET    service_orders/people          busca de contatos (e-mail/WhatsApp) e colegas (e-mail)
+#   GET    service_orders/checklist       se o checklist da OS já chegou respondido (libera Emitir relatório e Enviar)
 class Api::V1::Accounts::Outsider::Erp::OrderSchedulesController < Api::V1::Accounts::Outsider::Erp::BaseController
   MAX_PEOPLE = 15
 
@@ -38,6 +39,13 @@ class Api::V1::Accounts::Outsider::Erp::OrderSchedulesController < Api::V1::Acco
     target
     sent = scheduler.message(params.permit(:inbox_id, :message, contact_ids: []))
     render json: { sent: sent }
+  end
+
+  def checklist
+    company, number = target
+    render json: { answered: ::Outsider::Erp::OrderChecklist.new(Current.account).answered?(company, number) }
+  rescue ::Outsider::Erp::Client::Error
+    render json: { answered: nil, error: 'erp_unavailable' }
   end
 
   # contatos (com telefone e/ou e-mail) e colegas da conta (só e-mail)

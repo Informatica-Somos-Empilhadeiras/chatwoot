@@ -46,11 +46,21 @@ const initials = computed(() =>
     .toUpperCase()
 );
 
+// primeiro a unidade, depois o cliente dela (campos separados, para não abrir na unidade errada sem perceber)
+const initialCompany = () => {
+  if (props.budget.customer_code) return props.budget.company;
+  return erpState.companies.length === 1 ? erpState.companies[0] : '';
+};
+const pickCompany = ref(initialCompany());
+
 const searchCustomers = async q => {
+  if (!pickCompany.value) return [];
   const { data } = await withLoadingRetry(() =>
-    ErpAPI.customers(q, q ? null : props.contactId)
+    ErpAPI.customers(q, q ? null : props.contactId, pickCompany.value)
   );
-  return data.customers || [];
+  return (data.customers || []).filter(
+    row => row.empresa === pickCompany.value
+  );
 };
 
 const apply = (row, clearItems = false) => {
@@ -76,7 +86,7 @@ const clientDialog = ref(null);
 // cliente novo, cadastrado agora no ERP: entra no orçamento como se tivesse sido escolhido na lista
 const registerClient = () =>
   clientDialog.value?.open({
-    company: props.budget.company,
+    company: pickCompany.value || props.budget.company,
     contactId: props.contactId,
     onCreated: customer => choose(customer),
   });
@@ -112,10 +122,13 @@ defineExpose({ focusSearch: () => itemsRef.value?.focusSearch() });
           <span v-else class="text-sm font-medium text-n-amber-11">
             {{ t('OUTSIDER_ERP.BUDGET.CUSTOMER.NONE') }}
           </span>
-          <span class="text-xs truncate text-n-slate-10">
+          <span
+            v-if="budget.customer_code"
+            class="text-xs truncate text-n-slate-10"
+          >
             {{
               t('OUTSIDER_ERP.BUDGET.CUSTOMER.UNIT', {
-                company: budget.company,
+                company: companyName(budget.company),
               })
             }}
           </span>
@@ -155,33 +168,66 @@ defineExpose({ focusSearch: () => itemsRef.value?.focusSearch() });
     </div>
 
     <div v-if="picking" class="flex flex-col gap-2">
-      <ErpPicker
-        :search="searchCustomers"
-        :row-key="row => `${row.empresa}:${row.codigo}`"
-        :placeholder="t('OUTSIDER_ERP.CONTACT.FILTER_PLACEHOLDER')"
-        :empty-text="t('OUTSIDER_ERP.CONTACT.NO_RESULTS')"
-        @select="choose"
-      >
-        <template #row="{ row }">
-          <span class="text-xs font-medium truncate text-n-slate-12">
-            {{ row.nome }}
+      <div class="grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
+        <label :class="LABEL">
+          {{ t('OUTSIDER_ERP.BUDGET.CUSTOMER.STEP_UNIT') }}
+          <select
+            v-model="pickCompany"
+            :class="INPUT"
+            class="normal-case !pr-7 bg-[right_-1.25rem_center]"
+            data-erp-budget-unit
+          >
+            <option value="" disabled>
+              {{ t('OUTSIDER_ERP.BUDGET.CUSTOMER.PICK_UNIT') }}
+            </option>
+            <option v-for="db in erpState.companies" :key="db" :value="db">
+              {{ companyName(db) }}
+            </option>
+          </select>
+        </label>
+        <div class="flex flex-col min-w-0 gap-1">
+          <span :class="LABEL">
+            {{ t('OUTSIDER_ERP.BUDGET.CUSTOMER.STEP_CUSTOMER') }}
           </span>
-          <span class="text-xs truncate text-n-slate-10">
-            {{
-              [
-                `${companyName(row.empresa)} #${row.codigo}`,
-                row.fantasia,
-                row.cidade && [row.cidade, row.uf].filter(Boolean).join('/'),
-                row.documento,
-              ]
-                .filter(Boolean)
-                .join(' · ')
-            }}
-          </span>
-        </template>
-      </ErpPicker>
+          <p
+            v-if="!pickCompany"
+            class="flex items-center h-9 px-2.5 mb-0 text-sm rounded-lg bg-n-alpha-1 text-n-slate-10"
+            data-erp-budget-unit-first
+          >
+            {{ t('OUTSIDER_ERP.BUDGET.CUSTOMER.UNIT_FIRST') }}
+          </p>
+          <ErpPicker
+            v-else
+            :source="pickCompany"
+            :search="searchCustomers"
+            :row-key="row => `${row.empresa}:${row.codigo}`"
+            :placeholder="t('OUTSIDER_ERP.CONTACT.FILTER_PLACEHOLDER')"
+            :empty-text="t('OUTSIDER_ERP.CONTACT.NO_RESULTS')"
+            @select="choose"
+          >
+            <template #row="{ row }">
+              <span class="text-xs font-medium truncate text-n-slate-12">
+                {{ row.nome }}
+              </span>
+              <span class="text-xs truncate text-n-slate-10">
+                {{
+                  [
+                    `#${row.codigo}`,
+                    row.fantasia,
+                    row.cidade &&
+                      [row.cidade, row.uf].filter(Boolean).join('/'),
+                    row.documento,
+                  ]
+                    .filter(Boolean)
+                    .join(' · ')
+                }}
+              </span>
+            </template>
+          </ErpPicker>
+        </div>
+      </div>
       <button
-        v-if="erpState.canRegisterClient"
+        v-if="erpState.canRegisterClient && pickCompany"
         type="button"
         class="inline-flex items-center self-start gap-1.5 text-xs font-medium text-n-teal-11 hover:underline"
         @click="registerClient"
@@ -198,7 +244,7 @@ defineExpose({ focusSearch: () => itemsRef.value?.focusSearch() });
         <span class="flex-1 min-w-[12rem]">
           {{
             t('OUTSIDER_ERP.BUDGET.CUSTOMER.OTHER_UNIT', {
-              company: pending.empresa,
+              company: companyName(pending.empresa),
             })
           }}
         </span>

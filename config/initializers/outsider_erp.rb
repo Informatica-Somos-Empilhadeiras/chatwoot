@@ -28,6 +28,7 @@ Rails.application.routes.prepend do
                   delete 'schedule/:id', to: 'order_schedules#destroy', constraints: { id: /\d+/ }
                   post :message, to: 'order_schedules#message'
                   get :people, to: 'order_schedules#people'
+                  get :checklist, to: 'order_schedules#checklist'
                 end
               end
               resources :customers, only: [:index]
@@ -68,6 +69,8 @@ Rails.application.routes.prepend do
               resources :quotes, only: [:index]
               # seção ERP: listas com todo o histórico e o detalhe (kind: quotes, orders, sales, invoices, service_invoices)
               get 'records/:kind', to: 'records#index', constraints: { kind: /quotes|orders|sales|invoices|service_invoices/ }
+              # NF-e e NFS-e: quais já estão na nuvem (Nextcloud), para o aviso das que ainda não estão
+              get 'records/:kind/cloud', to: 'records#cloud', constraints: { kind: /invoices|service_invoices/ }
               get 'records/:kind/:company/:number', to: 'records#show',
                                                     constraints: { kind: /quotes|orders|sales|invoices|service_invoices/,
                                                                    company: /[a-z0-9_]+/, number: /\d+/ }
@@ -117,3 +120,12 @@ Rails.application.routes.prepend do
   end
 end
 # rubocop:enable Metrics/BlockLength
+
+# OUTSIDER: aviso das notas fiscais que ainda não foram para a nuvem (Outsider::Erp::InvoiceCloud): um passe leve a cada
+# 30 minutos. Job criado um a um (create), nunca com load_from_hash!, que apagaria os agendamentos do schedule.yml.
+Rails.application.reloader.to_prepare do
+  if Sidekiq.server?
+    Sidekiq::Cron::Job.create(name: 'outsider_erp_invoice_cloud_job', cron: '7,37 * * * *', class: 'Outsider::Erp::InvoiceCloudJob',
+                              queue: 'scheduled_jobs')
+  end
+end

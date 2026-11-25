@@ -55,9 +55,10 @@ class Outsider::Erp::OrderScheduler
     raise Blocked, "calendar_failed:#{results.first[:error]}" if created.empty?
 
     schedule = save(company, number, event, created)
+    substatus = mark_scheduled(company, number)
     sent = notice ? send_notice(notice, schedule) : 0
     schedule.update!(whatsapp_count: sent) if sent.positive?
-    { schedule: schedule_json(schedule), results: results, whatsapp: sent }
+    { schedule: schedule_json(schedule), results: results, whatsapp: sent, substatus: substatus }
   end
 
   # só quem agendou cancela (o evento está na agenda dele); os convidados recebem o cancelamento do Google/Microsoft
@@ -210,6 +211,28 @@ class Outsider::Erp::OrderScheduler
       location: event[:location], attendees: event[:attendees],
       events: created.map { |row| { 'provider' => row[:provider], 'id' => row[:id], 'web_link' => row[:web_link] } }
     )
+  end
+
+  # OS agendada vai para o substatus "AGENDADO" da filial dela (ex.: "2-AGENDADO (DF)"), com o histórico do ERP como no
+  # painel deles (Outsider::Erp::Writer). Sem a escrita ligada ou sem esse substatus, o agendamento vale do mesmo jeito.
+  def mark_scheduled(company, number)
+    return { ok: false, reason: 'write_disabled' } unless Outsider::Erp::Settings.new(@account).write_enabled?
+
+    writer = Outsider::Erp::Writer.new(account: @account, user: @user)
+    value = writer.substatus_choices(company).find { |option| scheduled_substatus?(option) }
+    return { ok: false, reason: 'no_substatus' } unless value
+
+    order = writer.substatus(company: company, code: number, value: value)
+    { ok: true, value: order['SubStatus'] }
+  rescue Outsider::Erp::Writer::Disabled
+    { ok: false, reason: 'write_disabled' }
+  rescue StandardError => e # o evento já está na agenda: o substatus nunca derruba o agendamento
+    Rails.logger.info("[Outsider::Erp] OS agendada sem trocar o substatus: #{e.class} #{e.message}")
+    { ok: false, reason: 'substatus_failed' }
+  end
+
+  def scheduled_substatus?(value)
+    Outsider::Erp::ServiceOrders.normalize(value.to_s.sub(/\s*\([A-Za-z]{2}\)\s*\z/, '').sub(/\A\s*\d+\s*-\s*/, '')) == 'AGENDADO'
   end
 
   def send_notice(notice, _schedule)

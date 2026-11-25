@@ -15,7 +15,7 @@ import ErpBudgetForm from './ErpBudgetForm.vue';
 import ErpBudgetSend from './ErpBudgetSend.vue';
 import ErpPdfDialog from './ErpPdfDialog.vue';
 import ErpDiscountApproval from './ErpDiscountApproval.vue';
-import { quoteClass } from '../erpStore';
+import { quoteClass, companyName } from '../erpStore';
 import { budgetErrorMessage, reasonText } from './budgetHelpers';
 
 const props = defineProps({
@@ -465,12 +465,14 @@ defineExpose({ open });
               {{
                 isRecorded
                   ? t('OUTSIDER_ERP.BUDGET.DRAWER.RECORDED_SUB', {
-                      company: budget.company,
+                      company: companyName(budget.company),
                       customer: budget.customer_name || budget.customer_code,
                     })
-                  : t('OUTSIDER_ERP.BUDGET.DRAWER.GOES_TO', {
-                      company: budget.company,
-                    })
+                  : budget.customer_code
+                    ? t('OUTSIDER_ERP.BUDGET.DRAWER.GOES_TO', {
+                        company: companyName(budget.company),
+                      })
+                    : t('OUTSIDER_ERP.BUDGET.DRAWER.GOES_TO_PICK')
               }}
             </span>
           </div>
