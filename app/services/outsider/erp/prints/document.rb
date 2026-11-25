@@ -3,8 +3,15 @@
 # recebe sempre algo com filename e render, então as telas e o envio ao cliente não mudam.
 # - OS: sem nenhum modelo escolhido, é exatamente o caminho de antes. Com modelo, lê a OS sem as fotos, escolhe pelo tipo
 #   de atendimento e só então busca as fotos que o modelo mostra (seções filtradas ficam sem buscar);
-# - orçamento: o padrão do orçamento (o do ERP, o feito no chat e a prévia do rascunho).
+# - orçamento: o padrão do orçamento (o do ERP, o feito no chat e a prévia do rascunho);
+# - contrato e ficha da máquina (Locação e máquinas): o escolhido ou o modelo pronto.
 class Outsider::Erp::Prints::Document
+  # quem lê do ERP o contrato e a ficha da máquina (Locação e máquinas)
+  RENTAL_READERS = {
+    'contract' => ->(account) { Outsider::Erp::Rentals::ContractDetail.new(account) },
+    'machine' => ->(account) { Outsider::Erp::Rentals::MachineDetail.new(account) }
+  }.freeze
+
   attr_reader :filename
 
   def initialize(template, values, filename:)
@@ -45,6 +52,48 @@ class Outsider::Erp::Prints::Document
       return original unless template
 
       new(template, values(account, 'quote', report), filename: original.filename)
+    end
+
+    # Locação e máquinas: o contrato no modelo escolhido para o tipo dele (locação, manutenção, prestação de serviço) e a
+    # ficha da máquina no modelo escolhido; sem escolha, o modelo pronto do caso (não existe "original" do ERP: o Mais
+    # Prático não imprime contrato nem ficha)
+    def contract(account, company, number) = rental(account, 'contract', rental_detail(account, 'contract', company, number))
+    def machine(account, company, number) = rental(account, 'machine', rental_detail(account, 'machine', company, number))
+
+    def rental?(kind) = RENTAL_READERS.key?(kind.to_s)
+    def rental_detail(account, kind, company, number) = RENTAL_READERS.fetch(kind.to_s).call(account).build(company, number)
+
+    # detail: o que Rentals::ContractDetail / MachineDetail devolvem (ou a amostra do estúdio); template: o do estúdio
+    def rental(account, kind, detail, template: nil)
+      type = kind == 'contract' ? contract_type(detail.dig('header', 'tipo')) : nil
+      template ||= rental_template(account, kind, type)
+      report = detail.merge('emitente' => full_emitter(account, detail['company'], detail['emitente']))
+      new(template, values(account, kind, report), filename: rental_filename(kind, detail))
+    end
+
+    def rental_filename(kind, detail)
+      name = kind == 'contract' ? "Contrato #{detail['numero']}" : "Ficha da maquina #{detail.dig('header', 'serie').presence || detail['numero']}"
+      "#{name.tr('/\\', '--')}.pdf"
+    end
+
+    def rental_template(account, kind, type)
+      chosen = Outsider::Erp::Prints::Bindings.new(account).template(kind, type)
+      return chosen if chosen
+
+      Outsider::Erp::Prints::Defaults.ensure!(account, kind)
+      key = Outsider::Erp::Prints::Defaults.builtin_for(kind, type)
+      scope = Outsider::Erp::PrintTemplate.where(account_id: account.id, kind: kind)
+      scope.find_by(builtin: key) || scope.ordered.first ||
+        Outsider::Erp::PrintTemplate.new(account: account, kind: kind, name: key, content: Outsider::Erp::Prints::Defaults.content(key))
+    end
+
+    # o tipo do contrato como chave das escolhas: CONTRATO DE LOCAÇÃO -> LOCACAO; MANUTENÇÃO; PRESTAÇÃO DE SERVIÇO -> SERVICO
+    def contract_type(text)
+      plain = Outsider::Erp::Prints::Bindings.normalize_type(text)
+      return 'LOCACAO' if plain.include?('LOCA')
+      return 'MANUTENCAO' if plain.include?('MANUT')
+
+      'SERVICO' if plain.include?('PRESTA') || plain.include?('SERVI')
     end
 
     def values(account, kind, report)

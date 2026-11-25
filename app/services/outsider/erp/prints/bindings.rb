@@ -1,14 +1,17 @@
 # OUTSIDER: qual modelo de relatório cada caso usa, em accounts.internal_attributes (sem tabela: são poucas linhas).
 # { 'os' => { 'default' => id | 'original', 'types' => { 'MANUT. CORRETIVA' => id | 'original' } }, 'quote' => { 'default' => ... } }
 # - OS: pelo tipo de atendimento dela; tipo sem escolha (ou novo no ERP) usa o padrão;
-# - orçamento: só o padrão;
+# - orçamento e ficha da máquina: só o padrão;
+# - contrato: pelo tipo dele (LOCACAO, MANUTENCAO, SERVICO); tipo sem escolha usa o padrão;
 # - 'original' é o relatório fixo, igual ao do Mais Prático (Outsider::Erp::ServiceOrderPdf / QuotePdf). É o começo de
-#   tudo: nada muda no que já sai até o administrador escolher um modelo.
+#   tudo: nada muda no que já sai até o administrador escolher um modelo. No contrato e na ficha (o ERP não imprime
+#   nenhum dos dois), 'original' é o modelo pronto do caso (Outsider::Erp::Prints::Defaults.builtin_for).
 # Modelo apagado some das escolhas (volta para o padrão / original).
 class Outsider::Erp::Prints::Bindings
   KEY = 'outsider_erp_prints'.freeze
   ORIGINAL = 'original'.freeze
   MAX_TYPES = 200
+  TYPED = %w[os contract].freeze
 
   def initialize(account)
     @account = account
@@ -19,7 +22,7 @@ class Outsider::Erp::Prints::Bindings
     Outsider::Erp::PrintTemplate::KINDS.to_h do |kind|
       entry = data[kind].to_h
       value = { 'default' => valid(kind, entry['default']) }
-      value['types'] = entry['types'].to_h.transform_values { |choice| valid(kind, choice) } if kind == 'os'
+      value['types'] = entry['types'].to_h.transform_values { |choice| valid(kind, choice) } if TYPED.include?(kind)
       [kind, value]
     end
   end
@@ -52,7 +55,7 @@ class Outsider::Erp::Prints::Bindings
     raise ArgumentError, 'kind' unless Outsider::Erp::PrintTemplate::KINDS.include?(kind)
 
     entry = { 'default' => valid(kind, default) }
-    entry['types'] = clean_types(kind, types) if kind == 'os'
+    entry['types'] = clean_types(kind, types) if TYPED.include?(kind)
     save(stored.merge(kind => entry))
     to_h
   end

@@ -1,7 +1,7 @@
 # OUTSIDER: dados de exemplo para o estúdio de relatórios mostrar o modelo antes de escolher uma OS ou um orçamento de
 # verdade. Mesmo formato do Outsider::Erp::ServiceOrderReport / QuoteReport; as fotos são as de public/outsider/erp-prints
 # ({ 'sample' => arquivo }) e o logo é o padrão da Somos. Nada aqui acessa o ERP.
-# rubocop:disable Metrics/MethodLength
+# rubocop:disable Metrics/MethodLength, Metrics/ModuleLength, Metrics/AbcSize -- dados de exemplo, campo a campo
 module Outsider::Erp::Prints::Sample
   PHOTOS_DIR = Rails.public_path.join('outsider/erp-prints')
   PHOTOS_URL = '/outsider/erp-prints'.freeze
@@ -9,7 +9,14 @@ module Outsider::Erp::Prints::Sample
 
   module_function
 
-  def for(kind) = kind.to_s == 'os' ? service_order : quote
+  def for(kind)
+    case kind.to_s
+    when 'os' then service_order
+    when 'contract' then contract
+    when 'machine' then machine
+    else quote
+    end
+  end
 
   def photo_path(name) = PHOTOS.include?(name.to_s) ? PHOTOS_DIR.join(name.to_s) : nil
 
@@ -80,5 +87,52 @@ module Outsider::Erp::Prints::Sample
       'observacoes' => 'Valores válidos para pagamento no prazo combinado. Instalação inclusa.'
     }
   end
+
+  def sample_machine(number, description, model, serial, extra = {})
+    { 'maquina' => number, 'descricao' => description, 'modelo' => model, 'serie' => serial }.merge(extra)
+  end
+
+  def contract
+    start = Time.zone.today.beginning_of_month
+    {
+      'kind' => 'contracts', 'company' => 'somosemp', 'numero' => 1038, 'emitente' => emitter,
+      'header' => { 'numero' => 1038, 'data' => (start - 5.days).to_s, 'status' => 'ATIVO', 'tipo' => 'CONTRATO DE LOCAÇÃO',
+                    'inicio' => start.to_s, 'termino' => (start + 1.year - 1.day).to_s, 'meses' => 12, 'periodicidade' => 'MENSAL',
+                    'total' => 176_400.0, 'parcela' => 14_700.0, 'pagamento' => 'BOLETO 28 DIAS', 'dia_faturamento' => 5,
+                    'vendedor_nome' => 'ANA SOUZA', 'entrega_endereco' => 'Rod. BA-526', 'entrega_numero' => 'km 3',
+                    'entrega_bairro' => 'Galpão 3', 'entrega_cidade' => 'Salvador', 'entrega_uf' => 'BA',
+                    'observacoes' => 'Manutenção preventiva a cada 250 horas inclusa. Operação por conta da locatária.' },
+      'cliente' => { 'nome' => 'LOGÍSTICA ATLÂNTICO LTDA', 'documento' => '12345678000190', 'endereco' => 'Rua das Docas',
+                     'numero' => '450', 'bairro' => 'Porto', 'cidade' => 'Salvador', 'uf' => 'BA', 'cep' => '40000-000',
+                     'fone' => '(71) 3333-4444', 'email' => 'compras@atlantico.com.br' },
+      'maquinas' => [
+        sample_machine(18_110, 'EMPILHADEIRA 2,5 T GLP', 'FG25', '18110',
+                       'patrimonio' => 'SE-0412', 'capacidade' => '2500', 'saida' => start.to_s,
+                       'retorno_previsto' => (start + 1.year - 1.day).to_s, 'valor' => 9800.0),
+        sample_machine(77_201, 'PALETEIRA ELÉTRICA 2 T', 'EP20', '77201',
+                       'capacidade' => '2000', 'saida' => start.to_s, 'retorno_previsto' => (start + 1.year - 1.day).to_s, 'valor' => 4900.0)
+      ]
+    }
+  end
+
+  def machine
+    {
+      'kind' => 'machines', 'company' => 'somosemp', 'numero' => 18_110, 'emitente' => emitter,
+      'header' => { 'numero' => 18_110, 'descricao' => 'EMPILHADEIRA 2,5 T GLP', 'modelo' => 'FG25', 'serie' => '18110',
+                    'patrimonio' => 'SE-0412', 'ano' => '2022', 'capacidade' => '2500', 'elevacao' => '4500', 'mastro' => 'TRIPLEX',
+                    'rodas' => '28X9-15', 'voltagem' => '12', 'situacao' => 'LOCADA', 'propria' => 1, 'horimetro' => '3412',
+                    'ultima_os' => (Time.zone.today - 40.days).to_s, 'total_os' => 12,
+                    'descricao_tecnica' => 'Garfos de 1.070 mm, deslocador lateral integrado, pneus superelásticos.' },
+      'agora' => { 'situacao' => 'LOCADA',
+                   'contrato' => { 'contrato' => 1038, 'tipo' => 'CONTRATO DE LOCAÇÃO', 'cliente' => 'LOGÍSTICA ATLÂNTICO LTDA' } },
+      'contracts' => [{ 'contrato' => 1038, 'tipo' => 'CONTRATO DE LOCAÇÃO', 'cliente' => 'LOGÍSTICA ATLÂNTICO LTDA',
+                        'saida' => Time.zone.today.beginning_of_month.to_s, 'retorno_previsto' => (Time.zone.today + 11.months).to_s,
+                        'contrato_status' => 'ATIVO' }],
+      'orders' => [{ 'numero' => 2071, 'data' => (Time.zone.today - 40.days).to_s, 'atendimento' => 'MANUT. PREVENTIVA', 'status' => 'FECHADA',
+                     'horimetro' => '3412', 'tecnico_nome' => 'MARCOS SILVA', 'cliente' => 'LOGÍSTICA ATLÂNTICO LTDA' },
+                   { 'numero' => 1955, 'data' => (Time.zone.today - 120.days).to_s, 'atendimento' => 'MANUT. CORRETIVA', 'status' => 'FECHADA',
+                     'horimetro' => '3000', 'tecnico_nome' => 'MARCOS SILVA', 'cliente' => 'TERMINAIS RIO NORTE' }]
+    }
+  end
 end
-# rubocop:enable Metrics/MethodLength
+# rubocop:enable Metrics/MethodLength, Metrics/ModuleLength, Metrics/AbcSize

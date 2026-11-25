@@ -58,20 +58,30 @@ export const contractDue = (row, now = new Date()) => {
   return { key: days === 0 ? 'DUE_TODAY' : 'DUE_IN', days };
 };
 
+// palavras com número (série, modelo: "CPCD35-XC5K2/480-3V", "2,5T") e siglas de combustível/tensão ficam como o ERP
+// escreveu; o resto vai para maiúsculas só na primeira letra
+const KEEP = /\d|^(GLP|GNV|AC|DC)$/;
+const nameCase = value =>
+  String(value || '')
+    .trim()
+    .split(/(\s+)/)
+    .map(word => (KEEP.test(word) ? word.toUpperCase() : titleCase(word)))
+    .join('');
+
 export const machineName = row =>
-  titleCase(row?.descricao || row?.modelo || '') ||
+  nameCase(row?.descricao || row?.modelo || '') ||
   (row?.maquina || row?.numero ? `#${row.maquina || row.numero}` : '');
 
 // "18110" (série); sem série, o patrimônio; sem os dois, o número do cadastro
 export const machineTag = row =>
   row?.serie || row?.patrimonio || `#${row?.maquina || row?.numero || ''}`;
 
-// horímetro em texto do ERP ("3412", "3.412,5") -> "3.412 h"; texto que não é número fica como veio
+// horímetro em texto do ERP ("3412", "3.412,5") -> "3.412 h"; zero fica vazio (sem leitura); texto que não é número
+// fica como veio
 export const hourMeter = value => {
   const text = String(value || '').trim();
   if (!text) return '';
   const number = Number(text.replace(/\./g, '').replace(',', '.'));
-  return Number.isFinite(number)
-    ? `${Math.round(number).toLocaleString('pt-BR')} h`
-    : text;
+  if (!Number.isFinite(number)) return text;
+  return number > 0 ? `${Math.round(number).toLocaleString('pt-BR')} h` : '';
 };

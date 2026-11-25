@@ -1,7 +1,8 @@
 # OUTSIDER: a situação de uma máquina (equipamentos) montada das outras tabelas, porque o ERP não preenche "locado" nem
 # "contrato" no cadastro dela (descoberta de 25/11/2026: CkLocado, Contrato e NFRemessa vazios em todas). Regras, na ordem:
 # - EM OS: tem OS aberta (fora das situações travadas das Configurações);
-# - LOCADA: está num item de contrato de locação ATIVO e ainda não voltou (sem DataRetorno ou retorno no futuro);
+# - LOCADA: está num item de contrato de locação ATIVO e ainda não voltou (sem DataRetorno, retorno no futuro ou retorno
+#   no dia da saída, que é o que o ERP grava ao cadastrar o item);
 # - EM CONTRATO: idem, num contrato ativo de outro tipo (manutenção, prestação de serviço);
 # - DISPONÍVEL: frota da Somos (Propriedade 0 ou proprietário "SOMOS EMPILHADEIRAS...") fora de contrato e de OS;
 # - DO CLIENTE: o resto (máquina que o cliente é dono, sem OS aberta nem contrato).
@@ -45,7 +46,8 @@ class Outsider::Erp::Rentals::MachineStatus
 
   # item de contrato ativo e não devolvido (D = detalhecontrato, C = contrato)
   def active_item
-    "UPPER(TRIM(IFNULL(C.`Status`, ''))) = 'ATIVO' AND (D.`DataRetorno` IS NULL OR D.`DataRetorno` > NOW())"
+    "UPPER(TRIM(IFNULL(C.`Status`, ''))) = 'ATIVO' AND (D.`DataRetorno` IS NULL OR D.`DataRetorno` > NOW() " \
+      'OR (D.`DataLocacao` IS NOT NULL AND DATE(D.`DataRetorno`) <= DATE(D.`DataLocacao`)))'
   end
 
   # contrato de locação pelo texto do tipo (tipocontratos: CONTRATO DE LOCAÇÃO, PRESTAÇÃO DE SERVIÇO, CONTRATO DE MANUTENÇÃO)

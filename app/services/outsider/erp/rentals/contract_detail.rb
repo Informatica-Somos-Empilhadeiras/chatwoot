@@ -43,7 +43,7 @@ class Outsider::Erp::Rentals::ContractDetail < Outsider::Erp::Rentals::Reader
     sql = "SELECT #{list(company, 'detalhecontrato', 'D', ITEM)}, #{machine_fields(company)} FROM #{bank}.detalhecontrato D " \
           "LEFT JOIN #{bank}.equipamentos O ON O.`Seq` = D.`CodigoEquipto`#{status_joins(company)} " \
           "WHERE D.`CodigoContrato` = #{S.int(number)} ORDER BY D.`CodigoItem` LIMIT #{LIMIT}"
-    run(sql).map { |row| row.merge('devolvida' => past?(row['retorno']), 'base' => @fleet.base(company)) }
+    run(sql).map { |row| row.merge('devolvida' => returned?(row), 'base' => @fleet.base(company)) }
   end
 
   def invoices(company, number)

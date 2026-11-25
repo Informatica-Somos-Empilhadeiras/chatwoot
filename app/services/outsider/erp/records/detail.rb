@@ -29,7 +29,7 @@ class Outsider::Erp::Records::Detail
       'kind' => @kind, 'company' => company, 'numero' => number.to_i, 'header' => header,
       'cliente' => Outsider::Erp::CustomerRecord.new(@account, client: @client).find(company, header['cliente_codigo']),
       'itens' => items(company, number), 'chain' => chain, 'budget_record' => budget(company, number)
-    }.merge(Outsider::Erp::Records::ContactFinder.new(@account).for_clients([[company, header['cliente_codigo'].to_i]]).values.first || {})
+    }.merge(Outsider::Erp::Records::ContactFinder.new(@account).for_client(company, header['cliente_codigo']))
     finish(data)
   end
 

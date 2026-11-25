@@ -1,6 +1,7 @@
 # OUTSIDER: os modelos de relatório que já vêm prontos no estúdio (builtin). Entram na conta na primeira vez que a lista
 # abre (e de novo se todos daquele tipo forem apagados), podem ser editados como qualquer outro e "Restaurar" devolve o
 # conteúdo original. Nenhum é usado sozinho: até o administrador escolher, a OS e o orçamento saem no relatório original.
+# rubocop:disable Metrics/ModuleLength -- os modelos prontos inteiros num lugar só
 module Outsider::Erp::Prints::Defaults
   def self.header(title, subtitle, style: 'line')
     { 'type' => 'header', 'logo' => 'erp', 'company' => true, 'title' => title, 'subtitle' => subtitle, 'style' => style }
@@ -58,7 +59,48 @@ module Outsider::Erp::Prints::Defaults
                    { 'type' => 'totals', 'title' => '', 'width' => 'half' }, fields('condicoes', 'Condições', columns: 3),
                    long_text('observacoes', 'Observações'), signatures(%w[Vendedor Cliente])]
     }
-  }.freeze
+  }.merge(
+    'contract_locacao' => {
+      'kind' => 'contract', 'name' => 'Contrato de locação',
+      'blocks' => [header('Contrato de locação Nº {numero}', 'Vigência de {inicio} a {termino}'),
+                   { 'type' => 'text', 'size' => 'md',
+                     'text' => 'Pelo presente instrumento, {empresa}, CNPJ {empresa_documento}, doravante LOCADORA, e {cliente}, CNPJ/CPF ' \
+                               '{documento}, doravante LOCATÁRIA, ajustam a locação dos equipamentos relacionados abaixo, pelo prazo de ' \
+                               '{prazo}, de {inicio} a {termino}, pelo valor de {valor}, nas condições deste contrato.' },
+                   fields('cliente', 'Locatária', columns: 2), fields('contrato', 'Condições comerciais', columns: 4),
+                   fields('entrega', 'Local de entrega', columns: 3), table('maquinas', 'Equipamentos locados'),
+                   long_text('observacoes', 'Observações'),
+                   { 'type' => 'text', 'size' => 'md', 'text' => '{cidade}, {data}.' }, { 'type' => 'spacer', 'height' => 24 },
+                   signatures(%w[LOCADORA LOCATÁRIA Testemunha Testemunha])]
+    },
+    'contract_manutencao' => {
+      'kind' => 'contract', 'name' => 'Contrato de manutenção',
+      'blocks' => [header('Contrato de manutenção Nº {numero}', 'Vigência de {inicio} a {termino}'),
+                   { 'type' => 'text', 'size' => 'md',
+                     'text' => 'Pelo presente instrumento, {empresa}, CNPJ {empresa_documento}, doravante CONTRATADA, e {cliente}, ' \
+                               'CNPJ/CPF {documento}, doravante CONTRATANTE, ajustam a prestação de serviços de manutenção nos ' \
+                               'equipamentos relacionados abaixo, pelo prazo de {prazo}, de {inicio} a {termino}, pelo valor de {valor}, ' \
+                               'nas condições deste contrato.' },
+                   fields('cliente', 'Contratante', columns: 2), fields('contrato', 'Condições comerciais', columns: 4),
+                   table('maquinas', 'Equipamentos atendidos'), long_text('observacoes', 'Observações'),
+                   { 'type' => 'text', 'size' => 'md', 'text' => '{cidade}, {data}.' }, { 'type' => 'spacer', 'height' => 24 },
+                   signatures(%w[CONTRATADA CONTRATANTE Testemunha Testemunha])]
+    },
+    'machine_ficha' => {
+      'kind' => 'machine', 'name' => 'Ficha da máquina',
+      'blocks' => [header('Ficha da máquina', '{maquina}'), fields('maquina', 'Máquina', columns: 4),
+                   fields('situacao', 'Situação', columns: 3), long_text('descricao_tecnica', 'Descrição técnica'),
+                   long_text('acessorios', 'Acessórios'), table('contratos', 'Contratos'), table('ordens', 'Histórico de OS')]
+    }
+  ).freeze
+
+  # o modelo pronto de cada caso de Locação e máquinas (sem escolha nas Configurações): manutenção e prestação de serviço
+  # usam o de manutenção
+  def self.builtin_for(kind, type = nil)
+    return 'machine_ficha' if kind.to_s == 'machine'
+
+    %w[MANUTENCAO SERVICO].include?(type.to_s) ? 'contract_manutencao' : 'contract_locacao'
+  end
 
   module_function
 
@@ -89,3 +131,4 @@ module Outsider::Erp::Prints::Defaults
     true
   end
 end
+# rubocop:enable Metrics/ModuleLength

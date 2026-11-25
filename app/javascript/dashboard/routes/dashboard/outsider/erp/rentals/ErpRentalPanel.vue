@@ -1,22 +1,28 @@
 <script setup>
 // OUTSIDER: painel de detalhe de Locação e máquinas (/outsider/erp/records/(contracts|machines|rental_invoices)/:empresa/:n):
-// cabeçalho, "Abrir conversa" e o corpo de cada tipo (contrato, ficha da máquina, fatura de locação). Contrato, máquina e
-// fatura clicados dentro do painel trocam o painel aqui mesmo, com "Voltar"; OS, pedido e notas abrem o painel de
-// sempre (ErpRecordPanel) por cima, sem sair da aba. Só leitura.
+// cabeçalho, as ações e o corpo de cada tipo (contrato, ficha da máquina, fatura de locação). Contrato: "Gerar PDF do
+// contrato", "Enviar" e "Abrir conversa"; máquina: "Ficha em PDF", "Enviar", "Ver OS da máquina" e "Conversa do
+// cliente" (o cliente com quem ela está). O PDF sai no modelo de ERP > Modelos de relatório. O cliente do ERP pode ter
+// vários contatos do chat: ErpClientChat deixa escolher, ou ligar um quando não há nenhum. Contrato, máquina e fatura
+// clicados dentro do painel trocam o painel aqui mesmo, com "Voltar"; OS, pedido e notas abrem o painel de sempre
+// (ErpRecordPanel) por cima, sem sair da aba. Não grava nada no ERP.
 import { ref, computed } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
-import { frontendURL } from 'dashboard/helper/URLHelper';
 import ErpAPI from 'dashboard/api/outsider/erp';
 import Button from 'dashboard/components-next/button/Button.vue';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 import ErpRecordPanel from '../records/ErpRecordPanel.vue';
+import ErpClientChat from '../records/ErpClientChat.vue';
+import ErpPdfDialog from '../budgets/ErpPdfDialog.vue';
+import ErpDocumentSendDialog from '../components/ErpDocumentSendDialog.vue';
 import ErpContractBody from './ErpContractBody.vue';
 import ErpMachineBody from './ErpMachineBody.vue';
 import ErpRentalInvoiceBody from './ErpRentalInvoiceBody.vue';
 import { allows } from '../../access/accessStore';
-import { erpErrorMessage, companyName } from '../erpStore';
+import { erpErrorMessage, companyName, ERP_ROUTE } from '../erpStore';
+import { erpTabs } from '../sidebar';
 import {
   KINDS,
   SCREENS,
@@ -41,6 +47,7 @@ const emit = defineEmits(['close']);
 
 const { t } = useI18n();
 const route = useRoute();
+const router = useRouter();
 const rt = (key, values) => t(`OUTSIDER_ERP.RENTALS.${key}`, values || {});
 
 const view = ref({
@@ -187,18 +194,58 @@ const subtitle = computed(() => {
     .join(' · ');
 });
 
-const chatUrl = computed(() => {
-  const accountId = route.params.accountId;
-  if (detail.value?.conversation_id)
-    return frontendURL(
-      `accounts/${accountId}/conversations/${detail.value.conversation_id}`
-    );
-  if (detail.value?.contact_id)
-    return frontendURL(
-      `accounts/${accountId}/contacts/${detail.value.contact_id}`
-    );
-  return '';
+// o cliente da conversa: o do contrato / da fatura; na máquina, com quem ela está agora (Rentals::MachineDetail)
+const chatClient = computed(() => {
+  if (view.value.kind === 'machines') {
+    const holder = detail.value?.cliente_atual || {};
+    return {
+      company: holder.banco || view.value.company,
+      code: Number(holder.codigo) || 0,
+      name: holder.nome || '',
+    };
+  }
+  return {
+    company: view.value.company,
+    code: Number(header.value.cliente_codigo) || 0,
+    name: client.value.nome || '',
+  };
 });
+
+const canUse = computed(() => allows('erp_rentals', 'use'));
+const documentKind = computed(() =>
+  ['contracts', 'machines'].includes(view.value.kind) ? view.value.kind : ''
+);
+const pdfRef = ref(null);
+const sendRef = ref(null);
+const showPdf = () =>
+  pdfRef.value?.open(() =>
+    ErpAPI.rentalPdf(documentKind.value, view.value.company, view.value.number)
+  );
+const send = () =>
+  sendRef.value?.open({
+    kind: documentKind.value,
+    company: view.value.company,
+    code: view.value.number,
+    contactId: detail.value?.contact_id,
+  });
+
+// as OS da máquina na aba OS (todas as unidades que usam o cadastro dela); sem a aba OS, fica a linha do tempo da ficha
+const canSeeOrders = computed(() => erpTabs().some(tab => tab.name === 'os'));
+const showOrders = () =>
+  router.push({
+    name: ERP_ROUTE,
+    params: { accountId: route.params.accountId, tab: 'os' },
+    query: {
+      machine: `${view.value.company}:${view.value.number}`,
+      machine_name: machineName(header.value) || undefined,
+    },
+  });
+
+// cliente ligado agora a um contato: lê o detalhe de novo (o cache é trocado)
+const relink = () => {
+  cache.delete(cacheKey(view.value));
+  load();
+};
 </script>
 
 <template>
@@ -249,18 +296,55 @@ const chatUrl = computed(() => {
           @click="emit('close')"
         />
       </div>
-      <div v-if="chatUrl" class="flex flex-wrap gap-2 mt-3">
-        <a
-          :href="chatUrl"
-          class="inline-flex items-center gap-1.5 h-8 px-3 text-xs font-medium rounded-lg bg-n-alpha-2 text-n-slate-12 hover:bg-n-alpha-3"
-        >
-          <Icon icon="i-lucide-message-circle" class="size-3.5" />
-          {{
-            detail?.conversation_id
-              ? t('OUTSIDER_ERP.RECORDS.OPEN_CHAT')
-              : t('OUTSIDER_ERP.RECORDS.OPEN_CONTACT')
-          }}
-        </a>
+      <div
+        v-if="detail"
+        class="flex flex-wrap items-center gap-2 mt-3"
+        data-rental-actions
+      >
+        <Button
+          v-if="documentKind"
+          size="sm"
+          variant="faded"
+          color="slate"
+          icon="i-lucide-file-text"
+          :label="
+            documentKind === 'contracts'
+              ? rt('ACTIONS.CONTRACT_PDF')
+              : rt('ACTIONS.MACHINE_PDF')
+          "
+          data-rental-pdf
+          @click="showPdf"
+        />
+        <Button
+          v-if="documentKind && canUse"
+          size="sm"
+          variant="faded"
+          color="slate"
+          icon="i-lucide-send"
+          :label="rt('ACTIONS.SEND')"
+          data-rental-send
+          @click="send"
+        />
+        <Button
+          v-if="view.kind === 'machines' && canSeeOrders"
+          size="sm"
+          variant="faded"
+          color="slate"
+          icon="i-lucide-wrench"
+          :label="rt('ACTIONS.MACHINE_ORDERS')"
+          data-rental-orders
+          @click="showOrders"
+        />
+        <ErpClientChat
+          :key="cacheKey(view)"
+          :contacts="detail.contacts || []"
+          :company="chatClient.company"
+          :client-code="chatClient.code"
+          :client-name="chatClient.name"
+          :label="view.kind === 'machines' ? rt('ACTIONS.CLIENT_CHAT') : ''"
+          :search="canUse ? ErpAPI.rentalContacts.bind(ErpAPI) : null"
+          @linked="relink"
+        />
       </div>
     </header>
 
@@ -308,5 +392,7 @@ const chatUrl = computed(() => {
       floating
       @close="floating = null"
     />
+    <ErpPdfDialog ref="pdfRef" />
+    <ErpDocumentSendDialog ref="sendRef" />
   </aside>
 </template>

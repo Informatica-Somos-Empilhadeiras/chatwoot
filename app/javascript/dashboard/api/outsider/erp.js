@@ -301,6 +301,35 @@ class ErpAPI extends ApiClient {
     );
   }
 
+  // Locação e máquinas: o PDF do contrato / da ficha da máquina (kind: contracts | machines), no modelo de
+  // ERP > Modelos de relatório, e o envio dele ao cliente (a mesma tela do relatório da OS)
+  rentalPdf(kind, company, number) {
+    return axios.get(
+      `${this.url}/rental_documents/${kind}/${company}/${number}/pdf`,
+      { responseType: 'blob' }
+    );
+  }
+
+  rentalDelivery(kind, company, number, params) {
+    return axios.get(
+      `${this.url}/rental_documents/${kind}/${company}/${number}/delivery`,
+      { params }
+    );
+  }
+
+  rentalContacts(q) {
+    return axios.get(`${this.url}/rental_documents/contacts`, {
+      params: { q },
+    });
+  }
+
+  deliverRental(kind, company, number, data) {
+    return axios.post(
+      `${this.url}/rental_documents/${kind}/${company}/${number}/deliver`,
+      data
+    );
+  }
+
   budgetPdf(id) {
     return axios.get(`${this.url}/budgets/${id}/pdf`, { responseType: 'blob' });
   }

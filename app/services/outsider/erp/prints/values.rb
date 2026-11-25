@@ -1,4 +1,5 @@
-# OUTSIDER: põe o hash de uma OS (Outsider::Erp::ServiceOrderReport) ou de um orçamento (Outsider::Erp::QuoteReport) no
+# OUTSIDER: põe o hash de uma OS (Outsider::Erp::ServiceOrderReport), de um orçamento (Outsider::Erp::QuoteReport) ou de
+# Locação e máquinas (contrato e ficha da máquina, Outsider::Erp::Prints::RentalValues) no
 # formato único que o estúdio desenha (Outsider::Erp::Prints::Pdf no servidor e a pré-visualização na tela): os grupos
 # de campos e as tabelas do Outsider::Erp::Prints::Catalog já como texto formatado (datas, valores, CNPJ), os textos
 # longos, o checklist (seção > item > respostas e fotos), o emitente e os marcadores dos textos livres.
@@ -6,6 +7,7 @@
 # rubocop:disable Metrics/AbcSize, Metrics/MethodLength -- mapeamento campo a campo, mais fácil de ler inteiro
 class Outsider::Erp::Prints::Values
   include Outsider::Erp::QuotePdfText
+  include Outsider::Erp::Prints::RentalValues
 
   def initialize(kind, raw, unit_name: nil)
     @kind = kind.to_s
@@ -14,7 +16,12 @@ class Outsider::Erp::Prints::Values
   end
 
   def build
-    base = @kind == 'os' ? service_order : quote
+    base = case @kind
+           when 'os' then service_order
+           when 'contract' then contract
+           when 'machine' then machine
+           else quote
+           end
     base.merge('kind' => @kind, 'numero' => @raw['numero'].to_i, 'company' => @raw['empresa'] || @raw['company'],
                'preview' => @raw['previa'] == true)
   end

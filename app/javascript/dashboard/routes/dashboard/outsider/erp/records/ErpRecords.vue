@@ -3,6 +3,7 @@
 // rápidas com contagem, busca (número, cliente, CNPJ), unidade, vendedor/técnico (na OS também tipo de atendimento e
 // vendedor), período, ordenação, tabela paginada e o painel de detalhe ao lado. O registro aberto fica na rota (?open=empresa:número); os nós da corrente orçamento -> OS ->
 // pedido trocam o painel sem sair da aba. ?contact=<id> mostra só os clientes do ERP ligados àquele contato.
+// ?machine=<cadastro base>:<número> ("Ver OS da máquina" da ficha) mostra só as OS daquela máquina, em todas as situações.
 // Locação e máquinas (contratos, máquinas, faturas de locação) usam a tabela e o painel de rentals/; máquina não tem
 // pessoa nem período.
 import { ref, computed, watch } from 'vue';
@@ -60,7 +61,8 @@ const storedPer = () => {
 };
 
 const q = ref('');
-const view = ref('');
+// OS de uma máquina: todas as situações
+const view = ref(route.query.machine ? 'all' : '');
 const company = ref('');
 const person = ref('');
 const period = ref('all');
@@ -83,6 +85,7 @@ const cfg = computed(() => KINDS[props.kind]);
 const label = key => t(`OUTSIDER_ERP.RECORDS.${cfg.value.key}.${key}`);
 const opened = computed(() => parseKey(route.query.open));
 const contactId = computed(() => Number(route.query.contact) || null);
+const machine = computed(() => route.query.machine || '');
 
 const dimensionKeys = computed(() => DIMENSIONS[props.kind] || []);
 
@@ -101,6 +104,7 @@ const params = computed(() => ({
   sort: sort.value,
   direction: direction.value,
   contact_id: contactId.value || undefined,
+  machine: machine.value || undefined,
 }));
 
 // NF-e/NFS-e: aviso das que ainda não estão na nuvem (só as linhas desta página)
@@ -138,7 +142,10 @@ const reload = () => {
 const searchLater = debounce(reload, 350);
 
 watch(q, searchLater);
-watch([view, company, person, from, to, contactId, picked], reload, {
+watch(machine, value => {
+  if (value) view.value = 'all';
+});
+watch([view, company, person, from, to, contactId, machine, picked], reload, {
   deep: true,
 });
 watch([page, per, sort, direction], load);
@@ -216,6 +223,8 @@ const setQuery = changes => {
 const select = row => setQuery({ open: recordKey(row) });
 const close = () => setQuery({ open: undefined });
 const clearContact = () => setQuery({ contact: undefined });
+const clearMachine = () =>
+  setQuery({ machine: undefined, machine_name: undefined });
 
 // orçamento novo direto da seção (o cliente é escolhido na gaveta)
 const createBudget = async () => {
@@ -406,6 +415,27 @@ const DATE =
               class="grid rounded-full size-5 place-content-center hover:bg-n-blue-4"
               :aria-label="t('OUTSIDER_ERP.RECORDS.CLEAR_CONTACT')"
               @click="clearContact"
+            >
+              <Icon icon="i-lucide-x" class="size-3" />
+            </button>
+          </span>
+          <span
+            v-if="machine"
+            class="inline-flex items-center gap-1.5 h-6 pl-2.5 pr-1 rounded-full bg-n-blue-3 text-n-blue-11"
+            data-machine-scope
+          >
+            {{
+              t('OUTSIDER_ERP.RECORDS.MACHINE_SCOPE', {
+                name:
+                  route.query.machine_name ||
+                  `#${String(machine).split(':')[1] || ''}`,
+              })
+            }}
+            <button
+              type="button"
+              class="grid rounded-full size-5 place-content-center hover:bg-n-blue-4"
+              :aria-label="t('OUTSIDER_ERP.RECORDS.CLEAR_MACHINE')"
+              @click="clearMachine"
             >
               <Icon icon="i-lucide-x" class="size-3" />
             </button>

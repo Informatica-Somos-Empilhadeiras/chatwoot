@@ -815,6 +815,50 @@ const removeField = index => form.value.extra_fields.splice(index, 1);
         />
       </label>
 
+      <!-- OUTSIDER: envio do contrato e da ficha da máquina (Locação e máquinas) -->
+      <template v-for="doc in ['contract', 'machine']" :key="doc">
+        <div class="flex flex-col gap-1 pt-2">
+          <h4 class="mb-0 text-sm font-medium text-n-slate-12">
+            {{ t(`OUTSIDER_ERP.SETTINGS.${doc.toUpperCase()}_SEND`) }}
+          </h4>
+          <p class="mb-0 text-xs text-n-slate-10">
+            {{ t('OUTSIDER_ERP.SETTINGS.RENTAL_PLACEHOLDERS') }}
+          </p>
+        </div>
+        <label class="flex flex-col gap-1 text-sm">
+          <span class="text-n-slate-11">{{
+            t('OUTSIDER_ERP.SETTINGS.SEND_EMAIL_SUBJECT')
+          }}</span>
+          <input
+            v-model="form[`${doc}_email_subject`]"
+            maxlength="200"
+            :class="INPUT"
+          />
+        </label>
+        <label class="flex flex-col gap-1 text-sm">
+          <span class="text-n-slate-11">{{
+            t('OUTSIDER_ERP.SETTINGS.SEND_EMAIL_BODY')
+          }}</span>
+          <textarea
+            v-model="form[`${doc}_email_body`]"
+            rows="6"
+            maxlength="4000"
+            class="!mb-0 px-2 py-1.5 text-sm rounded-lg reset-base bg-n-solid-1 text-n-slate-12 outline outline-1 -outline-offset-1 outline-n-slate-6"
+          />
+        </label>
+        <label class="flex flex-col gap-1 text-sm">
+          <span class="text-n-slate-11">{{
+            t('OUTSIDER_ERP.SETTINGS.SEND_WHATSAPP_TEXT')
+          }}</span>
+          <textarea
+            v-model="form[`${doc}_whatsapp_text`]"
+            rows="3"
+            maxlength="2000"
+            class="!mb-0 px-2 py-1.5 text-sm rounded-lg reset-base bg-n-solid-1 text-n-slate-12 outline outline-1 -outline-offset-1 outline-n-slate-6"
+          />
+        </label>
+      </template>
+
       <div class="flex flex-col gap-1 pt-2">
         <h4 class="mb-0 text-sm font-medium text-n-slate-12">
           {{ t('OUTSIDER_ERP.SETTINGS.NEXTCLOUD') }}

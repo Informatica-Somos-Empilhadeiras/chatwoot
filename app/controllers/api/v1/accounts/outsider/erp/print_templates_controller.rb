@@ -1,4 +1,5 @@
-# OUTSIDER: aba "Modelos de relatório" da seção ERP (só administradores): os modelos de impressão da OS e do orçamento
+# OUTSIDER: aba "Modelos de relatório" da seção ERP (só administradores): os modelos de impressão da OS, do orçamento, do
+# contrato e da ficha da máquina
 # (Outsider::Erp::PrintTemplate), o estúdio que monta cada um (blocos, campos, identidade visual) e qual modelo cada tipo
 # de atendimento usa (Outsider::Erp::Prints::Bindings). A pré-visualização usa os dados de exemplo ou uma OS/orçamento de
 # verdade, lido do ERP só para leitura (as mesmas rotas do relatório da OS e do PDF do orçamento).
@@ -11,6 +12,7 @@ class Api::V1::Accounts::Outsider::Erp::PrintTemplatesController < Api::V1::Acco
 
   rescue_from(::Outsider::Erp::ServiceOrderReport::NotFound) { render json: { error: 'os_not_found' }, status: :not_found }
   rescue_from(::Outsider::Erp::QuoteReport::NotFound) { render json: { error: 'quote_not_found' }, status: :not_found }
+  rescue_from(::Outsider::Erp::Records::Detail::NotFound) { render json: { error: 'record_not_found' }, status: :not_found }
   rescue_from(::Outsider::Crm::ImageShrinker::Invalid) { render json: { error: 'invalid_image' }, status: :unprocessable_entity }
 
   # a lista (os padrões entram na primeira vez), as escolhas por tipo de atendimento e o "cardápio" de cada tipo
@@ -175,6 +177,7 @@ class Api::V1::Accounts::Outsider::Erp::PrintTemplatesController < Api::V1::Acco
   def real_report(kind, photos:)
     company, code = real_target
     return ::Outsider::Erp::QuoteReport.new(Current.account).build(company, code) if kind == 'quote'
+    return rental_report(kind, company, code) if ::Outsider::Erp::Prints::Document.rental?(kind)
 
     report = ::Outsider::Erp::ServiceOrderReport.new(Current.account).build(company, code, photos: photos)
     report.merge('emitente' => ::Outsider::Erp::Prints::Document.full_emitter(Current.account, company, report['emitente']))
@@ -182,8 +185,16 @@ class Api::V1::Accounts::Outsider::Erp::PrintTemplatesController < Api::V1::Acco
 
   def sample_report(kind) = ::Outsider::Erp::Prints::Sample.for(kind)
 
+  # contrato e ficha da máquina de verdade (Locação e máquinas), com o emitente da unidade
+  def rental_report(kind, company, code)
+    detail = ::Outsider::Erp::Prints::Document.rental_detail(Current.account, kind, company, code)
+    detail.merge('emitente' => ::Outsider::Erp::Prints::Document.full_emitter(Current.account, detail['company'], nil))
+  end
+
   def preview_document
     kind = @template.kind
+    return rental_preview(kind) if ::Outsider::Erp::Prints::Document.rental?(kind)
+
     if kind == 'quote'
       ::Outsider::Erp::Prints::Document.quote(Current.account, real? ? real_report(kind, photos: false) : sample_report(kind), template: @template)
     elsif real?
@@ -195,6 +206,11 @@ class Api::V1::Accounts::Outsider::Erp::PrintTemplatesController < Api::V1::Acco
       ::Outsider::Erp::Prints::Document.new(@template, ::Outsider::Erp::Prints::Document.values(Current.account, kind, report),
                                             filename: ::Outsider::Erp::ServiceOrderPdf.new(report).filename)
     end
+  end
+
+  def rental_preview(kind)
+    report = real? ? real_report(kind, photos: false) : sample_report(kind)
+    ::Outsider::Erp::Prints::Document.rental(Current.account, kind, report, template: @template)
   end
 
   def summary(template)

@@ -52,7 +52,13 @@ describe('rentalHelpers', () => {
 
   it('names machines and shows the hour meter', () => {
     expect(machineName({ descricao: 'EMPILHADEIRA 2,5T GLP' })).toBe(
-      'Empilhadeira 2,5t Glp'
+      'Empilhadeira 2,5T GLP'
+    );
+    expect(
+      machineName({ descricao: '010353J8544 - CPCD35-XC5K2/480-3V' })
+    ).toBe('010353J8544 - CPCD35-XC5K2/480-3V');
+    expect(machineName({ descricao: 'empilhadeira elétrica de 3 rodas' })).toBe(
+      'Empilhadeira Elétrica De 3 Rodas'
     );
     expect(machineName({ maquina: 77 })).toBe('#77');
     expect(machineTag({ patrimonio: 'SE-0412', numero: 3 })).toBe('SE-0412');
@@ -60,5 +66,7 @@ describe('rentalHelpers', () => {
     expect(hourMeter('3.412,6')).toBe('3.413 h');
     expect(hourMeter('sem leitura')).toBe('sem leitura');
     expect(hourMeter('')).toBe('');
+    expect(hourMeter('0')).toBe('');
+    expect(hourMeter('0,0')).toBe('');
   });
 });

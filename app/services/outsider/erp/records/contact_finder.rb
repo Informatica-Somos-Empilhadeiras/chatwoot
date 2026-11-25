@@ -1,5 +1,6 @@
 # OUTSIDER: qual contato do chat está ligado a cada cliente do ERP (Outsider::Erp::ContactLink) e a conversa mais recente
-# dele, para o "Abrir no chat" das listas e do detalhe. Uma consulta para todos os clientes da página.
+# dele, para o "Abrir no chat" das listas e do detalhe. Uma consulta para todos os clientes da página. Um cliente do ERP
+# pode estar ligado a vários contatos (comprador, financeiro, gerente...): for_client devolve todos, para a tela escolher.
 class Outsider::Erp::Records::ContactFinder
   KEY = Outsider::Erp::ContactLink::KEY
 
@@ -20,7 +21,24 @@ class Outsider::Erp::Records::ContactFinder
     end
   end
 
+  # o detalhe: o contato com a conversa mais recente (contact_id, conversation_id) e todos os ligados ao cliente (contacts)
+  def for_client(company, code)
+    pair = [company.to_s, code.to_i]
+    return { 'contacts' => [] } if valid([pair]).empty?
+
+    contacts = matching_contacts([pair]).select { |item| linked?(item, pair) }
+    conversations = latest_conversations(contacts.map(&:id))
+    rows = contacts.map { |item| contact_row(item, conversations[item.id]) }.sort_by { |row| -row['conversation_id'].to_i }
+    first = rows.first || {}
+    { 'contact_id' => first['id'], 'conversation_id' => first['conversation_id'], 'contacts' => rows }.compact
+  end
+
   private
+
+  def contact_row(contact, conversation_id)
+    { 'id' => contact.id, 'name' => contact.name, 'phone' => contact.phone_number, 'email' => contact.email,
+      'conversation_id' => conversation_id }
+  end
 
   def valid(pairs) = pairs.select { |company, code| company.present? && code.to_i.positive? }.uniq
 

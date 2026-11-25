@@ -1,6 +1,7 @@
 # OUTSIDER: lista de ordens de serviço do ERP (tabela os), todo o histórico. A pessoa da linha é o técnico (o vendedor vem
 # junto, com filtro próprio, como o tipo de atendimento). "Em aberto" = fora das situações travadas das Configurações
-# (FECHADA/CANCELADA/PERDIDA); "Atrasada" = aberta com a previsão vencida.
+# (FECHADA/CANCELADA/PERDIDA); "Atrasada" = aberta com a previsão vencida. maquina (os.CodigoMaquina) serve ao filtro
+# "OS da máquina" (botão Ver OS da máquina, em Locação e máquinas).
 class Outsider::Erp::Records::OrderKind < Outsider::Erp::Records::Kind
   S = Outsider::Erp::Sql
 
@@ -18,7 +19,7 @@ class Outsider::Erp::Records::OrderKind < Outsider::Erp::Records::Kind
       numero: %w[CodigoOS], data: %w[DataEntrada], status: %w[Situacao], total: %w[Total], cliente_codigo: %w[CodigoCliente],
       pessoa_codigo: %w[Tecnico], previsao: %w[DataPrevisao], entrega: %w[DataEntrega], serie: %w[NSerie],
       equipamento: %w[Modelo DescricaoMaquina Equipamento DescrEquipto], substatus: %w[SubStatus], orcamento: %w[Orcamento],
-      pedido: %w[Pedido], atendimento: %w[TipoAtendimento], vendedor_codigo: %w[Vendedor]
+      pedido: %w[Pedido], atendimento: %w[TipoAtendimento], vendedor_codigo: %w[Vendedor], maquina: %w[CodigoMaquina]
     }
   end
 

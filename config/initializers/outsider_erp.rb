@@ -73,6 +73,13 @@ Rails.application.routes.prepend do
                                    constraints: { kind: /quotes|orders|sales|invoices|service_invoices|contracts|machines|rental_invoices/ }
               # bloco "Contratos e máquinas" do contato
               get 'records/rentals', to: 'records#rentals', defaults: { kind: 'contracts' }
+              # PDF do contrato e da ficha da máquina (ERP > Modelos de relatório) e o envio ao cliente
+              get 'rental_documents/contacts', to: 'rental_documents#contacts', defaults: { kind: 'contracts' }
+              scope 'rental_documents/:kind/:company/:number', constraints: { kind: /contracts|machines/, company: /[a-z0-9_]+/, number: /\d+/ } do
+                get 'pdf', to: 'rental_documents#pdf'
+                get 'delivery', to: 'rental_documents#delivery'
+                post 'deliver', to: 'rental_documents#deliver'
+              end
               # NF-e e NFS-e: quais já estão na nuvem (Nextcloud), para o aviso das que ainda não estão
               get 'records/:kind/cloud', to: 'records#cloud', constraints: { kind: /invoices|service_invoices/ }
               get 'records/:kind/:company/:number',

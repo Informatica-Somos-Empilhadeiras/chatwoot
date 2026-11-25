@@ -61,7 +61,9 @@ module Outsider::Erp::Prints::Content
     },
     'quote' => {
       'totals' => { 'title' => [:text, 200, ''], 'hide_zero' => [:bool, true], 'width' => [:enum, %w[half full], 'half'] }
-    }
+    },
+    'contract' => {},
+    'machine' => {}
   }.freeze
 
   module_function

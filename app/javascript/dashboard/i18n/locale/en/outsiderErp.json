@@ -365,7 +365,13 @@
       "NEXTCLOUD_FOLDER": "Invoices root folder",
       "CLIENT_WRITE": "Customer registration",
       "CLIENT_WRITE_HINT": "Lets agents register customers in Mais Prático from the chat, through the ERP's own function. Customers are saved as pre-registrations, and an already registered CPF/CNPJ is never saved again. Off by default; who can use it is set in the access profile (Customer registration).",
-      "CLIENT_WRITE_ENABLED": "Allow registration"
+      "CLIENT_WRITE_ENABLED": "Allow registration",
+      "CONTRACT_SEND": "Sending the contract",
+      "MACHINE_SEND": "Sending the machine sheet",
+      "RENTAL_PLACEHOLDERS": "Use {numero}, {contato}, {cliente} and {vendedor}: they are replaced with the document data.",
+      "SEND_EMAIL_SUBJECT": "Email subject",
+      "SEND_EMAIL_BODY": "Email text",
+      "SEND_WHATSAPP_TEXT": "WhatsApp text"
     },
     "BUDGET": {
       "BLOCK": {
@@ -902,7 +908,14 @@
         "VIEWS": {
           "ALL": "All"
         }
-      }
+      },
+      "LINK_CONTACT": "Link contact",
+      "LINK_ANOTHER": "Link another contact",
+      "LINK_SEARCH": "Contact name, phone or email",
+      "LINK_EMPTY": "Type to search for a contact",
+      "LINKED": "{name} linked to this ERP customer",
+      "MACHINE_SCOPE": "Service orders of machine {name}",
+      "CLEAR_MACHINE": "Show all service orders"
     },
     "CLIENT": {
       "NEW": "New customer",
@@ -963,7 +976,9 @@
     "PRINTS": {
       "KINDS": {
         "OS": "Service order",
-        "QUOTE": "Quote"
+        "QUOTE": "Quote",
+        "CONTRACT": "Contract",
+        "MACHINE": "Machine sheet"
       },
       "BLOCKS": {
         "HEADER": "Header",
@@ -1143,7 +1158,13 @@
         "FIELDS_HELP": "Which fields show and in what order (drag). Applies to every block of that group or table.",
         "FIELDS_COUNT": "{on} of {total}",
         "NOT_FOUND_OS": "Order not found in this unit",
-        "NOT_FOUND_QUOTE": "Quote not found in this unit"
+        "NOT_FOUND_QUOTE": "Quote not found in this unit",
+        "REAL_CONTRACT": "Real contract",
+        "REAL_MACHINE": "Real machine",
+        "PALETTE_CONTEXT_CONTRACT": "From the contract",
+        "PALETTE_CONTEXT_MACHINE": "From the machine",
+        "NOT_FOUND_CONTRACT": "Contract not found in this unit",
+        "NOT_FOUND_MACHINE": "Machine not found in this unit"
       },
       "THEME": {
         "SIZE_VALUE": "{size} pt",
@@ -1219,7 +1240,20 @@
         "RESTORED": "Template restored",
         "DELETE": "Delete",
         "DELETE_TITLE": "Delete \"{name}\"?",
-        "DELETE_TEXT": "Cases using this template go back to the default (or the Mais Prático original)."
+        "DELETE_TEXT": "Cases using this template go back to the default (or the Mais Prático original).",
+        "READY_MADE": "Ready-made template",
+        "CONTRACT_TYPE": "Contract type",
+        "CONTRACT_TEMPLATE": "Contract template",
+        "CONTRACT_DEFAULT": "Default (types without a choice)",
+        "CONTRACT_TYPES": {
+          "LOCACAO": "Rental",
+          "MANUTENCAO": "Maintenance",
+          "SERVICO": "Service"
+        },
+        "MACHINE_DEFAULT": "Machine sheet template",
+        "RENTAL_HELP": "The ERP has no contract or machine sheet PDF: \"Ready-made template\" is the template of each type listed below (edit it to add your clauses).",
+        "TEMPLATES_CONTRACT": "Contract templates",
+        "TEMPLATES_MACHINE": "Machine sheet templates"
       }
     },
     "GROUPS": {
@@ -1369,6 +1403,23 @@
         "OWN_MACHINES": "Client's own machines ({n})",
         "SEE_CONTRACTS": "See contracts in the ERP",
         "SEE_MACHINES": "See machines in the ERP"
+      },
+      "ACTIONS": {
+        "CONTRACT_PDF": "Contract PDF",
+        "MACHINE_PDF": "Machine sheet PDF",
+        "SEND": "Send",
+        "MACHINE_ORDERS": "Machine service orders",
+        "CLIENT_CHAT": "Customer conversation"
+      },
+      "SEND": {
+        "CONTRACT_TITLE": "Send contract #{number} to the customer",
+        "CONTRACT_PDF_TITLE": "Contract",
+        "CONTRACT_HINT": "The contract is attached, in the template chosen in ERP > Report templates. On WhatsApp it stays in the conversation; the email becomes a note in the conversation it was sent from.",
+        "MACHINE_TITLE": "Send the machine sheet to the customer",
+        "MACHINE_PDF_TITLE": "Machine sheet",
+        "MACHINE_HINT": "The sheet is attached, with the machine contracts and service order history. On WhatsApp it stays in the conversation; the email becomes a note in the conversation it was sent from.",
+        "EMAIL_DONE": "Document sent by email.",
+        "WHATSAPP_DONE": "Document sent on WhatsApp."
       }
     }
   }

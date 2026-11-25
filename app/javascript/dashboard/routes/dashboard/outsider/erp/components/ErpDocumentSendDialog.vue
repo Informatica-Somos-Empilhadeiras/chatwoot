@@ -1,7 +1,8 @@
 <script setup>
 // OUTSIDER: envio de um PDF do ERP ao cliente, na mesma tela do orçamento (ErpBudgetSend, com o documento como fonte):
 // a prévia e o envio por WhatsApp ou e-mail. kind: orders (o relatório da OS com as fotos do checklist), invoices (NF-e)
-// ou service_invoices (NFS-e), as duas do Nextcloud. Abre do detalhe da OS/nota (seção ERP) e do cartão da OS. O contato
+// ou service_invoices (NFS-e), as duas do Nextcloud, contracts (o contrato) ou machines (a ficha da máquina), os dois
+// montados no modelo de ERP > Modelos de relatório. Abre do detalhe da OS/nota (seção ERP) e do cartão da OS. O contato
 // vem o escolhido, senão o da conversa, senão o vinculado ao cliente do ERP.
 import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -23,11 +24,21 @@ const close = () => {
   isOpen.value = false;
 };
 
-const isOrder = computed(() => target.value.kind === 'orders');
+const RENTALS = { contracts: 'CONTRACT', machines: 'MACHINE' };
 
 // textos da tela de cada tipo (os da OS em ORDER.SEND, os das notas em RECORDS.INVOICE.SEND)
 const texts = computed(() => {
   const { kind, code } = target.value;
+  if (RENTALS[kind]) {
+    const key = `OUTSIDER_ERP.RENTALS.SEND.${RENTALS[kind]}`;
+    return {
+      title: t(`${key}_TITLE`, { number: code }),
+      pdfTitle: t(`${key}_PDF_TITLE`),
+      hint: t(`${key}_HINT`),
+      emailDone: t('OUTSIDER_ERP.RENTALS.SEND.EMAIL_DONE'),
+      whatsappDone: t('OUTSIDER_ERP.RENTALS.SEND.WHATSAPP_DONE'),
+    };
+  }
   if (kind === 'orders')
     return {
       title: t('OUTSIDER_ERP.ORDER.SEND.TITLE', { code }),
@@ -76,11 +87,27 @@ const invoiceSource = (
     ErpAPI.deliverInvoice(kind, company, code, { ...base, ...payload }),
 });
 
+// o cliente do contrato / da ficha o servidor já sabe (o do contrato ou com quem a máquina está)
+const rentalSource = (base, { kind, company, code, contactId }) => ({
+  pdf: () => ErpAPI.rentalPdf(kind, company, code),
+  delivery: () =>
+    ErpAPI.rentalDelivery(kind, company, code, {
+      ...base,
+      contact_id: contactId || undefined,
+    }),
+  contacts: q => ErpAPI.rentalContacts(q),
+  deliver: payload =>
+    ErpAPI.deliverRental(kind, company, code, { ...base, ...payload }),
+});
+
 const source = computed(() => {
   const base = {
     conversation_id: target.value.conversationId || undefined,
   };
-  const build = isOrder.value ? orderSource : invoiceSource;
+  const { kind } = target.value;
+  let build = invoiceSource;
+  if (kind === 'orders') build = orderSource;
+  else if (RENTALS[kind]) build = rentalSource;
   const { title, ...labels } = texts.value;
   return { ...build(base, target.value), labels };
 });

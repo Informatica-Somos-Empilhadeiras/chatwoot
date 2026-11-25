@@ -1206,7 +1206,7 @@
       },
       "ERP_RENTALS": {
         "LABEL": "Locação e máquinas",
-        "HINT": "Vê: consulta os contratos, as máquinas (com a situação de agora e a linha do tempo) e as faturas de locação (só leitura)."
+        "HINT": "Vê: consulta os contratos, as máquinas (com a situação de agora e a linha do tempo) e as faturas de locação, e gera o PDF do contrato e da ficha. Usa: envia esses PDFs ao cliente e liga contatos do chat ao cliente do ERP."
       },
       "ERP_CLIENTS": {
         "LABEL": "Cadastro de clientes",

@@ -18,7 +18,7 @@ class Api::V1::Accounts::Outsider::Erp::RecordsController < Api::V1::Accounts::O
   before_action :ensure_invoice_sending, only: %i[delivery contacts deliver]
 
   # q, view, company, person (código do vendedor/técnico), from, to (AAAA-MM-DD), page, per, sort, direction;
-  # contact_id (os clientes do ERP do contato) ou client=empresa:código
+  # contact_id (os clientes do ERP do contato) ou client=empresa:código; OS: machine=empresa:número (as OS de uma máquina)
   def index
     lister = ::Outsider::Erp::Records::Lister.new(Current.account, params[:kind], user: Current.user)
     render json: lister.page(list_params.merge(clients: clients)).merge(clients_scope)
@@ -105,7 +105,7 @@ class Api::V1::Accounts::Outsider::Erp::RecordsController < Api::V1::Accounts::O
     render json: { error: 'invoice_not_in_nextcloud' }, status: :not_found unless settings.nextcloud_enabled?
   end
 
-  LIST_PARAMS = %i[q view company person from to page per sort direction atendimento vendedor tipo].freeze
+  LIST_PARAMS = %i[q view company person from to page per sort direction atendimento vendedor tipo machine].freeze
 
   def list_params = LIST_PARAMS.index_with { |key| params[key] }
 

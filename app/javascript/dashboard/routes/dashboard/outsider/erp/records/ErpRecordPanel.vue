@@ -21,6 +21,7 @@ import ErpOrderEditor from '../components/ErpOrderEditor.vue';
 import ErpBudgetDrawer from '../budgets/ErpBudgetDrawer.vue';
 import ErpPdfDialog from '../budgets/ErpPdfDialog.vue';
 import ErpDocumentSendDialog from '../components/ErpDocumentSendDialog.vue';
+import ErpClientChat from './ErpClientChat.vue';
 import ErpOrderScheduleDialog from '../components/ErpOrderScheduleDialog.vue';
 import { useOrderReady } from '../components/orderReady';
 import { fetchCloud, cloudKey, CLOUD_KINDS } from './invoiceCloud';
@@ -746,7 +747,16 @@ const LABEL =
             {{ value }}
           </dd>
         </div>
-        <div v-if="chatUrl" class="min-w-0">
+        <!-- OUTSIDER: cliente do ERP ligado a vários contatos do chat: escolhe qual conversa abrir -->
+        <div v-if="(detail.contacts || []).length > 1" class="min-w-0">
+          <dt :class="LABEL" class="mb-0.5">
+            {{ t('OUTSIDER_ERP.RECORDS.FIELDS.CHAT') }}
+          </dt>
+          <dd class="mb-0">
+            <ErpClientChat :contacts="detail.contacts" />
+          </dd>
+        </div>
+        <div v-else-if="chatUrl" class="min-w-0">
           <dt :class="LABEL" class="mb-0.5">
             {{ t('OUTSIDER_ERP.RECORDS.FIELDS.CHAT') }}
           </dt>

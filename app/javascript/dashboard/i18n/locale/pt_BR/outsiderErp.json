@@ -365,7 +365,13 @@
       "NEXTCLOUD_FOLDER": "Pasta raiz das notas",
       "CLIENT_WRITE": "Cadastro de clientes",
       "CLIENT_WRITE_HINT": "Permite cadastrar cliente no Mais Prático pelo chat, pela função do próprio ERP. O cliente entra como pré-cadastro, e um CPF/CNPJ já cadastrado nunca é gravado de novo. Começa desligado; quem pode usar é definido no perfil de acesso (Cadastro de clientes).",
-      "CLIENT_WRITE_ENABLED": "Permitir cadastrar"
+      "CLIENT_WRITE_ENABLED": "Permitir cadastrar",
+      "CONTRACT_SEND": "Envio do contrato",
+      "MACHINE_SEND": "Envio da ficha da máquina",
+      "RENTAL_PLACEHOLDERS": "Use {numero}, {contato}, {cliente} e {vendedor}: são trocados pelos dados do documento.",
+      "SEND_EMAIL_SUBJECT": "Assunto do e-mail",
+      "SEND_EMAIL_BODY": "Texto do e-mail",
+      "SEND_WHATSAPP_TEXT": "Texto do WhatsApp"
     },
     "BUDGET": {
       "BLOCK": {
@@ -902,7 +908,14 @@
         "VIEWS": {
           "ALL": "Todas"
         }
-      }
+      },
+      "LINK_CONTACT": "Ligar contato",
+      "LINK_ANOTHER": "Ligar outro contato",
+      "LINK_SEARCH": "Nome, telefone ou e-mail do contato",
+      "LINK_EMPTY": "Digite para procurar um contato",
+      "LINKED": "{name} ligado a este cliente do ERP",
+      "MACHINE_SCOPE": "OS da máquina {name}",
+      "CLEAR_MACHINE": "Mostrar todas as OS"
     },
     "CLIENT": {
       "NEW": "Novo cliente",
@@ -963,7 +976,9 @@
     "PRINTS": {
       "KINDS": {
         "OS": "OS",
-        "QUOTE": "Orçamento"
+        "QUOTE": "Orçamento",
+        "CONTRACT": "Contrato",
+        "MACHINE": "Ficha da máquina"
       },
       "BLOCKS": {
         "HEADER": "Cabeçalho",
@@ -1143,7 +1158,13 @@
         "FIELDS_HELP": "Quais campos aparecem e em que ordem (arraste). Vale para todos os blocos daquele grupo ou tabela.",
         "FIELDS_COUNT": "{on} de {total}",
         "NOT_FOUND_OS": "OS não encontrada nesta unidade",
-        "NOT_FOUND_QUOTE": "Orçamento não encontrado nesta unidade"
+        "NOT_FOUND_QUOTE": "Orçamento não encontrado nesta unidade",
+        "REAL_CONTRACT": "Contrato de verdade",
+        "REAL_MACHINE": "Máquina de verdade",
+        "PALETTE_CONTEXT_CONTRACT": "Do contrato",
+        "PALETTE_CONTEXT_MACHINE": "Da máquina",
+        "NOT_FOUND_CONTRACT": "Contrato não encontrado nesta unidade",
+        "NOT_FOUND_MACHINE": "Máquina não encontrada nesta unidade"
       },
       "THEME": {
         "SIZE_VALUE": "{size} pt",
@@ -1219,7 +1240,20 @@
         "RESTORED": "Modelo restaurado",
         "DELETE": "Apagar",
         "DELETE_TITLE": "Apagar \"{name}\"?",
-        "DELETE_TEXT": "Os casos que usam este modelo voltam para o padrão (ou para o original do Mais Prático)."
+        "DELETE_TEXT": "Os casos que usam este modelo voltam para o padrão (ou para o original do Mais Prático).",
+        "READY_MADE": "Modelo pronto",
+        "CONTRACT_TYPE": "Tipo de contrato",
+        "CONTRACT_TEMPLATE": "Modelo do contrato",
+        "CONTRACT_DEFAULT": "Padrão (tipos sem escolha)",
+        "CONTRACT_TYPES": {
+          "LOCACAO": "Locação",
+          "MANUTENCAO": "Manutenção",
+          "SERVICO": "Prestação de serviço"
+        },
+        "MACHINE_DEFAULT": "Modelo da ficha da máquina",
+        "RENTAL_HELP": "O ERP não tem PDF de contrato nem de ficha: \"Modelo pronto\" é o modelo de cada tipo que já vem aqui embaixo (edite para pôr as cláusulas de vocês).",
+        "TEMPLATES_CONTRACT": "Modelos de contrato",
+        "TEMPLATES_MACHINE": "Modelos de ficha da máquina"
       }
     },
     "GROUPS": {
@@ -1369,6 +1403,23 @@
         "OWN_MACHINES": "Máquinas próprias do cliente ({n})",
         "SEE_CONTRACTS": "Ver contratos no ERP",
         "SEE_MACHINES": "Ver máquinas no ERP"
+      },
+      "ACTIONS": {
+        "CONTRACT_PDF": "Gerar PDF do contrato",
+        "MACHINE_PDF": "Ficha em PDF",
+        "SEND": "Enviar",
+        "MACHINE_ORDERS": "Ver OS da máquina",
+        "CLIENT_CHAT": "Conversa do cliente"
+      },
+      "SEND": {
+        "CONTRACT_TITLE": "Enviar o contrato Nº {number} ao cliente",
+        "CONTRACT_PDF_TITLE": "Contrato",
+        "CONTRACT_HINT": "O contrato vai em anexo, no modelo escolhido em ERP > Modelos de relatório. No WhatsApp fica na conversa; o e-mail vira nota na conversa de onde saiu.",
+        "MACHINE_TITLE": "Enviar a ficha da máquina ao cliente",
+        "MACHINE_PDF_TITLE": "Ficha da máquina",
+        "MACHINE_HINT": "A ficha vai em anexo, com os contratos e o histórico de OS da máquina. No WhatsApp fica na conversa; o e-mail vira nota na conversa de onde saiu.",
+        "EMAIL_DONE": "Documento enviado por e-mail.",
+        "WHATSAPP_DONE": "Documento enviado no WhatsApp."
       }
     }
   }

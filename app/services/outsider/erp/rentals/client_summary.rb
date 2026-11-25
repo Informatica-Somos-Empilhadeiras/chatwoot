@@ -48,7 +48,7 @@ class Outsider::Erp::Rentals::ClientSummary < Outsider::Erp::Rentals::Reader
                                                                                        ITEM.slice('saida', 'retorno'))}, " \
           "#{machine_fields(company)} FROM #{bank}.detalhecontrato D LEFT JOIN #{bank}.equipamentos O ON O.`Seq` = D.`CodigoEquipto`" \
           "#{status_joins(company)} WHERE D.`CodigoContrato` IN (#{numbers.join(', ')}) LIMIT #{MACHINES}"
-    run(sql).reject { |row| past?(row['retorno']) }.map { |row| row.merge('banco' => company, 'base' => @fleet.base(company)) }
+    run(sql).reject { |row| returned?(row) }.map { |row| row.merge('banco' => company, 'base' => @fleet.base(company)) }
   end
 
   # máquinas do próprio cliente: cadastro com o código dele nas unidades com cadastro próprio, fora da frota da Somos

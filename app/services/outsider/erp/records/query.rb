@@ -143,7 +143,8 @@ class Outsider::Erp::Records::Query
   end
 
   def where(filters, full:)
-    parts = [search(filters[:q]), period(filters[:from], filters[:to]), clients(filters[:clients]), dimensions(filters[:dimensions])]
+    parts = [search(filters[:q]), period(filters[:from], filters[:to]), clients(filters[:clients]), dimensions(filters[:dimensions]),
+             machine(filters[:machine])]
     parts += [view(filters[:view], filters[:mine]), person(filters[:person])] if full
     parts.compact.presence&.join(' AND ') || '1 = 1'
   end
@@ -186,6 +187,14 @@ class Outsider::Erp::Records::Query
       "(X.banco = #{S.str(company)} AND X.cliente_codigo IN (#{rows.map { |row| S.int(row.last) }.join(', ')}))"
     end
     "(#{parts.join(' OR ')})"
+  end
+
+  # { companies:, number: } — as OS de uma máquina nas unidades que enxergam o cadastro dela (Rentals::Fleet)
+  def machine(filter)
+    return if filter.nil?
+    return '1 = 0' if filter[:companies].empty?
+
+    "(X.banco IN (#{texts(filter[:companies])}) AND X.maquina = #{S.int(filter[:number])})"
   end
 
   def view(definition, mine)

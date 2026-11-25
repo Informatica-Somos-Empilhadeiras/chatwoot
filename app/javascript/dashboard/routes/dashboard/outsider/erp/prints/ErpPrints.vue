@@ -1,8 +1,10 @@
 <script setup>
 // OUTSIDER: aba "Modelos de relatório" da seção ERP (só administradores). Em cima, qual modelo sai em cada caso: a OS
 // pelo Tipo de Atendimento dela (tipo sem escolha usa o padrão) e o orçamento num só padrão; "Original do Mais Prático"
-// é o relatório de hoje, que continua valendo até alguém escolher outro. Embaixo, os modelos de OS e de orçamento (os
-// padrões já vêm prontos): editar no estúdio, copiar, restaurar o padrão ou apagar.
+// é o relatório de hoje, que continua valendo até alguém escolher outro. O contrato (pelo tipo: locação, manutenção,
+// prestação de serviço) e a ficha da máquina não têm relatório no ERP: "Modelo pronto" é o modelo de cada tipo que já
+// vem pronto aqui. Embaixo, os modelos de cada documento (os padrões já vêm prontos): editar no estúdio, copiar,
+// restaurar o padrão ou apagar.
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useAlert } from 'dashboard/composables';
@@ -56,7 +58,10 @@ const load = async () => {
 load();
 
 const ofKind = kind => templates.value.filter(item => item.kind === kind);
-const KINDS = ['os', 'quote'];
+const KINDS = ['os', 'quote', 'contract', 'machine'];
+// tipos de contrato do ERP (tipocontratos), na chave das escolhas (Prints::Document.contract_type)
+const CONTRACT_TYPES = ['LOCACAO', 'MANUTENCAO', 'SERVICO'];
+const TYPED = ['os', 'contract'];
 
 // ---------- qual modelo em cada caso ----------
 
@@ -64,17 +69,26 @@ const optionsFor = (kind, withDefault = false) => [
   ...(withDefault
     ? [{ value: DEFAULT, label: t('OUTSIDER_ERP.PRINTS.LIST.USE_DEFAULT') }]
     : []),
-  { value: ORIGINAL, label: t('OUTSIDER_ERP.PRINTS.LIST.ORIGINAL') },
+  {
+    value: ORIGINAL,
+    label: ['os', 'quote'].includes(kind)
+      ? t('OUTSIDER_ERP.PRINTS.LIST.ORIGINAL')
+      : t('OUTSIDER_ERP.PRINTS.LIST.READY_MADE'),
+  },
   ...ofKind(kind).map(item => ({ value: String(item.id), label: item.name })),
 ];
 
-const typeChoice = type => String(bindings.value.os?.types?.[type] ?? DEFAULT);
+const typeChoice = (type, kind = 'os') =>
+  String(bindings.value[kind]?.types?.[type] ?? DEFAULT);
 
-const setTypeChoice = (type, value) => {
-  const types = { ...(bindings.value.os?.types || {}) };
+const setTypeChoice = (type, value, kind = 'os') => {
+  const types = { ...(bindings.value[kind]?.types || {}) };
   if (value === DEFAULT) delete types[type];
   else types[type] = value === ORIGINAL ? ORIGINAL : Number(value);
-  bindings.value = { ...bindings.value, os: { ...bindings.value.os, types } };
+  bindings.value = {
+    ...bindings.value,
+    [kind]: { ...bindings.value[kind], types },
+  };
 };
 
 const setDefault = (kind, value) => {
@@ -110,7 +124,7 @@ const saveBindings = async () => {
       // eslint-disable-next-line no-await-in-loop
       const { data } = await ErpAPI.savePrintBindings(kind, {
         default: entry.default,
-        types: kind === 'os' ? entry.types || {} : undefined,
+        types: TYPED.includes(kind) ? entry.types || {} : undefined,
       });
       latest = data.bindings;
     }
@@ -356,6 +370,97 @@ const SELECT =
             </select>
             <p class="mb-0 text-xs text-n-slate-10">
               {{ t('OUTSIDER_ERP.PRINTS.LIST.QUOTE_HELP') }}
+            </p>
+          </div>
+        </div>
+        <div class="grid gap-4 mt-4 lg:grid-cols-[2fr_1fr]">
+          <div
+            class="overflow-hidden rounded-lg outline outline-1 outline-n-weak"
+            data-contract-bindings
+          >
+            <table class="w-full text-sm">
+              <thead class="bg-n-alpha-1 text-n-slate-11">
+                <tr>
+                  <th class="px-3 py-2 font-medium text-left">
+                    {{ t('OUTSIDER_ERP.PRINTS.LIST.CONTRACT_TYPE') }}
+                  </th>
+                  <th class="px-3 py-2 font-medium text-left w-1/2">
+                    {{ t('OUTSIDER_ERP.PRINTS.LIST.CONTRACT_TEMPLATE') }}
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="border-t border-n-weak bg-n-teal-2/40">
+                  <td class="px-3 py-1 font-medium text-n-slate-12">
+                    {{ t('OUTSIDER_ERP.PRINTS.LIST.CONTRACT_DEFAULT') }}
+                  </td>
+                  <td class="px-3 py-1">
+                    <select
+                      :class="SELECT"
+                      :value="String(bindings.contract?.default ?? ORIGINAL)"
+                      @change="setDefault('contract', $event.target.value)"
+                    >
+                      <option
+                        v-for="option in optionsFor('contract')"
+                        :key="option.value"
+                        :value="option.value"
+                      >
+                        {{ option.label }}
+                      </option>
+                    </select>
+                  </td>
+                </tr>
+                <tr
+                  v-for="type in CONTRACT_TYPES"
+                  :key="type"
+                  class="border-t border-n-weak"
+                  :data-contract-type="type"
+                >
+                  <td class="px-3 py-1 text-n-slate-12">
+                    {{ t(`OUTSIDER_ERP.PRINTS.LIST.CONTRACT_TYPES.${type}`) }}
+                  </td>
+                  <td class="px-3 py-1">
+                    <select
+                      :class="SELECT"
+                      :value="typeChoice(type, 'contract')"
+                      @change="
+                        setTypeChoice(type, $event.target.value, 'contract')
+                      "
+                    >
+                      <option
+                        v-for="option in optionsFor('contract', true)"
+                        :key="option.value"
+                        :value="option.value"
+                      >
+                        {{ option.label }}
+                      </option>
+                    </select>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div
+            class="flex flex-col gap-2 p-3 rounded-lg outline outline-1 outline-n-weak h-fit"
+          >
+            <span class="text-sm font-medium text-n-slate-12">
+              {{ t('OUTSIDER_ERP.PRINTS.LIST.MACHINE_DEFAULT') }}
+            </span>
+            <select
+              :class="SELECT"
+              :value="String(bindings.machine?.default ?? ORIGINAL)"
+              @change="setDefault('machine', $event.target.value)"
+            >
+              <option
+                v-for="option in optionsFor('machine')"
+                :key="option.value"
+                :value="option.value"
+              >
+                {{ option.label }}
+              </option>
+            </select>
+            <p class="mb-0 text-xs text-n-slate-10">
+              {{ t('OUTSIDER_ERP.PRINTS.LIST.RENTAL_HELP') }}
             </p>
           </div>
         </div>

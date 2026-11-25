@@ -36,10 +36,11 @@ RSpec.describe 'Outsider ERP print templates', type: :request do
   it 'lists the ready templates, the attendance types and the catalog' do
     call(:get, 'print_templates')
     body = response.parsed_body
-    expect(body['templates'].pluck('builtin')).to include('os_fotos', 'os_respostas', 'quote_padrao')
+    expect(body['templates'].pluck('builtin')).to include('os_fotos', 'os_respostas', 'quote_padrao', 'contract_locacao', 'machine_ficha')
     expect(body['attendance_types']).to eq(['ENTREGA TECNICA', 'MANUT. CORRETIVA', 'PREVENTIVA'])
     expect(body['attendance_labels']).to eq('ENTREGA TECNICA' => 'ENTREGA TÉCNICA')
-    expect(body['bindings']).to eq('os' => { 'default' => 'original', 'types' => {} }, 'quote' => { 'default' => 'original' })
+    expect(body['bindings']).to eq('os' => { 'default' => 'original', 'types' => {} }, 'quote' => { 'default' => 'original' },
+                                   'contract' => { 'default' => 'original', 'types' => {} }, 'machine' => { 'default' => 'original' })
     expect(body['catalog']['os']['blocks'].pluck('type')).to include('checklist')
     expect(body['catalog']['quote']['blocks'].pluck('type')).to include('totals')
   end

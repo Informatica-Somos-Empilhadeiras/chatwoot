@@ -149,6 +149,75 @@ RSpec.describe 'Outsider ERP rentals and machines' do # rubocop:disable RSpec/De
     end
   end
 
+  describe 'same-day return' do
+    it 'keeps a machine at the client when the ERP wrote the return date equal to the departure' do
+      reader = Outsider::Erp::Rentals::ContractDetail.new(account)
+      travel_to(Time.zone.parse('2026-11-25 12:00')) do
+        expect(reader.send(:returned?, { 'saida' => '2026-11-01T03:00:00.000Z', 'retorno' => '2026-11-01T03:00:00.000Z' })).to be(false)
+        expect(reader.send(:returned?, { 'saida' => '2026-11-01T03:00:00.000Z', 'retorno' => '2026-11-10T03:00:00.000Z' })).to be(true)
+        expect(reader.send(:returned?, { 'saida' => '2026-11-01T03:00:00.000Z', 'retorno' => '2026-12-10T03:00:00.000Z' })).to be(false)
+      end
+      Outsider::Erp::Records::Lister.new(account, 'machines', user: user).page({ view: 'rented' })
+      expect(page_sql).to include('DATE(D.`DataRetorno`) <= DATE(D.`DataLocacao`)')
+    end
+  end
+
+  describe 'contacts of the ERP client' do
+    it 'lists every chat contact linked to the client, the one with the latest conversation first' do
+      buyer = create(:contact, account: account, name: 'Comprador')
+      finance = create(:contact, account: account, name: 'Financeiro')
+      settings = Outsider::Erp::Settings.new(account)
+      [buyer, finance].each do |item|
+        Outsider::Erp::ContactLink.new(item).add(company: 'somosemp', code: 709, name: 'DISTRIBUIDORA', settings: settings)
+      end
+      create(:conversation, account: account, contact: finance)
+
+      detail = Outsider::Erp::Rentals::ContractDetail.new(account).build('somosemp', 1038)
+      expect(detail['contacts'].pluck('name')).to eq(%w[Financeiro Comprador])
+      expect(detail['contact_id']).to eq(finance.id)
+    end
+  end
+
+  describe 'documents' do
+    it 'prints the contract in the ready rental template and the machine sheet' do
+      travel_to(Time.zone.parse('2026-11-25 12:00')) do
+        contract_pdf = Outsider::Erp::Prints::Document.contract(account, 'somosemp', 1038)
+        expect(contract_pdf.filename).to eq('Contrato 1038.pdf')
+        expect(contract_pdf.render).to start_with('%PDF')
+        expect(Outsider::Erp::PrintTemplate.where(account: account, kind: 'contract').pluck(:builtin))
+          .to contain_exactly('contract_locacao', 'contract_manutencao')
+
+        machine_pdf = Outsider::Erp::Prints::Document.machine(account, 'somosfilial', 18_110)
+        expect(machine_pdf.render).to start_with('%PDF')
+      end
+    end
+
+    it 'fills the contract values for the template' do
+      values = Outsider::Erp::Prints::Values.new('contract', Outsider::Erp::Prints::Sample.contract, unit_name: 'Matriz').build
+      expect(values['groups']['contrato']).to include('valor' => 'R$ 14.700,00 por mês', 'prazo' => '12 meses', 'faturamento' => 'Todo dia 5',
+                                                      'tipo' => 'Locação')
+      expect(values['tables']['maquinas'].first).to include('serie' => '18110', 'valor' => '9.800,00')
+      expect(values['placeholders']).to include('cliente' => 'LOGÍSTICA ATLÂNTICO LTDA', 'documento' => '12.345.678/0001-90')
+    end
+
+    it 'uses the template chosen for the contract type' do
+      Outsider::Erp::Prints::Defaults.ensure!(account, 'contract')
+      chosen = Outsider::Erp::PrintTemplate.create!(account: account, kind: 'contract', name: 'Nosso contrato',
+                                                    content: Outsider::Erp::Prints::Defaults.content('contract_locacao'))
+      Outsider::Erp::Prints::Bindings.new(account).update('contract', default: 'original', types: { 'LOCAÇÃO' => chosen.id })
+
+      expect(Outsider::Erp::Prints::Document.rental_template(account, 'contract', 'LOCACAO')).to eq(chosen)
+      expect(Outsider::Erp::Prints::Document.rental_template(account, 'contract', 'MANUTENCAO').builtin).to eq('contract_manutencao')
+    end
+  end
+
+  describe 'OS of a machine' do
+    it 'filters the OS list by the machine in every unit that shares its register' do
+      Outsider::Erp::Records::Lister.new(account, 'orders', user: user).page({ view: 'all', machine: 'somosemp:18110' })
+      expect(page_sql).to include("(X.banco IN ('somosemp', 'somosfilial') AND X.maquina = 18110)", 'O.`CodigoMaquina` AS maquina')
+    end
+  end
+
   describe 'contact block' do
     it 'shows the contracts of the linked ERP clients with the machines still at the client' do
       result = Outsider::Erp::Rentals::ClientSummary.new(account).build([{ 'empresa' => 'somosemp', 'codigo' => 709 },

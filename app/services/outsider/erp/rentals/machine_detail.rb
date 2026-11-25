@@ -27,14 +27,27 @@ class Outsider::Erp::Rentals::MachineDetail < Outsider::Erp::Rentals::Reader
     header = header(base, number)
     members = @fleet.members(base)
     links = links(members, number)
+    now = now(header, links[:contracts])
+    owner = header['propria'].to_i == 1 ? {} : customer(base, header['dono_codigo'])
+    holder = holder(base, header, now, owner)
     {
-      'kind' => 'machines', 'company' => base, 'numero' => number.to_i, 'header' => header,
-      'dono' => header['propria'].to_i == 1 ? {} : customer(base, header['dono_codigo']),
-      'agora' => now(header, links[:contracts]), 'timeline' => timeline(links)
-    }.merge(links.transform_keys(&:to_s)).merge(contact(base, header['propria'].to_i == 1 ? 0 : header['dono_codigo']))
+      'kind' => 'machines', 'company' => base, 'numero' => number.to_i, 'header' => header, 'dono' => owner,
+      'agora' => now, 'cliente_atual' => holder, 'timeline' => timeline(links)
+    }.merge(links.transform_keys(&:to_s)).merge(contact(holder['banco'], holder['codigo']))
   end
 
   private
+
+  # o cliente com quem a máquina está: o do contrato ativo; sem contrato, o dono (máquina da frota sem contrato: ninguém)
+  def holder(base, header, now, owner)
+    place = now['contrato'].to_h
+    if place['cliente_codigo'].to_i.positive?
+      return { 'banco' => place['banco'], 'codigo' => place['cliente_codigo'].to_i, 'nome' => place['cliente'] }
+    end
+    return { 'banco' => base, 'codigo' => 0 } if header['propria'].to_i == 1
+
+    { 'banco' => base, 'codigo' => header['dono_codigo'].to_i, 'nome' => owner['nome'] }
+  end
 
   def header(base, number)
     sql = "SELECT #{list(base, 'equipamentos', 'O', HEADER)}, #{@machine_status.status} AS situacao, #{@machine_status.fields.join(', ')} " \
@@ -67,7 +80,7 @@ class Outsider::Erp::Rentals::MachineDetail < Outsider::Erp::Rentals::Reader
         "#{client_name(member)} AS cliente FROM #{bank}.detalhecontrato D JOIN #{bank}.contrato C ON C.`CodigoContrato` = D.`CodigoContrato` " \
         "LEFT JOIN #{bank}.clientes K ON K.`CodigoCliente` = C.`CodigoCliente` WHERE D.`CodigoEquipto` = #{S.int(number)}"
     end
-    run(sql).map { |row| row.merge('devolvida' => past?(row['retorno'])) }
+    run(sql).map { |row| row.merge('devolvida' => returned?(row)) }
   end
 
   def client_name(company)

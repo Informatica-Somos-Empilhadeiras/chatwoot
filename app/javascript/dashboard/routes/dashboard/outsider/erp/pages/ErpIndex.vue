@@ -88,8 +88,9 @@ const kind = computed(() =>
   tab.value === 'notas' ? notesMode.value : kindForTab(tab.value)
 );
 const osMode = ref(stored(MODE_KEY, ['table', 'board'], 'table'));
+// "Ver OS da máquina" (?machine=) abre sempre a lista, que filtra pela máquina
 const showBoard = computed(
-  () => tab.value === 'os' && osMode.value === 'board'
+  () => tab.value === 'os' && osMode.value === 'board' && !route.query.machine
 );
 const fills = computed(
   () => (kind.value && !showBoard.value) || tab.value === 'produtos'

@@ -61,9 +61,8 @@ class Outsider::Erp::Rentals::Reader
 
   def customer(company, code) = Outsider::Erp::CustomerRecord.new(@account, client: @client).find(company, code)
 
-  def contact(company, code)
-    Outsider::Erp::Records::ContactFinder.new(@account).for_clients([[company, code.to_i]]).values.first || {}
-  end
+  # os contatos do chat ligados ao cliente (o da conversa mais recente primeiro)
+  def contact(company, code) = Outsider::Erp::Records::ContactFinder.new(@account).for_client(company, code)
 
   def person(company, code) = Outsider::Erp::SellerName.new(@account, client: @client).for_code(company, code)
 
@@ -75,6 +74,21 @@ class Outsider::Erp::Rentals::Reader
   def chronological(events)
     events.select { |item| item['at'].present? }.each_with_index
           .sort_by { |item, index| [Time.zone.parse(item['at'].to_s) || Time.zone.at(0), index] }.map(&:first)
+  end
+
+  # a máquina voltou do contrato: retorno já passou e depois do dia da saída (o ERP grava DataRetorno igual à DataLocacao
+  # quando cadastra o item, então retorno no mesmo dia da saída ainda é máquina no cliente)
+  def returned?(row)
+    return false unless past?(row['retorno'])
+
+    out = day(row['saida'])
+    out.nil? || day(row['retorno']) > out
+  end
+
+  def day(value)
+    Time.zone.parse(value.to_s)&.in_time_zone('America/Sao_Paulo')&.to_date
+  rescue ArgumentError
+    nil
   end
 
   def past?(value)

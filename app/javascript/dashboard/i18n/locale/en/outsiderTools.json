@@ -1206,7 +1206,7 @@
       },
       "ERP_RENTALS": {
         "LABEL": "Rentals and machines",
-        "HINT": "View: browse contracts, machines (current status and timeline) and rental invoices (read only)."
+        "HINT": "View: browse contracts, machines (current status and timeline) and rental invoices, and open the contract and machine sheet PDFs. Use: send those PDFs to the customer and link chat contacts to the ERP customer."
       },
       "ERP_CLIENTS": {
         "LABEL": "Client registration",

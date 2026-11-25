@@ -35,7 +35,7 @@ class Outsider::Erp::Records::Lister
   def companies = @companies ||= @kind.companies(@settings.companies)
 
   def base_filters(params)
-    { q: params[:q], from: params[:from], to: params[:to], clients: clients(params[:clients]),
+    { q: params[:q], from: params[:from], to: params[:to], clients: clients(params[:clients]), machine: machine(params[:machine]),
       dimensions: @kind.dimensions.keys.index_with { |key| params[key].presence }.compact }
   end
 
@@ -83,6 +83,14 @@ class Outsider::Erp::Records::Lister
       company, code = row.is_a?(Hash) ? row.with_indifferent_access.values_at(:empresa, :codigo) : row
       [company.to_s, code.to_i] if @settings.companies.include?(company.to_s) && code.to_i.positive?
     end
+  end
+
+  # "somosemp:18110" (cadastro base da máquina): as OS dela em todas as unidades que enxergam aquele cadastro
+  def machine(value)
+    base, number = value.to_s.split(':', 2)
+    return unless @kind.columns.key?(:maquina) && number.to_i.positive? && @settings.companies.include?(base.to_s)
+
+    { companies: Outsider::Erp::Rentals::Fleet.new(@account, client: @client).members(base) & companies, number: number.to_i }
   end
 
   # código do ERP de quem está vendo (Configurações > pessoas do chat x código do ERP)
