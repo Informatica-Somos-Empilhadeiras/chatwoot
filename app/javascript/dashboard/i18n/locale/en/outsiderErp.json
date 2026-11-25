@@ -1347,6 +1347,12 @@
           "NOTES": "invoices",
           "RENTAL_INVOICES": "rental inv."
         },
+        "LINK_LIST": {
+          "CONTRACTS": "Contracts with this machine ({n})",
+          "ORDERS": "Work orders for this machine ({n})",
+          "NOTES": "Invoices from this machine's work orders ({n})",
+          "RENTAL_INVOICES": "Rental invoices with this machine ({n})"
+        },
         "OPEN_ORDERS": "{n} open | {n} open",
         "TECH": "Technical notes and accessories",
         "TIMELINE": "Machine timeline",
@@ -1526,7 +1532,7 @@
         "SCHEDULED": "Sub status Schedule service",
         "SCHEDULE_FAILED": "Sub status Schedule service did not go in: change it on the work order board",
         "OFFICIAL_ROUTE": "official route",
-        "NEXT_FRESH": "Next step at the office: open work order {number} in Mais Prático and save it, to compute taxes and the official total. Until then it has the estimated total of {total}.",
+        "NEXT_FRESH": "Next step at the office: open work order {number} in Mais Prático and save it to compute taxes and the official total. Until then it has no total in the ERP (the estimate here was {total}).",
         "NEXT_CONVERSION": "Parts, prices and taxes came from quote {number}, the same way the desktop conversion saves them. The quote shows work order {os} in its follow-up.",
         "BY": "Saved by {name} on {date}",
         "CANCEL_CONFIRM_HINT": "The work order gets status CANCELADA in Mais Prático (nothing is deleted). Use it only if it was saved by mistake. Click \"Confirm\" again to cancel."

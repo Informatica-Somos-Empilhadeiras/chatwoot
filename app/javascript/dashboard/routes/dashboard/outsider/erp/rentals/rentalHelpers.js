@@ -85,3 +85,7 @@ export const hourMeter = value => {
   if (!Number.isFinite(number)) return text;
   return number > 0 ? `${Math.round(number).toLocaleString('pt-BR')} h` : '';
 };
+
+// "Vínculos" da ficha da máquina: o tipo aberto (CONTRACTS, ORDERS...) por "empresa:máquina", para o "Voltar" do painel
+// reabrir a ficha com a mesma lista aberta
+export const machineLinkTabs = new Map();

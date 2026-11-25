@@ -1347,6 +1347,12 @@
           "NOTES": "notas",
           "RENTAL_INVOICES": "faturas"
         },
+        "LINK_LIST": {
+          "CONTRACTS": "Contratos desta máquina ({n})",
+          "ORDERS": "OS desta máquina ({n})",
+          "NOTES": "Notas fiscais das OS desta máquina ({n})",
+          "RENTAL_INVOICES": "Faturas de locação com esta máquina ({n})"
+        },
         "OPEN_ORDERS": "{n} aberta | {n} abertas",
         "TECH": "Descrição técnica e acessórios",
         "TIMELINE": "Linha do tempo da máquina",
@@ -1526,7 +1532,7 @@
         "SCHEDULED": "Sub status Agendar atendimento",
         "SCHEDULE_FAILED": "Sub status Agendar atendimento não entrou: troque no quadro de OS",
         "OFFICIAL_ROUTE": "rota oficial",
-        "NEXT_FRESH": "Próximo passo no escritório: abrir a OS {number} no Mais Prático e salvar, para calcular impostos e o total oficial. Até lá ela tem o total estimado de {total}.",
+        "NEXT_FRESH": "Próximo passo no escritório: abrir a OS {number} no Mais Prático e salvar, para calcular impostos e o total oficial. Até lá a OS fica sem total no ERP (o estimado aqui foi {total}).",
         "NEXT_CONVERSION": "Peças, valores e impostos vieram do orçamento {number}, do mesmo jeito que a conversão do desktop grava. O orçamento mostra a OS {os} no Acompanhamento.",
         "BY": "Gravada por {name} em {date}",
         "CANCEL_CONFIRM_HINT": "A OS fica com a situação CANCELADA no Mais Prático (nada é apagado). Use só se ela foi gravada por engano. Clique de novo em \"Confirmar\" para cancelar."

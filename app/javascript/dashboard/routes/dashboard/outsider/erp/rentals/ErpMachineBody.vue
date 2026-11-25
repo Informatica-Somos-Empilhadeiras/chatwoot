@@ -1,17 +1,13 @@
 <script setup>
 // OUTSIDER: corpo da ficha da máquina (Outsider::Erp::Rentals::MachineDetail): dados técnicos, onde ela está agora
 // (contrato ativo com o cliente, OS aberta, disponível na Somos ou com o dono), o dono quando é do cliente, os vínculos
-// (contratos, OS, notas e faturas) e a linha do tempo da máquina com as abas Tudo / OS / Contratos / Notas.
+// (contratos, OS, notas e faturas: ErpMachineLinks, clicáveis) e a linha do tempo da máquina com as abas Tudo / OS / Contratos / Notas.
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
 import ErpRentalTimeline from './ErpRentalTimeline.vue';
-import {
-  formatDate,
-  formatMoney,
-  companyName,
-  isOrderLocked,
-} from '../erpStore';
+import ErpMachineLinks from './ErpMachineLinks.vue';
+import { formatDate, formatMoney, companyName } from '../erpStore';
 import { titleCase } from '../records/recordsConfig';
 import { contractTypeLabel, hourMeter } from './rentalHelpers';
 
@@ -75,35 +71,6 @@ const place = computed(() => {
 });
 
 const owner = computed(() => props.detail.dono || {});
-
-const links = computed(() => {
-  const orders = props.detail.orders || [];
-  const open = orders.filter(
-    row => !isOrderLocked({ Situacao: row.status })
-  ).length;
-  const notes =
-    (props.detail.invoices || []).length +
-    (props.detail.service_invoices || []).length;
-  return [
-    [
-      'CONTRACTS',
-      (props.detail.contracts || []).length,
-      'i-lucide-file-signature',
-    ],
-    [
-      'ORDERS',
-      orders.length,
-      'i-lucide-wrench',
-      open ? t('OUTSIDER_ERP.RENTALS.MACHINE.OPEN_ORDERS', open) : '',
-    ],
-    ['NOTES', notes, 'i-lucide-receipt-text'],
-    [
-      'RENTAL_INVOICES',
-      (props.detail.rental_invoices || []).length,
-      'i-lucide-receipt',
-    ],
-  ];
-});
 
 const LABEL =
   'text-[11px] font-medium uppercase tracking-wider text-n-slate-10';
@@ -189,27 +156,11 @@ const LABEL =
       </span>
     </section>
 
-    <section class="flex flex-col gap-2">
-      <h4 :class="LABEL" class="mb-0">{{ rt('MACHINE.LINKS') }}</h4>
-      <div class="grid grid-cols-4 gap-2">
-        <div
-          v-for="[key, count, icon, note] in links"
-          :key="key"
-          class="flex flex-col items-center gap-1 px-1 py-2 text-center rounded-lg bg-n-alpha-1"
-        >
-          <Icon :icon="icon" class="size-4 text-n-slate-10" />
-          <span class="text-[13px] font-semibold tabular-nums text-n-slate-12">
-            {{ count }}
-          </span>
-          <span class="text-[11px] leading-tight text-n-slate-10">
-            {{ rt(`MACHINE.LINK.${key}`) }}
-          </span>
-          <span v-if="note" class="text-[10px] text-n-amber-11">
-            {{ note }}
-          </span>
-        </div>
-      </div>
-    </section>
+    <ErpMachineLinks
+      :detail="detail"
+      :can-open="canOpen"
+      @open="node => emit('open', node)"
+    />
 
     <section
       v-if="h.descricao_tecnica || h.acessorios"
