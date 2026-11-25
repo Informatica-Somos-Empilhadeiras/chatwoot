@@ -28,11 +28,12 @@ class Api::V1::Accounts::Outsider::Erp::StatusesController < Api::V1::Accounts::
     { nextcloud_invoices: settings.nextcloud_enabled?, product_photos: settings.product_photos_enabled? }
   end
 
-  # gravações com flag própria: orçamento e cadastro de cliente (Outsider::Erp::ClientRegistrar)
+  # gravações com flag própria: orçamento, cadastro de cliente (Outsider::Erp::ClientRegistrar) e OS feita no chat
   def writes
     {
       quote_write_enabled: settings.quote_write_enabled?, can_create_quote: settings.enabled? && can_create_quote?,
-      client_write_enabled: settings.client_write_enabled?, can_register_client: can_register_client?
+      client_write_enabled: settings.client_write_enabled?, can_register_client: can_register_client?,
+      can_create_order: can_create_order?, can_convert_quote: can_convert_quote?, order_companies: settings.order_companies
     }
   end
 end

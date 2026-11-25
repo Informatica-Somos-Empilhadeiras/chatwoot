@@ -68,6 +68,7 @@ const fill = data => {
     extra_fields: (data.settings.extra_fields || []).map(row => ({ ...row })),
     user_erp_ids: { ...(data.settings.user_erp_ids || {}) },
     company_names: { ...(data.settings.company_names || {}) },
+    order_companies: [...(data.settings.order_companies || [])],
   };
   people.value = data.people || [];
   quoteLists.value = data.quote_lists || {};
@@ -173,6 +174,14 @@ const confirmedText = computed(() =>
     ),
   ].join(' · ')
 );
+
+// OS feita no chat: unidades liberadas (marca e desmarca)
+const toggleOrderCompany = db => {
+  const list = form.value.order_companies || [];
+  form.value.order_companies = list.includes(db)
+    ? list.filter(item => item !== db)
+    : [...list, db];
+};
 
 const addField = () =>
   form.value.extra_fields.push({ field: '', endpoint: '' });
@@ -546,6 +555,50 @@ const removeField = index => form.value.extra_fields.splice(index, 1);
         <Switch v-model="form.client_write_enabled" />
         {{ t('OUTSIDER_ERP.SETTINGS.CLIENT_WRITE_ENABLED') }}
       </label>
+    </section>
+
+    <!-- OS feita no chat: Nova OS e Converter orçamento em OS (Outsider::Erp::Orders::Creator), por unidade -->
+    <section class="flex flex-col gap-4" data-erp-settings-orders>
+      <div class="flex flex-col gap-1">
+        <h3 class="text-base font-medium text-n-slate-12">
+          {{ t('OUTSIDER_ERP.SETTINGS.ORDERS_WRITE') }}
+        </h3>
+        <p class="mb-0 text-sm text-n-slate-11">
+          {{ t('OUTSIDER_ERP.SETTINGS.ORDERS_WRITE_HINT') }}
+        </p>
+      </div>
+      <div class="flex flex-wrap gap-x-8 gap-y-3">
+        <label class="flex items-center gap-2 text-sm text-n-slate-12">
+          <Switch v-model="form.order_create_enabled" />
+          {{ t('OUTSIDER_ERP.SETTINGS.ORDER_CREATE_ENABLED') }}
+        </label>
+        <label class="flex items-center gap-2 text-sm text-n-slate-12">
+          <Switch v-model="form.quote_convert_enabled" />
+          {{ t('OUTSIDER_ERP.SETTINGS.QUOTE_CONVERT_ENABLED') }}
+        </label>
+      </div>
+      <div class="flex flex-col gap-2 text-sm">
+        <span class="text-n-slate-11">{{
+          t('OUTSIDER_ERP.SETTINGS.ORDER_COMPANIES')
+        }}</span>
+        <div class="flex flex-wrap gap-x-5 gap-y-2">
+          <label
+            v-for="db in companyList"
+            :key="db"
+            class="flex items-center gap-2 text-n-slate-12"
+          >
+            <input
+              type="checkbox"
+              :checked="(form.order_companies || []).includes(db)"
+              @change="toggleOrderCompany(db)"
+            />
+            {{ form.company_names[db] || companyName(db) }}
+          </label>
+        </div>
+        <span class="text-xs text-n-slate-10">{{
+          t('OUTSIDER_ERP.SETTINGS.ORDER_COMPANIES_HINT')
+        }}</span>
+      </div>
     </section>
 
     <!-- orçamento de peças e serviços: gravação no ERP, padrões do formulário, desconto e envio -->

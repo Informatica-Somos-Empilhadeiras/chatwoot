@@ -1,7 +1,8 @@
 <script setup>
 // OUTSIDER: peças e serviços do orçamento. Quantidade, valor e desconto (%) se editam direto na linha; a busca de produto
 // fica embaixo da tabela (ErpProductSearch), assim a lista que abre não tapa os itens já escolhidos. Item com foto tem o
-// botão "Fotos (n)", que abre o carrossel (ErpPhotoViewer) como na busca.
+// botão "Fotos (n)", que abre o carrossel (ErpPhotoViewer) como na busca. discount: false (OS feita no chat) tira a coluna
+// de desconto: na OS o desconto fica para o escritório, como no app.
 import { ref, computed, watch, inject } from 'vue';
 import { useI18n } from 'vue-i18n';
 import ErpAPI from 'dashboard/api/outsider/erp';
@@ -22,6 +23,7 @@ const props = defineProps({
   readOnly: { type: Boolean, default: false },
   // desconto livre até este % (acima, a linha fica em vermelho e o orçamento pede liberação); null = sem limite
   discountMax: { type: Number, default: null },
+  discount: { type: Boolean, default: true },
 });
 
 const items = defineModel({ type: Array, default: () => [] });
@@ -98,8 +100,11 @@ const shown = (item, field) => {
 
 const INPUT =
   '!mb-0 h-8 px-2 text-sm text-right rounded-lg reset-base bg-n-solid-1 text-n-slate-12 outline outline-1 -outline-offset-1 outline-n-slate-6 focus:outline-n-brand disabled:opacity-70';
-const ROW =
-  'flex flex-wrap items-center gap-2 sm:grid sm:grid-cols-[2.5rem_3.5rem_minmax(0,1fr)_4.5rem_6.5rem_4.5rem_6rem_1.75rem] sm:gap-3';
+const ROW = computed(() =>
+  props.discount
+    ? 'flex flex-wrap items-center gap-2 sm:grid sm:grid-cols-[2.5rem_3.5rem_minmax(0,1fr)_4.5rem_6.5rem_4.5rem_6rem_1.75rem] sm:gap-3'
+    : 'flex flex-wrap items-center gap-2 sm:grid sm:grid-cols-[2.5rem_3.5rem_minmax(0,1fr)_4.5rem_6.5rem_6rem_1.75rem] sm:gap-3'
+);
 
 defineExpose({ focusSearch: () => searchRef.value?.focus() });
 </script>
@@ -116,7 +121,7 @@ defineExpose({ focusSearch: () => searchRef.value?.focus() });
       <span>{{ t('OUTSIDER_ERP.BUDGET.ITEMS.DESCRIPTION') }}</span>
       <span class="text-right">{{ t('OUTSIDER_ERP.BUDGET.ITEMS.QTY') }}</span>
       <span class="text-right">{{ t('OUTSIDER_ERP.BUDGET.ITEMS.PRICE') }}</span>
-      <span class="text-right">{{
+      <span v-if="discount" class="text-right">{{
         t('OUTSIDER_ERP.BUDGET.ITEMS.DISCOUNT')
       }}</span>
       <span class="text-right">{{ t('OUTSIDER_ERP.BUDGET.ITEMS.TOTAL') }}</span>
@@ -198,6 +203,7 @@ defineExpose({ focusSearch: () => searchRef.value?.focus() });
         @blur="normalize(index, 'preco')"
       />
       <input
+        v-if="discount"
         :value="shown(item, 'desconto')"
         inputmode="decimal"
         :aria-label="t('OUTSIDER_ERP.BUDGET.ITEMS.DISCOUNT')"

@@ -17,6 +17,10 @@ export const erpState = reactive({
   canCreateQuote: false,
   // cadastrar cliente no ERP: gravação ligada nas Configurações + "Usa" no Cadastro de clientes do perfil
   canRegisterClient: false,
+  // OS feita no chat: Nova OS e Converter em OS (Configurações + perfil) e as unidades liberadas para elas
+  canCreateOrder: false,
+  canConvertQuote: false,
+  orderCompanies: [],
   administrator: false,
   fields: [],
   fieldKinds: {},
@@ -52,6 +56,9 @@ export const loadErpStatus = async accountId => {
       quoteWriteEnabled: data.quote_write_enabled,
       canCreateQuote: data.can_create_quote,
       canRegisterClient: data.can_register_client === true,
+      canCreateOrder: data.can_create_order === true,
+      canConvertQuote: data.can_convert_quote === true,
+      orderCompanies: data.order_companies || [],
       administrator: data.administrator,
       fields: data.fields || [],
       fieldKinds: data.field_kinds || {},

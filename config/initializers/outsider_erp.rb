@@ -106,6 +106,18 @@ Rails.application.routes.prepend do
                 put 'attribution', to: 'sale_attributions#update'
                 delete 'attribution', to: 'sale_attributions#destroy'
               end
+              # OS feita no chat (Nova OS) e conversão de orçamento do ERP em OS
+              resources :order_drafts, only: [:index, :show, :create, :update, :destroy] do
+                collection do
+                  get :options
+                  get :machines
+                  get :preview
+                end
+                member do
+                  post :submit
+                  post :cancel_os
+                end
+              end
               # orçamento de peças e serviços feito no chat (separado da proposta comercial do CRM)
               resources :budgets, only: [:index, :show, :create, :update, :destroy] do
                 collection do

@@ -1212,6 +1212,14 @@
         "LABEL": "Cadastro de clientes",
         "HINT": "Usa: cadastra cliente novo no ERP (pré-cadastro, como o aplicativo de vendas)."
       },
+      "ERP_ORDER_CREATE": {
+        "LABEL": "Criar OS pelo chat",
+        "HINT": "Usa: grava no ERP uma OS nova feita no chat (pré-OS com peças e serviços, como a do aplicativo). O ERP ainda confere a permissão de inclusão de OS do seu usuário de lá."
+      },
+      "ERP_QUOTE_CONVERT": {
+        "LABEL": "Converter orçamento em OS",
+        "HINT": "Usa: converte um orçamento em NEGOCIAÇÃO em OS, ligando os dois como o Mais Prático faz. O ERP ainda confere a permissão \"Conversão OS\" do seu usuário de lá."
+      },
       "REPORTS": {
         "LABEL": "Relatórios do ERP",
         "HINT": "Não vê: as abas de relatório somem da seção ERP. Os relatórios abaixo nunca passam deste nível."

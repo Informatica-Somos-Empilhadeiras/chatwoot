@@ -55,6 +55,11 @@ class Api::V1::Accounts::Outsider::Erp::BaseController < Api::V1::Accounts::Base
     settings.client_write_enabled? && allows_screen?('erp_clients', 'use')
   end
 
+  # OS feita no chat (Outsider::Erp::OrderDraft): Nova OS e Converter em OS ligadas nas Configurações + "Usa" na linha do
+  # perfil de acesso de cada uma
+  def can_create_order? = settings.order_create_enabled? && allows_screen?('erp_order_create', 'use')
+  def can_convert_quote? = settings.quote_convert_enabled? && allows_screen?('erp_quote_convert', 'use')
+
   # abas da seção ERP no perfil de acesso (erp_quotes, erp_orders, erp_sales)
   def allows_screen?(screen, level = 'view')
     ::Outsider::Access.for(Current.account_user).allows?(screen, level)

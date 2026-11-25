@@ -1,7 +1,8 @@
 <script setup>
 // OUTSIDER: painel de detalhe da seção ERP (/outsider/erp/records/:kind/:empresa/:número): cabeçalho, ações, a corrente
 // orçamento -> OS -> pedido (nós clicáveis), dados, cliente, itens, totais e a linha do tempo. Orçamento: Editar (só em
-// NEGOCIAÇÃO e fechado no Mais Prático), Ver PDF, Enviar e Copiar, pela gaveta do orçamento. OS: a edição de sempre
+// NEGOCIAÇÃO e fechado no Mais Prático), Ver PDF, Enviar e Copiar, pela gaveta do orçamento, e "Converter em OS"
+// (ErpQuoteConvertDialog, em NEGOCIAÇÃO, sem OS e sem pedido, na unidade liberada). OS: a edição de sempre
 // (ErpOrderEditor), travada quando a OS está fechada. Pedido: técnico e OS informados no chat (ErpSaleAttribution, só
 // no Chatwoot). Notas (NF-e, NFS-e): só leitura. Um nó da corrente troca o
 // painel aqui mesmo (sem mudar de aba), com "Voltar" para o registro anterior.
@@ -23,6 +24,8 @@ import ErpPdfDialog from '../budgets/ErpPdfDialog.vue';
 import ErpDocumentSendDialog from '../components/ErpDocumentSendDialog.vue';
 import ErpClientChat from './ErpClientChat.vue';
 import ErpOrderScheduleDialog from '../components/ErpOrderScheduleDialog.vue';
+import ErpQuoteConvertDialog from '../orders/ErpQuoteConvertDialog.vue';
+import { isNegotiation } from '../orders/orderHelpers';
 import { useOrderReady } from '../components/orderReady';
 import { fetchCloud, cloudKey, CLOUD_KINDS } from './invoiceCloud';
 import { budgetErrorMessage } from '../budgets/budgetHelpers';
@@ -336,6 +339,27 @@ const startEdit = () =>
     drawerRef.value?.open(data.budget, { focus: true });
   });
 
+// Converter em OS: como no desktop, só orçamento em NEGOCIAÇÃO que ainda não virou OS nem pedido (a tela confere de novo)
+const convertRef = ref(null);
+const convertible = computed(
+  () =>
+    erpState.canConvertQuote &&
+    erpState.orderCompanies.includes(view.value.company) &&
+    isNegotiation(header.value.status) &&
+    !(detail.value?.chain || []).some(node =>
+      ['orders', 'sales'].includes(node.kind)
+    )
+);
+const convert = () =>
+  convertRef.value?.open({
+    company: view.value.company,
+    number: view.value.number,
+    customerCode: header.value.cliente_codigo,
+    customerName: client.value.nome,
+    contactId: detail.value?.contact_id || null,
+    conversationId: detail.value?.conversation_id || null,
+  });
+
 // PDF direto do ERP (sem criar registro); orçamento em edição no chat mostra a prévia dele
 const showPdf = () =>
   run('pdf', async () => {
@@ -560,6 +584,16 @@ const LABEL =
           :label="t('OUTSIDER_ERP.BUDGET.ACTIONS.COPY')"
           :is-loading="busy === 'copy'"
           @click="copy"
+        />
+        <Button
+          v-if="convertible"
+          size="sm"
+          variant="faded"
+          color="teal"
+          icon="i-lucide-wrench"
+          :label="t('OUTSIDER_ERP.ORDER_DRAFT.CONVERT.BUTTON')"
+          data-erp-convert-quote
+          @click="convert"
         />
       </div>
       <p
@@ -938,5 +972,6 @@ const LABEL =
     <ErpPdfDialog ref="pdfRef" />
     <ErpDocumentSendDialog ref="sendDialogRef" />
     <ErpOrderScheduleDialog ref="scheduleRef" @changed="load" />
+    <ErpQuoteConvertDialog ref="convertRef" @converted="refresh" />
   </aside>
 </template>

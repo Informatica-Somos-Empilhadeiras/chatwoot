@@ -3,6 +3,7 @@
 // orçamentos feitos no chat (rascunhos e gravados) com o espelho dos orçamentos do ERP (os feitos no Mais Prático):
 // o mesmo orçamento aparece uma vez só. PDF, Enviar e Copiar valem para os dois; o do ERP vira registro na hora.
 // Mostra os 5 mais novos; "Ver todos no ERP" abre a seção ERP filtrada pelos clientes deste contato (todo o histórico).
+// Orçamento em NEGOCIAÇÃO, sem OS e sem pedido, numa unidade liberada: "Converter em OS" (ErpQuoteConvertDialog).
 import { ref, computed, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useI18n } from 'vue-i18n';
@@ -13,6 +14,8 @@ import Icon from 'dashboard/components-next/icon/Icon.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 import ErpBudgetDrawer from './ErpBudgetDrawer.vue';
 import ErpPdfDialog from './ErpPdfDialog.vue';
+import ErpQuoteConvertDialog from '../orders/ErpQuoteConvertDialog.vue';
+import { isNegotiation } from '../orders/orderHelpers';
 import {
   ERP_ROUTE,
   erpState,
@@ -43,6 +46,9 @@ const busy = ref('');
 const showAll = ref(false);
 const drawerRef = ref(null);
 const pdfRef = ref(null);
+const convertRef = ref(null);
+// orçamentos convertidos agora pelo chat ({ unidade:número => OS }): o espelho do ERP só atualiza depois
+const converted = ref({});
 
 const LIMIT = 5;
 const route = useRoute();
@@ -222,6 +228,37 @@ const draftChip = budget => {
   };
 };
 
+const convertible = row => {
+  const quote = row.quote;
+  if (!quote || !erpState.canConvertQuote) return false;
+  if (!erpState.orderCompanies.includes(quote.Banco)) return false;
+  if (converted.value[quoteKey(quote.Banco, quote.CodigoOrcamento)])
+    return false;
+  return (
+    isNegotiation(quote.Status) &&
+    !Number(quote.OrdemServico) &&
+    !Number(quote.Pedido)
+  );
+};
+
+const convert = row =>
+  convertRef.value?.open({
+    company: row.quote.Banco,
+    number: row.quote.CodigoOrcamento,
+    customerCode: row.quote.CodigoCliente,
+    customerName: row.quote.Cliente,
+    contactId: props.contactId,
+    conversationId: props.conversationId,
+  });
+
+const onConverted = draft => {
+  if (draft.status !== 'created') return;
+  converted.value = {
+    ...converted.value,
+    [quoteKey(draft.company, draft.quote_number)]: draft.erp_number,
+  };
+};
+
 const lastSend = budget => {
   const send = budget?.last_send;
   if (!send) return '';
@@ -363,6 +400,21 @@ const lastSend = budget => {
           </span>
         </div>
         <span
+          v-if="
+            row.quote &&
+            converted[quoteKey(row.quote.Banco, row.quote.CodigoOrcamento)]
+          "
+          class="text-xs text-n-teal-11"
+        >
+          {{
+            t('OUTSIDER_ERP.ORDER_DRAFT.CONVERT.CONVERTED_ROW', {
+              os: converted[
+                quoteKey(row.quote.Banco, row.quote.CodigoOrcamento)
+              ],
+            })
+          }}
+        </span>
+        <span
           v-if="row.quote?.OrdemServico || row.quote?.Pedido"
           class="text-xs text-n-slate-11"
         >
@@ -407,6 +459,16 @@ const lastSend = budget => {
             :label="t('OUTSIDER_ERP.BUDGET.ACTIONS.COPY')"
             :is-loading="busy === `copy-${row.key}`"
             @click="copy(row)"
+          />
+          <Button
+            v-if="convertible(row)"
+            size="xs"
+            variant="faded"
+            color="teal"
+            icon="i-lucide-wrench"
+            :label="t('OUTSIDER_ERP.ORDER_DRAFT.CONVERT.BUTTON')"
+            data-erp-convert-quote
+            @click="convert(row)"
           />
         </div>
       </template>
@@ -461,5 +523,6 @@ const lastSend = budget => {
       @removed="removed"
     />
     <ErpPdfDialog ref="pdfRef" />
+    <ErpQuoteConvertDialog ref="convertRef" @converted="onConverted" />
   </div>
 </template>

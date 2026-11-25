@@ -33,6 +33,10 @@ module Outsider::Access::Catalog
     # Locação e máquinas: contratos, máquinas e faturas de locação (Vê) e o PDF do contrato e da ficha enviado ao cliente (Usa)
     { key: 'erp_rentals', group: 'erp', levels: %w[none view use], agent: 'use', technician: 'none', parent: 'erp' },
     { key: 'erp_clients', group: 'erp', levels: %w[none use], agent: 'use', technician: 'none', parent: 'erp' },
+    # OS pelo chat: criar OS e converter orçamento em OS (gravam direto nas tabelas de OS do ERP). Começam fechadas para agente
+    # e técnico: o administrador libera no perfil de quem pode (o ERP ainda confere a permissão do usuário de lá)
+    { key: 'erp_order_create', group: 'erp', levels: %w[none use], agent: 'none', technician: 'none', parent: 'erp' },
+    { key: 'erp_quote_convert', group: 'erp', levels: %w[none use], agent: 'none', technician: 'none', parent: 'erp' },
     # OUTSIDER (Relatórios do ERP, abas da seção ERP): a linha geral e uma por relatório (os próximos entram aqui). Começa fechada para
     # agente e técnico: o administrador libera no perfil de quem precisa (comissão é informação sensível).
     { key: 'reports', group: 'relatorios', levels: %w[none view], agent: 'none', technician: 'none', parent: 'erp' },

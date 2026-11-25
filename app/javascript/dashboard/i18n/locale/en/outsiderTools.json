@@ -1212,6 +1212,14 @@
         "LABEL": "Client registration",
         "HINT": "Use: registers a new client in the ERP (pre-registration, like the sales app)."
       },
+      "ERP_ORDER_CREATE": {
+        "LABEL": "Create service orders from the chat",
+        "HINT": "Use: saves a new service order made in the chat to the ERP (a pre-order with parts and services, like the mobile app's). The ERP still checks your ERP user's permission to add service orders."
+      },
+      "ERP_QUOTE_CONVERT": {
+        "LABEL": "Convert quote to service order",
+        "HINT": "Use: converts a quote in NEGOCIAÇÃO into a service order and links both, like Mais Prático does. The ERP still checks your ERP user's \"Conversão OS\" permission."
+      },
       "REPORTS": {
         "LABEL": "ERP reports",
         "HINT": "None: report tabs are hidden in the ERP section. Reports below never exceed this level."

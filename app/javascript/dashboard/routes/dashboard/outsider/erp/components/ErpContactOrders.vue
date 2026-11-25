@@ -4,7 +4,9 @@
 // só o atalho "Ver as OS no ERP" com o filtro do contato. Sem vínculo, a lista de clientes do ERP já abre, com os
 // parecidos com o contato (telefone ou nome) no topo, e filtra por nome, código ou CNPJ (ErpPicker). Não achou: "Cadastrar
 // no ERP" abre o pré-cadastro já com os dados do contato, e o cliente novo fica vinculado a ele. Com a aba Contratos
-// aberta no perfil, o bloco "Contratos e máquinas" (ErpContactRentals) vem depois dos orçamentos.
+// aberta no perfil, o bloco "Contratos e máquinas" (ErpContactRentals) vem depois dos orçamentos. Com a Nova OS ou a
+// conversão de orçamento ligada (Configurações + perfil), as OS feitas no chat (ErpContactOrderDrafts) vêm logo depois
+// dos orçamentos.
 import { ref, computed, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useI18n } from 'vue-i18n';
@@ -16,6 +18,7 @@ import ErpBudgets from '../budgets/ErpBudgets.vue';
 import ErpPicker from './ErpPicker.vue';
 import ErpClientDialog from '../clients/ErpClientDialog.vue';
 import ErpContactRentals from '../rentals/ErpContactRentals.vue';
+import ErpContactOrderDrafts from '../orders/ErpContactOrderDrafts.vue';
 import { erpTabs } from '../sidebar';
 import {
   ERP_ROUTE,
@@ -47,6 +50,9 @@ const clientDialog = ref(null);
 
 const showQuotes = computed(() =>
   erpTabs().some(item => item.name === 'orcamentos')
+);
+const showOrderDrafts = computed(
+  () => erpState.canCreateOrder || erpState.canConvertQuote
 );
 const showRentals = computed(() =>
   erpTabs().some(item => item.name === 'contratos')
@@ -256,6 +262,11 @@ const lastUpdate = computed(() =>
           :contact-id="contactId"
           :conversation-id="conversationId"
           :opportunity-id="opportunityId"
+        />
+        <ErpContactOrderDrafts
+          v-if="showOrderDrafts"
+          :contact-id="contactId"
+          :conversation-id="conversationId"
         />
         <ErpContactRentals v-if="showRentals" :contact-id="contactId" />
         <router-link

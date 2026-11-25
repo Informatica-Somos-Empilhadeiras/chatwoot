@@ -248,6 +248,58 @@ class ErpAPI extends ApiClient {
     return axios.post(`${this.url}/budgets/${id}/cancel_revision`);
   }
 
+  // OS feita no chat (Outsider::Erp::OrderDraft): Nova OS e Converter orçamento em OS. Lista: { contact_id } ou
+  // { company, quote_number }
+  orderDrafts(params) {
+    return axios.get(`${this.url}/order_drafts`, { params });
+  }
+
+  orderDraft(id) {
+    return axios.get(`${this.url}/order_drafts/${id}`);
+  }
+
+  // kind: fresh (contact_id, conversation_id) ou conversion (company, quote_number, customer_code, customer_name)
+  createOrderDraft(data) {
+    return axios.post(`${this.url}/order_drafts`, data);
+  }
+
+  saveOrderDraft(id, draft) {
+    return axios.patch(`${this.url}/order_drafts/${id}`, { draft });
+  }
+
+  deleteOrderDraft(id) {
+    return axios.delete(`${this.url}/order_drafts/${id}`);
+  }
+
+  submitOrderDraft(id) {
+    return axios.post(`${this.url}/order_drafts/${id}/submit`);
+  }
+
+  // muda a OS gravada pelo chat para CANCELADA (nada é apagado)
+  cancelOrderOs(id) {
+    return axios.post(`${this.url}/order_drafts/${id}/cancel_os`);
+  }
+
+  // listas do formulário; kind = 'conversion' quando é a tela de converter (outra linha do perfil de acesso)
+  orderOptions(company, kind = 'fresh') {
+    return axios.get(`${this.url}/order_drafts/options`, {
+      params: { company, kind },
+    });
+  }
+
+  orderMachines(company, customer, q, kind = 'fresh') {
+    return axios.get(`${this.url}/order_drafts/machines`, {
+      params: { company, customer, q: q || undefined, kind },
+    });
+  }
+
+  // conferência da conversão (só leitura): orçamento, permissão, cliente
+  orderPreview(company, quoteNumber) {
+    return axios.get(`${this.url}/order_drafts/preview`, {
+      params: { company, quote_number: quoteNumber },
+    });
+  }
+
   // seção ERP: listas com todo o histórico (kind: quotes, orders, sales) e o detalhe de um registro
   records(kind, params) {
     return axios.get(`${this.url}/records/${kind}`, { params });
