@@ -374,7 +374,7 @@
       "SEND_WHATSAPP_TEXT": "Texto do WhatsApp",
       "ORDERS_WRITE": "Ordens de serviço feitas no chat",
       "ORDERS_WRITE_HINT": "Nova OS (no contato) e Converter orçamento em OS (no orçamento), gravadas direto nas tabelas do Mais Prático como o desktop faz, com conferência antes e leitura de volta depois. Nada é apagado: desfazer é \"Cancelar OS\". Cada pessoa precisa do seu usuário do ERP (Gravar no ERP, logo acima) e da linha no perfil de acesso.",
-      "ORDER_CREATE_ENABLED": "Nova OS",
+      "ORDER_CREATE_ENABLED": "Nova ordem de serviço",
       "QUOTE_CONVERT_ENABLED": "Converter orçamento em OS",
       "ORDER_COMPANIES": "Unidades liberadas",
       "ORDER_COMPANIES_HINT": "Comece por uma unidade (piloto). Nas outras os botões não aparecem."
@@ -1435,7 +1435,7 @@
       }
     },
     "ORDER_DRAFT": {
-      "NEW": "Nova OS",
+      "NEW": "Nova ordem de serviço",
       "LIST": {
         "DRAFT": "Rascunho de OS",
         "CONVERSION": "Conversão do orçamento {number}",

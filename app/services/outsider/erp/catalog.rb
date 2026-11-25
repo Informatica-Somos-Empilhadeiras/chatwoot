@@ -94,10 +94,11 @@ class Outsider::Erp::Catalog
   # buscando um número, o produto com esse código vem primeiro (antes dos que só têm o número no nome)
   def exact_first(query) = query.match?(/\A\d{1,9}\z/) ? "P.CodigoProduto = #{S.int(query)} DESC, " : ''
 
-  # só os ativos; número: o código, o código de fábrica ou a descrição com ele; texto: todas as palavras na descrição
+  # só os ativos e com descrição (produto sem nome no ERP fica fora); número: o código, o código de fábrica ou a
+  # descrição com ele; texto: todas as palavras na descrição
   def conditions(company, column, query)
     active = schema.pick(company, TABLE, ACTIVE)
-    list = [active ? "(P.#{S.column(active)} IS NULL OR P.#{S.column(active)} <> 0)" : '1 = 1']
+    list = [active ? "(P.#{S.column(active)} IS NULL OR P.#{S.column(active)} <> 0)" : '1 = 1', "TRIM(IFNULL(#{column}, '')) <> ''"]
     return list if query.empty?
 
     list + [query_condition(company, column, query)]

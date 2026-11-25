@@ -32,8 +32,9 @@ class Outsider::Erp::Customers
     @snapshot ||= Outsider::Erp::Snapshot.new(@account, 'customers', ttl: TTL.to_i, loader: method(:load), sync: false)
   end
 
+  # cliente sem nome no ERP (só o código, às vezes o CPF/CNPJ) não entra na lista; sem razão social, vale o fantasia
   def rows
-    items = snapshot.fetch['items']
+    items = snapshot.fetch['items'].filter_map { |row| named(row) }
     @only_company ? items.select { |row| row['empresa'] == @only_company } : items
   end
 
@@ -91,6 +92,11 @@ class Outsider::Erp::Customers
 
     phones = schema.columns(company, TABLE).grep(PHONE).first(MAX_PHONES)
     client.query_execute(select_sql(company, picked, phones), read_timeout: read_timeout).grep(Hash).map { |data| build(company, data) }
+  end
+
+  def named(row)
+    name = row['nome'].presence || row['fantasia'].presence
+    name && row.merge('nome' => name)
   end
 
   def select_sql(company, picked, phones)

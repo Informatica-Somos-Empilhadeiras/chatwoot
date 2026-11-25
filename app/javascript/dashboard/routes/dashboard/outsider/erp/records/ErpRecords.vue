@@ -22,6 +22,8 @@ import ErpRecordPanel from './ErpRecordPanel.vue';
 import ErpRentalTable from '../rentals/ErpRentalTable.vue';
 import ErpRentalPanel from '../rentals/ErpRentalPanel.vue';
 import ErpBudgetDrawer from '../budgets/ErpBudgetDrawer.vue';
+import ErpOrderDrawer from '../orders/ErpOrderDrawer.vue';
+import { orderErrorMessage } from '../orders/orderHelpers';
 import {
   erpState,
   erpErrorMessage,
@@ -241,6 +243,23 @@ const createBudget = async () => {
   }
 };
 
+// OS nova direto da aba OS (com a OS pelo chat ligada): o cliente é escolhido na gaveta
+const orderDrawerRef = ref(null);
+const createOrder = async () => {
+  busy.value = 'new';
+  try {
+    const { data: created } = await ErpAPI.createOrderDraft({
+      kind: 'fresh',
+      contact_id: contactId.value || undefined,
+    });
+    orderDrawerRef.value?.open(created.draft, { focus: true });
+  } catch (error) {
+    useAlert(orderErrorMessage(t, error));
+  } finally {
+    busy.value = '';
+  }
+};
+
 const summary = computed(() => {
   if (!data.value) return '';
   return t(`OUTSIDER_ERP.RECORDS.${cfg.value.key}.SUMMARY`, {
@@ -287,6 +306,15 @@ const DATE =
           :label="t('OUTSIDER_ERP.RECORDS.QUOTES.NEW')"
           :is-loading="busy === 'new'"
           @click="createBudget"
+        />
+        <Button
+          v-if="kind === 'orders' && erpState.canCreateOrder"
+          size="sm"
+          icon="i-lucide-plus"
+          :label="t('OUTSIDER_ERP.ORDER_DRAFT.NEW')"
+          :is-loading="busy === 'new'"
+          data-erp-records-new-order
+          @click="createOrder"
         />
       </div>
 
@@ -527,5 +555,10 @@ const DATE =
       @changed="load"
     />
     <ErpBudgetDrawer ref="drawerRef" :contact-id="contactId" @changed="load" />
+    <ErpOrderDrawer
+      v-if="kind === 'orders' && erpState.canCreateOrder"
+      ref="orderDrawerRef"
+      :contact-id="contactId"
+    />
   </div>
 </template>
