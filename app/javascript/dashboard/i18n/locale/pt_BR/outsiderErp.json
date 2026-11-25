@@ -73,7 +73,10 @@
       "PEDIDOS": "Pedidos",
       "SETTINGS": "Configurações do ERP",
       "NOTAS": "Notas fiscais",
-      "MODELOS": "Modelos de relatório"
+      "MODELOS": "Modelos de relatório",
+      "CONTRATOS": "Contratos",
+      "MAQUINAS": "Máquinas",
+      "FATURAS": "Faturas de locação"
     },
     "LIST": {
       "SEARCH": "Buscar por número ou cliente",
@@ -828,7 +831,11 @@
         "TOTAL_ASC": "Menor valor",
         "PERSON_AZ": "{person} (A a Z)",
         "ATTENDANCE_AZ": "Tipo de atendimento (A a Z)",
-        "SELLER_AZ": "Vendedor (A a Z)"
+        "SELLER_AZ": "Vendedor (A a Z)",
+        "REGISTERED": "Cadastradas por último",
+        "SERIES_AZ": "Série (A a Z)",
+        "LAST_ORDER": "Última OS mais recente",
+        "ENDS_SOON": "Termina antes"
       },
       "DIMENSIONS": {
         "ATENDIMENTO": {
@@ -838,6 +845,10 @@
         "VENDEDOR": {
           "LABEL": "Vendedor",
           "ALL": "Todos os vendedores"
+        },
+        "TIPO": {
+          "LABEL": "Tipo de contrato",
+          "ALL": "Todos os tipos"
         }
       },
       "ATTENDANCE": "Atendimento",
@@ -845,6 +856,52 @@
       "CLOUD": {
         "MISSING": "Fora da nuvem",
         "MISSING_HINT": "A nota fiscal ainda não foi inserida na nuvem (Nextcloud)."
+      },
+      "CONTRACTS": {
+        "ONE": "Contrato {number}",
+        "SEARCH": "Buscar por número, cliente ou CNPJ",
+        "PERSON": "Vendedor",
+        "ALL_PEOPLE": "Todos os vendedores",
+        "DATE": "Vigência",
+        "EMPTY": "Nenhum contrato com esses filtros.",
+        "SUMMARY": "{count} contratos · {sum}",
+        "VIEWS": {
+          "ACTIVE": "Ativos",
+          "EXPIRING": "Vencendo em 30 dias",
+          "CONCLUDED": "Concluídos",
+          "CANCELED": "Cancelados",
+          "ALL": "Todos"
+        }
+      },
+      "MACHINES": {
+        "ONE": "Máquina {number}",
+        "SEARCH": "Buscar por série, patrimônio, modelo ou cliente",
+        "PERSON": "Pessoa",
+        "ALL_PEOPLE": "Todos",
+        "DATE": "Horímetro",
+        "EMPTY": "Nenhuma máquina com esses filtros.",
+        "SUMMARY": "{count} máquinas",
+        "VIEWS": {
+          "ALL": "Todas",
+          "OWN": "Frota própria",
+          "RENTED": "Locadas",
+          "CONTRACT": "Em contrato de manutenção/serviço",
+          "AVAILABLE": "Disponíveis para locação",
+          "IN_ORDER": "Em OS",
+          "CLIENT": "Do cliente, sem contrato"
+        }
+      },
+      "RENTAL_INVOICES": {
+        "ONE": "Fatura {number}",
+        "SEARCH": "Buscar por número, cliente ou CNPJ",
+        "PERSON": "Vendedor",
+        "ALL_PEOPLE": "Todos os vendedores",
+        "DATE": "Emissão",
+        "EMPTY": "Nenhuma fatura de locação com esses filtros.",
+        "SUMMARY": "{count} faturas · {sum}",
+        "VIEWS": {
+          "ALL": "Todas"
+        }
       }
     },
     "CLIENT": {
@@ -1169,7 +1226,150 @@
       "SALES": "Orçamentos e OS",
       "FISCAL": "Fiscal e financeiro",
       "REPORTS": "Relatórios e desempenho",
-      "SETTINGS": "Configurações"
+      "SETTINGS": "Configurações",
+      "RENTALS": "Locação e máquinas"
+    },
+    "RENTALS": {
+      "TYPES": {
+        "RENTAL": "Locação",
+        "MAINTENANCE": "Manutenção",
+        "SERVICE": "Prestação de serviço"
+      },
+      "PER_MONTH": "por mês",
+      "PER_WEEK": "por semana",
+      "PER_YEAR": "por ano",
+      "PER_MONTH_ADJ": "mensal",
+      "PER_WEEK_ADJ": "semanal",
+      "PER_YEAR_ADJ": "anual",
+      "INSTALLMENT": "por parcela",
+      "DUE": {
+        "DUE_IN": "VENCE EM {n} DIAS",
+        "DUE_TODAY": "VENCE HOJE",
+        "OVERDUE": "VENCEU HÁ {n} DIAS"
+      },
+      "SALE_OF": "Pedido {number}",
+      "CONTRACT": {
+        "ONE": "Contrato {number}",
+        "TYPE": "Tipo",
+        "TO": "a",
+        "MACHINES": "nenhuma máquina | 1 máquina | {n} máquinas",
+        "MONTHS": "{n} meses",
+        "DAYS": "{n} dias",
+        "EVERY_DAY": "Todo dia {day}",
+        "SITE": "Obra: {name}",
+        "DELIVERY": "Entrega",
+        "MACHINES_TITLE": "Máquinas no contrato ({n})",
+        "NO_MACHINES": "Nenhuma máquina lançada neste contrato.",
+        "LEFT": "Saiu {date}",
+        "RETURNED": "voltou {date}",
+        "RETURN_DUE": "retorno previsto {date}",
+        "BACK": "DEVOLVIDA",
+        "INVOICES": "Faturas de locação",
+        "ISSUED_ON": "Emitida {date}",
+        "ORDERS": "OS das máquinas desde o início do contrato",
+        "TIMELINE": "Linha do tempo do contrato",
+        "FIELDS": {
+          "VALIDITY": "Vigência",
+          "DURATION": "Prazo",
+          "VALUE": "Valor",
+          "TOTAL": "Total do contrato",
+          "BILLING": "Faturamento",
+          "NEXT_INVOICE": "Próxima fatura",
+          "PAYMENT": "Pagamento",
+          "SELLER": "Vendedor",
+          "CONTACT": "Contato",
+          "ISSUED": "Emissão"
+        }
+      },
+      "MACHINE": {
+        "ONE": "Máquina {number}",
+        "SERIES": "Série",
+        "MACHINE": "Máquina",
+        "CLIENT_NOW": "Cliente atual",
+        "OWN": "Frota própria",
+        "CLIENTS": "Do cliente",
+        "ASSET_SHORT": "Pat. {tag}",
+        "ORDER_SHORT": "OS {number}",
+        "CONTRACT_SHORT": "CT {number}",
+        "LAST_ORDER": "última OS {date}",
+        "NO_ORDER": "sem OS",
+        "SERIES_OF": "série {serie}",
+        "ASSET_OF": "patrimônio {tag}",
+        "NOW": "Onde está agora",
+        "AVAILABLE": "Na Somos, disponível para locação.",
+        "AT_OWNER": "Com o cliente dono, sem contrato nem OS aberta.",
+        "OPEN_ORDER": "OS {number} aberta ({unit})",
+        "OWNER": "Dono",
+        "LINKS": "Vínculos",
+        "LINK": {
+          "CONTRACTS": "contratos",
+          "ORDERS": "OS",
+          "NOTES": "notas",
+          "RENTAL_INVOICES": "faturas"
+        },
+        "OPEN_ORDERS": "{n} aberta | {n} abertas",
+        "TECH": "Descrição técnica e acessórios",
+        "TIMELINE": "Linha do tempo da máquina",
+        "ORDER_OPEN": "OS {number} aberta",
+        "AT_CLIENT": "NO CLIENTE",
+        "NO_CONTRACT": "Sem contrato",
+        "FIELDS": {
+          "CAPACITY": "Capacidade",
+          "LIFT": "Elevação",
+          "MAST": "Mastro",
+          "MAST_HEIGHT": "Altura do mastro",
+          "YEAR": "Ano",
+          "VOLTAGE": "Voltagem",
+          "WHEELS": "Rodas",
+          "HOURMETER": "Horímetro (última OS)",
+          "MODEL": "Modelo",
+          "RENTAL_VALUE": "Valor de locação",
+          "WARRANTY": "Garantia até",
+          "IN_OPERATION": "Em operação desde",
+          "PURCHASE_INVOICE": "NF de aquisição"
+        }
+      },
+      "INVOICE": {
+        "SERIES": "série {serie}",
+        "CONTRACT": "Contrato",
+        "HINT": "Documento de cobrança do contrato (não é nota fiscal).",
+        "FIELDS": {
+          "ISSUED": "Emissão",
+          "TOTAL": "Total",
+          "PERIOD": "Período",
+          "SERIES": "Série",
+          "SELLER": "Vendedor"
+        },
+        "CONTRACTS": "Contratos cobrados",
+        "MACHINES": "Máquinas cobradas ({n})"
+      },
+      "TIMELINE": {
+        "CONTRACT_CREATED": "Emissão: {record}",
+        "CONTRACT_START": "Início: {record}",
+        "CONTRACT_DUE": "Término previsto: {record}",
+        "CONTRACT_END": "Fim: {record}",
+        "CONTRACT_STATUS": "{record}: {status}",
+        "MACHINE_OUT": "Saiu para o cliente",
+        "MACHINE_BACK": "Voltou para a Somos",
+        "RENTAL_INVOICE": "{record}",
+        "ORDER": "{record}",
+        "ORDER_DELIVERED": "Entrega: {record}",
+        "NOTE": "{record}",
+        "TABS": {
+          "ALL": "Tudo",
+          "ORDERS": "OS",
+          "CONTRACTS": "Contratos",
+          "NOTES": "Notas"
+        },
+        "EMPTY": "Nada por aqui ainda."
+      },
+      "CONTACT": {
+        "TITLE": "Contratos e máquinas",
+        "EMPTY": "Nenhum contrato nem máquina deste cliente no ERP.",
+        "OWN_MACHINES": "Máquinas próprias do cliente ({n})",
+        "SEE_CONTRACTS": "Ver contratos no ERP",
+        "SEE_MACHINES": "Ver máquinas no ERP"
+      }
     }
   }
 }

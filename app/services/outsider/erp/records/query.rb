@@ -78,14 +78,17 @@ class Outsider::Erp::Records::Query
     return if @kind.required.any? { |key| picked[key].nil? }
 
     bank = S.ident(company)
-    "SELECT #{S.str(company)} AS banco, #{fields(picked).join(', ')}, #{client_fields(company)}, #{person_field(company)}" \
-      "#{seller_field(company, picked)} FROM #{bank}.#{S.ident(@kind.table)} O #{client_join(company, picked)} " \
+    "SELECT #{S.str(company)} AS banco, #{(fields(picked) + @kind.computed(company, @schema)).join(', ')}, " \
+      "#{client_fields(company)}, #{person_field(company, picked)}" \
+      "#{seller_field(company, picked)} FROM #{bank}.#{S.ident(@kind.table)} O#{@kind.joins(company, @schema)} " \
+      "#{client_join(company, picked)} " \
       "#{person_join(company, picked)}#{seller_join(company, picked)}"
   end
 
   def fields(picked)
     @kind.columns.keys.map do |key|
       next "NULLIF(TRIM(#{@kind.status_sql(picked) || 'NULL'}), '') AS status" if key == :status
+      next "#{@kind.client_sql(picked)} AS cliente_codigo" if key == :cliente_codigo
 
       picked[key] ? "O.#{S.column(picked[key])} AS #{key}" : "NULL AS #{key}"
     end
@@ -102,13 +105,14 @@ class Outsider::Erp::Records::Query
     code = client_code(company)
     return '' unless code
 
-    "LEFT JOIN #{S.ident(company)}.clientes C ON C.#{S.column(code)} = O.#{S.column(picked[:cliente_codigo])}"
+    "LEFT JOIN #{S.ident(company)}.clientes C ON C.#{S.column(code)} = #{@kind.client_sql(picked)}"
   end
 
   def client_code(company) = @schema.pick(company, 'clientes', %w[CodigoCliente Codigo])
 
-  def person_field(company)
-    name = person_code(company) && @schema.pick(company, 'funcionarios', Outsider::Erp::SellerName::NAME)
+  # sem a coluna da pessoa na tabela (máquinas), sem o join e sem o nome
+  def person_field(company, picked)
+    name = picked[@kind.person] && person_code(company) && @schema.pick(company, 'funcionarios', Outsider::Erp::SellerName::NAME)
     name ? "P.#{S.column(name)} AS pessoa" : 'NULL AS pessoa'
   end
 
@@ -159,6 +163,7 @@ class Outsider::Erp::Records::Query
     parts = []
     number = digits.sub(/\A0+(?=\d)/, '') # zeros à esquerda (nº da chave da NF) não viram octal
     parts += @kind.number_keys.map { |key| "X.#{key} = #{S.int(number)}" } if number.size <= 15
+    parts += @kind.digit_keys.map { |key| "X.#{key} LIKE #{like(digits)}" } if digits.size >= 3
     parts << "REPLACE(REPLACE(REPLACE(REPLACE(IFNULL(X.cnpj, ''), '.', ''), '/', ''), '-', ''), ' ', '') LIKE #{like(digits)}" if digits.size >= 4
     parts.empty? ? '1 = 0' : "(#{parts.join(' OR ')})"
   end

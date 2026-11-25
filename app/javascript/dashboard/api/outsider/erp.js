@@ -253,6 +253,13 @@ class ErpAPI extends ApiClient {
     return axios.get(`${this.url}/records/${kind}`, { params });
   }
 
+  // bloco "Contratos e máquinas" do contato (Outsider::Erp::Rentals::ClientSummary)
+  contactRentals(contactId) {
+    return axios.get(`${this.url}/records/rentals`, {
+      params: { contact_id: contactId },
+    });
+  }
+
   record(kind, company, number) {
     return axios.get(`${this.url}/records/${kind}/${company}/${number}`);
   }

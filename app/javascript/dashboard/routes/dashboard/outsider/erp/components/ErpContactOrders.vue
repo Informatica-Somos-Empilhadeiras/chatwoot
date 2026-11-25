@@ -3,7 +3,8 @@
 // código) e os orçamentos de peças e serviços (os 5 mais novos e "Ver todos no ERP"). As OS ficam na seção ERP: aqui
 // só o atalho "Ver as OS no ERP" com o filtro do contato. Sem vínculo, a lista de clientes do ERP já abre, com os
 // parecidos com o contato (telefone ou nome) no topo, e filtra por nome, código ou CNPJ (ErpPicker). Não achou: "Cadastrar
-// no ERP" abre o pré-cadastro já com os dados do contato, e o cliente novo fica vinculado a ele.
+// no ERP" abre o pré-cadastro já com os dados do contato, e o cliente novo fica vinculado a ele. Com a aba Contratos
+// aberta no perfil, o bloco "Contratos e máquinas" (ErpContactRentals) vem depois dos orçamentos.
 import { ref, computed, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useI18n } from 'vue-i18n';
@@ -14,6 +15,7 @@ import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 import ErpBudgets from '../budgets/ErpBudgets.vue';
 import ErpPicker from './ErpPicker.vue';
 import ErpClientDialog from '../clients/ErpClientDialog.vue';
+import ErpContactRentals from '../rentals/ErpContactRentals.vue';
 import { erpTabs } from '../sidebar';
 import {
   ERP_ROUTE,
@@ -45,6 +47,9 @@ const clientDialog = ref(null);
 
 const showQuotes = computed(() =>
   erpTabs().some(item => item.name === 'orcamentos')
+);
+const showRentals = computed(() =>
+  erpTabs().some(item => item.name === 'contratos')
 );
 // atalho para as OS dos clientes deste contato na seção ERP (todo o histórico)
 const ordersLink = computed(() =>
@@ -252,6 +257,7 @@ const lastUpdate = computed(() =>
           :conversation-id="conversationId"
           :opportunity-id="opportunityId"
         />
+        <ErpContactRentals v-if="showRentals" :contact-id="contactId" />
         <router-link
           v-if="ordersLink"
           :to="ordersLink"

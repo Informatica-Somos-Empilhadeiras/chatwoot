@@ -1,7 +1,8 @@
 # OUTSIDER: listas e detalhe da seção ERP (orçamentos, OS, pedidos de venda e notas fiscais) lidos direto do banco do ERP,
 # com todo o histórico (Outsider::Erp::Records). kind: quotes | orders | sales | invoices (NF-e) | service_invoices
-# (NFS-e). Só leitura; a edição continua nas rotas próprias
-# (orçamento do chat em BudgetsController, OS em ServiceOrdersController). Cada aba segue a linha dela no perfil de acesso.
+# (NFS-e) e, em Locação e máquinas, contracts | machines | rental_invoices (o detalhe vem de Outsider::Erp::Rentals). Só
+# leitura; a edição continua nas rotas próprias (orçamento do chat em BudgetsController, OS em ServiceOrdersController).
+# Cada aba segue a linha dela no perfil de acesso.
 class Api::V1::Accounts::Outsider::Erp::RecordsController < Api::V1::Accounts::Outsider::Erp::BaseController
   include ::Outsider::Erp::DocumentSending
 
@@ -24,7 +25,15 @@ class Api::V1::Accounts::Outsider::Erp::RecordsController < Api::V1::Accounts::O
   end
 
   def show
+    rental = RENTAL_DETAILS[params[:kind]]
+    return render json: rental.new(Current.account).build(params[:company].to_s, params[:number].to_i) if rental
+
     render json: ::Outsider::Erp::Records::Detail.new(Current.account, params[:kind]).build(params[:company].to_s, params[:number])
+  end
+
+  # contact_id: contratos (ativos primeiro, com as máquinas no cliente) e as máquinas próprias dos clientes do ERP do contato
+  def rentals
+    render json: ::Outsider::Erp::Rentals::ClientSummary.new(Current.account).build(::Outsider::Erp::ContactLink.new(contact).links)
   end
 
   # PDF do orçamento no modelo do relatório do Mais Prático, lido direto do ERP (não cria registro no chat: serve a quem só vê)
@@ -96,12 +105,18 @@ class Api::V1::Accounts::Outsider::Erp::RecordsController < Api::V1::Accounts::O
     render json: { error: 'invoice_not_in_nextcloud' }, status: :not_found unless settings.nextcloud_enabled?
   end
 
-  LIST_PARAMS = %i[q view company person from to page per sort direction atendimento vendedor].freeze
+  LIST_PARAMS = %i[q view company person from to page per sort direction atendimento vendedor tipo].freeze
 
   def list_params = LIST_PARAMS.index_with { |key| params[key] }
 
   SCREENS = {
-    'quotes' => 'erp_quotes', 'orders' => 'erp_orders', 'sales' => 'erp_sales', 'invoices' => 'erp_invoices', 'service_invoices' => 'erp_invoices'
+    'quotes' => 'erp_quotes', 'orders' => 'erp_orders', 'sales' => 'erp_sales', 'invoices' => 'erp_invoices', 'service_invoices' => 'erp_invoices',
+    'contracts' => 'erp_rentals', 'machines' => 'erp_rentals', 'rental_invoices' => 'erp_rentals'
+  }.freeze
+
+  RENTAL_DETAILS = {
+    'contracts' => ::Outsider::Erp::Rentals::ContractDetail, 'machines' => ::Outsider::Erp::Rentals::MachineDetail,
+    'rental_invoices' => ::Outsider::Erp::Rentals::RentalInvoiceDetail
   }.freeze
 
   # a lista pede a aba ligada nas Configurações; o detalhe (aberto também pela corrente, no painel) só o tipo válido.

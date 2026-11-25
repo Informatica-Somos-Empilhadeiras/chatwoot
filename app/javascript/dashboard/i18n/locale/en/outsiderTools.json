@@ -1204,6 +1204,10 @@
         "LABEL": "Products",
         "HINT": "View: browse the ERP products, with their photos (read only)."
       },
+      "ERP_RENTALS": {
+        "LABEL": "Rentals and machines",
+        "HINT": "View: browse contracts, machines (current status and timeline) and rental invoices (read only)."
+      },
       "ERP_CLIENTS": {
         "LABEL": "Client registration",
         "HINT": "Use: registers a new client in the ERP (pre-registration, like the sales app)."

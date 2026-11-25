@@ -13,6 +13,27 @@ export const KINDS = {
     key: 'SERVICE_INVOICES',
     icon: 'i-lucide-receipt',
   },
+  // Locação e máquinas: tabela e painel próprios (rentals/); máquina sem pessoa nem período
+  contracts: {
+    tab: 'contratos',
+    key: 'CONTRACTS',
+    icon: 'i-lucide-file-signature',
+    rental: true,
+  },
+  machines: {
+    tab: 'maquinas',
+    key: 'MACHINES',
+    icon: 'i-lucide-forklift',
+    rental: true,
+    noPerson: true,
+    noPeriod: true,
+  },
+  rental_invoices: {
+    tab: 'faturas',
+    key: 'RENTAL_INVOICES',
+    icon: 'i-lucide-receipt',
+    rental: true,
+  },
 };
 
 // tela do perfil de acesso de cada tipo (nós da corrente e abas)
@@ -22,6 +43,9 @@ export const SCREENS = {
   sales: 'erp_sales',
   invoices: 'erp_invoices',
   service_invoices: 'erp_invoices',
+  contracts: 'erp_rentals',
+  machines: 'erp_rentals',
+  rental_invoices: 'erp_rentals',
 };
 
 // número que a pessoa reconhece: a NFS-e mostra o da prefeitura (ou o RPS); sem ele, a sequência interna
@@ -47,34 +71,51 @@ export const PER_PAGE = [25, 50, 100];
 
 // filtros extras que o servidor conta (Outsider::Erp::Records::OrderKind#dimensions); a OS filtra por tipo de atendimento
 // e vendedor
-export const DIMENSIONS = { orders: ['atendimento', 'vendedor'] };
+export const DIMENSIONS = {
+  orders: ['atendimento', 'vendedor'],
+  contracts: ['tipo'],
+};
 
 // "Ordenar": campo + sentido (o servidor só aceita os da lista dele; texto vazio vai para o fim)
+// máquinas: série, última OS e cliente (não têm pessoa nem valor de lista)
+const MACHINE_SORTS = [
+  ['data', 'desc', 'REGISTERED'],
+  ['serie', 'asc', 'SERIES_AZ'],
+  ['ultima_os', 'desc', 'LAST_ORDER'],
+  ['cliente', 'asc', 'CLIENT_AZ'],
+  ['numero', 'desc', 'NUMBER_DESC'],
+];
 export const sortOptions = kind => {
   const orders = kind === 'orders';
-  return [
-    ['data', 'desc', 'NEWEST'],
-    ['data', 'asc', 'OLDEST'],
-    ...(orders
-      ? [
-          ['previsao', 'asc', 'DUE_SOON'],
-          ['previsao', 'desc', 'DUE_LATE'],
-        ]
-      : []),
-    ['numero', 'desc', 'NUMBER_DESC'],
-    ['numero', 'asc', 'NUMBER_ASC'],
-    ['cliente', 'asc', 'CLIENT_AZ'],
-    ['cliente', 'desc', 'CLIENT_ZA'],
-    ['total', 'desc', 'TOTAL_DESC'],
-    ['total', 'asc', 'TOTAL_ASC'],
-    ['pessoa', 'asc', 'PERSON_AZ'],
-    ...(orders
-      ? [
-          ['atendimento', 'asc', 'ATTENDANCE_AZ'],
-          ['vendedor', 'asc', 'SELLER_AZ'],
-        ]
-      : []),
-  ].map(([sort, direction, key]) => ({
+  const contracts = kind === 'contracts';
+  const list =
+    kind === 'machines'
+      ? MACHINE_SORTS
+      : [
+          ['data', 'desc', 'NEWEST'],
+          ['data', 'asc', 'OLDEST'],
+          ...(orders
+            ? [
+                ['previsao', 'asc', 'DUE_SOON'],
+                ['previsao', 'desc', 'DUE_LATE'],
+              ]
+            : []),
+          ...(contracts ? [['termino', 'asc', 'ENDS_SOON']] : []),
+          ['numero', 'desc', 'NUMBER_DESC'],
+          ['numero', 'asc', 'NUMBER_ASC'],
+          ['cliente', 'asc', 'CLIENT_AZ'],
+          ['cliente', 'desc', 'CLIENT_ZA'],
+          ['total', 'desc', 'TOTAL_DESC'],
+          ['total', 'asc', 'TOTAL_ASC'],
+          ['pessoa', 'asc', 'PERSON_AZ'],
+          ...(orders
+            ? [
+                ['atendimento', 'asc', 'ATTENDANCE_AZ'],
+                ['vendedor', 'asc', 'SELLER_AZ'],
+              ]
+            : []),
+        ];
+  return list.map(([sort, direction, key]) => ({
     value: `${sort}:${direction}`,
     sort,
     direction,
@@ -114,10 +155,22 @@ export const periodRange = key => {
   }
 };
 
-// cores das situações (orçamento, OS, pedido e notas)
+// situações de contrato e de máquina (Locação e máquinas), antes das regras por pedaço de palavra
+const RENTAL_STATUS = {
+  ATIVO: 'bg-n-teal-3 text-n-teal-11',
+  CONCLUÍDO: 'bg-n-alpha-2 text-n-slate-11',
+  LOCADA: 'bg-n-blue-3 text-n-blue-11',
+  'EM CONTRATO': 'bg-n-iris-3 text-n-iris-11',
+  DISPONÍVEL: 'bg-n-teal-3 text-n-teal-11',
+  'EM OS': 'bg-n-amber-3 text-n-amber-11',
+  'DO CLIENTE': 'bg-n-alpha-2 text-n-slate-11',
+};
+
+// cores das situações (orçamento, OS, pedido, notas, contratos e máquinas)
 export const statusClass = status => {
   const text = String(status || '').toUpperCase();
   if (!text) return 'bg-n-alpha-2 text-n-slate-11';
+  if (RENTAL_STATUS[text]) return RENTAL_STATUS[text];
   if (
     text.includes('FATURAD') ||
     text.includes('ENVIAD') ||

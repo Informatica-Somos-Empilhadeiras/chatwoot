@@ -1,5 +1,6 @@
-// OUTSIDER: menu "ERP" no menu lateral (secao Atendimento) com uma aba por modulo, em quatro grupos (os mesmos das abas
-// da secao, ErpIndex): Orcamentos e OS (orcamentos, OS, produtos), Fiscal e financeiro (pedidos, notas fiscais),
+// OUTSIDER: menu "ERP" no menu lateral (secao Atendimento) com uma aba por modulo, em cinco grupos (os mesmos das abas
+// da secao, ErpIndex): Orcamentos e OS (orcamentos, OS, produtos), Locacao e maquinas (contratos, maquinas, faturas de
+// locacao; linha erp_rentals do perfil), Fiscal e financeiro (pedidos, notas fiscais),
 // Relatorios e desempenho (os relatorios de reports/reportsCatalog.js e os Modelos de relatorio) e Configuracoes. Cada
 // aba segue o que esta ligado nas Configuracoes e a linha dela no perfil de acesso (erp_quotes, erp_orders, erp_sales,
 // erp_invoices, erp_products, abaixo da tela "erp"); com a integracao desligada so o admin ve. Grupo sem aba some.
@@ -29,6 +30,21 @@ export const ERP_TABS = [
     label: 'OUTSIDER_ERP.TABS.PRODUTOS',
     icon: 'i-lucide-package-search',
   },
+  {
+    name: 'contratos',
+    label: 'OUTSIDER_ERP.TABS.CONTRATOS',
+    icon: 'i-lucide-file-signature',
+  },
+  {
+    name: 'maquinas',
+    label: 'OUTSIDER_ERP.TABS.MAQUINAS',
+    icon: 'i-lucide-forklift',
+  },
+  {
+    name: 'faturas',
+    label: 'OUTSIDER_ERP.TABS.FATURAS',
+    icon: 'i-lucide-receipt',
+  },
   // modelos de relatório da OS e do orçamento (estúdio), só para o administrador
   {
     name: 'modelos',
@@ -49,6 +65,12 @@ export const ERP_GROUPS = [
     label: 'OUTSIDER_ERP.GROUPS.SALES',
     icon: 'i-lucide-clipboard-list',
     tabs: ['orcamentos', 'os', 'produtos'],
+  },
+  {
+    key: 'locacao',
+    label: 'OUTSIDER_ERP.GROUPS.RENTALS',
+    icon: 'i-lucide-forklift',
+    tabs: ['contratos', 'maquinas', 'faturas'],
   },
   {
     key: 'fiscal',
@@ -80,6 +102,9 @@ export const erpTabs = () => {
     pedidos: erpState.enabled && allows('erp_sales'),
     notas: erpState.enabled && allows('erp_invoices'),
     produtos: erpState.enabled && allows('erp_products'),
+    contratos: erpState.enabled && allows('erp_rentals'),
+    maquinas: erpState.enabled && allows('erp_rentals'),
+    faturas: erpState.enabled && allows('erp_rentals'),
     modelos: erpState.enabled && erpState.administrator,
     settings: erpState.administrator,
   };

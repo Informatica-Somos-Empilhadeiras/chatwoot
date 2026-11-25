@@ -11,7 +11,7 @@ class Outsider::Erp::Records::Lister
     @user = user
     @settings = Outsider::Erp::Settings.new(account)
     @client = client || Outsider::Erp::Client.new(@settings)
-    @kind = Outsider::Erp::Records::Kind.for(kind_name, @settings)
+    @kind = Outsider::Erp::Records::Kind.for(kind_name, @settings, client: @client)
     @query = Outsider::Erp::Records::Query.new(@kind, Outsider::Erp::Schema.new(account, client: @client))
   end
 
@@ -31,7 +31,8 @@ class Outsider::Erp::Records::Lister
 
   private
 
-  def company(value) = @settings.companies.include?(value.to_s) ? value.to_s : nil
+  def company(value) = companies.include?(value.to_s) ? value.to_s : nil
+  def companies = @companies ||= @kind.companies(@settings.companies)
 
   def base_filters(params)
     { q: params[:q], from: params[:from], to: params[:to], clients: clients(params[:clients]),
@@ -39,12 +40,12 @@ class Outsider::Erp::Records::Lister
   end
 
   def facets(base)
-    Outsider::Erp::Records::Facets.new(@kind, run(@query.facets_sql(@settings.companies, base)), mine: mine)
+    Outsider::Erp::Records::Facets.new(@kind, run(@query.facets_sql(companies, base)), mine: mine)
   end
 
   def rows(company, filters, params, per, page)
     options = { sort: params[:sort], direction: params[:direction], per: per, offset: (page - 1) * per }
-    sql = @query.page_sql(company ? [company] : @settings.companies, filters, options)
+    sql = @query.page_sql(company ? [company] : companies, filters, options)
     run(sql).map { |row| item(row) }
   end
 
@@ -52,7 +53,7 @@ class Outsider::Erp::Records::Lister
   def dimensions(company, filters)
     return {} if @kind.dimensions.empty?
 
-    rows = run(@query.dimensions_sql(company ? [company] : @settings.companies, filters)).group_by { |row| row['dim'].to_s }
+    rows = run(@query.dimensions_sql(company ? [company] : companies, filters)).group_by { |row| row['dim'].to_s }
     @kind.dimensions.keys.index_with do |key|
       rows.fetch(key.to_s, []).map { |row| dimension_item(row) }.sort_by { |item| (item[:name] || item[:value]).to_s }
     end

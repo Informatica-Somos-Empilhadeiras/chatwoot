@@ -73,7 +73,10 @@
       "PEDIDOS": "Sales orders",
       "SETTINGS": "ERP settings",
       "NOTAS": "Invoices",
-      "MODELOS": "Report templates"
+      "MODELOS": "Report templates",
+      "CONTRATOS": "Contracts",
+      "MAQUINAS": "Machines",
+      "FATURAS": "Rental invoices"
     },
     "LIST": {
       "SEARCH": "Search by number or client",
@@ -828,7 +831,11 @@
         "TOTAL_ASC": "Lowest value",
         "PERSON_AZ": "{person} (A to Z)",
         "ATTENDANCE_AZ": "Service type (A to Z)",
-        "SELLER_AZ": "Salesperson (A to Z)"
+        "SELLER_AZ": "Salesperson (A to Z)",
+        "REGISTERED": "Newest registered",
+        "SERIES_AZ": "Serial (A to Z)",
+        "LAST_ORDER": "Most recent service order",
+        "ENDS_SOON": "Ending soonest"
       },
       "DIMENSIONS": {
         "ATENDIMENTO": {
@@ -838,6 +845,10 @@
         "VENDEDOR": {
           "LABEL": "Salesperson",
           "ALL": "All salespeople"
+        },
+        "TIPO": {
+          "LABEL": "Contract type",
+          "ALL": "All types"
         }
       },
       "ATTENDANCE": "Service type",
@@ -845,6 +856,52 @@
       "CLOUD": {
         "MISSING": "Not in cloud",
         "MISSING_HINT": "This invoice has not been added to the cloud (Nextcloud) yet."
+      },
+      "CONTRACTS": {
+        "ONE": "Contract {number}",
+        "SEARCH": "Search by number, client or tax ID",
+        "PERSON": "Seller",
+        "ALL_PEOPLE": "All sellers",
+        "DATE": "Term",
+        "EMPTY": "No contracts match these filters.",
+        "SUMMARY": "{count} contracts · {sum}",
+        "VIEWS": {
+          "ACTIVE": "Active",
+          "EXPIRING": "Ending in 30 days",
+          "CONCLUDED": "Concluded",
+          "CANCELED": "Canceled",
+          "ALL": "All"
+        }
+      },
+      "MACHINES": {
+        "ONE": "Machine {number}",
+        "SEARCH": "Search by serial, asset tag, model or client",
+        "PERSON": "Person",
+        "ALL_PEOPLE": "Everyone",
+        "DATE": "Hour meter",
+        "EMPTY": "No machines match these filters.",
+        "SUMMARY": "{count} machines",
+        "VIEWS": {
+          "ALL": "All",
+          "OWN": "Own fleet",
+          "RENTED": "Rented",
+          "CONTRACT": "In maintenance/service contract",
+          "AVAILABLE": "Available for rent",
+          "IN_ORDER": "In a service order",
+          "CLIENT": "Client-owned, no contract"
+        }
+      },
+      "RENTAL_INVOICES": {
+        "ONE": "Invoice {number}",
+        "SEARCH": "Search by number, client or tax ID",
+        "PERSON": "Seller",
+        "ALL_PEOPLE": "All sellers",
+        "DATE": "Issued",
+        "EMPTY": "No rental invoices match these filters.",
+        "SUMMARY": "{count} invoices · {sum}",
+        "VIEWS": {
+          "ALL": "All"
+        }
       }
     },
     "CLIENT": {
@@ -1169,7 +1226,150 @@
       "SALES": "Quotes and work orders",
       "FISCAL": "Tax and finance",
       "REPORTS": "Reports and performance",
-      "SETTINGS": "Settings"
+      "SETTINGS": "Settings",
+      "RENTALS": "Rentals and machines"
+    },
+    "RENTALS": {
+      "TYPES": {
+        "RENTAL": "Rental",
+        "MAINTENANCE": "Maintenance",
+        "SERVICE": "Service"
+      },
+      "PER_MONTH": "per month",
+      "PER_WEEK": "per week",
+      "PER_YEAR": "per year",
+      "PER_MONTH_ADJ": "monthly",
+      "PER_WEEK_ADJ": "weekly",
+      "PER_YEAR_ADJ": "yearly",
+      "INSTALLMENT": "per installment",
+      "DUE": {
+        "DUE_IN": "ENDS IN {n} DAYS",
+        "DUE_TODAY": "ENDS TODAY",
+        "OVERDUE": "ENDED {n} DAYS AGO"
+      },
+      "SALE_OF": "Sales order {number}",
+      "CONTRACT": {
+        "ONE": "Contract {number}",
+        "TYPE": "Type",
+        "TO": "to",
+        "MACHINES": "no machines | 1 machine | {n} machines",
+        "MONTHS": "{n} months",
+        "DAYS": "{n} days",
+        "EVERY_DAY": "Every day {day}",
+        "SITE": "Site: {name}",
+        "DELIVERY": "Delivery",
+        "MACHINES_TITLE": "Machines in the contract ({n})",
+        "NO_MACHINES": "No machines in this contract.",
+        "LEFT": "Out {date}",
+        "RETURNED": "back {date}",
+        "RETURN_DUE": "due back {date}",
+        "BACK": "RETURNED",
+        "INVOICES": "Rental invoices",
+        "ISSUED_ON": "Issued {date}",
+        "ORDERS": "Service orders of these machines since the start",
+        "TIMELINE": "Contract timeline",
+        "FIELDS": {
+          "VALIDITY": "Term",
+          "DURATION": "Duration",
+          "VALUE": "Value",
+          "TOTAL": "Contract total",
+          "BILLING": "Billing",
+          "NEXT_INVOICE": "Next invoice",
+          "PAYMENT": "Payment",
+          "SELLER": "Seller",
+          "CONTACT": "Contact",
+          "ISSUED": "Issued"
+        }
+      },
+      "MACHINE": {
+        "ONE": "Machine {number}",
+        "SERIES": "Serial",
+        "MACHINE": "Machine",
+        "CLIENT_NOW": "Current client",
+        "OWN": "Own fleet",
+        "CLIENTS": "Client-owned",
+        "ASSET_SHORT": "Asset {tag}",
+        "ORDER_SHORT": "SO {number}",
+        "CONTRACT_SHORT": "CT {number}",
+        "LAST_ORDER": "last SO {date}",
+        "NO_ORDER": "no SO",
+        "SERIES_OF": "serial {serie}",
+        "ASSET_OF": "asset {tag}",
+        "NOW": "Where it is now",
+        "AVAILABLE": "At Somos, available for rent.",
+        "AT_OWNER": "With its owner, no contract or open service order.",
+        "OPEN_ORDER": "Service order {number} open ({unit})",
+        "OWNER": "Owner",
+        "LINKS": "Links",
+        "LINK": {
+          "CONTRACTS": "contracts",
+          "ORDERS": "SOs",
+          "NOTES": "invoices",
+          "RENTAL_INVOICES": "rental inv."
+        },
+        "OPEN_ORDERS": "{n} open | {n} open",
+        "TECH": "Technical notes and accessories",
+        "TIMELINE": "Machine timeline",
+        "ORDER_OPEN": "SO {number} open",
+        "AT_CLIENT": "AT CLIENT",
+        "NO_CONTRACT": "No contract",
+        "FIELDS": {
+          "CAPACITY": "Capacity",
+          "LIFT": "Lift height",
+          "MAST": "Mast",
+          "MAST_HEIGHT": "Mast height",
+          "YEAR": "Year",
+          "VOLTAGE": "Voltage",
+          "WHEELS": "Wheels",
+          "HOURMETER": "Hour meter (last SO)",
+          "MODEL": "Model",
+          "RENTAL_VALUE": "Rental value",
+          "WARRANTY": "Warranty until",
+          "IN_OPERATION": "In operation since",
+          "PURCHASE_INVOICE": "Purchase invoice"
+        }
+      },
+      "INVOICE": {
+        "SERIES": "series {serie}",
+        "CONTRACT": "Contract",
+        "HINT": "Contract billing document (not a tax invoice).",
+        "FIELDS": {
+          "ISSUED": "Issued",
+          "TOTAL": "Total",
+          "PERIOD": "Period",
+          "SERIES": "Series",
+          "SELLER": "Seller"
+        },
+        "CONTRACTS": "Contracts billed",
+        "MACHINES": "Machines billed ({n})"
+      },
+      "TIMELINE": {
+        "CONTRACT_CREATED": "Issued: {record}",
+        "CONTRACT_START": "Start: {record}",
+        "CONTRACT_DUE": "Scheduled end: {record}",
+        "CONTRACT_END": "End: {record}",
+        "CONTRACT_STATUS": "{record}: {status}",
+        "MACHINE_OUT": "Went to the client",
+        "MACHINE_BACK": "Back at Somos",
+        "RENTAL_INVOICE": "{record}",
+        "ORDER": "{record}",
+        "ORDER_DELIVERED": "Delivered: {record}",
+        "NOTE": "{record}",
+        "TABS": {
+          "ALL": "All",
+          "ORDERS": "SOs",
+          "CONTRACTS": "Contracts",
+          "NOTES": "Invoices"
+        },
+        "EMPTY": "Nothing here yet."
+      },
+      "CONTACT": {
+        "TITLE": "Contracts and machines",
+        "EMPTY": "No contracts or machines for this client in the ERP.",
+        "OWN_MACHINES": "Client's own machines ({n})",
+        "SEE_CONTRACTS": "See contracts in the ERP",
+        "SEE_MACHINES": "See machines in the ERP"
+      }
     }
   }
 }

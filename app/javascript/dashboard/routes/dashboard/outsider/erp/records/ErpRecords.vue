@@ -3,6 +3,8 @@
 // rápidas com contagem, busca (número, cliente, CNPJ), unidade, vendedor/técnico (na OS também tipo de atendimento e
 // vendedor), período, ordenação, tabela paginada e o painel de detalhe ao lado. O registro aberto fica na rota (?open=empresa:número); os nós da corrente orçamento -> OS ->
 // pedido trocam o painel sem sair da aba. ?contact=<id> mostra só os clientes do ERP ligados àquele contato.
+// Locação e máquinas (contratos, máquinas, faturas de locação) usam a tabela e o painel de rentals/; máquina não tem
+// pessoa nem período.
 import { ref, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
@@ -16,6 +18,8 @@ import ErpRecordsTable from './ErpRecordsTable.vue';
 import { fetchCloud, cloudKey } from './invoiceCloud';
 import ErpRecordsPager from './ErpRecordsPager.vue';
 import ErpRecordPanel from './ErpRecordPanel.vue';
+import ErpRentalTable from '../rentals/ErpRentalTable.vue';
+import ErpRentalPanel from '../rentals/ErpRentalPanel.vue';
 import ErpBudgetDrawer from '../budgets/ErpBudgetDrawer.vue';
 import {
   erpState,
@@ -308,7 +312,12 @@ const DATE =
             {{ companyName(item.value) }} ({{ item.count }})
           </option>
         </select>
-        <select v-model="person" :class="SELECT" :aria-label="label('PERSON')">
+        <select
+          v-if="!cfg.noPerson"
+          v-model="person"
+          :class="SELECT"
+          :aria-label="label('PERSON')"
+        >
           <option value="">{{ label('ALL_PEOPLE') }}</option>
           <option
             v-for="item in data?.people || []"
@@ -341,6 +350,7 @@ const DATE =
           </option>
         </select>
         <select
+          v-if="!cfg.noPeriod"
           v-model="period"
           :class="SELECT"
           :aria-label="t('OUTSIDER_ERP.RECORDS.PERIOD')"
@@ -349,7 +359,7 @@ const DATE =
             {{ t(`OUTSIDER_ERP.RECORDS.PERIODS.${key.toUpperCase()}`) }}
           </option>
         </select>
-        <template v-if="period === 'custom'">
+        <template v-if="period === 'custom' && !cfg.noPeriod">
           <input
             v-model="from"
             type="date"
@@ -432,7 +442,21 @@ const DATE =
           >
             {{ failure }}
           </p>
+          <ErpRentalTable
+            v-if="cfg.rental"
+            class="flex-1 min-h-0"
+            :kind="kind"
+            :rows="data.items || []"
+            :sort="sort"
+            :direction="direction"
+            :selected="opened ? `${opened.company}:${opened.number}` : ''"
+            :loading="loading"
+            :compact="!!opened"
+            @select="select"
+            @sort="toggleSort"
+          />
           <ErpRecordsTable
+            v-else
             class="flex-1 min-h-0"
             :kind="kind"
             :rows="data.items || []"
@@ -455,8 +479,16 @@ const DATE =
       </div>
     </section>
 
+    <ErpRentalPanel
+      v-if="opened && cfg.rental"
+      :key="`${kind}:${opened.company}:${opened.number}`"
+      :kind="kind"
+      :company="opened.company"
+      :number="opened.number"
+      @close="close"
+    />
     <ErpRecordPanel
-      v-if="opened"
+      v-else-if="opened"
       :key="`${kind}:${opened.company}:${opened.number}`"
       :kind="kind"
       :company="opened.company"

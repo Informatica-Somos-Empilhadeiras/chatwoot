@@ -1204,6 +1204,10 @@
         "LABEL": "Produtos",
         "HINT": "Vê: consulta os produtos do ERP, com as fotos (só leitura)."
       },
+      "ERP_RENTALS": {
+        "LABEL": "Locação e máquinas",
+        "HINT": "Vê: consulta os contratos, as máquinas (com a situação de agora e a linha do tempo) e as faturas de locação (só leitura)."
+      },
       "ERP_CLIENTS": {
         "LABEL": "Cadastro de clientes",
         "HINT": "Usa: cadastra cliente novo no ERP (pré-cadastro, como o aplicativo de vendas)."

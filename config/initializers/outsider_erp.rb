@@ -67,13 +67,18 @@ Rails.application.routes.prepend do
                 end
               end
               resources :quotes, only: [:index]
-              # seção ERP: listas com todo o histórico e o detalhe (kind: quotes, orders, sales, invoices, service_invoices)
-              get 'records/:kind', to: 'records#index', constraints: { kind: /quotes|orders|sales|invoices|service_invoices/ }
+              # seção ERP: listas com todo o histórico e o detalhe (kind: quotes, orders, sales, invoices, service_invoices e, em
+              # Locação e máquinas, contracts, machines, rental_invoices)
+              get 'records/:kind', to: 'records#index',
+                                   constraints: { kind: /quotes|orders|sales|invoices|service_invoices|contracts|machines|rental_invoices/ }
+              # bloco "Contratos e máquinas" do contato
+              get 'records/rentals', to: 'records#rentals', defaults: { kind: 'contracts' }
               # NF-e e NFS-e: quais já estão na nuvem (Nextcloud), para o aviso das que ainda não estão
               get 'records/:kind/cloud', to: 'records#cloud', constraints: { kind: /invoices|service_invoices/ }
-              get 'records/:kind/:company/:number', to: 'records#show',
-                                                    constraints: { kind: /quotes|orders|sales|invoices|service_invoices/,
-                                                                   company: /[a-z0-9_]+/, number: /\d+/ }
+              get 'records/:kind/:company/:number',
+                  to: 'records#show',
+                  constraints: { kind: /quotes|orders|sales|invoices|service_invoices|contracts|machines|rental_invoices/, company: /[a-z0-9_]+/,
+                                 number: /\d+/ }
               get 'records/quotes/:company/:number/pdf', to: 'records#pdf', defaults: { kind: 'quotes' },
                                                          constraints: { company: /[a-z0-9_]+/, number: /\d+/ }
               # NF-e e NFS-e: o PDF da nota espelhado do Nextcloud e o envio dele ao cliente
