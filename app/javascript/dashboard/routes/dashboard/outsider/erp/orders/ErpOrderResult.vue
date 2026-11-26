@@ -42,13 +42,7 @@ const rows = computed(() => {
     key: 'header',
     ok: !!back.situacao,
     text: t('OUTSIDER_ERP.ORDER_DRAFT.RESULT.HEADER', {
-      detail:
-        header +
-        (fields.value.tecnico_nome
-          ? t('OUTSIDER_ERP.ORDER_DRAFT.RESULT.HEADER_TECH', {
-              name: fields.value.tecnico_nome,
-            })
-          : ''),
+      detail: header,
     }),
     detail: t('OUTSIDER_ERP.ORDER_DRAFT.RESULT.READ_BACK'),
   });
@@ -81,13 +75,6 @@ const rows = computed(() => {
         number: props.draft.quote_number,
       }),
       detail: t('OUTSIDER_ERP.ORDER_DRAFT.RESULT.BOTH_WAYS'),
-    });
-  if (fields.value.enviar_app)
-    list.push({
-      key: 'app',
-      ok: true,
-      text: t('OUTSIDER_ERP.ORDER_DRAFT.RESULT.APP'),
-      detail: '',
     });
   if (fields.value.agendar)
     list.push({

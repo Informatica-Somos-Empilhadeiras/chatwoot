@@ -1,5 +1,6 @@
 # OUTSIDER: agendar uma OS do ERP nas agendas conectadas de quem agenda (Microsoft e/ou Google) e avisar por WhatsApp
-# (Outsider::Erp::OrderScheduler). Pede "Usa" na aba Ordens de serviço do perfil, como o envio do relatório.
+# (Outsider::Erp::OrderScheduler), escolhendo o técnico e o envio para o app dele. Agendar e cancelar pedem "Usa" na
+# linha "Agendar OS" do perfil; o resto (só texto, busca, checklist) pede "Usa" na aba Ordens de serviço.
 #   GET    service_orders/schedule        a OS, o evento sugerido, as agendas, sugestões de convidados e os agendamentos
 #   POST   service_orders/schedule        marcar (e avisar por WhatsApp, se escolheu contatos)
 #   DELETE service_orders/schedule/:id    cancelar (só quem marcou)
@@ -10,7 +11,9 @@ class Api::V1::Accounts::Outsider::Erp::OrderSchedulesController < Api::V1::Acco
   MAX_PEOPLE = 15
 
   before_action :ensure_orders_enabled
-  before_action :ensure_order_access
+  before_action :ensure_order_access, except: [:show, :create, :destroy, :people]
+  before_action :ensure_schedule_access, only: [:show, :create, :destroy]
+  before_action :ensure_people_access, only: [:people]
 
   rescue_from(::Outsider::Erp::Delivery::Blocked) do |error|
     render json: { error: 'send_blocked', reason: error.message }, status: :unprocessable_entity
@@ -74,11 +77,21 @@ class Api::V1::Accounts::Outsider::Erp::OrderSchedulesController < Api::V1::Acco
   end
 
   def schedule_params
-    params.permit(:title, :start, :end, :all_day, :location, :body, calendars: [], attendees: [],
-                                                                    whatsapp: [:inbox_id, :message, { contact_ids: [] }])
+    params.permit(:title, :start, :end, :all_day, :location, :body, :tecnico, :enviar_app,
+                  calendars: [], attendees: [], whatsapp: [:inbox_id, :message, { contact_ids: [] }])
   end
 
   def ensure_order_access
     render json: { error: 'erp_forbidden' }, status: :forbidden unless allows_screen?('erp_orders', 'use')
+  end
+
+  def ensure_schedule_access
+    render json: { error: 'erp_forbidden' }, status: :forbidden unless allows_screen?('erp_order_schedule', 'use')
+  end
+
+  # a busca de pessoas serve ao Agendar e ao "só texto"
+  def ensure_people_access
+    allowed = allows_screen?('erp_order_schedule', 'use') || allows_screen?('erp_orders', 'use')
+    render json: { error: 'erp_forbidden' }, status: :forbidden unless allowed
   end
 end

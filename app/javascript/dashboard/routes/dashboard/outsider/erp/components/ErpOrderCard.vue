@@ -39,6 +39,8 @@ const open = ref(props.startOpen);
 const pdfRef = ref(null);
 const sendRef = ref(null);
 const canSend = computed(() => allows('erp_orders', 'use'));
+// OUTSIDER: Agendar tem linha própria no perfil de acesso (Agendar OS)
+const canSchedule = computed(() => allows('erp_order_schedule', 'use'));
 
 const openSend = () =>
   sendRef.value?.open({
@@ -189,7 +191,7 @@ const details = computed(() =>
       </span>
     </button>
 
-    <div v-if="canSend && schedulable" class="flex">
+    <div v-if="canSchedule && schedulable" class="flex">
       <Button
         size="sm"
         color="blue"

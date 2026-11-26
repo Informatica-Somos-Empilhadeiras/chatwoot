@@ -799,26 +799,6 @@ defineExpose({ open });
                       :class="{ 'opacity-70': !canEdit }"
                     >
                       <input
-                        :checked="fields.enviar_app === true"
-                        type="checkbox"
-                        :disabled="!canEdit"
-                        @change="
-                          fields = {
-                            ...fields,
-                            enviar_app: $event.target.checked,
-                          }
-                        "
-                      />
-                      {{ t('OUTSIDER_ERP.ORDER_DRAFT.FIELDS.APP') }}
-                      <span class="text-xs text-n-slate-10">
-                        · {{ t('OUTSIDER_ERP.ORDER_DRAFT.FIELDS.APP_HINT') }}
-                      </span>
-                    </label>
-                    <label
-                      class="flex items-center gap-2 text-n-slate-12"
-                      :class="{ 'opacity-70': !canEdit }"
-                    >
-                      <input
                         :checked="fields.agendar === true"
                         type="checkbox"
                         :disabled="!canEdit"

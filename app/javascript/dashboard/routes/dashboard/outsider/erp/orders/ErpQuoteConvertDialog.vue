@@ -49,7 +49,6 @@ const DEFAULT_FIELDS = {
   maquina_do_cliente: true,
   maquina_parada: false,
   agendar: false,
-  enviar_app: false,
 };
 
 const quote = computed(() => preview.value?.quote || {});
@@ -537,20 +536,6 @@ defineExpose({ open });
                   "
                 />
                 {{ t('OUTSIDER_ERP.ORDER_DRAFT.FIELDS.SCHEDULE') }}
-              </label>
-              <label
-                class="flex items-center gap-2"
-                :class="{ 'opacity-70': halfDone }"
-              >
-                <input
-                  :checked="fields.enviar_app === true"
-                  type="checkbox"
-                  :disabled="halfDone || phase === 'submitting'"
-                  @change="
-                    fields = { ...fields, enviar_app: $event.target.checked }
-                  "
-                />
-                {{ t('OUTSIDER_ERP.ORDER_DRAFT.FIELDS.APP') }}
               </label>
             </div>
             <p v-if="erpUser" class="mb-0 text-xs text-n-slate-11">

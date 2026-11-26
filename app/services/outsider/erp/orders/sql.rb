@@ -201,27 +201,21 @@ class Outsider::Erp::Orders::Sql
 
   private
 
-  # o que a Nova OS e a conversão gravam igual: situação, tipo, cliente, documento, técnico, máquina, datas pedidas,
-  # usuário, classe, máquina normal/parada, marca e o envio para o app do técnico
+  # o que a Nova OS e a conversão gravam igual: situação, tipo, cliente, documento, máquina, datas pedidas, usuário,
+  # classe, máquina normal/parada e marca. Técnico e envio para o app do técnico ficam só no Agendar
+  # (Outsider::Erp::OrderScheduler), como no quadro de OS do Mais Prático
   def common_header
     fields = @draft.fields
     machine = fields['maquina'].to_i.positive? ? S.int(fields['maquina']) : 'NULL'
     {
       'CodigoOS' => 'M.proximo', 'TipoAtendimento' => text('tipo_atendimento', 50), 'Situacao' => S.str(NEGOTIATION),
-      'CodigoCliente' => 'C.`CodigoCliente`', 'CPF_CNPJ' => 'C.`CPF_CNPJ`', 'Tecnico' => positive('tecnico'),
+      'CodigoCliente' => 'C.`CodigoCliente`', 'CPF_CNPJ' => 'C.`CPF_CNPJ`',
       'Atendente' => S.int(@erp_user), 'IDLogado' => S.int(@erp_user), 'Hora' => "DATE_FORMAT(NOW(), '%H:%i')",
       'DataPrevisao' => datetime(fields['previsao']), 'DataEntrega' => datetime(fields['entrega']), 'Horimetro' => text('horimetro', 7),
       'CodigoMaquina' => machine, 'NSerie' => machine == 'NULL' ? 'NULL' : 'E.`NSerie`', 'ClasseOS' => positive('classe'),
       'IsCliente' => '1', 'StatusMaquina' => S.str(fields['maquina_parada'] == true ? 'PARADA' : 'NORMAL'),
       'CkListaMaqCliente' => fields['maquina_do_cliente'] == false ? '0' : '1', 'CodigoPedidoOutroSistema' => marker
-    }.merge(app_header)
-  end
-
-  # "Enviar para o app do técnico": os campos que fazem a OS aparecer no celular, como nas OS enviadas pelo desktop
-  def app_header
-    return {} unless @draft.fields['enviar_app'] == true
-
-    { 'ExibirFSMMobile' => '1', 'SubStatusFSM' => S.str(APP_SUBSTATUS) }
+    }
   end
 
   def insert_header(values, from)

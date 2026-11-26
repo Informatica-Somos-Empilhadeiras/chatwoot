@@ -124,7 +124,7 @@ class Api::V1::Accounts::Outsider::Erp::OrderDraftsController < Api::V1::Account
 
     drafts.create!(user: Current.user, contact: optional_contact, conversation_id: conversation_id, kind: :fresh, status: :draft,
                    company: company, customer_code: link&.dig('codigo'), customer_name: link&.dig('nome'),
-                   fields: { 'classe' => nil, 'enviar_app' => false, 'agendar' => false, 'maquina_do_cliente' => true })
+                   fields: { 'classe' => nil, 'agendar' => false, 'maquina_do_cliente' => true })
   end
 
   def conversion_draft
@@ -139,7 +139,7 @@ class Api::V1::Accounts::Outsider::Erp::OrderDraftsController < Api::V1::Account
       drafts.create!(user: Current.user, contact: optional_contact, conversation_id: conversation_id, kind: :conversion, status: :draft,
                      company: company, quote_number: number, customer_code: params[:customer_code].presence,
                      customer_name: params[:customer_name].to_s.squish.first(150).presence,
-                     fields: { 'enviar_app' => false, 'agendar' => false, 'maquina_do_cliente' => true })
+                     fields: { 'agendar' => false, 'maquina_do_cliente' => true })
   end
 
   def optional_contact

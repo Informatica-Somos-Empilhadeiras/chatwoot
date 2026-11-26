@@ -214,7 +214,17 @@
         "WHATSAPP_DONE": "WhatsApp enviado para {count} pessoa(s).",
         "SUBSTATUS_DONE": "Substatus: {value}.",
         "SUBSTATUS_SKIPPED": "O substatus não mudou para Agendado (escrita no ERP desligada ou sem esse substatus).",
-        "PARTIAL": "Não deu em: {calendars}."
+        "PARTIAL": "Não deu em: {calendars}.",
+        "TECHNICIAN": "Técnico",
+        "TECHNICIAN_LABEL": "Técnico da OS",
+        "TECHNICIAN_NONE": "Sem técnico",
+        "SEND_APP": "Enviar para o app do técnico",
+        "TECHNICIAN_HINT": "A lista vem do cadastro de técnicos do Mais Prático. Ao agendar, o técnico é gravado na OS e, se marcado, a OS vai para o app dele.",
+        "TECHNICIAN_OFF": "Escolher o técnico e enviar para o app pede \"Gravar no ERP\" ligado em ERP > Configurações.",
+        "TECHNICIAN_DONE": "Técnico: {name}.",
+        "TECHNICIAN_FAILED": "O técnico não foi gravado na OS (veja no Mais Prático).",
+        "APP_DONE": "Enviada para o app do técnico.",
+        "APP_FAILED": "Não foi enviada para o app do técnico (veja no Mais Prático)."
       }
     },
     "CONTACT": {
@@ -1530,8 +1540,6 @@
         "LAST_HOURS": "último: {value}",
         "TYPE": "Tipo de atendimento",
         "TYPE_PICK": "Escolha o tipo",
-        "TECHNICIAN": "Técnico",
-        "TECHNICIAN_NONE": "Sem técnico",
         "FORECAST": "Previsão",
         "DELIVERY": "Entrega",
         "CLASS": "Classe da OS",
@@ -1543,9 +1551,7 @@
         "DEFECTS_PLACEHOLDER": "O que o cliente relatou",
         "NOTES": "Observações",
         "NOTES_PLACEHOLDER": "Contato no local, horário, acesso…",
-        "SCHEDULE": "Sub status Agendar atendimento",
-        "APP": "Enviar para o app do técnico",
-        "APP_HINT": "aparece no celular do técnico escolhido"
+        "SCHEDULE": "Sub status Agendar atendimento"
       },
       "ITEMS": {
         "TITLE": "Peças e serviços",
@@ -1575,7 +1581,6 @@
         "SERIAL": "série {value}",
         "CHECKED": "Conferido no ERP depois de gravar",
         "HEADER": "Cabeçalho: {detail}",
-        "HEADER_TECH": ", técnico {name}",
         "READ_BACK": "lido de volta",
         "HISTORY": "Histórico: situação e tipo de atendimento",
         "HISTORY_LINES": "{count} linhas",
@@ -1583,7 +1588,6 @@
         "ITEMS_COUNT": "{count} de {total} itens",
         "QUOTE_CLOSED": "Orçamento {number} FECHADO e ligado a esta OS",
         "BOTH_WAYS": "ligados nos dois sentidos",
-        "APP": "Enviada para o app do técnico",
         "SCHEDULED": "Sub status Agendar atendimento",
         "SCHEDULE_FAILED": "Sub status Agendar atendimento não entrou: troque no quadro de OS",
         "OFFICIAL_ROUTE": "rota oficial",

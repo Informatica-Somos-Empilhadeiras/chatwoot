@@ -1224,6 +1224,14 @@
         "LABEL": "Release work order for picking",
         "HINT": "Use: on a work order in NEGOCIAÇÃO, releases the parts for stock to check and pick (Mais Prático's \"Libera Conferência\")."
       },
+      "ERP_ORDER_BOARD": {
+        "LABEL": "Work order board (Kanban)",
+        "HINT": "View: shows the work order board. Use: drags the cards and changes the work order (substatus, technician, fields and Edit)."
+      },
+      "ERP_ORDER_SCHEDULE": {
+        "LABEL": "Schedule work order",
+        "HINT": "Use: schedules the work order on calendars, picks the technician and sends it to the technician's app."
+      },
       "REPORTS": {
         "LABEL": "ERP reports",
         "HINT": "None: report tabs are hidden in the ERP section. Reports below never exceed this level."

@@ -288,6 +288,7 @@ const edit = computed(() => detail.value?.edit || {});
 // enviar e copiar pedem "Usa" na aba Orçamentos do perfil; editar pede também a gravação de orçamentos ligada
 const canUseQuotes = computed(() => allows('erp_quotes', 'use'));
 const canUseOrders = computed(() => allows('erp_orders', 'use'));
+const canSchedule = computed(() => allows('erp_order_schedule', 'use'));
 const canUseInvoices = computed(() => allows('erp_invoices', 'use'));
 const canUseSales = computed(() => allows('erp_sales', 'use'));
 const editBlocked = computed(() => {
@@ -669,7 +670,7 @@ const LABEL =
           @click="sendOrder"
         />
         <Button
-          v-if="canUseOrders && schedulable"
+          v-if="canSchedule && schedulable"
           size="sm"
           color="blue"
           icon="i-lucide-calendar-plus"

@@ -21,6 +21,7 @@ import { kindForTab } from '../records/recordsConfig';
 import { erpTabs, erpGroups } from '../sidebar';
 import { reportTabs } from '../../reports/reportsCatalog';
 import { erpState, ERP_ROUTE } from '../erpStore';
+import { allows } from '../../access/accessStore';
 
 const { t } = useI18n();
 const route = useRoute();
@@ -88,9 +89,15 @@ const kind = computed(() =>
   tab.value === 'notas' ? notesMode.value : kindForTab(tab.value)
 );
 const osMode = ref(stored(MODE_KEY, ['table', 'board'], 'table'));
+// o quadro (Kanban) tem linha própria no perfil de acesso: sem "Vê" fica só a lista
+const boardAllowed = computed(() => allows('erp_order_board', 'view'));
 // "Ver OS da máquina" (?machine=) abre sempre a lista, que filtra pela máquina
 const showBoard = computed(
-  () => tab.value === 'os' && osMode.value === 'board' && !route.query.machine
+  () =>
+    tab.value === 'os' &&
+    osMode.value === 'board' &&
+    boardAllowed.value &&
+    !route.query.machine
 );
 const fills = computed(
   () => (kind.value && !showBoard.value) || tab.value === 'produtos'
@@ -211,7 +218,7 @@ watch(tab, () => {
             </nav>
             <div class="flex items-center gap-2 py-1.5">
               <div
-                v-if="tab === 'os'"
+                v-if="tab === 'os' && boardAllowed"
                 class="flex items-center p-0.5 rounded-lg bg-n-alpha-2"
               >
                 <button

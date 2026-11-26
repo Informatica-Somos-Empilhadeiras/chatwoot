@@ -214,7 +214,17 @@
         "WHATSAPP_DONE": "WhatsApp sent to {count} person(s).",
         "SUBSTATUS_DONE": "Substatus: {value}.",
         "SUBSTATUS_SKIPPED": "The substatus was not changed to Scheduled (ERP writing is off or there is no such substatus).",
-        "PARTIAL": "Failed in: {calendars}."
+        "PARTIAL": "Failed in: {calendars}.",
+        "TECHNICIAN": "Technician",
+        "TECHNICIAN_LABEL": "Work order technician",
+        "TECHNICIAN_NONE": "No technician",
+        "SEND_APP": "Send to the technician's app",
+        "TECHNICIAN_HINT": "The list comes from Mais Prático's technician registry. On scheduling, the technician is saved on the work order and, if checked, the order goes to their app.",
+        "TECHNICIAN_OFF": "Choosing the technician and sending to the app needs \"Write to ERP\" on in ERP > Settings.",
+        "TECHNICIAN_DONE": "Technician: {name}.",
+        "TECHNICIAN_FAILED": "The technician was not saved on the work order (check Mais Prático).",
+        "APP_DONE": "Sent to the technician's app.",
+        "APP_FAILED": "Not sent to the technician's app (check Mais Prático)."
       }
     },
     "CONTACT": {
@@ -1530,8 +1540,6 @@
         "LAST_HOURS": "last: {value}",
         "TYPE": "Service type",
         "TYPE_PICK": "Pick the type",
-        "TECHNICIAN": "Technician",
-        "TECHNICIAN_NONE": "No technician",
         "FORECAST": "Forecast",
         "DELIVERY": "Delivery",
         "CLASS": "Work order class",
@@ -1543,9 +1551,7 @@
         "DEFECTS_PLACEHOLDER": "What the customer reported",
         "NOTES": "Notes",
         "NOTES_PLACEHOLDER": "On-site contact, time, access…",
-        "SCHEDULE": "Sub status Schedule service",
-        "APP": "Send to the technician app",
-        "APP_HINT": "shows up on the chosen technician's phone"
+        "SCHEDULE": "Sub status Schedule service"
       },
       "ITEMS": {
         "TITLE": "Parts and services",
@@ -1575,7 +1581,6 @@
         "SERIAL": "serial {value}",
         "CHECKED": "Checked in the ERP after saving",
         "HEADER": "Header: {detail}",
-        "HEADER_TECH": ", technician {name}",
         "READ_BACK": "read back",
         "HISTORY": "History: status and service type",
         "HISTORY_LINES": "{count} lines",
@@ -1583,7 +1588,6 @@
         "ITEMS_COUNT": "{count} of {total} items",
         "QUOTE_CLOSED": "Quote {number} CLOSED and linked to this work order",
         "BOTH_WAYS": "linked both ways",
-        "APP": "Sent to the technician app",
         "SCHEDULED": "Sub status Schedule service",
         "SCHEDULE_FAILED": "Sub status Schedule service did not go in: change it on the work order board",
         "OFFICIAL_ROUTE": "official route",

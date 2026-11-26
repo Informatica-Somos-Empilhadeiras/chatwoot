@@ -3,7 +3,9 @@
 // as pessoas: por e-mail (o convite sai do próprio Google/Microsoft) e/ou por WhatsApp (até 5 contatos, o servidor
 // limita por hora). mode 'message': só um texto pelo WhatsApp sobre a OS. Abre do painel da OS (seção ERP) e do cartão
 // da OS. Quem participa: o contato do cliente e o técnico já vêm; outros pela busca (contatos e colegas) ou digitando o
-// e-mail. Cada pessoa tem E-mail e WhatsApp para ligar/desligar. Ver Outsider::Erp::OrderScheduler.
+// e-mail. Cada pessoa tem E-mail e WhatsApp para ligar/desligar. O técnico da OS (lista do cadastro do Mais Prático) e o
+// "Enviar para o app do técnico" também ficam aqui, como no agendador do quadro de OS do Mais Prático (gravam só com
+// "Gravar no ERP" ligado). Ver Outsider::Erp::OrderScheduler e Outsider::Erp::Orders::Assignment.
 import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useAlert } from 'dashboard/composables';
@@ -38,6 +40,8 @@ const people = ref([]);
 const inboxId = ref(null);
 const message = ref('');
 let autoMessage = '';
+const technician = ref('');
+const sendApp = ref(false);
 
 const query = ref('');
 const results = ref({ contacts: [], users: [] });
@@ -162,6 +166,10 @@ const load = async () => {
       .filter(item => item.ready)
       .map(item => item.provider);
     inboxId.value = data.inbox_id || data.inboxes[0]?.id || null;
+    technician.value = data.order.tecnico_codigo
+      ? String(data.order.tecnico_codigo)
+      : '';
+    sendApp.value = false;
     data.suggestions.whatsapp.forEach(contact =>
       addPerson({ ...contact, contactId: contact.id, kind: 'contact' })
     );
@@ -287,6 +295,29 @@ const nextDay = value => {
   return `${day.getFullYear()}-${pad(day.getMonth() + 1)}-${pad(day.getDate())}`;
 };
 
+const technicianOptions = computed(() => {
+  const list = info.value?.technicians || [];
+  const current = info.value?.order;
+  // o técnico que já está na OS sempre aparece, mesmo fora da lista
+  if (
+    current?.tecnico_codigo &&
+    !list.some(row => Number(row.codigo) === current.tecnico_codigo)
+  )
+    return [
+      { codigo: current.tecnico_codigo, nome: current.tecnico || '' },
+      ...list,
+    ];
+  return list;
+});
+const technicianName = name =>
+  String(name || '')
+    .toLowerCase()
+    .replace(/(^|\s)\S/g, letter => letter.toUpperCase());
+const canAssign = computed(() => !!info.value?.erp_write);
+const onTechnician = () => {
+  if (!technician.value) sendApp.value = false;
+};
+
 const timesValid = computed(
   () => allDay.value || (startTime.value && endTime.value > startTime.value)
 );
@@ -322,6 +353,26 @@ const whatsappPayload = () =>
 const calendarNames = providers =>
   providers.map(provider => t(CALENDAR[provider].label)).join(', ');
 
+// o que aconteceu com o técnico e o app (só as partes pedidas voltam)
+const assignmentText = data => {
+  const parts = [];
+  if (data.technician)
+    parts.push(
+      data.technician.ok
+        ? t('OUTSIDER_ERP.ORDER.SCHEDULE.TECHNICIAN_DONE', {
+            name: technicianName(data.technician.name),
+          })
+        : t('OUTSIDER_ERP.ORDER.SCHEDULE.TECHNICIAN_FAILED')
+    );
+  if (data.app)
+    parts.push(
+      data.app.ok
+        ? t('OUTSIDER_ERP.ORDER.SCHEDULE.APP_DONE')
+        : t('OUTSIDER_ERP.ORDER.SCHEDULE.APP_FAILED')
+    );
+  return parts.length ? ` ${parts.join(' ')}` : '';
+};
+
 const schedule = async () => {
   const { data } = await ErpAPI.createOrderSchedule({
     company: target.value.company,
@@ -338,6 +389,8 @@ const schedule = async () => {
     calendars: chosen.value,
     attendees: emailPeople.value.map(person => person.email),
     whatsapp: whatsappPayload(),
+    tecnico: canAssign.value && technician.value ? technician.value : undefined,
+    enviar_app: canAssign.value && sendApp.value && !!technician.value,
   });
   const done = data.results.filter(row => row.ok).map(row => row.provider);
   const failed = data.results.filter(row => !row.ok).map(row => row.provider);
@@ -355,7 +408,8 @@ const schedule = async () => {
               value: data.substatus.value,
             })
           : t('OUTSIDER_ERP.ORDER.SCHEDULE.SUBSTATUS_SKIPPED')
-      }`
+      }` +
+      assignmentText(data)
   );
   return data;
 };
@@ -626,6 +680,63 @@ const HEADING = 'mb-0 text-sm font-semibold text-n-slate-12';
                 class="!mb-0 w-full px-2.5 py-2 text-sm normal-case rounded-lg reset-base bg-n-solid-1 text-n-slate-12 outline outline-1 -outline-offset-1 outline-n-slate-6 focus:outline-n-brand resize-y"
               />
             </label>
+          </section>
+
+          <!-- técnico e app do técnico (como o agendador do quadro do Mais Prático) -->
+          <section
+            v-if="isSchedule"
+            :class="SECTION"
+            data-erp-schedule-technician
+          >
+            <h4 :class="HEADING">
+              {{ t('OUTSIDER_ERP.ORDER.SCHEDULE.TECHNICIAN') }}
+            </h4>
+            <div class="grid items-end gap-2 sm:grid-cols-[1fr_auto]">
+              <label :class="LABEL">
+                {{ t('OUTSIDER_ERP.ORDER.SCHEDULE.TECHNICIAN_LABEL') }}
+                <select
+                  v-model="technician"
+                  :disabled="!canAssign"
+                  :class="INPUT"
+                  class="normal-case disabled:opacity-50"
+                  data-erp-schedule-tecnico
+                  @change="onTechnician"
+                >
+                  <option value="">
+                    {{ t('OUTSIDER_ERP.ORDER.SCHEDULE.TECHNICIAN_NONE') }}
+                  </option>
+                  <option
+                    v-for="row in technicianOptions"
+                    :key="row.codigo"
+                    :value="String(row.codigo)"
+                  >
+                    {{ technicianName(row.nome) || row.codigo }}
+                  </option>
+                </select>
+              </label>
+              <label
+                class="flex items-center h-9 gap-2 text-sm cursor-pointer text-n-slate-12"
+                :class="{
+                  'opacity-50 cursor-not-allowed': !canAssign || !technician,
+                }"
+              >
+                <input
+                  v-model="sendApp"
+                  type="checkbox"
+                  class="!m-0"
+                  :disabled="!canAssign || !technician"
+                  data-erp-schedule-app
+                />
+                {{ t('OUTSIDER_ERP.ORDER.SCHEDULE.SEND_APP') }}
+              </label>
+            </div>
+            <p class="mb-0 text-xs text-n-slate-10">
+              {{
+                canAssign
+                  ? t('OUTSIDER_ERP.ORDER.SCHEDULE.TECHNICIAN_HINT')
+                  : t('OUTSIDER_ERP.ORDER.SCHEDULE.TECHNICIAN_OFF')
+              }}
+            </p>
           </section>
 
           <!-- agendas -->

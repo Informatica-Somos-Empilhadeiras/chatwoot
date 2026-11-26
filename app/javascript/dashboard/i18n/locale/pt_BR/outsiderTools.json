@@ -1224,6 +1224,14 @@
         "LABEL": "Liberar OS para separação",
         "HINT": "Usa: no painel da OS em NEGOCIAÇÃO, libera as peças para o estoque conferir e separar (o \"Libera Conferência\" do Mais Prático)."
       },
+      "ERP_ORDER_BOARD": {
+        "LABEL": "Quadro de OS (Kanban)",
+        "HINT": "Vê: mostra o quadro de OS. Usa: arrasta os cartões e muda a OS (substatus, técnico, campos e Editar OS)."
+      },
+      "ERP_ORDER_SCHEDULE": {
+        "LABEL": "Agendar OS",
+        "HINT": "Usa: agenda a OS nas agendas, escolhe o técnico e envia para o app do técnico."
+      },
       "REPORTS": {
         "LABEL": "Relatórios do ERP",
         "HINT": "Não vê: as abas de relatório somem da seção ERP. Os relatórios abaixo nunca passam deste nível."

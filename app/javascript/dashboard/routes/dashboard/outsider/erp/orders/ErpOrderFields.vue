@@ -1,6 +1,6 @@
 <script setup>
 // OUTSIDER: os campos da OS feita no chat, os mesmos que o desktop pede: máquina (+ horímetro), tipo de atendimento,
-// técnico, previsão, entrega, classe e máquina normal/parada; na Nova OS também defeitos e observações (na conversão o
+// previsão, entrega, classe e máquina normal/parada (o técnico e o envio para o app ficam só no Agendar); na Nova OS também defeitos e observações (na conversão o
 // desktop grava defeitos "." e copia as observações do orçamento). Quem salva é a tela que usa (gaveta ou conversão).
 // compact: a tela de converter (duas colunas). Slot "customer": o cartão do cliente, ao lado da máquina.
 import { ref, computed } from 'vue';
@@ -46,19 +46,8 @@ const types = computed(() => {
   const current = fields.value.tipo_atendimento;
   return current && !list.includes(current) ? [current, ...list] : list;
 });
-const technicians = computed(() => props.options.technicians || []);
 const classes = computed(() => props.options.classes || []);
 const machineRequired = computed(() => props.options.machine_required === true);
-
-const setTechnician = event => {
-  const code = Number(event.target.value) || null;
-  const found = technicians.value.find(item => Number(item.codigo) === code);
-  fields.value = {
-    ...fields.value,
-    tecnico: code,
-    tecnico_nome: found?.nome || null,
-  };
-};
 
 const INPUT =
   '!mb-0 w-full h-9 px-2.5 text-sm rounded-lg reset-base bg-n-solid-1 text-n-slate-12 outline outline-1 -outline-offset-1 outline-n-slate-6 focus:outline-n-brand disabled:opacity-70 normal-case';
@@ -125,7 +114,7 @@ const bad = key => props.missing === key && '!outline-n-ruby-9';
       :class="
         compact
           ? 'grid-cols-2'
-          : 'grid-cols-2 md:grid-cols-3 xl:grid-cols-[minmax(0,1.8fr)_minmax(0,1.8fr)_minmax(0,1.6fr)_minmax(0,1.3fr)_minmax(0,1.4fr)_auto]'
+          : 'grid-cols-2 md:grid-cols-3 xl:grid-cols-[minmax(0,1.8fr)_minmax(0,1.6fr)_minmax(0,1.3fr)_minmax(0,1.4fr)_auto]'
       "
     >
       <label :class="LABEL">
@@ -145,37 +134,6 @@ const bad = key => props.missing === key && '!outline-n-ruby-9';
           </option>
           <option v-for="name in types" :key="name" :value="name">
             {{ name }}
-          </option>
-        </select>
-      </label>
-      <label :class="LABEL">
-        {{ t('OUTSIDER_ERP.ORDER_DRAFT.FIELDS.TECHNICIAN') }}
-        <select
-          :value="fields.tecnico ? String(fields.tecnico) : ''"
-          :disabled="readOnly"
-          :class="SELECT"
-          @change="setTechnician"
-        >
-          <option value="">
-            {{ t('OUTSIDER_ERP.ORDER_DRAFT.FIELDS.TECHNICIAN_NONE') }}
-          </option>
-          <option
-            v-if="
-              fields.tecnico &&
-              !technicians.some(
-                item => Number(item.codigo) === Number(fields.tecnico)
-              )
-            "
-            :value="String(fields.tecnico)"
-          >
-            {{ fields.tecnico_nome || `#${fields.tecnico}` }}
-          </option>
-          <option
-            v-for="item in technicians"
-            :key="item.codigo"
-            :value="String(item.codigo)"
-          >
-            {{ item.nome }}
           </option>
         </select>
       </label>

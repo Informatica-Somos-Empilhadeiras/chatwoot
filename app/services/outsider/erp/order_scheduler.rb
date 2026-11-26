@@ -2,7 +2,8 @@
 # de quem agenda (Outsider::Erp::OrderCalendars: Microsoft e/ou Google), com convidados por e-mail (o Google/Microsoft
 # manda o convite) e, se quiser, um aviso por WhatsApp para até 5 contatos (Outsider::Erp::Delivery limita por hora).
 # Também manda só um texto pelo WhatsApp sobre a OS (message). O evento mora na agenda da pessoa; aqui fica o resumo
-# (Outsider::Erp::OrderSchedule) para o painel da OS mostrar e para cancelar.
+# (Outsider::Erp::OrderSchedule) para o painel da OS mostrar e para cancelar. O técnico e o envio para o app do técnico
+# também são escolhidos aqui (Outsider::Erp::Orders::Assignment), como no agendador do quadro de OS do Mais Prático.
 class Outsider::Erp::OrderScheduler
   include Outsider::Erp::Delivery
 
@@ -31,7 +32,7 @@ class Outsider::Erp::OrderScheduler
       inboxes: recipients.whatsapp_inboxes.map { |inbox| { id: inbox.id, name: inbox.name, channel_type: inbox.channel_type } },
       inbox_id: recipients.for_contact(contact)[:inbox_id], texts: { schedule: WHATSAPP_TEXT, message: MESSAGE_TEXT },
       limits: { whatsapp: MAX_WHATSAPP, attendees: MAX_ATTENDEES, whatsapp_per_hour: WHATSAPP_PER_HOUR },
-      schedules: list(company, number)
+      schedules: list(company, number), technicians: technicians, erp_write: Outsider::Erp::Settings.new(@account).write_enabled?
     }
   end
 
@@ -55,10 +56,12 @@ class Outsider::Erp::OrderScheduler
     raise Blocked, "calendar_failed:#{results.first[:error]}" if created.empty?
 
     schedule = save(company, number, event, created)
+    assigned = Outsider::Erp::Orders::Assignment.new(@account, @user)
+                                                .call(company, number, technician: params[:tecnico], app: truthy?(params[:enviar_app]))
     substatus = mark_scheduled(company, number)
     sent = notice ? send_notice(notice, schedule) : 0
     schedule.update!(whatsapp_count: sent) if sent.positive?
-    { schedule: schedule_json(schedule), results: results, whatsapp: sent, substatus: substatus }
+    { schedule: schedule_json(schedule), results: results, whatsapp: sent, substatus: substatus }.merge(assigned)
   end
 
   # só quem agendou cancela (o evento está na agenda dele); os convidados recebem o cancelamento do Google/Microsoft
@@ -85,11 +88,20 @@ class Outsider::Erp::OrderScheduler
     @recipients ||= Outsider::Erp::BudgetRecipients.new(@account_user)
   end
 
+  def truthy?(value) = ActiveModel::Type::Boolean.new.cast(value) == true
+
+  # os técnicos do cadastro do Mais Prático (a mesma lista do quadro de OS)
+  def technicians
+    Outsider::Erp::Lists.new(@account).technicians
+  rescue Outsider::Erp::Client::Error
+    []
+  end
+
   def order_info(detail)
     header = detail['header'].to_h
     { company: detail['company'], number: detail['numero'], cliente: client_name(detail), atendimento: header['atendimento'],
-      tecnico: header['tecnico_nome'], equipamento: header['equipamento'], previsao: header['previsao'], status: header['status'],
-      contact_id: detail['contact_id'] }
+      tecnico: header['tecnico_nome'], tecnico_codigo: header['tecnico'].to_i, equipamento: header['equipamento'],
+      previsao: header['previsao'], status: header['status'], contact_id: detail['contact_id'] }
   end
 
   def client_name(detail)

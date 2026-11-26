@@ -7,10 +7,11 @@ class Outsider::Erp::Orders::Form
 
   # campo => limite (texto), :int, :bool, :datetime (AAAA-MM-DDTHH:MM) ou :date (AAAA-MM-DD). Tamanhos: os, 25/11/2026
   FIELDS = {
-    'tipo_atendimento' => 50, 'tecnico' => :int, 'tecnico_nome' => 80, 'maquina' => :int, 'maquina_descricao' => 150, 'serie' => 50,
+    'tipo_atendimento' => 50, 'maquina' => :int, 'maquina_descricao' => 150, 'serie' => 50,
     'horimetro' => 7, 'previsao' => :datetime, 'entrega' => :date, 'classe' => :int, 'maquina_parada' => :bool,
-    'maquina_do_cliente' => :bool, 'defeitos' => 5000, 'observacoes' => 5000, 'agendar' => :bool, 'enviar_app' => :bool
+    'maquina_do_cliente' => :bool, 'defeitos' => 5000, 'observacoes' => 5000, 'agendar' => :bool
   }.freeze
+  # técnico e "Enviar para o app do técnico" saíram da OS feita no chat: ficam no Agendar (Outsider::Erp::OrderScheduler)
   ITEM_FIELDS = %w[codigo descricao unidade tipo quantidade preco].freeze
   MAX_ITEMS = 100
   MAX_VALUE = 100_000_000

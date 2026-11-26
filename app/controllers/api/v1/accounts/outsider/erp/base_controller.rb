@@ -35,9 +35,10 @@ class Api::V1::Accounts::Outsider::Erp::BaseController < Api::V1::Accounts::Base
     @contact ||= Current.account.contacts.find(params.require(:contact_id))
   end
 
-  # gravar na OS: gravação ligada + "Usa" na aba Ordens de serviço do perfil (que nunca passa da tela "erp")
+  # gravar na OS: gravação ligada + "Usa" na aba Ordens de serviço do perfil (que nunca passa da tela "erp") e na linha
+  # "Quadro de OS (Kanban)" (mexer no quadro e no Editar OS)
   def can_edit?
-    settings.write_enabled? && allows_screen?('erp_orders', 'use')
+    settings.write_enabled? && allows_screen?('erp_orders', 'use') && allows_screen?('erp_order_board', 'use')
   end
 
   # acesso de uso da integração (ver/editar), sem exigir a flag de escrita — para buscas de apoio (produtos, listas)

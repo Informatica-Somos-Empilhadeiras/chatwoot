@@ -39,6 +39,10 @@ module Outsider::Access::Catalog
     { key: 'erp_quote_convert', group: 'erp', levels: %w[none use], agent: 'none', technician: 'none', parent: 'erp' },
     # liberar a OS para a separação do estoque ("Libera Conferência" do Mais Prático); fechada para agente e técnico
     { key: 'erp_order_release', group: 'erp', levels: %w[none use], agent: 'none', technician: 'none', parent: 'erp' },
+    # quadro (Kanban) das OS: Vê mostra o quadro; Usa arrasta os cartões e muda a OS (substatus, técnico, campos, Editar OS).
+    # Agendar OS: marcar nas agendas, escolher o técnico e enviar para o app dele. Abertas para agente como antes; técnico não
+    { key: 'erp_order_board', group: 'erp', levels: %w[none view use], agent: 'use', technician: 'none', parent: 'erp' },
+    { key: 'erp_order_schedule', group: 'erp', levels: %w[none use], agent: 'use', technician: 'none', parent: 'erp' },
     # OUTSIDER (Relatórios do ERP, abas da seção ERP): a linha geral e uma por relatório (os próximos entram aqui). Começa fechada para
     # agente e técnico: o administrador libera no perfil de quem precisa (comissão é informação sensível).
     { key: 'reports', group: 'relatorios', levels: %w[none view], agent: 'none', technician: 'none', parent: 'erp' },
