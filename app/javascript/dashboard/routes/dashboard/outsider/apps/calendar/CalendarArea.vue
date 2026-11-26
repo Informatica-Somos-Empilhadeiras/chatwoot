@@ -4,7 +4,7 @@
 // com os detalhes ("Entrar na reunião", abrir no Outlook, cancelar) e "Marcar reunião". Os eventos vêm da agenda da
 // pessoa na hora, só do período na tela; nada fica no Chatwoot.
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { useAlert } from 'dashboard/composables';
 import Avatar from 'dashboard/components-next/avatar/Avatar.vue';
@@ -23,6 +23,7 @@ import {
   colorClassOf,
 } from 'dashboard/helper/outsider/calendarChoice';
 import { providerOf, gateOf } from '../providers';
+import { appsState, CALENDAR_ROUTE } from '../appsStore';
 import { errorText } from '../appsErrors';
 import {
   rangeOf,
@@ -38,6 +39,7 @@ import '../apps.css';
 
 const { t } = useI18n();
 const route = useRoute();
+const router = useRouter();
 
 const VIEW_KEY = 'outsider_apps_calendar_view';
 const HOUR = 48; // px por hora na grade de Dia e Semana
@@ -56,6 +58,25 @@ const providerKey = computed(() => route.params.provider || 'microsoft');
 const info = computed(() => providerOf(providerKey.value));
 const cal = computed(() => info.value.calendar);
 const gate = computed(() => gateOf(providerKey.value, cal.value.feature));
+// OUTSIDER: qual agenda está na tela (Teams ou Google), com a conta, e o atalho para a outra quando as duas estão ligadas
+const accountEmail = computed(() => appsState[providerKey.value]?.email || '');
+const PROVIDER_TABS = [
+  { key: 'microsoft', label: 'OUTSIDER_APPS.CAL.TAB_MICROSOFT' },
+  { key: 'google', label: 'OUTSIDER_APPS.CAL.TAB_GOOGLE' },
+];
+const providerTabs = computed(() =>
+  PROVIDER_TABS.filter(
+    tab => tab.key === providerKey.value || appsState[tab.key]?.connected
+  )
+);
+const switchProvider = key => {
+  if (key !== providerKey.value)
+    router.push({
+      name: CALENDAR_ROUTE,
+      params: { ...route.params, provider: key },
+      query: route.query,
+    });
+};
 
 const view = ref(
   ['day', 'week', 'month'].includes(route.query.view)
@@ -348,7 +369,19 @@ const remove = async event => {
 };
 
 watch([range, gate, () => visibleIds.value.join('|')], load);
-watch([gate, providerKey], loadCalendars);
+watch(gate, loadCalendars);
+// trocou de Teams para Google (ou o contrário): a tela é a mesma, então limpa tudo da outra conta e carrega de novo
+watch(providerKey, () => {
+  ticket += 1;
+  events.value = [];
+  calendars.value = [];
+  calendarsComplete.value = true;
+  selectedEventId.value = null;
+  form.value = null;
+  error.value = '';
+  load();
+  loadCalendars();
+});
 // a grade só aparece depois de saber se a conta está conectada: rola para as 7h quando ela surge ou muda de visão
 watch([view, gridRef], scrollToMorning);
 onMounted(() => {
@@ -371,15 +404,39 @@ onMounted(() => {
     />
     <template v-else>
       <header
-        class="flex flex-wrap items-center gap-2 px-4 py-3 border-b border-n-weak md:px-5"
+        class="flex flex-wrap items-center gap-2 px-4 py-3 border-t-4 border-b border-n-weak md:px-5"
+        :class="
+          providerKey === 'google' ? 'border-t-[#1A73E8]' : 'border-t-[#5B5FC7]'
+        "
+        :data-apps-calendar-provider="providerKey"
       >
         <AppLogo :name="cal.logo" :size="30" />
         <div class="min-w-0 mr-auto">
           <h2 class="mb-0 text-lg font-semibold leading-tight text-n-slate-12">
-            {{ t(cal.name) }}
+            {{ t(cal.source) }}
           </h2>
-          <p class="mb-0 text-xs text-n-slate-11">{{ t(cal.source) }}</p>
+          <p v-if="accountEmail" class="mb-0 text-xs truncate text-n-slate-11">
+            {{ t('OUTSIDER_APPS.CAL.ACCOUNT', { email: accountEmail }) }}
+          </p>
         </div>
+        <span
+          v-if="providerTabs.length > 1"
+          class="oa-tabs"
+          role="tablist"
+          data-apps-calendar-switch
+        >
+          <button
+            v-for="tab in providerTabs"
+            :key="tab.key"
+            type="button"
+            role="tab"
+            :class="{ on: providerKey === tab.key }"
+            :aria-selected="providerKey === tab.key"
+            @click="switchProvider(tab.key)"
+          >
+            {{ t(tab.label) }}
+          </button>
+        </span>
         <button type="button" class="oa-ghost" @click="today">
           {{ t('OUTSIDER_APPS.CAL.TODAY') }}
         </button>
