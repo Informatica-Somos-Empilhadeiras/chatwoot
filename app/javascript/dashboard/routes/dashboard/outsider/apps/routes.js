@@ -3,11 +3,18 @@
 //   /apps/microsoft/outlook?folder=...&message=...   /apps/google/gmail?folder=...&message=...
 //   /apps/microsoft/onedrive                          /apps/google/drive
 //   /apps/microsoft/agenda?view=day|week|month&date=AAAA-MM-DD   /apps/google/agenda
+//   /apps/google/mapa  Mapa dos agendamentos (clientes com OS agendada, ficha, máquinas, OS abertas e a rota)
 import { frontendURL } from 'dashboard/helper/URLHelper';
 import MailArea from './mail/MailArea.vue';
 import DriveArea from './drive/DriveArea.vue';
 import CalendarArea from './calendar/CalendarArea.vue';
-import { MAIL_ROUTE, DRIVE_ROUTE, CALENDAR_ROUTE } from './appsStore';
+import ScheduleMapArea from './map/ScheduleMapArea.vue';
+import {
+  MAIL_ROUTE,
+  DRIVE_ROUTE,
+  CALENDAR_ROUTE,
+  SCHEDULE_MAP_ROUTE,
+} from './appsStore';
 
 const meta = { permissions: ['administrator', 'agent'] };
 
@@ -34,6 +41,12 @@ export const routes = [
     ),
     name: CALENDAR_ROUTE,
     component: CalendarArea,
+    meta,
+  },
+  {
+    path: frontendURL('accounts/:accountId/apps/google/mapa'),
+    name: SCHEDULE_MAP_ROUTE,
+    component: ScheduleMapArea,
     meta,
   },
 ];

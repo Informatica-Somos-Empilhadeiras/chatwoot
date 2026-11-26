@@ -77,8 +77,9 @@ class Api::V1::Accounts::Outsider::Erp::OrderSchedulesController < Api::V1::Acco
   end
 
   def schedule_params
-    params.permit(:title, :start, :end, :all_day, :location, :body, :tecnico, :enviar_app,
-                  calendars: [], attendees: [], whatsapp: [:inbox_id, :message, { contact_ids: [] }])
+    params.permit(:title, :start, :end, :all_day, :location, :body, :tecnico, :enviar_app, :save_place,
+                  calendars: [], attendees: [], place: [:name, :address, :latitude, :longitude],
+                  whatsapp: [:inbox_id, :message, :send_location, { contact_ids: [] }])
   end
 
   def ensure_order_access

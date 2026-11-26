@@ -1,6 +1,6 @@
 <script setup>
 // OUTSIDER: ícones da empresa e de cada aplicativo nos blocos Microsoft e Google do menu e nas telas.
-// name: microsoft | google | teams | outlook | onedrive | mcalendar | gmail | gcalendar | gdrive
+// name: microsoft | google | teams | outlook | onedrive | mcalendar | gmail | gcalendar | gdrive | gmaps
 defineProps({
   name: { type: String, required: true },
   size: { type: Number, default: 18 },
@@ -118,6 +118,21 @@ const CALENDAR_DAY = '31';
       <path d="M8.2 2.5h7.6l7.2 12.4h-7.6z" fill="#FBBC04" />
       <path d="M8.2 2.5l3.8 6.6-7.6 13.2L.6 15.7z" fill="#34A853" />
       <path d="M4.4 22.3l3.8-7.4h14.8l-3.8 7.4z" fill="#4285F4" />
+    </template>
+    <template v-else-if="name === 'gmaps'">
+      <path
+        d="M12 1.5a7.5 7.5 0 0 0-7.5 7.5c0 5.6 7.5 13.5 7.5 13.5S19.5 14.6 19.5 9A7.5 7.5 0 0 0 12 1.5z"
+        fill="#EA4335"
+      />
+      <path
+        d="M6.2 4.2 12 9l5.8-4.8A7.4 7.4 0 0 0 12 1.5a7.4 7.4 0 0 0-5.8 2.7z"
+        fill="#4285F4"
+      />
+      <path
+        d="M4.5 9c0 1.6.6 3.3 1.4 4.9L12 9 6.2 4.2A7.5 7.5 0 0 0 4.5 9z"
+        fill="#FBBC04"
+      />
+      <circle cx="12" cy="9" r="2.8" fill="#fff" />
     </template>
     <circle v-else cx="12" cy="12" r="10" fill="currentColor" opacity=".3" />
   </svg>

@@ -26,6 +26,7 @@ import LinearIssuesList from 'dashboard/components/widgets/conversation/linear/I
 import LinearSetupCTA from 'dashboard/components/widgets/conversation/linear/LinearSetupCTA.vue';
 import CrmContactPanelSection from 'dashboard/routes/dashboard/outsider/crm/conversation/CrmContactPanelSection.vue'; // OUTSIDER: bloco do CRM
 import ErpContactPanelSection from 'dashboard/routes/dashboard/outsider/erp/conversation/ErpContactPanelSection.vue'; // OUTSIDER: OS do ERP
+import ContactPlaces from 'dashboard/routes/dashboard/outsider/maps/ContactPlaces.vue'; // OUTSIDER: locais do cliente (Google Maps)
 
 const props = defineProps({
   conversationId: {
@@ -146,6 +147,8 @@ onMounted(() => {
       :channel-type="channelType"
       :show-avatar="false"
     />
+    <!-- OUTSIDER: locais do cliente com Street View (Google Maps na agenda) -->
+    <ContactPlaces :contact-id="contactId" :conversation-id="conversationId" />
     <div class="px-2 pb-8 list-group">
       <Draggable
         :list="conversationSidebarItems"

@@ -6,6 +6,8 @@
 // e-mail. Cada pessoa tem E-mail e WhatsApp para ligar/desligar. O técnico da OS (lista do cadastro do Mais Prático) e o
 // "Enviar para o app do técnico" também ficam aqui, como no agendador do quadro de OS do Mais Prático (gravam só com
 // "Gravar no ERP" ligado). Ver Outsider::Erp::OrderScheduler e Outsider::Erp::Orders::Assignment.
+// Local exato (Google Maps): vem o local principal do cliente (locais do contato); dá para trocar no mapa, mandar o pin
+// do WhatsApp depois do aviso e guardar um local novo no cliente. O evento leva o endereço, as coordenadas e o link.
 import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useAlert } from 'dashboard/composables';
@@ -15,6 +17,9 @@ import Button from 'dashboard/components-next/button/Button.vue';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 import AppLogo from '../../apps/AppLogo.vue';
+import PlaceView from 'dashboard/components-next/outsider/maps/PlaceView.vue';
+import SendLocationDialog from 'dashboard/components/widgets/WootWriter/outsider/SendLocationDialog.vue';
+import { formatCoordinates } from 'dashboard/helper/outsider/location';
 import { budgetErrorMessage } from '../budgets/budgetHelpers';
 
 const emit = defineEmits(['changed']);
@@ -42,6 +47,11 @@ const message = ref('');
 let autoMessage = '';
 const technician = ref('');
 const sendApp = ref(false);
+const place = ref(null);
+const savePlace = ref(false);
+const sendLocation = ref(false);
+const pickRef = ref(null);
+const openPlaceId = ref(null);
 
 const query = ref('');
 const results = ref({ contacts: [], users: [] });
@@ -170,6 +180,10 @@ const load = async () => {
       ? String(data.order.tecnico_codigo)
       : '';
     sendApp.value = false;
+    place.value = data.places?.[0] || null;
+    savePlace.value = false;
+    sendLocation.value = !!place.value;
+    openPlaceId.value = null;
     data.suggestions.whatsapp.forEach(contact =>
       addPerson({ ...contact, contactId: contact.id, kind: 'contact' })
     );
@@ -205,6 +219,32 @@ const open = (options, openMode = 'schedule') => {
 const close = () => {
   isOpen.value = false;
 };
+
+const samePoint = (a, b) =>
+  Number(a.latitude).toFixed(6) === Number(b.latitude).toFixed(6) &&
+  Number(a.longitude).toFixed(6) === Number(b.longitude).toFixed(6);
+
+// local escolhido no mapa: se ainda não é do cliente, já vem marcado para guardar nele
+const onPlacePicked = picked => {
+  const known = (info.value?.places || []).find(item =>
+    samePoint(item, picked)
+  );
+  place.value = known || { ...picked, name: picked.name || picked.address };
+  savePlace.value = !known && !!info.value?.order?.contact_id;
+  sendLocation.value = true;
+  if (!location.value.trim() && place.value.address)
+    location.value = place.value.address;
+};
+
+const placePayload = () =>
+  place.value
+    ? {
+        name: place.value.name,
+        address: place.value.address || '',
+        latitude: place.value.latitude,
+        longitude: place.value.longitude,
+      }
+    : undefined;
 
 const clientEmails = computed(() =>
   (info.value?.suggestions.emails || []).filter(
@@ -347,6 +387,7 @@ const whatsappPayload = () =>
         contact_ids: whatsappPeople.value.map(person => person.contactId),
         inbox_id: inboxId.value,
         message: message.value,
+        send_location: isSchedule.value && !!place.value && sendLocation.value,
       }
     : undefined;
 
@@ -389,6 +430,8 @@ const schedule = async () => {
     calendars: chosen.value,
     attendees: emailPeople.value.map(person => person.email),
     whatsapp: whatsappPayload(),
+    place: placePayload(),
+    save_place: !!place.value && savePlace.value,
     tecnico: canAssign.value && technician.value ? technician.value : undefined,
     enviar_app: canAssign.value && sendApp.value && !!technician.value,
   });
@@ -585,6 +628,16 @@ const HEADING = 'mb-0 text-sm font-semibold text-n-slate-12';
                 {{ t('OUTSIDER_ERP.ORDER.SCHEDULE.OPEN') }}
               </a>
               <button
+                v-if="row.place"
+                type="button"
+                class="flex items-center gap-1 !p-0 text-xs text-n-brand hover:underline"
+                data-erp-schedule-place-toggle
+                @click="openPlaceId = openPlaceId === row.id ? null : row.id"
+              >
+                <Icon icon="i-lucide-map-pin" class="size-3.5" />
+                {{ t('OUTSIDER_MAPS.SCHEDULE.SEE_PLACE') }}
+              </button>
+              <button
                 v-if="row.mine"
                 type="button"
                 class="text-xs text-n-ruby-11 hover:underline"
@@ -592,6 +645,13 @@ const HEADING = 'mb-0 text-sm font-semibold text-n-slate-12';
               >
                 {{ t('OUTSIDER_ERP.ORDER.SCHEDULE.CANCEL') }}
               </button>
+              <PlaceView
+                v-if="row.place && openPlaceId === row.id"
+                class="w-full"
+                :latitude="row.place.latitude"
+                :longitude="row.place.longitude"
+                :height="200"
+              />
             </div>
           </section>
 
@@ -671,6 +731,77 @@ const HEADING = 'mb-0 text-sm font-semibold text-n-slate-12';
                 @change="fillMessage"
               />
             </label>
+            <!-- local exato no mapa (Google Maps) -->
+            <div class="flex flex-col gap-1.5" data-erp-schedule-place>
+              <span :class="LABEL">
+                {{ t('OUTSIDER_MAPS.SCHEDULE.PLACE') }}
+              </span>
+              <div
+                v-if="place"
+                class="flex flex-col gap-2 p-2.5 border rounded-lg border-n-weak bg-n-solid-1"
+              >
+                <PlaceView
+                  :latitude="place.latitude"
+                  :longitude="place.longitude"
+                  :height="190"
+                  :links="false"
+                />
+                <div class="flex items-start justify-between gap-2">
+                  <span class="flex flex-col min-w-0">
+                    <span class="text-sm font-medium text-n-slate-12">
+                      {{ place.name || formatCoordinates(place) }}
+                    </span>
+                    <span class="text-xs text-n-slate-11">
+                      {{
+                        place.id
+                          ? t('OUTSIDER_MAPS.SCHEDULE.FROM_CLIENT')
+                          : place.address || formatCoordinates(place)
+                      }}
+                    </span>
+                  </span>
+                  <span class="flex items-center gap-1 shrink-0">
+                    <Button
+                      size="xs"
+                      variant="faded"
+                      color="slate"
+                      :label="t('OUTSIDER_MAPS.SCHEDULE.CHANGE')"
+                      data-erp-schedule-place-change
+                      @click="pickRef?.open()"
+                    />
+                    <Button
+                      size="xs"
+                      variant="ghost"
+                      color="slate"
+                      icon="i-lucide-x"
+                      :aria-label="t('OUTSIDER_MAPS.SCHEDULE.REMOVE')"
+                      @click="place = null"
+                    />
+                  </span>
+                </div>
+                <label
+                  v-if="!place.id && info.order.contact_id"
+                  class="flex items-center gap-2 text-sm cursor-pointer text-n-slate-12"
+                >
+                  <input
+                    v-model="savePlace"
+                    type="checkbox"
+                    class="!m-0"
+                    data-erp-schedule-save-place
+                  />
+                  {{ t('OUTSIDER_MAPS.SCHEDULE.SAVE_ON_CLIENT') }}
+                </label>
+              </div>
+              <button
+                v-else
+                type="button"
+                class="flex items-center gap-2 !px-3 !py-2.5 text-sm text-left border border-dashed rounded-lg border-n-slate-7 text-n-slate-11 hover:bg-n-alpha-1"
+                data-erp-schedule-place-pick
+                @click="pickRef?.open()"
+              >
+                <Icon icon="i-lucide-map-pin" class="size-4 text-n-teal-11" />
+                {{ t('OUTSIDER_MAPS.SCHEDULE.PICK') }}
+              </button>
+            </div>
             <label :class="LABEL">
               {{ t('OUTSIDER_ERP.ORDER.SCHEDULE.DESCRIPTION') }}
               <textarea
@@ -1037,6 +1168,23 @@ const HEADING = 'mb-0 text-sm font-semibold text-n-slate-12';
                 {{ t('OUTSIDER_ERP.ORDER.SCHEDULE.MESSAGE_HINT') }}
               </span>
             </label>
+            <label
+              v-if="isSchedule && place"
+              class="flex items-start gap-2 text-sm cursor-pointer text-n-slate-12"
+            >
+              <input
+                v-model="sendLocation"
+                type="checkbox"
+                class="!m-0 mt-0.5"
+                data-erp-schedule-send-location
+              />
+              <span class="flex flex-col">
+                {{ t('OUTSIDER_MAPS.SCHEDULE.SEND_LOCATION') }}
+                <span class="text-xs text-n-slate-10">
+                  {{ t('OUTSIDER_MAPS.SCHEDULE.SEND_LOCATION_HINT') }}
+                </span>
+              </span>
+            </label>
           </section>
         </div>
 
@@ -1073,5 +1221,12 @@ const HEADING = 'mb-0 text-sm font-semibold text-n-slate-12';
         </footer>
       </div>
     </div>
+    <SendLocationDialog
+      v-if="isOpen && info"
+      ref="pickRef"
+      mode="pick"
+      :places="info.places || []"
+      @picked="onPlacePicked"
+    />
   </Teleport>
 </template>

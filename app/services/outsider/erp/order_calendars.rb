@@ -13,6 +13,11 @@ class Outsider::Erp::OrderCalendars
 
   attr_reader :zone
 
+  # OUTSIDER (Maps): link do Google Maps para o ponto exato, que abre no celular do técnico
+  def self.maps_url(place)
+    "https://www.google.com/maps/search/?api=1&query=#{place[:latitude]},#{place[:longitude]}"
+  end
+
   # [{ provider, ready, email, reason }]; reason: not_connected | reconnect | scope_outdated
   def available
     [state('microsoft', microsoft_link, microsoft_link && Outsider::Teams::Graph::Login.allows?(microsoft_link, :calendar)),
@@ -23,7 +28,8 @@ class Outsider::Erp::OrderCalendars
     available.find { |item| item[:provider] == provider.to_s }&.dig(:ready) == true
   end
 
-  # event: { subject, start, finish ("2026-11-25T09:00:00", no fuso da pessoa), all_day, attendees, body, location }
+  # event: { subject, start, finish ("2026-11-25T09:00:00", no fuso da pessoa), all_day, attendees, body, location,
+  #          place { name, address, latitude, longitude } (opcional: o ponto exato) }
   # => { provider, id, web_link }
   def create(provider, event)
     case provider.to_s
@@ -78,9 +84,18 @@ class Outsider::Erp::OrderCalendars
       body: { contentType: 'text', content: event[:body].to_s }, isOnlineMeeting: false,
       attendees: Array(event[:attendees]).map { |email| { emailAddress: { address: email }, type: 'required' } }
     }
-    body[:location] = { displayName: event[:location] } if event[:location].present?
+    body[:location] = microsoft_location(event) if event[:location].present?
     data = microsoft_client.post('/me/events', body, headers: { 'Prefer' => "outlook.timezone=\"#{@zone}\"" })
     { provider: 'microsoft', id: data['id'], web_link: data['webLink'] }
+  end
+
+  # com o ponto exato, o Outlook mostra o mapa do local e o Chatwoot lê as coordenadas de volta
+  def microsoft_location(event)
+    place = event[:place]
+    return { displayName: event[:location] } unless place
+
+    { displayName: event[:location], locationType: 'default', address: { street: place[:address].to_s.first(250) }.compact_blank,
+      coordinates: { latitude: place[:latitude], longitude: place[:longitude] } }.compact_blank
   end
 
   # a Microsoft quer o dia inteiro de 00:00 a 00:00 do dia seguinte
@@ -93,7 +108,7 @@ class Outsider::Erp::OrderCalendars
 
     data = Outsider::Apps::Google::Calendar.new(google_link, @zone).create(
       subject: event[:subject], start: event[:start], finish: event[:finish], all_day: event[:all_day] == true, online: false,
-      attendees: event[:attendees], body: event[:body], location: event[:location]
+      attendees: event[:attendees], body: event[:body], location: event[:location], place: event[:place]
     )
     { provider: 'google', id: data[:id], web_link: data[:web_link] }
   end

@@ -1,13 +1,16 @@
 <script setup>
 // OUTSIDER: "Marcar reunião" / "Novo evento" da Agenda dos Aplicativos: assunto, dia, horário (ou o dia inteiro),
 // convidados (das suas conversas ou por e-mail), observações e se é reunião online. Vai direto para a agenda da pessoa
-// na Microsoft (ou no Google); nada fica no Chatwoot.
+// na Microsoft (ou no Google); nada fica no Chatwoot. Local exato (Google Maps): escolhido no mapa, vai com as
+// coordenadas e o link do Maps, e o evento mostra o Street View.
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useAlert } from 'dashboard/composables';
 import Avatar from 'dashboard/components-next/avatar/Avatar.vue';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
+import PlaceView from 'dashboard/components-next/outsider/maps/PlaceView.vue';
+import SendLocationDialog from 'dashboard/components/widgets/WootWriter/outsider/SendLocationDialog.vue';
 import { errorText } from '../appsErrors';
 import { dayKey, timeKey } from './calendarDates';
 
@@ -46,6 +49,17 @@ const form = ref({
   location: '',
 });
 const isSaving = ref(false);
+const place = ref(null);
+const pickRef = ref(null);
+const onPlacePicked = picked => {
+  place.value = picked;
+  if (!form.value.location.trim())
+    form.value.location = [picked.name, picked.address]
+      .filter(Boolean)
+      .filter((value, index, list) => list.indexOf(value) === index)
+      .join(' - ')
+      .slice(0, 250);
+};
 const people = ref(null);
 const personQuery = ref('');
 
@@ -108,6 +122,7 @@ const save = async () => {
       attendees: f.attendees.map(item => item.email),
       body: f.body,
       location: f.location,
+      place: place.value || undefined,
     });
     emit('saved', data);
     useAlert(t('OUTSIDER_APPS.CAL.CREATED'));
@@ -171,6 +186,34 @@ const save = async () => {
         :placeholder="t('OUTSIDER_APPS.CAL.LOCATION')"
         maxlength="250"
       />
+      <div v-if="place" class="flex flex-col gap-1.5" data-apps-event-place>
+        <PlaceView
+          :latitude="place.latitude"
+          :longitude="place.longitude"
+          :height="150"
+          :links="false"
+        />
+        <div class="flex items-center gap-2 text-xs text-n-slate-11">
+          <Icon icon="i-lucide-map-pin" class="size-3.5 text-n-teal-11" />
+          <span class="flex-1 min-w-0 truncate">{{ place.name }}</span>
+          <button type="button" class="!p-0 underline" @click="pickRef?.open()">
+            {{ t('OUTSIDER_MAPS.SCHEDULE.CHANGE') }}
+          </button>
+          <button type="button" class="!p-0 underline" @click="place = null">
+            {{ t('OUTSIDER_MAPS.SCHEDULE.REMOVE') }}
+          </button>
+        </div>
+      </div>
+      <button
+        v-else
+        type="button"
+        class="flex items-center gap-2 !px-3 !py-2 text-sm text-left border border-dashed rounded-lg border-n-slate-7 text-n-slate-11 hover:bg-n-alpha-1"
+        data-apps-event-place-pick
+        @click="pickRef?.open()"
+      >
+        <Icon icon="i-lucide-map-pin" class="size-4 text-n-teal-11" />
+        {{ t('OUTSIDER_MAPS.SCHEDULE.PICK') }}
+      </button>
       <div class="relative">
         <div v-if="form.attendees.length" class="flex flex-wrap gap-1 mb-1">
           <span
@@ -243,5 +286,6 @@ const save = async () => {
         </button>
       </div>
     </form>
+    <SendLocationDialog ref="pickRef" mode="pick" @picked="onPlacePicked" />
   </div>
 </template>

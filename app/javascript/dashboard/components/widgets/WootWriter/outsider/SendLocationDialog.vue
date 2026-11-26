@@ -4,6 +4,8 @@
 // os endereços salvos da conta e a localização atual do navegador. Depois de escolher, dá para
 // ajustar o nome que o cliente vê e enviar como o pin de mapa do WhatsApp
 // (ver app/services/outsider/location_sender.rb). Só o administrador salva e apaga endereços.
+// Com mode "pick" (Google Maps na agenda: locais do cliente, Agendar OS, Agenda) a janela só escolhe o local e devolve
+// no evento picked, sem enviar; places são os locais do cliente, mostrados antes dos endereços salvos.
 // O mapa da escolha aceita clique para levar o pin ao ponto exato: o OpenStreetMap costuma achar só
 // a rua (exact: false) e a localização do navegador num computador pode errar por centenas de metros.
 import { computed, ref, watch } from 'vue';
@@ -20,7 +22,13 @@ import { formatCoordinates } from 'dashboard/helper/outsider/location';
 
 const props = defineProps({
   conversationId: { type: Number, default: null },
+  mode: { type: String, default: 'send' },
+  places: { type: Array, default: () => [] },
+  pickLabel: { type: String, default: '' },
 });
+
+const emit = defineEmits(['picked']);
+const isPick = computed(() => props.mode === 'pick');
 
 const MIN_QUERY = 3;
 // a partir daqui a localização do navegador merece o aviso para conferir o pin
@@ -207,6 +215,17 @@ const open = () => {
 
 const send = async () => {
   if (!selected.value || isSending.value) return;
+  if (isPick.value) {
+    const { name, address, latitude, longitude } = selected.value;
+    emit('picked', {
+      name: name.trim(),
+      address: address.trim(),
+      latitude,
+      longitude,
+    });
+    dialogRef.value?.close();
+    return;
+  }
   isSending.value = true;
   try {
     const { name, address, latitude, longitude } = selected.value;
@@ -237,9 +256,21 @@ const rowClass =
 <template>
   <Dialog
     ref="dialogRef"
-    :title="t('OUTSIDER_WHATSAPP.SEND_LOCATION.TITLE')"
-    :description="t('OUTSIDER_WHATSAPP.SEND_LOCATION.DESCRIPTION')"
-    :confirm-button-label="t('OUTSIDER_WHATSAPP.SEND_LOCATION.SEND')"
+    :title="
+      isPick
+        ? t('OUTSIDER_MAPS.PICK.TITLE')
+        : t('OUTSIDER_WHATSAPP.SEND_LOCATION.TITLE')
+    "
+    :description="
+      isPick
+        ? t('OUTSIDER_MAPS.PICK.DESCRIPTION')
+        : t('OUTSIDER_WHATSAPP.SEND_LOCATION.DESCRIPTION')
+    "
+    :confirm-button-label="
+      isPick
+        ? pickLabel || t('OUTSIDER_MAPS.PICK.USE')
+        : t('OUTSIDER_WHATSAPP.SEND_LOCATION.SEND')
+    "
     :disable-confirm-button="!selected"
     :is-loading="isSending"
     width="md"
@@ -424,6 +455,33 @@ const rowClass =
           </template>
 
           <template v-else>
+            <template v-if="places.length">
+              <span class="px-2 pb-1 text-xs font-medium text-n-slate-11">
+                {{ t('OUTSIDER_MAPS.PICK.CLIENT_PLACES') }}
+              </span>
+              <button
+                v-for="item in places"
+                :key="`place-${item.id}`"
+                type="button"
+                :class="rowClass"
+                data-location-client-place
+                @click="choose(item)"
+              >
+                <Icon
+                  :icon="item.main ? 'i-lucide-star' : 'i-lucide-map-pin'"
+                  class="size-5 shrink-0 text-n-amber-10"
+                />
+                <span class="flex flex-col flex-1 min-w-0">
+                  <span class="text-sm truncate text-n-slate-12">
+                    {{ item.name }}
+                  </span>
+                  <span class="text-xs truncate text-n-slate-11">
+                    {{ item.address || formatCoordinates(item) }}
+                  </span>
+                </span>
+              </button>
+              <span class="h-2" />
+            </template>
             <span class="px-2 pb-1 text-xs font-medium text-n-slate-11">
               {{ t('OUTSIDER_WHATSAPP.SEND_LOCATION.SAVED_TITLE') }}
             </span>

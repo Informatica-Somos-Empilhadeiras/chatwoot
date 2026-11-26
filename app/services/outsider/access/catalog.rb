@@ -43,6 +43,10 @@ module Outsider::Access::Catalog
     # Agendar OS: marcar nas agendas, escolher o técnico e enviar para o app dele. Abertas para agente como antes; técnico não
     { key: 'erp_order_board', group: 'erp', levels: %w[none view use], agent: 'use', technician: 'none', parent: 'erp' },
     { key: 'erp_order_schedule', group: 'erp', levels: %w[none use], agent: 'use', technician: 'none', parent: 'erp' },
+    # OUTSIDER (Maps): Mapa dos agendamentos (Aplicativos > Google) e gravar no ERP os campos vazios do cliente completados
+    # pela consulta do CNPJ (fechada para agente e técnico)
+    { key: 'erp_schedule_map', group: 'erp', levels: %w[none view], agent: 'view', technician: 'none', parent: 'erp' },
+    { key: 'erp_client_complete', group: 'erp', levels: %w[none use], agent: 'none', technician: 'none', parent: 'erp' },
     # OUTSIDER (Relatórios do ERP, abas da seção ERP): a linha geral e uma por relatório (os próximos entram aqui). Começa fechada para
     # agente e técnico: o administrador libera no perfil de quem precisa (comissão é informação sensível).
     { key: 'reports', group: 'relatorios', levels: %w[none view], agent: 'none', technician: 'none', parent: 'erp' },

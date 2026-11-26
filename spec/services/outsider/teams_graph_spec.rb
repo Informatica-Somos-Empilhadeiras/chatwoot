@@ -567,6 +567,21 @@ RSpec.describe 'Outsider Conectar meu Teams (Microsoft Graph)', type: :request d
     expect(create_event).to have_been_requested
     expect(response).to have_http_status(:created)
     expect(response.parsed_body).to include('id' => 'ev-2', 'mine' => true)
+
+    # OUTSIDER (Maps): o local exato vai com as coordenadas e o link do Maps, e volta na lista
+    with_place = stub_request(:post, 'https://graph.microsoft.com/v1.0/me/events')
+                 .with(body: hash_including('location' => { 'displayName' => 'Galpão - Rua 10, 250',
+                                                            'coordinates' => { 'latitude' => -16.68, 'longitude' => -49.25 } },
+                                            'body' => { 'contentType' => 'text',
+                                                        'content' => 'Local no Google Maps: ' \
+                                                                     'https://www.google.com/maps/search/?api=1&query=-16.68,-49.25' }))
+                 .to_return(graph_json(id: 'ev-3', subject: 'Visita', isOrganizer: true,
+                                       location: { displayName: 'Galpão', coordinates: { latitude: -16.68, longitude: -49.25 } }))
+    post "#{api}/teams_calendar", params: { subject: 'Visita', start: '2026-11-11T14:00:00', end: '2026-11-11T15:00:00', online: false,
+                                            place: { name: 'Galpão', address: 'Rua 10, 250', latitude: -16.68, longitude: -49.25 } },
+                                  headers: agent.create_new_auth_token, as: :json
+    expect(with_place).to have_been_requested
+    expect(response.parsed_body).to include('latitude' => -16.68, 'longitude' => -49.25)
     post "#{api}/teams_calendar", params: { subject: '', start: '2026-11-11T14:00:00', end: '2026-11-11T14:30:00' },
                                   headers: agent.create_new_auth_token, as: :json
     expect(response).to have_http_status(:unprocessable_entity)

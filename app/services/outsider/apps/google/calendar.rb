@@ -33,10 +33,12 @@ class Outsider::Apps::Google::Calendar
   end
 
   # online: reunião do Google Meet (o link vem no evento); attendees: e-mails convidados (o Google manda o convite)
-  def create(subject:, start:, finish:, all_day: false, online: true, attendees: [], body: nil, location: nil)
+  # place: { latitude, longitude } (opcional): o ponto exato fica guardado no evento para o Chatwoot mostrar o Street View
+  def create(subject:, start:, finish:, all_day: false, online: true, attendees: [], body: nil, location: nil, place: nil)
     event = { summary: subject.to_s.first(250), description: body.to_s.first(4000).presence, location: location.to_s.first(250).presence,
               start: moment(start, all_day), end: moment(finish, all_day),
               attendees: Array(attendees).first(MAX_ATTENDEES).map { |email| { email: email } } }.compact
+    event[:extendedProperties] = { private: { outsider_latitude: place[:latitude].to_s, outsider_longitude: place[:longitude].to_s } } if place
     if online && !all_day
       event[:conferenceData] = { createRequest: { requestId: SecureRandom.uuid, conferenceSolutionKey: { type: 'hangoutsMeet' } } }
     end
@@ -55,7 +57,7 @@ class Outsider::Apps::Google::Calendar
     {
       id: event['id'], subject: event['summary'].to_s, start: local(event['start']), end: local(event['end']),
       all_day: event.dig('start', 'date').present?, online: join_url(event).present?, join_url: join_url(event),
-      web_link: event['htmlLink'], location: event['location'].presence, cancelled: event['status'] == 'cancelled',
+      web_link: event['htmlLink'], location: event['location'].presence, cancelled: event['status'] == 'cancelled', **point(event),
       organizer: event.dig('organizer', 'displayName').presence || event.dig('organizer', 'email'), mine: mine,
       response: mine ? 'organizer' : RESPONSES[me&.dig('responseStatus')], preview: plain(event['description']).first(300),
       attendees: Array(event['attendees']).reject { |person| person['resource'] }.first(MAX_ATTENDEES).map do |person|
@@ -89,6 +91,14 @@ class Outsider::Apps::Google::Calendar
   def join_url(event)
     event['hangoutLink'].presence ||
       Array(event.dig('conferenceData', 'entryPoints')).find { |point| point['entryPointType'] == 'video' }&.dig('uri')
+  end
+
+  # o ponto exato guardado pelo Chatwoot no evento (latitude/longitude nil quando não tem)
+  def point(event)
+    data = event.dig('extendedProperties', 'private').to_h
+    latitude = Float(data['outsider_latitude'].to_s, exception: false)
+    longitude = Float(data['outsider_longitude'].to_s, exception: false)
+    latitude && longitude ? { latitude: latitude, longitude: longitude } : { latitude: nil, longitude: nil }
   end
 
   # a descrição do Google pode vir em HTML

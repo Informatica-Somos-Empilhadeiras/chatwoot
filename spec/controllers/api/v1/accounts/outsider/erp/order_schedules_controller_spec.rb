@@ -26,6 +26,7 @@ RSpec.describe 'Outsider ERP order schedules', type: :request do
     create(:inbox_member, user: agent, inbox: inbox)
     settings.update('enabled' => true, 'companies' => %w[somosemp], 'device_id' => 'abc123', 'user_erp_ids' => { technician.id.to_s => '12' })
     allow_any_instance_of(Outsider::Erp::Records::Detail).to receive(:build).and_return(detail) # rubocop:disable RSpec/AnyInstance
+    allow_any_instance_of(Outsider::Erp::Lists).to receive(:technicians).and_return([]) # rubocop:disable RSpec/AnyInstance
     Outsider::GoogleLink.create!(account: account, user: agent, google_user_id: 'g-1', email: 'ana@gmail.com', display_name: 'Ana',
                                  access_token: 'token-g', refresh_token: 'refresh-g', token_expires_at: 1.hour.from_now, scopes: all_scopes)
     Outsider::GoogleLink.create!(account: account, user: technician, google_user_id: 'g-2', email: 'teo@gmail.com', display_name: 'Teo',

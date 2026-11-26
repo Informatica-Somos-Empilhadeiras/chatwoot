@@ -29,10 +29,10 @@ class Api::V1::Accounts::Outsider::TeamsCalendarController < Api::V1::Accounts::
     body = {
       subject: subject, isAllDay: cast(params[:all_day]),
       start: { dateTime: params[:start].to_s, timeZone: time_zone }, end: { dateTime: params[:end].to_s, timeZone: time_zone },
-      body: { contentType: 'text', content: params[:body].to_s.first(4000) },
+      body: { contentType: 'text', content: body_with_place(params[:body].to_s).first(4000) },
       attendees: attendees, isOnlineMeeting: cast(params.fetch(:online, true)), onlineMeetingProvider: 'teamsForBusiness'
     }
-    body[:location] = { displayName: params[:location].to_s.first(250) } if params[:location].present?
+    body[:location] = location_with_place(params[:location].to_s.first(250)) if params[:location].present? || place
     event = client.post('/me/events', body, headers: { 'Prefer' => "outlook.timezone=\"#{time_zone}\"" })
     render json: event_json(event), status: :created
   rescue ::Outsider::Teams::Graph::Client::Error => e
@@ -79,11 +79,30 @@ class Api::V1::Accounts::Outsider::TeamsCalendarController < Api::V1::Accounts::
                              .map { |email| { emailAddress: { address: email }, type: 'required' } }
   end
 
+  # OUTSIDER (Maps): o ponto exato escolhido no mapa (place: name, address, latitude, longitude)
+  def place
+    @place ||= ::Outsider::ContactPlaces.point(params[:place].respond_to?(:permit) ? params[:place].permit!.to_h : {})
+  end
+
+  def body_with_place(text)
+    return text unless place
+
+    [text.presence, "Local no Google Maps: #{::Outsider::Erp::OrderCalendars.maps_url(place)}"].compact.join("\n\n")
+  end
+
+  def location_with_place(text)
+    return { displayName: text } unless place
+
+    name = text.presence || [place[:name], place[:address]].compact.uniq.join(' - ').presence || "#{place[:latitude]}, #{place[:longitude]}"
+    { displayName: name.first(250), coordinates: { latitude: place[:latitude], longitude: place[:longitude] } }
+  end
+
   def event_json(event)
     {
       id: event['id'], subject: event['subject'], start: event.dig('start', 'dateTime'), end: event.dig('end', 'dateTime'),
       all_day: event['isAllDay'] == true, online: event['isOnlineMeeting'] == true, join_url: event.dig('onlineMeeting', 'joinUrl'),
       web_link: event['webLink'], location: event.dig('location', 'displayName').presence, cancelled: event['isCancelled'] == true,
+      latitude: event.dig('location', 'coordinates', 'latitude'), longitude: event.dig('location', 'coordinates', 'longitude'),
       organizer: event.dig('organizer', 'emailAddress', 'name'), mine: event['isOrganizer'] == true,
       response: event.dig('responseStatus', 'response'), preview: event['bodyPreview'].to_s.first(300),
       attendees: Array(event['attendees']).first(MAX_ATTENDEES).map do |person|

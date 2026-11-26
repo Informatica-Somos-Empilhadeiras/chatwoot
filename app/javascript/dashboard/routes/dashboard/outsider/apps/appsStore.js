@@ -11,6 +11,7 @@ export const APPS_NOTICE = 'outsider:notice';
 export const MAIL_ROUTE = 'outsider_apps_mail';
 export const DRIVE_ROUTE = 'outsider_apps_drive';
 export const CALENDAR_ROUTE = 'outsider_apps_calendar';
+export const SCHEDULE_MAP_ROUTE = 'outsider_apps_schedule_map'; // OUTSIDER (Maps): Mapa dos agendamentos
 
 const emptyProvider = () => ({
   loaded: false,

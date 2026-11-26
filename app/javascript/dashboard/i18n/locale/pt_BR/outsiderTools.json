@@ -1232,6 +1232,14 @@
         "LABEL": "Agendar OS",
         "HINT": "Usa: agenda a OS nas agendas, escolhe o técnico e envia para o app do técnico."
       },
+      "ERP_SCHEDULE_MAP": {
+        "LABEL": "Mapa dos agendamentos",
+        "HINT": "Vê: abre o mapa com os clientes agendados, a ficha do cliente, as máquinas, as OS abertas e a rota."
+      },
+      "ERP_CLIENT_COMPLETE": {
+        "LABEL": "Completar cadastro do cliente no ERP",
+        "HINT": "Usa: grava no Mais Prático os campos vazios do cliente com os dados da consulta do CNPJ (nunca troca o que já está preenchido)."
+      },
       "REPORTS": {
         "LABEL": "Relatórios do ERP",
         "HINT": "Não vê: as abas de relatório somem da seção ERP. Os relatórios abaixo nunca passam deste nível."

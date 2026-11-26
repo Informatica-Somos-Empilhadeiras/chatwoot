@@ -12,7 +12,10 @@ import {
   MAIL_ROUTE,
   DRIVE_ROUTE,
   CALENDAR_ROUTE,
+  SCHEDULE_MAP_ROUTE,
 } from './appsStore';
+import { erpState } from '../erp/erpStore';
+import { allows } from '../access/accessStore';
 import { teamsState, teamsVisible, TEAMS_ROUTE } from '../teams/teamsStore';
 
 const logo = name => h(AppLogo, { name, size: 18 });
@@ -112,6 +115,20 @@ const googleModule = (t, accountScopedRoute) => {
         activeOn: [DRIVE_ROUTE],
         to: accountScopedRoute(DRIVE_ROUTE, { ...provider, driveApp: 'drive' }),
       },
+      // OUTSIDER (Maps): Mapa dos agendamentos, com a integração do ERP ligada e a linha do perfil de acesso
+      ...(erpState.enabled &&
+      erpState.ordersEnabled &&
+      allows('erp_schedule_map', 'view')
+        ? [
+            {
+              name: 'OutsiderGoogle-map',
+              label: t('OUTSIDER_MAPS.MAP.MENU'),
+              icon: logo('gmaps'),
+              activeOn: [SCHEDULE_MAP_ROUTE],
+              to: accountScopedRoute(SCHEDULE_MAP_ROUTE),
+            },
+          ]
+        : []),
     ],
   };
 };

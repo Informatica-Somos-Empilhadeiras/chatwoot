@@ -1232,6 +1232,14 @@
         "LABEL": "Schedule work order",
         "HINT": "Use: schedules the work order on calendars, picks the technician and sends it to the technician's app."
       },
+      "ERP_SCHEDULE_MAP": {
+        "LABEL": "Schedule map",
+        "HINT": "View: opens the map with the scheduled clients, the client sheet, machines, open service orders and the route."
+      },
+      "ERP_CLIENT_COMPLETE": {
+        "LABEL": "Complete client record in the ERP",
+        "HINT": "Use: writes the client's empty fields in Mais Prático with the CNPJ lookup data (never replaces what is filled)."
+      },
       "REPORTS": {
         "LABEL": "ERP reports",
         "HINT": "None: report tabs are hidden in the ERP section. Reports below never exceed this level."

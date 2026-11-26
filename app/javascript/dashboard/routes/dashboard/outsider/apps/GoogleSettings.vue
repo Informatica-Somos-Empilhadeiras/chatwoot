@@ -15,6 +15,7 @@ import BaseSettingsHeader from 'dashboard/routes/dashboard/settings/components/B
 import Button from 'dashboard/components-next/button/Button.vue';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
 import AppLogo from './AppLogo.vue';
+import GoogleMapsSettings from './GoogleMapsSettings.vue';
 import { loadAppsSummary } from './appsStore';
 import { errorText } from './appsErrors';
 import './apps.css';
@@ -495,6 +496,9 @@ onMounted(async () => {
             </li>
           </ol>
         </section>
+
+        <!-- OUTSIDER (Maps): chave do Google Maps para o Street View dos locais -->
+        <GoogleMapsSettings v-if="isAdmin" />
 
         <!-- quem está conectado -->
         <section

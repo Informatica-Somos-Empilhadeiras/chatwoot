@@ -13,6 +13,7 @@ import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 import AppLogo from '../AppLogo.vue';
 import AppsGate from '../AppsGate.vue';
 import EventForm from './EventForm.vue';
+import PlaceView from 'dashboard/components-next/outsider/maps/PlaceView.vue'; // OUTSIDER (Maps): local do evento
 import { providerOf, gateOf } from '../providers';
 import { errorText } from '../appsErrors';
 import {
@@ -636,6 +637,30 @@ onMounted(load);
             >
               {{ event.preview }}
             </p>
+            <!-- local do evento: Street View (com coordenadas) ou o mapa do endereço; só no evento escolhido -->
+            <template
+              v-if="(event.latitude ?? null) !== null || event.location"
+            >
+              <PlaceView
+                v-if="selectedEventId === event.id"
+                class="mt-1"
+                :latitude="event.latitude ?? null"
+                :longitude="event.longitude ?? null"
+                :query="event.location || ''"
+                :height="170"
+                data-apps-event-place
+              />
+              <button
+                v-else
+                type="button"
+                class="flex items-center gap-1 !p-0 text-xs text-[var(--oa-accent)] hover:underline w-fit"
+                data-apps-event-place-show
+                @click="selectedEventId = event.id"
+              >
+                <Icon icon="i-lucide-map-pin" class="size-3.5" />
+                {{ t('OUTSIDER_MAPS.SCHEDULE.SEE_PLACE') }}
+              </button>
+            </template>
             <div
               v-if="event.attendees?.length"
               class="flex items-center gap-1 mt-0.5"

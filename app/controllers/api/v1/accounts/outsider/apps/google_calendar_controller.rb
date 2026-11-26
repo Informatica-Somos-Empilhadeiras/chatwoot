@@ -23,7 +23,7 @@ class Api::V1::Accounts::Outsider::Apps::GoogleCalendarController < Api::V1::Acc
 
     event = calendar.create(subject: subject, start: params[:start], finish: params[:end], all_day: cast(params[:all_day]) == true,
                             online: cast(params.fetch(:online, true)) == true, attendees: emails(params[:attendees]),
-                            body: params[:body], location: params[:location])
+                            **place_fields)
     render json: event, status: :created
   rescue ::Outsider::Apps::Google::Client::Error => e
     graph_error(e)
@@ -47,6 +47,17 @@ class Api::V1::Accounts::Outsider::Apps::GoogleCalendarController < Api::V1::Acc
   end
 
   private
+
+  # OUTSIDER (Maps): o ponto exato escolhido no mapa vai no evento (coordenadas guardadas e o link do Maps na descrição)
+  def place_fields
+    place = ::Outsider::ContactPlaces.point(params[:place].respond_to?(:permit) ? params[:place].permit!.to_h : {})
+    return { body: params[:body], location: params[:location] } unless place
+
+    location = params[:location].presence || [place[:name], place[:address]].compact.uniq.join(' - ').presence
+    link = "Local no Google Maps: #{::Outsider::Erp::OrderCalendars.maps_url(place)}"
+    { body: [params[:body].presence, link].compact.join("\n\n"), location: location || "#{place[:latitude]}, #{place[:longitude]}",
+      place: place }
+  end
 
   def calendar
     @calendar ||= ::Outsider::Apps::Google::Calendar.new(google_link, params[:time_zone])

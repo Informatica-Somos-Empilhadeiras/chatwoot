@@ -4,6 +4,8 @@
 # Também manda só um texto pelo WhatsApp sobre a OS (message). O evento mora na agenda da pessoa; aqui fica o resumo
 # (Outsider::Erp::OrderSchedule) para o painel da OS mostrar e para cancelar. O técnico e o envio para o app do técnico
 # também são escolhidos aqui (Outsider::Erp::Orders::Assignment), como no agendador do quadro de OS do Mais Prático.
+# O local exato (place: um local do cliente, Outsider::ContactPlaces) vai no evento (endereço, coordenadas e o link do
+# Google Maps) e, se pedir, como o pin do WhatsApp depois do aviso (Outsider::Erp::ScheduleLocationJob).
 class Outsider::Erp::OrderScheduler
   include Outsider::Erp::Delivery
 
@@ -14,6 +16,8 @@ class Outsider::Erp::OrderScheduler
   DATE = /\A\d{4}-\d{2}-\d{2}\z/
   WHATSAPP_TEXT = "Olá, {contato}! A Ordem de Serviço Nº {numero} foi agendada para {data} às {hora}.\nLocal: {local}".freeze
   MESSAGE_TEXT = 'Olá, {contato}! Sobre a Ordem de Serviço Nº {numero}: '.freeze
+  # o pin vai alguns segundos depois do texto, para chegar depois dele no celular do cliente
+  LOCATION_DELAY = 8.seconds
 
   def initialize(account_user, time_zone: nil)
     @account_user = account_user
@@ -32,7 +36,8 @@ class Outsider::Erp::OrderScheduler
       inboxes: recipients.whatsapp_inboxes.map { |inbox| { id: inbox.id, name: inbox.name, channel_type: inbox.channel_type } },
       inbox_id: recipients.for_contact(contact)[:inbox_id], texts: { schedule: WHATSAPP_TEXT, message: MESSAGE_TEXT },
       limits: { whatsapp: MAX_WHATSAPP, attendees: MAX_ATTENDEES, whatsapp_per_hour: WHATSAPP_PER_HOUR },
-      schedules: list(company, number), technicians: technicians, erp_write: Outsider::Erp::Settings.new(@account).write_enabled?
+      schedules: list(company, number), technicians: technicians, erp_write: Outsider::Erp::Settings.new(@account).write_enabled?,
+      places: contact ? Outsider::ContactPlaces.new(contact).all.map(&:as_place_json) : []
     }
   end
 
@@ -42,20 +47,24 @@ class Outsider::Erp::OrderScheduler
   end
 
   # params: title, start, end ("2026-11-25T09:00"), all_day, location, body, calendars [], attendees [],
-  # whatsapp { contact_ids [], inbox_id, message } (opcional). => { schedule, results, whatsapp }
+  # place { name, address, latitude, longitude } + save_place (opcional),
+  # whatsapp { contact_ids [], inbox_id, message, send_location } (opcional). => { schedule, results, whatsapp }
   def create(company, number, params)
     params = params.to_h.with_indifferent_access
     event = event_params(params)
+    event[:place] = Outsider::ContactPlaces.point(params[:place]) if params[:place].present?
     providers = Array(params[:calendars]).map(&:to_s).uniq & Outsider::Erp::OrderCalendars::PROVIDERS
     raise Blocked, 'no_calendar' if providers.empty?
     raise Blocked, 'calendar_not_ready' unless providers.all? { |provider| calendars.ready?(provider) }
 
     notice = whatsapp_params(params[:whatsapp])
+    notice[:place] = event[:place] if notice && event[:place] && truthy?(params.dig(:whatsapp, :send_location))
     results = providers.map { |provider| create_event(provider, event) }
     created = results.select { |row| row[:ok] }
     raise Blocked, "calendar_failed:#{results.first[:error]}" if created.empty?
 
     schedule = save(company, number, event, created)
+    save_place(company, number, event[:place]) if event[:place] && truthy?(params[:save_place])
     assigned = Outsider::Erp::Orders::Assignment.new(@account, @user)
                                                 .call(company, number, technician: params[:tecnico], app: truthy?(params[:enviar_app]))
     substatus = mark_scheduled(company, number)
@@ -209,18 +218,40 @@ class Outsider::Erp::OrderScheduler
   end
 
   def create_event(provider, event)
-    { provider: provider, ok: true }.merge(calendars.create(provider, event))
+    { provider: provider, ok: true }.merge(calendars.create(provider, with_place(event)))
   rescue Outsider::Erp::OrderCalendars::Error => e
     Rails.logger.info("[Outsider::Erp] agendar OS (#{provider}): #{e.message}")
     { provider: provider, ok: false, error: e.is_a?(Outsider::Teams::Graph::Client::Reconnect) ? 'reconnect' : e.message.to_s.first(200) }
   end
 
+  # o evento com o local exato: o endereço no local (ou as coordenadas, sem texto) e o link do Maps na descrição
+  def with_place(event)
+    place = event[:place]
+    return event unless place
+
+    link = "Local no Google Maps: #{Outsider::Erp::OrderCalendars.maps_url(place)}"
+    location = event[:location].presence || [place[:name], place[:address]].compact.uniq.join(' - ').presence ||
+               "#{place[:latitude]}, #{place[:longitude]}"
+    event.merge(location: location.first(250), body: [event[:body].presence, link].compact.join("\n\n").first(MAX_BODY))
+  end
+
+  # guarda o local no cliente (contato do Chatwoot ligado à OS) para a próxima vez
+  def save_place(company, number, place)
+    detail = Outsider::Erp::Records::Detail.new(@account, 'orders').build(company, number)
+    contact = detail['contact_id'] && @account.contacts.find_by(id: detail['contact_id'])
+    Outsider::ContactPlaces.new(contact, @user).create(place.merge(name: place[:name] || place[:address])) if contact
+  rescue StandardError => e # o evento já está marcado: guardar o local nunca derruba o agendamento
+    Rails.logger.info("[Outsider::Erp] local do agendamento não guardado no cliente: #{e.class} #{e.message}")
+  end
+
   def save(company, number, event, created)
     zone = ActiveSupport::TimeZone[calendars.zone]
+    place = event[:place].to_h
     Outsider::Erp::OrderSchedule.create!(
       account: @account, user: @user, company: company, order_number: number, title: event[:subject],
       starts_at: zone.parse(event[:start]), ends_at: zone.parse(event[:finish]), all_day: event[:all_day], time_zone: calendars.zone,
-      location: event[:location], attendees: event[:attendees],
+      location: with_place(event)[:location], attendees: event[:attendees],
+      place_name: place[:name] || place[:address], latitude: place[:latitude], longitude: place[:longitude],
       events: created.map { |row| { 'provider' => row[:provider], 'id' => row[:id], 'web_link' => row[:web_link] } }
     )
   end
@@ -250,9 +281,17 @@ class Outsider::Erp::OrderScheduler
   def send_notice(notice, _schedule)
     whatsapp_quota!(notice[:contacts].size)
     notice[:contacts].each do |contact|
-      post(whatsapp_conversation(notice[:inbox], contact), personalize(notice[:text], contact))
+      conversation = whatsapp_conversation(notice[:inbox], contact)
+      post(conversation, personalize(notice[:text], contact))
+      send_location_later(conversation, notice[:place]) if notice[:place]
     end
     notice[:contacts].size
+  end
+
+  def send_location_later(conversation, place)
+    return unless Outsider::EvolutionApi.evolution_inbox?(conversation.inbox)
+
+    Outsider::Erp::ScheduleLocationJob.set(wait: LOCATION_DELAY).perform_later(conversation.id, @user.id, place.stringify_keys)
   end
 
   def schedule_json(schedule)
@@ -260,7 +299,8 @@ class Outsider::Erp::OrderScheduler
       id: schedule.id, title: schedule.title, start: local(schedule, schedule.starts_at), end: local(schedule, schedule.ends_at),
       all_day: schedule.all_day, location: schedule.location, attendees: schedule.attendees, whatsapp_count: schedule.whatsapp_count,
       calendars: schedule.events.map { |row| row.slice('provider', 'web_link') }, user: schedule.user&.name,
-      mine: schedule.user_id == @user.id, created_at: schedule.created_at.iso8601
+      mine: schedule.user_id == @user.id, created_at: schedule.created_at.iso8601,
+      place: schedule.latitude && { name: schedule.place_name, latitude: schedule.latitude.to_f, longitude: schedule.longitude.to_f }
     }
   end
 
