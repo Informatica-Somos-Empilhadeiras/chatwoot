@@ -30,6 +30,7 @@ class Outsider::Erp::Records::Detail
       'cliente' => Outsider::Erp::CustomerRecord.new(@account, client: @client).find(company, header['cliente_codigo']),
       'itens' => items(company, number), 'chain' => chain, 'budget_record' => budget(company, number)
     }.merge(Outsider::Erp::Records::ContactFinder.new(@account).for_client(company, header['cliente_codigo']))
+    data['conference'] = Outsider::Erp::Orders::Conference.new(@account, client: @client).build(company, number) if @kind == 'orders'
     finish(data)
   end
 
@@ -201,7 +202,7 @@ class Outsider::Erp::Records::Detail
 
   def item(row)
     {
-      'codigo' => row['codigo'].to_i, 'descricao' => row['descricao'].to_s.squish, 'servico' => row['tipo'].to_i == 1,
+      'codigo' => row['codigo'].to_i, 'item' => row['item'].to_i, 'descricao' => row['descricao'].to_s.squish, 'servico' => row['tipo'].to_i == 1,
       'unidade' => row['unidade'].to_s.strip, 'quantidade' => row['quantidade'].to_f, 'unitario' => row['unitario'].to_f,
       'desconto' => row['desconto'].to_f, 'total' => row['total'].to_f.round(2)
     }

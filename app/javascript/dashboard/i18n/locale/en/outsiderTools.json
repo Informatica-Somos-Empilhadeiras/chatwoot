@@ -1220,6 +1220,10 @@
         "LABEL": "Convert quote to service order",
         "HINT": "Use: converts a quote in NEGOCIAÇÃO into a service order and links both, like Mais Prático does. The ERP still checks your ERP user's \"Conversão OS\" permission."
       },
+      "ERP_ORDER_RELEASE": {
+        "LABEL": "Release work order for picking",
+        "HINT": "Use: on a work order in NEGOCIAÇÃO, releases the parts for stock to check and pick (Mais Prático's \"Libera Conferência\")."
+      },
       "REPORTS": {
         "LABEL": "ERP reports",
         "HINT": "None: report tabs are hidden in the ERP section. Reports below never exceed this level."

@@ -1,6 +1,7 @@
 <script setup>
 // OUTSIDER: painel de detalhe da seção ERP (/outsider/erp/records/:kind/:empresa/:número): cabeçalho, ações, a corrente
-// orçamento -> OS -> pedido (nós clicáveis), dados, cliente, itens, totais e a linha do tempo. Orçamento: Editar (só em
+// orçamento -> OS -> pedido (nós clicáveis), dados, cliente, itens e totais (ErpRecordItems; na OS, com a conferência do
+// estoque e "Liberar para separação") e a linha do tempo. Orçamento: Editar (só em
 // NEGOCIAÇÃO e fechado no Mais Prático), Ver PDF, Enviar e Copiar, pela gaveta do orçamento, e "Converter em OS"
 // (ErpQuoteConvertDialog, em NEGOCIAÇÃO, sem OS e sem pedido, na unidade liberada). OS: a edição de sempre
 // (ErpOrderEditor), travada quando a OS está fechada. Pedido: técnico e OS informados no chat (ErpSaleAttribution, só
@@ -16,6 +17,7 @@ import Button from 'dashboard/components-next/button/Button.vue';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 import ErpRecordChain from './ErpRecordChain.vue';
+import ErpRecordItems from './ErpRecordItems.vue';
 import ErpRecordTimeline from './ErpRecordTimeline.vue';
 import ErpSaleAttribution from './ErpSaleAttribution.vue';
 import ErpOrderEditor from '../components/ErpOrderEditor.vue';
@@ -34,7 +36,6 @@ import {
   erpState,
   erpErrorMessage,
   formatDate,
-  formatMoney,
   isOrderLocked,
   reportTypeName,
   orderConcluded,
@@ -164,7 +165,6 @@ const name = (code, fullName) => {
   if (fullName) return titleCase(fullName);
   return code ? `#${code}` : '';
 };
-const money = value => (Number(value) ? formatMoney(value) : '');
 
 // dados do cabeçalho por tipo: [rótulo, valor]; vazio não aparece
 const facts = computed(() => {
@@ -245,15 +245,16 @@ const forecastLate = computed(
 );
 
 const items = computed(() => detail.value?.itens || []);
-const totals = computed(() => {
-  const parts = items.value
-    .filter(item => !item.servico)
-    .reduce((sum, item) => sum + item.total, 0);
-  const services = items.value
-    .filter(item => item.servico)
-    .reduce((sum, item) => sum + item.total, 0);
-  return { parts, services, freight: Number(header.value.frete) || 0 };
-});
+// "Editar OS" começa fechado (os itens vêm antes)
+const editOpen = ref(false);
+// "Liberar para separação": função e perfil (erpState), unidade liberada, OS em NEGOCIAÇÃO
+const canRelease = computed(
+  () =>
+    viewKind.value === 'orders' &&
+    erpState.canReleaseOrder &&
+    erpState.orderCompanies.includes(view.value.company) &&
+    isNegotiation(header.value.status)
+);
 
 const longTexts = computed(() =>
   [
@@ -832,6 +833,17 @@ const LABEL =
         </span>
       </section>
 
+      <ErpRecordItems
+        :key="`${view.kind}:${view.company}:${view.number}`"
+        :items="items"
+        :header="header"
+        :company="view.company"
+        :number="view.number"
+        :conference="viewKind === 'orders' ? detail.conference || null : null"
+        :can-release="canRelease"
+        @released="refresh"
+      />
+
       <section
         v-for="[key, value] in longTexts"
         :key="key"
@@ -858,100 +870,34 @@ const LABEL =
           !orderLocked &&
           detail.editor
         "
-        class="flex flex-col gap-2"
+        class="flex flex-col gap-2 rounded-xl outline outline-1 -outline-offset-1 outline-n-weak"
+        data-erp-order-edit
       >
-        <span :class="LABEL">{{ t('OUTSIDER_ERP.RECORDS.ORDERS.EDIT') }}</span>
-        <ErpOrderEditor
-          :order="detail.editor"
-          :options="detail.substatus_options || []"
-          @updated="refresh"
-        />
-      </section>
-
-      <section class="flex flex-col gap-2">
-        <span :class="LABEL">
-          {{ t('OUTSIDER_ERP.RECORDS.ITEMS', { count: items.length }) }}
-        </span>
-        <div
-          v-if="items.length"
-          class="overflow-hidden border rounded-lg border-n-weak"
+        <!-- OUTSIDER: a edição fica fechada embaixo dos itens; abre num clique -->
+        <button
+          type="button"
+          class="flex items-center justify-between w-full gap-2 px-3 py-2.5 text-[13px] text-left text-n-slate-11 hover:text-n-slate-12"
+          :aria-expanded="editOpen"
+          data-erp-order-edit-toggle
+          @click="editOpen = !editOpen"
         >
-          <div
-            v-for="(item, index) in items"
-            :key="`${item.codigo}-${index}`"
-            class="flex flex-wrap items-center px-3 py-2 text-[13px] border-b gap-x-3 gap-y-0.5 sm:flex-nowrap border-n-weak last:border-0"
-          >
-            <span class="w-12 tabular-nums shrink-0 text-n-slate-10">{{
-              item.codigo
-            }}</span>
-            <span
-              class="flex items-center flex-1 min-w-[60%] sm:min-w-0 gap-1.5"
-            >
-              <span class="truncate text-n-slate-12" :title="item.descricao">{{
-                item.descricao
-              }}</span>
-              <span
-                v-if="item.servico"
-                class="shrink-0 px-1.5 py-0.5 text-[10px] font-medium rounded bg-n-blue-3 text-n-blue-11"
-              >
-                {{ t('OUTSIDER_ERP.RECORDS.SERVICE') }}
-              </span>
+          <span>
+            <span class="font-medium text-n-slate-12">
+              {{ t('OUTSIDER_ERP.RECORDS.ORDERS.EDIT') }}
             </span>
-            <span class="tabular-nums shrink-0 text-n-slate-11 ps-14 sm:ps-0">
-              {{
-                `${item.quantidade.toLocaleString('pt-BR')} × ${formatMoney(item.unitario)}`
-              }}
-              <span v-if="item.desconto" class="text-n-ruby-11">
-                {{ `−${item.desconto.toLocaleString('pt-BR')}%` }}
-              </span>
-            </span>
-            <span
-              class="ml-auto font-medium text-right tabular-nums sm:w-24 shrink-0 text-n-slate-12"
-            >
-              {{ formatMoney(item.total) }}
-            </span>
-          </div>
-        </div>
-        <p v-else class="mb-0 text-xs text-n-slate-10">
-          {{ t('OUTSIDER_ERP.RECORDS.NO_ITEMS') }}
-        </p>
-        <div class="flex flex-col self-end w-64 gap-1 text-[13px]">
-          <div
-            v-if="totals.services"
-            class="flex justify-between text-n-slate-11"
-          >
-            <span>{{ t('OUTSIDER_ERP.BUDGET.TOTALS.PARTS') }}</span>
-            <span class="tabular-nums">{{ formatMoney(totals.parts) }}</span>
-          </div>
-          <div
-            v-if="totals.services"
-            class="flex justify-between text-n-slate-11"
-          >
-            <span>{{ t('OUTSIDER_ERP.BUDGET.TOTALS.SERVICES') }}</span>
-            <span class="tabular-nums">{{ formatMoney(totals.services) }}</span>
-          </div>
-          <div
-            v-if="totals.freight"
-            class="flex justify-between text-n-slate-11"
-          >
-            <span>{{ t('OUTSIDER_ERP.BUDGET.TOTALS.FREIGHT') }}</span>
-            <span class="tabular-nums">{{ formatMoney(totals.freight) }}</span>
-          </div>
-          <div
-            v-if="money(header.desconto)"
-            class="flex justify-between text-n-slate-11"
-          >
-            <span>{{ t('OUTSIDER_ERP.BUDGET.TOTALS.DISCOUNTS') }}</span>
-            <span class="tabular-nums text-n-ruby-11">{{
-              `− ${money(header.desconto)}`
-            }}</span>
-          </div>
-          <div
-            class="flex justify-between pt-1.5 mt-0.5 font-semibold border-t border-n-weak text-[15px] text-n-slate-12"
-          >
-            <span>{{ t('OUTSIDER_ERP.BUDGET.TOTALS.TOTAL') }}</span>
-            <span class="tabular-nums">{{ formatMoney(header.total) }}</span>
-          </div>
+            · {{ t('OUTSIDER_ERP.RECORDS.ORDERS.EDIT_HINT') }}
+          </span>
+          <Icon
+            :icon="editOpen ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'"
+            class="size-4 shrink-0"
+          />
+        </button>
+        <div v-if="editOpen" class="px-3 pb-3">
+          <ErpOrderEditor
+            :order="detail.editor"
+            :options="detail.substatus_options || []"
+            @updated="refresh"
+          />
         </div>
       </section>
 

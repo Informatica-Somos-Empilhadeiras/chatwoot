@@ -1,12 +1,13 @@
 <script setup>
 // OUTSIDER: linha do tempo do registro (Outsider::Erp::Records::Timeline): o que aconteceu no ERP com o orçamento, as
 // OS, os pedidos e as notas da corrente, e o que foi feito pelo chat (criação, desconto liberado, edições, envios, técnico
-// e OS do pedido informados pelo vendedor, com o selo "informado no chat"). Mais novo em
+// e OS do pedido informados pelo vendedor, com o selo "informado no chat") e, na OS, a liberação para separação e as
+// conferências do estoque. Mais novo em
 // cima; cada evento com bolinha e linha, como o histórico da jornada do CRM.
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
-import { displayNumber } from './recordsConfig';
+import { displayNumber, titleCase } from './recordsConfig';
 
 const props = defineProps({
   events: { type: Array, default: () => [] },
@@ -26,6 +27,14 @@ const STYLE = {
   sent: ['i-lucide-send', 'bg-n-brand/15 text-n-brand'],
   chat_attributed: ['i-lucide-hard-hat', 'bg-n-brand/15 text-n-brand'],
   chat_unattributed: ['i-lucide-hard-hat', 'bg-n-slate-3 text-n-slate-11'],
+  released: ['i-lucide-package-plus', 'bg-n-amber-3 text-n-amber-11'],
+  conference_counted: [
+    'i-lucide-package-search',
+    'bg-n-slate-3 text-n-slate-11',
+  ],
+  conference_removed: ['i-lucide-undo-2', 'bg-n-ruby-3 text-n-ruby-11'],
+  separated_done: ['i-lucide-package-check', 'bg-n-teal-3 text-n-teal-11'],
+  separated_partial: ['i-lucide-package-minus', 'bg-n-amber-3 text-n-amber-11'],
 };
 
 const when = value => {
@@ -55,8 +64,12 @@ const record = event =>
 const text = event => {
   const values = {
     record: record(event),
-    name: event.name || '—',
+    // nomes do cadastro do ERP vêm em maiúsculas
+    name: event.type.startsWith('conference_')
+      ? titleCase(event.name || '—')
+      : event.name || '—',
     status: event.status || '',
+    count: event.count || 0,
     channel: event.channel
       ? t(
           `OUTSIDER_ERP.RECORDS.TIMELINE.CHANNEL_${event.channel.toUpperCase()}`
@@ -72,10 +85,13 @@ const text = event => {
       )
       .join(', '),
   };
-  const key =
-    event.type === 'sent' && !values.to
-      ? 'SENT_NO_TO'
-      : event.type.toUpperCase();
+  let key = event.type.toUpperCase();
+  if (event.type === 'sent' && !values.to) key = 'SENT_NO_TO';
+  // liberada no Mais Prático: o ERP não guarda quem foi
+  if (event.type === 'released' && !event.name) key = 'RELEASED_ERP';
+  // conferência: "1 item" / "3 itens"
+  if (event.count)
+    return t(`OUTSIDER_ERP.RECORDS.TIMELINE.${key}`, values, event.count);
   return t(`OUTSIDER_ERP.RECORDS.TIMELINE.${key}`, values);
 };
 

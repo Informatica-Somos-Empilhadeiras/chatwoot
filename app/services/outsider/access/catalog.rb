@@ -37,6 +37,8 @@ module Outsider::Access::Catalog
     # e técnico: o administrador libera no perfil de quem pode (o ERP ainda confere a permissão do usuário de lá)
     { key: 'erp_order_create', group: 'erp', levels: %w[none use], agent: 'none', technician: 'none', parent: 'erp' },
     { key: 'erp_quote_convert', group: 'erp', levels: %w[none use], agent: 'none', technician: 'none', parent: 'erp' },
+    # liberar a OS para a separação do estoque ("Libera Conferência" do Mais Prático); fechada para agente e técnico
+    { key: 'erp_order_release', group: 'erp', levels: %w[none use], agent: 'none', technician: 'none', parent: 'erp' },
     # OUTSIDER (Relatórios do ERP, abas da seção ERP): a linha geral e uma por relatório (os próximos entram aqui). Começa fechada para
     # agente e técnico: o administrador libera no perfil de quem precisa (comissão é informação sensível).
     { key: 'reports', group: 'relatorios', levels: %w[none view], agent: 'none', technician: 'none', parent: 'erp' },

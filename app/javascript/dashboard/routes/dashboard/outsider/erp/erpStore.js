@@ -20,6 +20,8 @@ export const erpState = reactive({
   // OS feita no chat: Nova OS e Converter em OS (Configurações + perfil) e as unidades liberadas para elas
   canCreateOrder: false,
   canConvertQuote: false,
+  // liberar a OS para a separação do estoque (Configurações + perfil), nas mesmas unidades
+  canReleaseOrder: false,
   orderCompanies: [],
   administrator: false,
   fields: [],
@@ -58,6 +60,7 @@ export const loadErpStatus = async accountId => {
       canRegisterClient: data.can_register_client === true,
       canCreateOrder: data.can_create_order === true,
       canConvertQuote: data.can_convert_quote === true,
+      canReleaseOrder: data.can_release_order === true,
       orderCompanies: data.order_companies || [],
       administrator: data.administrator,
       fields: data.fields || [],

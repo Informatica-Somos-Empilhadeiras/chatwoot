@@ -59,7 +59,7 @@ module Outsider::Erp::Records::DetailFields
     }
   }.freeze
   ITEMS = {
-    'quantidade' => %w[Quantidade quantidade], 'unitario' => %w[PrecoUnitario precounitario], 'desconto' => %w[PercDesconto descperc],
-    'total' => %w[TotalLinha]
+    'item' => %w[CodigoItem], 'quantidade' => %w[Quantidade quantidade], 'unitario' => %w[PrecoUnitario precounitario],
+    'desconto' => %w[PercDesconto descperc], 'total' => %w[TotalLinha]
   }.freeze
 end

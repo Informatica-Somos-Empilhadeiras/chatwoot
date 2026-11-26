@@ -33,7 +33,8 @@ class Api::V1::Accounts::Outsider::Erp::StatusesController < Api::V1::Accounts::
     {
       quote_write_enabled: settings.quote_write_enabled?, can_create_quote: settings.enabled? && can_create_quote?,
       client_write_enabled: settings.client_write_enabled?, can_register_client: can_register_client?,
-      can_create_order: can_create_order?, can_convert_quote: can_convert_quote?, order_companies: settings.order_companies
+      can_create_order: can_create_order?, can_convert_quote: can_convert_quote?, can_release_order: can_release_order?,
+      order_companies: settings.order_companies
     }
   end
 end

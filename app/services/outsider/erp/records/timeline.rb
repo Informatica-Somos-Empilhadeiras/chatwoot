@@ -1,7 +1,8 @@
 # OUTSIDER: a linha do tempo do painel de detalhe da seção ERP (como a jornada do CRM): o que aconteceu com o
 # orçamento, as OS, os pedidos e as notas fiscais da corrente (datas do próprio ERP) e o que foi feito pelo chat
 # (criação, liberação de desconto, edições do orçamento gravado, envios por WhatsApp/e-mail, técnico/OS do pedido
-# informados pelo vendedor). A tela só traduz o "type".
+# informados pelo vendedor) e, na OS, a conferência do estoque (Outsider::Erp::Orders::Conference). A tela só traduz o
+# "type".
 class Outsider::Erp::Records::Timeline
   def initialize(account)
     @account = account
@@ -9,7 +10,7 @@ class Outsider::Erp::Records::Timeline
 
   def build(detail)
     events = chain_events(detail['chain']) + header_events(detail) + chat_events(detail['budget_record']) +
-             attribution_events(detail['attribution'])
+             attribution_events(detail['attribution']) + conference_events(detail['conference'])
     events.select { |event| event['at'].present? }.sort_by { |event| time(event['at']) || Time.zone.at(0) }
   end
 
@@ -66,6 +67,18 @@ class Outsider::Erp::Records::Timeline
       { 'at' => entry['at'], 'type' => entry['action'] == 'removed' ? 'chat_unattributed' : 'chat_attributed', 'name' => entry['name'],
         'os' => os, 'approved_by' => entry['approved_by'] }.compact
     end
+  end
+
+  # OS: liberada para a separação (com quem liberou, se foi pelo chat), cada conferência do estoque e o fim
+  def conference_events(conference)
+    return [] if conference.blank? || conference['state'] == 'none'
+
+    list = [{ 'at' => conference['released_at'], 'type' => 'released', 'name' => conference['released_by'] }.compact]
+    list += Array(conference['log']).map do |row|
+      { 'at' => row['at'], 'type' => "conference_#{row['operacao']}", 'name' => row['name'], 'count' => row['itens'] }
+    end
+    list << { 'at' => conference['done_at'], 'type' => "separated_#{conference['state']}" } if conference['done_at'].present?
+    list
   end
 
   def send_event(send)

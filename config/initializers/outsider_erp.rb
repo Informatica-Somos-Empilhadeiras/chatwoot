@@ -106,6 +106,11 @@ Rails.application.routes.prepend do
                 put 'attribution', to: 'sale_attributions#update'
                 delete 'attribution', to: 'sale_attributions#destroy'
               end
+              # OS do ERP: liberar para a separação do estoque (Libera Conferência)
+              scope 'records/orders/:company/:number', constraints: { company: /[a-z0-9_]+/, number: /\d+/ } do
+                get 'conference', to: 'order_releases#show'
+                post 'release', to: 'order_releases#create'
+              end
               # OS feita no chat (Nova OS) e conversão de orçamento do ERP em OS
               resources :order_drafts, only: [:index, :show, :create, :update, :destroy] do
                 collection do

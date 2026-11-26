@@ -59,6 +59,8 @@ class Api::V1::Accounts::Outsider::Erp::BaseController < Api::V1::Accounts::Base
   # perfil de acesso de cada uma
   def can_create_order? = settings.order_create_enabled? && allows_screen?('erp_order_create', 'use')
   def can_convert_quote? = settings.quote_convert_enabled? && allows_screen?('erp_quote_convert', 'use')
+  # liberar a OS para a separação do estoque: função ligada + "Usa" na linha própria do perfil
+  def can_release_order? = settings.order_release_enabled? && allows_screen?('erp_order_release', 'use')
 
   # abas da seção ERP no perfil de acesso (erp_quotes, erp_orders, erp_sales)
   def allows_screen?(screen, level = 'view')

@@ -259,6 +259,19 @@ class ErpAPI extends ApiClient {
   }
 
   // kind: fresh (contact_id, conversation_id) ou conversion (company, quote_number, customer_code, customer_name)
+  // OS do ERP: liberar para a separação do estoque (Libera Conferência); volta a conferência lida de novo
+  orderConference(company, number) {
+    return axios.get(
+      `${this.url}/records/orders/${company}/${number}/conference`
+    );
+  }
+
+  releaseOrder(company, number) {
+    return axios.post(
+      `${this.url}/records/orders/${company}/${number}/release`
+    );
+  }
+
   createOrderDraft(data) {
     return axios.post(`${this.url}/order_drafts`, data);
   }

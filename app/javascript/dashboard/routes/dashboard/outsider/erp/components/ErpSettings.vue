@@ -576,6 +576,10 @@ const removeField = index => form.value.extra_fields.splice(index, 1);
           <Switch v-model="form.quote_convert_enabled" />
           {{ t('OUTSIDER_ERP.SETTINGS.QUOTE_CONVERT_ENABLED') }}
         </label>
+        <label class="flex items-center gap-2 text-sm text-n-slate-12">
+          <Switch v-model="form.order_release_enabled" />
+          {{ t('OUTSIDER_ERP.SETTINGS.ORDER_RELEASE_ENABLED') }}
+        </label>
       </div>
       <div class="flex flex-col gap-2 text-sm">
         <span class="text-n-slate-11">{{

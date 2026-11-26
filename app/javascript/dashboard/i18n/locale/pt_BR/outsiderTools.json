@@ -1220,6 +1220,10 @@
         "LABEL": "Converter orçamento em OS",
         "HINT": "Usa: converte um orçamento em NEGOCIAÇÃO em OS, ligando os dois como o Mais Prático faz. O ERP ainda confere a permissão \"Conversão OS\" do seu usuário de lá."
       },
+      "ERP_ORDER_RELEASE": {
+        "LABEL": "Liberar OS para separação",
+        "HINT": "Usa: no painel da OS em NEGOCIAÇÃO, libera as peças para o estoque conferir e separar (o \"Libera Conferência\" do Mais Prático)."
+      },
       "REPORTS": {
         "LABEL": "Relatórios do ERP",
         "HINT": "Não vê: as abas de relatório somem da seção ERP. Os relatórios abaixo nunca passam deste nível."
