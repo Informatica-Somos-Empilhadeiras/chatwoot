@@ -525,6 +525,7 @@
       "ROUTE_TOTAL": "{km} km · {min} min",
       "CLIENT_FAILED": "Não foi possível carregar os dados do cliente.",
       "PICK_HINT": "Toque num pin para ver o cadastro, os contatos, as máquinas e as OS abertas do cliente.",
+      "BACK": "Voltar à lista de clientes",
       "MISSING_TITLE": "Sem local no mapa ({count})",
       "LOCATING": "Procurando o endereço de {count} clientes...",
       "MISSING_HINT": "Não foi possível achar estes endereços. Salve o local exato do cliente no Agendar OS ou no painel do contato.",
@@ -574,7 +575,7 @@
       "NO_ORDERS": "Nenhuma OS aberta.",
       "ORDER": "OS {code}",
       "FORECAST": "previsão {date}",
-      "ASSETS_HINT": "Máquinas locadas primeiro. Toque para abrir a ficha."
+      "ASSETS_HINT": "Máquinas locadas primeiro. Toque para abrir o painel ao lado do mapa."
     }
   }
 }

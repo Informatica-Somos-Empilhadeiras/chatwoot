@@ -47,6 +47,7 @@ class Outsider::Erp::OrderScheduler
   end
 
   # params: title, start, end ("2026-11-25T09:00"), all_day, location, body, calendars [], attendees [],
+  # calendar_ids { google: id, microsoft: id } (opcional: a agenda de cada um; sem ela, a principal da pessoa),
   # place { name, address, latitude, longitude } + save_place (opcional),
   # whatsapp { contact_ids [], inbox_id, message, send_location } (opcional). => { schedule, results, whatsapp }
   def create(company, number, params)
@@ -59,7 +60,8 @@ class Outsider::Erp::OrderScheduler
 
     notice = whatsapp_params(params[:whatsapp])
     notice[:place] = event[:place] if notice && event[:place] && truthy?(params.dig(:whatsapp, :send_location))
-    results = providers.map { |provider| create_event(provider, event) }
+    targets = params[:calendar_ids].to_h.with_indifferent_access
+    results = providers.map { |provider| create_event(provider, event, targets[provider]) }
     created = results.select { |row| row[:ok] }
     raise Blocked, "calendar_failed:#{results.first[:error]}" if created.empty?
 
@@ -77,7 +79,7 @@ class Outsider::Erp::OrderScheduler
   def cancel(schedule)
     raise Blocked, 'not_owner' unless schedule.user_id == @user.id
 
-    schedule.events.each { |row| calendars.delete(row['provider'], row['id']) }
+    schedule.events.each { |row| calendars.delete(row['provider'], row['id'], calendar_id: row['calendar_id']) }
     schedule.destroy!
   end
 
@@ -120,14 +122,10 @@ class Outsider::Erp::OrderScheduler
   def event_defaults(detail)
     header = detail['header'].to_h
     title = ["OS #{detail['numero']}", client_name(detail), header['atendimento']].compact_blank.join(' · ')
-    { title: title.first(MAX_TITLE), location: address(detail['cliente'].to_h), body: description(detail),
+    # o local fica vazio: o endereço do cadastro do cliente muitas vezes não é onde a máquina está; o local exato
+    # escolhido no mapa preenche o local do evento
+    { title: title.first(MAX_TITLE), location: nil, body: description(detail),
       date: header['previsao'].to_s.first(10).presence&.then { |value| value.match?(DATE) ? value : nil } }
-  end
-
-  def address(client)
-    street = [client['endereco'], client['numero']].compact_blank.join(', ')
-    city = [client['cidade'], client['uf']].compact_blank.join(' - ')
-    [street, client['complemento'], client['bairro'], city].compact_blank.join(', ').first(250)
   end
 
   def description(detail)
@@ -139,11 +137,22 @@ class Outsider::Erp::OrderScheduler
       ("Equipamento: #{header['equipamento']}" if header['equipamento'].present?),
       ("Série: #{header['serie']}" if header['serie'].present?),
       ("Técnico: #{header['tecnico_nome']}" if header['tecnico_nome'].present?),
-      ("Defeitos: #{header['defeitos']}" if header['defeitos'].present?),
+      notes_line(header),
       ("No Chatwoot: #{order_link(detail)}" if Outsider::Teams::Graph::Login.site.present?)
     ]
     lines.compact.join("\n").first(MAX_BODY)
   end
+
+  # as Observações da OS (é onde os consultores escrevem); sem elas, os Defeitos, se tiverem texto de verdade
+  def notes_line(header)
+    notes = header['observacoes'].to_s.strip
+    return "Observações: #{notes}" if meaningful?(notes)
+
+    defects = header['defeitos'].to_s.strip
+    "Defeitos: #{defects}" if meaningful?(defects)
+  end
+
+  def meaningful?(text) = text.match?(/[[:alnum:]]/)
 
   def order_link(detail)
     "#{Outsider::Teams::Graph::Login.site}/app/accounts/#{@account.id}/erp/os?open=#{detail['company']}:#{detail['numero']}"
@@ -217,8 +226,8 @@ class Outsider::Erp::OrderScheduler
     { contacts: contacts, inbox: inbox, text: text }
   end
 
-  def create_event(provider, event)
-    { provider: provider, ok: true }.merge(calendars.create(provider, with_place(event)))
+  def create_event(provider, event, calendar_id)
+    { provider: provider, ok: true }.merge(calendars.create(provider, with_place(event), calendar_id: calendar_id))
   rescue Outsider::Erp::OrderCalendars::Error => e
     Rails.logger.info("[Outsider::Erp] agendar OS (#{provider}): #{e.message}")
     { provider: provider, ok: false, error: e.is_a?(Outsider::Teams::Graph::Client::Reconnect) ? 'reconnect' : e.message.to_s.first(200) }
@@ -252,7 +261,9 @@ class Outsider::Erp::OrderScheduler
       starts_at: zone.parse(event[:start]), ends_at: zone.parse(event[:finish]), all_day: event[:all_day], time_zone: calendars.zone,
       location: with_place(event)[:location], attendees: event[:attendees],
       place_name: place[:name] || place[:address], latitude: place[:latitude], longitude: place[:longitude],
-      events: created.map { |row| { 'provider' => row[:provider], 'id' => row[:id], 'web_link' => row[:web_link] } }
+      events: created.map do |row|
+        { 'provider' => row[:provider], 'id' => row[:id], 'web_link' => row[:web_link], 'calendar_id' => row[:calendar_id] }
+      end
     )
   end
 

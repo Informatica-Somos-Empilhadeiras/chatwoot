@@ -5,6 +5,7 @@
 // as laterais: ficha do cliente e contatos (esquerda), máquinas e OS abertas (direita). "Vista 3D" inclina e gira o mapa
 // (precisa do Map ID vetorial nas Configurações). "Ver rota" (só quando aperta) liga os clientes do dia na ordem do
 // horário, um caminho por técnico, traçado pelo Google (Directions); as OS sem hora entram onde menos aumentam o caminho.
+// Tocar numa máquina ou OS abre o painel lateral do ERP por cima do mapa (sem sair da tela). Mapa sempre claro.
 import {
   computed,
   nextTick,
@@ -28,6 +29,8 @@ import { googleMapsUrl } from 'dashboard/helper/outsider/location';
 import AppLogo from '../AppLogo.vue';
 import MapClientSheet from './MapClientSheet.vue';
 import MapClientAssets from './MapClientAssets.vue';
+import ErpRecordPanel from '../../erp/records/ErpRecordPanel.vue';
+import ErpRentalPanel from '../../erp/rentals/ErpRentalPanel.vue';
 import '../apps.css';
 
 const { t } = useI18n();
@@ -71,6 +74,7 @@ const failure = ref('');
 const selected = ref(null); // { company, code }
 const clientInfo = ref(null);
 const clientLoading = ref(false);
+const panel = ref(null); // { kind: 'orders' | 'machines', company, number }
 const is3d = ref(false);
 const routeOn = ref(false);
 const routeDay = ref('');
@@ -238,7 +242,17 @@ const infoContent = client => {
     link.textContent = label;
     link.href = href;
     link.style.color = '#1f6feb';
-    if (!href.startsWith('/')) {
+    if (href.startsWith('/')) {
+      // "Abrir OS": o painel lateral do ERP, sem sair do mapa
+      link.addEventListener('click', event => {
+        event.preventDefault();
+        panel.value = {
+          kind: 'orders',
+          company: String(client.company),
+          number: Number(first.order),
+        };
+      });
+    } else {
       link.target = '_blank';
       link.rel = 'noopener noreferrer';
     }
@@ -251,6 +265,7 @@ const infoContent = client => {
 const selectClient = async client => {
   selected.value = { company: client.company, code: client.code };
   clientInfo.value = null;
+  panel.value = null;
   clientLoading.value = true;
   try {
     const { data: body } = await MapsAPI.mapClient(client.company, client.code);
@@ -260,6 +275,13 @@ const selectClient = async client => {
   } finally {
     clientLoading.value = false;
   }
+};
+
+const closeClient = () => {
+  selected.value = null;
+  clientInfo.value = null;
+  panel.value = null;
+  infoWindow?.close();
 };
 
 const openClient = (client, marker) => {
@@ -333,6 +355,8 @@ const initMap = async () => {
     streetViewControl: true,
     fullscreenControl: true,
     clickableIcons: false,
+    // o Map ID vetorial segue o tema escuro do computador; o mapa fica sempre claro
+    colorScheme: maps.ColorScheme?.LIGHT || 'LIGHT',
     ...(mapsState.mapId ? { mapId: mapsState.mapId } : {}),
   });
   infoWindow = new maps.InfoWindow();
@@ -608,6 +632,16 @@ const chip = active =>
         class="order-2 lg:order-1 w-full lg:w-[320px] shrink-0 p-4 overflow-y-auto border-t lg:border-t-0 lg:border-r border-n-weak max-h-[45vh] lg:max-h-none"
         data-map-left
       >
+        <button
+          v-if="selected"
+          type="button"
+          class="flex items-center gap-1.5 !px-2 !py-1 mb-3 text-sm rounded-lg text-n-slate-11 hover:bg-n-alpha-1"
+          data-map-back
+          @click="closeClient"
+        >
+          <Icon icon="i-lucide-arrow-left" class="size-4" />
+          {{ t('OUTSIDER_MAPS.MAP.BACK') }}
+        </button>
         <div v-if="clientLoading" class="flex justify-center py-6">
           <Spinner class="text-n-slate-10" />
         </div>
@@ -777,11 +811,34 @@ const chip = active =>
         <MapClientAssets
           v-if="clientInfo && !clientInfo.error"
           :info="clientInfo"
+          @open="panel = $event"
         />
         <p v-else class="mb-0 text-sm text-n-slate-10">
           {{ t('OUTSIDER_MAPS.MAP.ASSETS_EMPTY') }}
         </p>
       </aside>
+    </div>
+    <ErpRecordPanel
+      v-if="panel?.kind === 'orders'"
+      :key="`o:${panel.company}:${panel.number}`"
+      kind="orders"
+      :company="panel.company"
+      :number="panel.number"
+      floating
+      @close="panel = null"
+    />
+    <div
+      v-else-if="panel"
+      :key="`m:${panel.company}:${panel.number}`"
+      class="fixed inset-y-0 right-0 z-50 flex xl:pt-4 xl:pr-4 bg-n-background xl:shadow-xl"
+      data-map-machine-panel
+    >
+      <ErpRentalPanel
+        kind="machines"
+        :company="panel.company"
+        :number="panel.number"
+        @close="panel = null"
+      />
     </div>
   </section>
 </template>

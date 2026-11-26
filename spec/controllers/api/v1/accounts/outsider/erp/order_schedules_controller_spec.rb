@@ -45,9 +45,9 @@ RSpec.describe 'Outsider ERP order schedules', type: :request do
 
   it 'suggests the event, the calendars and who to invite (contact, client e-mails and the technician by his calendar)' do
     body = call(:get, 'schedule', company: 'somosemp', code: 850, time_zone: 'America/Sao_Paulo')
-    expect(body['event']).to include('title' => 'OS 850 · Transportes Rota · PREVENTIVA', 'date' => '2026-11-26',
-                                     'location' => 'Rua A, 10, Centro, Goiânia - GO')
-    expect(body['event']['body']).to include('Equipamento: Empilhadeira 2,5 t', 'https://chat.exemplo.com.br/app/accounts/')
+    # o local fica vazio: o endereço do cadastro muitas vezes não é onde a máquina está (vai o ponto escolhido no mapa)
+    expect(body['event']).to include('title' => 'OS 850 · Transportes Rota · PREVENTIVA', 'date' => '2026-11-26', 'location' => nil)
+    expect(body['event']['body']).to include('Equipamento: Empilhadeira 2,5 t', 'Defeitos: Vazamento', 'https://chat.exemplo.com.br/app/accounts/')
     expect(body['calendars']).to contain_exactly(include('provider' => 'microsoft', 'ready' => false, 'reason' => 'not_connected'),
                                                  include('provider' => 'google', 'ready' => true, 'email' => 'ana@gmail.com'))
     expect(body['suggestions']['emails'].map { |row| row.values_at('email', 'kind') })
@@ -82,6 +82,28 @@ RSpec.describe 'Outsider ERP order schedules', type: :request do
     expect(response).to have_http_status(:no_content)
     expect(removed).to have_been_requested
     expect(Outsider::Erp::OrderSchedule.count).to eq(0)
+  end
+
+  it 'writes the Observações of the OS in the description (Defeitos only when there are none, never a lone dot)' do
+    detail['header'].merge!('observacoes' => 'Levar mangueira', 'defeitos' => '.')
+    body = call(:get, 'schedule', company: 'somosemp', code: 850)['event']['body']
+    expect(body).to include('Observações: Levar mangueira')
+    expect(body).not_to include('Defeitos')
+    detail['header']['observacoes'] = ' . '
+    expect(call(:get, 'schedule', company: 'somosemp', code: 850)['event']['body']).not_to include('Defeitos', 'Observações')
+  end
+
+  it 'books in the calendar the person picked (a shared one) and cancels it there' do
+    created = stub_request(:post, %r{googleapis.com/calendar/v3/calendars/tec@group.calendar.google.com/events})
+              .to_return(status: 200, headers: { 'Content-Type' => 'application/json' },
+                         body: { id: 'ev3', status: 'confirmed', start: { dateTime: '2026-11-26T09:00:00-03:00' } }.to_json)
+    call(:post, 'schedule', company: 'somosemp', code: 850, title: 'OS 850', start: '2026-11-26T09:00', end: '2026-11-26T10:00',
+                            calendars: %w[google], calendar_ids: { google: 'tec@group.calendar.google.com' })
+    expect(created).to have_been_requested
+    schedule = Outsider::Erp::OrderSchedule.sole
+    removed = stub_request(:delete, %r{calendars/tec@group.calendar.google.com/events/ev3}).to_return(status: 204)
+    send(:delete, "#{base}/schedule/#{schedule.id}", headers: agent.create_new_auth_token, as: :json)
+    expect(removed).to have_been_requested
   end
 
   it 'moves the OS to the AGENDADO substatus of its unit after booking' do

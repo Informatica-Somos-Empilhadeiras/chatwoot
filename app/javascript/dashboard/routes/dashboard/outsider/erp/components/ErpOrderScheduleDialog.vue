@@ -8,7 +8,7 @@
 // "Gravar no ERP" ligado). Ver Outsider::Erp::OrderScheduler e Outsider::Erp::Orders::Assignment.
 // Local exato (Google Maps): vem o local principal do cliente (locais do contato); dá para trocar no mapa, mandar o pin
 // do WhatsApp depois do aviso e guardar um local novo no cliente. O evento leva o endereço, as coordenadas e o link.
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useAlert } from 'dashboard/composables';
 import { debounce } from '@chatwoot/utils';
@@ -20,6 +20,14 @@ import AppLogo from '../../apps/AppLogo.vue';
 import PlaceView from 'dashboard/components-next/outsider/maps/PlaceView.vue';
 import SendLocationDialog from 'dashboard/components/widgets/WootWriter/outsider/SendLocationDialog.vue';
 import { formatCoordinates } from 'dashboard/helper/outsider/location';
+import { useUISettings } from 'dashboard/composables/useUISettings';
+import AppsAPI from 'dashboard/api/outsider/apps';
+import TeamsGraphAPI from 'dashboard/api/outsider/teamsGraph';
+import {
+  savedChoice,
+  choicePatch,
+  targetOf,
+} from 'dashboard/helper/outsider/calendarChoice';
 import { budgetErrorMessage } from '../budgets/budgetHelpers';
 
 const emit = defineEmits(['changed']);
@@ -38,7 +46,6 @@ const date = ref('');
 const startTime = ref('08:00');
 const endTime = ref('10:00');
 const allDay = ref(false);
-const location = ref('');
 const body = ref('');
 const chosen = ref([]);
 const people = ref([]);
@@ -52,6 +59,55 @@ const savePlace = ref(false);
 const sendLocation = ref(false);
 const pickRef = ref(null);
 const openPlaceId = ref(null);
+// o local do evento e do aviso vem só do local exato escolhido no mapa (o endereço do cadastro do cliente muitas
+// vezes não é onde a máquina está)
+const location = computed(() =>
+  place.value
+    ? [place.value.name, place.value.address]
+        .filter(Boolean)
+        .filter((value, index, list) => list.indexOf(value) === index)
+        .join(' - ')
+        .slice(0, 250)
+    : ''
+);
+// OUTSIDER: em qual agenda de cada empresa marcar (a principal ou uma compartilhada, como a dos técnicos); a escolha
+// fica lembrada nas preferências da pessoa (a mesma da Agenda dos Aplicativos)
+const { uiSettings, updateUISettings } = useUISettings();
+const calendarLists = ref({ google: [], microsoft: [] });
+const calendarTargets = ref({ google: 'primary', microsoft: 'primary' });
+const CALENDAR_LISTS = {
+  google: () => AppsAPI.googleCalendars(),
+  microsoft: () => TeamsGraphAPI.calendars(),
+};
+const loadCalendarLists = providers =>
+  providers.forEach(async provider => {
+    try {
+      const { data } = await CALENDAR_LISTS[provider]();
+      const list = (data.payload || []).filter(item => item.can_edit);
+      calendarLists.value = { ...calendarLists.value, [provider]: list };
+      calendarTargets.value = {
+        ...calendarTargets.value,
+        [provider]: targetOf(
+          list,
+          savedChoice(uiSettings.value, provider).target
+        ),
+      };
+    } catch {
+      // sem a lista: marca na agenda principal, como antes
+    }
+  });
+const rememberTargets = providers => {
+  const patch = providers.reduce(
+    (all, provider) => ({
+      ...all,
+      ...choicePatch(uiSettings.value, provider, {
+        target: calendarTargets.value[provider],
+      }),
+    }),
+    {}
+  );
+  updateUISettings(patch);
+};
 
 const query = ref('');
 const results = ref({ contacts: [], users: [] });
@@ -61,6 +117,7 @@ const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const timeZone = () =>
   Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Sao_Paulo';
 const isSchedule = computed(() => mode.value === 'schedule');
+
 const maxWhatsapp = computed(() => info.value?.limits?.whatsapp || 5);
 
 const CALENDAR = {
@@ -114,6 +171,7 @@ const fillMessage = () => {
   message.value = text;
   autoMessage = text;
 };
+watch(location, () => fillMessage());
 
 const personKey = person =>
   person.contactId ? `c${person.contactId}` : `e${person.email.toLowerCase()}`;
@@ -165,7 +223,6 @@ const load = async () => {
     });
     info.value = data;
     title.value = data.event.title;
-    location.value = data.event.location || '';
     body.value = data.event.body || '';
     // a previsão da OS, se ainda não passou; senão amanhã
     date.value =
@@ -175,6 +232,7 @@ const load = async () => {
     chosen.value = data.calendars
       .filter(item => item.ready)
       .map(item => item.provider);
+    loadCalendarLists(chosen.value);
     inboxId.value = data.inbox_id || data.inboxes[0]?.id || null;
     technician.value = data.order.tecnico_codigo
       ? String(data.order.tecnico_codigo)
@@ -232,8 +290,6 @@ const onPlacePicked = picked => {
   place.value = known || { ...picked, name: picked.name || picked.address };
   savePlace.value = !known && !!info.value?.order?.contact_id;
   sendLocation.value = true;
-  if (!location.value.trim() && place.value.address)
-    location.value = place.value.address;
 };
 
 const placePayload = () =>
@@ -428,6 +484,13 @@ const schedule = async () => {
     location: location.value,
     body: body.value,
     calendars: chosen.value,
+    calendar_ids: chosen.value.reduce(
+      (all, provider) => ({
+        ...all,
+        [provider]: calendarTargets.value[provider],
+      }),
+      {}
+    ),
     attendees: emailPeople.value.map(person => person.email),
     whatsapp: whatsappPayload(),
     place: placePayload(),
@@ -435,6 +498,7 @@ const schedule = async () => {
     tecnico: canAssign.value && technician.value ? technician.value : undefined,
     enviar_app: canAssign.value && sendApp.value && !!technician.value,
   });
+  rememberTargets(chosen.value);
   const done = data.results.filter(row => row.ok).map(row => row.provider);
   const failed = data.results.filter(row => !row.ok).map(row => row.provider);
   useAlert(
@@ -721,16 +785,6 @@ const HEADING = 'mb-0 text-sm font-semibold text-n-slate-12';
             >
               {{ t('OUTSIDER_ERP.BUDGET.REASONS.INVALID_TIME') }}
             </p>
-            <label :class="LABEL">
-              {{ t('OUTSIDER_ERP.ORDER.SCHEDULE.LOCATION') }}
-              <input
-                v-model="location"
-                maxlength="250"
-                :class="INPUT"
-                class="normal-case"
-                @change="fillMessage"
-              />
-            </label>
             <!-- local exato no mapa (Google Maps) -->
             <div class="flex flex-col gap-1.5" data-erp-schedule-place>
               <span :class="LABEL">
@@ -932,6 +986,36 @@ const HEADING = 'mb-0 text-sm font-semibold text-n-slate-12';
                 />
               </button>
             </div>
+            <!-- em qual agenda de cada empresa (as compartilhadas com edição entram aqui) -->
+            <template v-for="cal in info.calendars" :key="`t-${cal.provider}`">
+              <label
+                v-if="
+                  chosen.includes(cal.provider) &&
+                  calendarLists[cal.provider].length > 1
+                "
+                :class="LABEL"
+                :data-erp-schedule-target="cal.provider"
+              >
+                {{
+                  t('OUTSIDER_ERP.ORDER.SCHEDULE.TARGET', {
+                    name: t(CALENDAR[cal.provider].label),
+                  })
+                }}
+                <select
+                  v-model="calendarTargets[cal.provider]"
+                  :class="INPUT"
+                  class="normal-case"
+                >
+                  <option
+                    v-for="item in calendarLists[cal.provider]"
+                    :key="item.id"
+                    :value="item.id"
+                  >
+                    {{ item.name }}
+                  </option>
+                </select>
+              </label>
+            </template>
             <p
               v-if="!info.calendars.some(cal => cal.ready)"
               class="p-2 mb-0 text-sm rounded-lg bg-n-amber-2 text-n-amber-11"

@@ -525,6 +525,7 @@
       "ROUTE_TOTAL": "{km} km · {min} min",
       "CLIENT_FAILED": "Could not load the client data.",
       "PICK_HINT": "Tap a pin to see the client's record, contacts, machines and open work orders.",
+      "BACK": "Back to the client list",
       "MISSING_TITLE": "Not on the map ({count})",
       "LOCATING": "Looking up the address of {count} clients...",
       "MISSING_HINT": "These addresses were not found. Save the client's exact place in Schedule work order or in the contact panel.",

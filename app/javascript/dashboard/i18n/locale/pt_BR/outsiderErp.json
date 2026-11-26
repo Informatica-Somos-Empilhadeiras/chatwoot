@@ -224,7 +224,8 @@
         "TECHNICIAN_DONE": "Técnico: {name}.",
         "TECHNICIAN_FAILED": "O técnico não foi gravado na OS (veja no Mais Prático).",
         "APP_DONE": "Enviada para o app do técnico.",
-        "APP_FAILED": "Não foi enviada para o app do técnico (veja no Mais Prático)."
+        "APP_FAILED": "Não foi enviada para o app do técnico (veja no Mais Prático).",
+        "TARGET": "{name}: em qual agenda marcar"
       }
     },
     "CONTACT": {

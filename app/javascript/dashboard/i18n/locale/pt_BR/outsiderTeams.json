@@ -447,7 +447,11 @@
       "ONLINE_TEAMS": "Reunião do Teams (gera o link para entrar)",
       "SAVE": "Salvar",
       "CREATED": "Evento marcado. Os convidados recebem o convite por e-mail.",
-      "HINT": "Clique num horário vazio para marcar um evento."
+      "HINT": "Clique num horário vazio para marcar um evento.",
+      "CALENDARS": "Agendas",
+      "READ_ONLY": "Só leitura: não dá para marcar nesta agenda",
+      "SHARED_RELOGIN": "Para ver as agendas compartilhadas com você, toque em \"Entrar de novo\" em Configurações.",
+      "CALENDAR_FIELD": "Agenda"
     },
     "GMAIL": "Gmail",
     "GDRIVE": "Drive",

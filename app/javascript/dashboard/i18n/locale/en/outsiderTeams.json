@@ -447,7 +447,11 @@
       "ONLINE_TEAMS": "Teams meeting (creates the join link)",
       "SAVE": "Save",
       "CREATED": "Event scheduled. Attendees get the invitation by email.",
-      "HINT": "Click an empty time slot to schedule an event."
+      "HINT": "Click an empty time slot to schedule an event.",
+      "CALENDARS": "Calendars",
+      "READ_ONLY": "Read only: you cannot add events here",
+      "SHARED_RELOGIN": "To see calendars shared with you, tap \"Sign in again\" in Settings.",
+      "CALENDAR_FIELD": "Calendar"
     },
     "GMAIL": "Gmail",
     "GDRIVE": "Drive",

@@ -224,7 +224,8 @@
         "TECHNICIAN_DONE": "Technician: {name}.",
         "TECHNICIAN_FAILED": "The technician was not saved on the work order (check Mais Prático).",
         "APP_DONE": "Sent to the technician's app.",
-        "APP_FAILED": "Not sent to the technician's app (check Mais Prático)."
+        "APP_FAILED": "Not sent to the technician's app (check Mais Prático).",
+        "TARGET": "{name}: which calendar"
       }
     },
     "CONTACT": {

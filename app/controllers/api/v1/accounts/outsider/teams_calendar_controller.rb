@@ -1,11 +1,14 @@
 # OUTSIDER: agenda da pessoa (Outlook/Teams) dentro da área Teams, com o Teams dela (permissão Calendars.ReadWrite,
 # versão 2 das permissões). Nada fica gravado no Chatwoot: a Microsoft é sempre a fonte.
-#   index: eventos entre from e to (calendarView), no fuso da pessoa.
-#   create: marca um evento; online = reunião do Teams (vem o link para entrar); attendees = e-mails convidados.
+#   calendars: as agendas da pessoa e as que outras pessoas compartilharam com ela (permissões versão 5 para as
+#              compartilhadas; antes disso, só as dela). 'primary' = a agenda padrão.
+#   index: eventos entre from e to (calendarView), no fuso da pessoa, das agendas calendar_ids[] (até 10).
+#   create: marca um evento (calendar_id); online = reunião do Teams (vem o link para entrar); attendees = e-mails.
 #   destroy: cancela/apaga o evento (quem marcou cancela para todos; convidado só tira da própria agenda).
 class Api::V1::Accounts::Outsider::TeamsCalendarController < Api::V1::Accounts::BaseController
   MAX_RANGE = 62.days
   MAX_ATTENDEES = 50
+  MAX_CALENDARS = 10
 
   before_action :require_link
 
@@ -16,8 +19,23 @@ class Api::V1::Accounts::Outsider::TeamsCalendarController < Api::V1::Accounts::
     query = { :startDateTime => from.utc.iso8601, :endDateTime => to.utc.iso8601, '$orderby' => 'start/dateTime', '$top' => 200,
               '$select' => 'id,subject,start,end,isAllDay,isOnlineMeeting,onlineMeeting,webLink,location,organizer,attendees,' \
                            'isCancelled,responseStatus,bodyPreview,isOrganizer' }
-    data = client.get("/me/calendarView?#{query.to_query}", headers: { 'Prefer' => "outlook.timezone=\"#{time_zone}\"" })
-    render json: { payload: Array(data['value']).map { |event| event_json(event) }, time_zone: time_zone }
+    payload = calendar_ids.flat_map do |id|
+      data = client.get("#{calendar_path(id)}/calendarView?#{query.to_query}", headers: { 'Prefer' => "outlook.timezone=\"#{time_zone}\"" })
+      Array(data['value']).map { |event| event_json(event).merge(calendar_id: id) }
+    end
+    render json: { payload: payload, time_zone: time_zone }
+  rescue ::Outsider::Teams::Graph::Client::Error => e
+    render_error(e, :bad_gateway)
+  end
+
+  def calendars
+    data = client.get('/me/calendars?$top=50&$select=id,name,hexColor,canEdit,isDefaultCalendar')
+    list = Array(data['value']).map do |item|
+      { id: item['isDefaultCalendar'] ? 'primary' : item['id'], name: item['name'].to_s, color: item['hexColor'].presence,
+        primary: item['isDefaultCalendar'] == true, can_edit: item['canEdit'] == true }
+    end
+    list = list.select { |item| item[:primary] } unless shared_allowed?
+    render json: { payload: list.sort_by { |item| [item[:primary] ? 0 : 1, item[:name].downcase] }, complete: shared_allowed? }
   rescue ::Outsider::Teams::Graph::Client::Error => e
     render_error(e, :bad_gateway)
   end
@@ -33,14 +51,15 @@ class Api::V1::Accounts::Outsider::TeamsCalendarController < Api::V1::Accounts::
       attendees: attendees, isOnlineMeeting: cast(params.fetch(:online, true)), onlineMeetingProvider: 'teamsForBusiness'
     }
     body[:location] = location_with_place(params[:location].to_s.first(250)) if params[:location].present? || place
-    event = client.post('/me/events', body, headers: { 'Prefer' => "outlook.timezone=\"#{time_zone}\"" })
-    render json: event_json(event), status: :created
+    calendar_id = params[:calendar_id].presence || 'primary'
+    event = client.post("#{calendar_path(calendar_id)}/events", body, headers: { 'Prefer' => "outlook.timezone=\"#{time_zone}\"" })
+    render json: event_json(event).merge(calendar_id: calendar_id), status: :created
   rescue ::Outsider::Teams::Graph::Client::Error => e
     render_error(e, :bad_gateway)
   end
 
   def destroy
-    client.delete("/me/events/#{::Outsider::Teams::Graph::Client.enc(params[:id])}")
+    client.delete("#{calendar_path(params[:calendar_id].presence || 'primary')}/events/#{::Outsider::Teams::Graph::Client.enc(params[:id])}")
     head :no_content
   rescue ::Outsider::Teams::Graph::Client::Error => e
     render_error(e, :bad_gateway)
@@ -60,6 +79,19 @@ class Api::V1::Accounts::Outsider::TeamsCalendarController < Api::V1::Accounts::
 
   def client
     ::Outsider::Teams::Graph::Client.new(my_link)
+  end
+
+  def shared_allowed? = ::Outsider::Teams::Graph::Login.allows?(my_link, :shared_calendars)
+
+  def calendar_ids
+    ids = Array(params[:calendar_ids]).map(&:to_s).compact_blank.uniq.first(MAX_CALENDARS)
+    ids = ids.select { |id| id == 'primary' } unless shared_allowed?
+    ids.presence || ['primary']
+  end
+
+  # 'primary' = a agenda padrão da pessoa
+  def calendar_path(id)
+    id == 'primary' ? '/me/calendar' : "/me/calendars/#{::Outsider::Teams::Graph::Client.enc(id)}"
   end
 
   def cast(value)

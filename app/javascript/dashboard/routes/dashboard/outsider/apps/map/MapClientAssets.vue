@@ -1,21 +1,29 @@
 <script setup>
 // OUTSIDER (Maps): lateral direita do Mapa dos agendamentos: as máquinas no cliente (locadas nos contratos ativos e as
-// do próprio cliente) e as OS abertas dele. Tocar abre o detalhe na seção ERP.
+// do próprio cliente) e as OS abertas dele. Tocar abre o mesmo painel lateral das telas do ERP (informações, linha do
+// tempo, vínculos), por cima do mapa e com fechar.
 import { useI18n } from 'vue-i18n';
-import { useRoute } from 'vue-router';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
 
 defineProps({
   info: { type: Object, required: true },
 });
 
+const emit = defineEmits(['open']);
 const { t } = useI18n();
-const route = useRoute();
 
-const base = () => `/app/accounts/${route.params.accountId}/erp`;
-const orderLink = order => `${base()}/os?open=${order.company}:${order.code}`;
-const machineLink = machine =>
-  `${base()}/maquinas?open=${machine.banco}:${machine.numero || machine.maquina}`;
+const openOrder = order =>
+  emit('open', {
+    kind: 'orders',
+    company: String(order.company),
+    number: Number(order.code),
+  });
+const openMachine = machine =>
+  emit('open', {
+    kind: 'machines',
+    company: String(machine.banco),
+    number: Number(machine.numero || machine.maquina),
+  });
 const brDate = value => {
   const [y, m, d] = String(value || '')
     .slice(0, 10)
@@ -39,12 +47,13 @@ const machineName = machine =>
       <p v-if="!info.machines?.length" class="mb-0 text-xs text-n-slate-10">
         {{ t('OUTSIDER_MAPS.MAP.NO_MACHINES') }}
       </p>
-      <a
+      <button
         v-for="(machine, index) in info.machines || []"
         :key="index"
-        :href="machineLink(machine)"
-        class="block p-2 border rounded-lg border-n-weak hover:bg-n-alpha-1"
+        type="button"
+        class="block w-full !p-2 text-left border rounded-lg border-n-weak hover:bg-n-alpha-1"
         data-map-machine
+        @click="openMachine(machine)"
       >
         <span class="flex flex-wrap items-center gap-1.5">
           <b class="text-sm text-n-slate-12">{{ machineName(machine) }}</b>
@@ -76,7 +85,7 @@ const machineName = machine =>
               .join(' · ')
           }}
         </span>
-      </a>
+      </button>
     </section>
 
     <section class="flex flex-col gap-1.5">
@@ -88,12 +97,13 @@ const machineName = machine =>
       <p v-if="!info.orders?.length" class="mb-0 text-xs text-n-slate-10">
         {{ t('OUTSIDER_MAPS.MAP.NO_ORDERS') }}
       </p>
-      <a
+      <button
         v-for="order in info.orders || []"
         :key="`${order.company}-${order.code}`"
-        :href="orderLink(order)"
-        class="block p-2 border rounded-lg border-n-weak hover:bg-n-alpha-1"
+        type="button"
+        class="block w-full !p-2 text-left border rounded-lg border-n-weak hover:bg-n-alpha-1"
         data-map-order
+        @click="openOrder(order)"
       >
         <span class="flex flex-wrap items-center gap-1.5 text-sm">
           <b class="text-n-slate-12">
@@ -122,7 +132,7 @@ const machineName = machine =>
               .join(' · ')
           }}
         </span>
-      </a>
+      </button>
       <p class="mb-0 text-[11px] text-n-slate-10">
         <Icon icon="i-lucide-mouse-pointer-click" class="size-3 inline" />
         {{ t('OUTSIDER_MAPS.MAP.ASSETS_HINT') }}

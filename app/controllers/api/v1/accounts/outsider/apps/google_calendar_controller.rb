@@ -1,18 +1,29 @@
 # OUTSIDER: Agenda do Google no bloco Google (Outsider::Apps::Google::Calendar). Nada fica gravado no Chatwoot. Mesmas
 # respostas da agenda da Microsoft (TeamsCalendarController), para a tela ser uma só.
-#   GET    events         eventos entre from e to, no fuso da pessoa (time_zone)
-#   POST   events         marcar (subject, start, end, all_day, online = Google Meet, attendees, body, location)
-#   DELETE events/:id     cancelar (quem marcou) ou tirar da própria agenda (convidado)
+#   GET    calendars      as agendas que a pessoa vê no Google (a principal e as compartilhadas com ela)
+#   GET    events         eventos entre from e to, no fuso da pessoa (time_zone), das agendas calendar_ids[] (até 10)
+#   POST   events         marcar (subject, start, end, all_day, online = Google Meet, attendees, body, location, calendar_id)
+#   DELETE events/:id     cancelar (quem marcou) ou tirar da própria agenda (convidado); calendar_id
 #   GET    people         sugestões de convidados: os colegas do Chatwoot (com o Gmail de quem conectou o Google)
 class Api::V1::Accounts::Outsider::Apps::GoogleCalendarController < Api::V1::Accounts::Outsider::Apps::BaseController
   MAX_PEOPLE = 300
+  MAX_CALENDARS = 10
 
   before_action { require_google(:calendar) }
 
   def index
     from = Time.zone.parse(params[:from].to_s) || Time.current.beginning_of_week
     to = Time.zone.parse(params[:to].to_s) || (from + 7.days)
-    render json: { payload: calendar.events(from, to), time_zone: calendar.zone }
+    payload = calendar_ids.flat_map do |id|
+      calendar.events(from, to, calendar_id: id).map { |event| event.merge(calendar_id: id) }
+    end
+    render json: { payload: payload, time_zone: calendar.zone }
+  rescue ::Outsider::Apps::Google::Client::Error => e
+    graph_error(e)
+  end
+
+  def calendars
+    render json: { payload: calendar.calendars, complete: google_link.allows?(:calendars) }
   rescue ::Outsider::Apps::Google::Client::Error => e
     graph_error(e)
   end
@@ -23,14 +34,14 @@ class Api::V1::Accounts::Outsider::Apps::GoogleCalendarController < Api::V1::Acc
 
     event = calendar.create(subject: subject, start: params[:start], finish: params[:end], all_day: cast(params[:all_day]) == true,
                             online: cast(params.fetch(:online, true)) == true, attendees: emails(params[:attendees]),
-                            **place_fields)
-    render json: event, status: :created
+                            calendar_id: params[:calendar_id].presence || 'primary', **place_fields)
+    render json: event.merge(calendar_id: params[:calendar_id].presence || 'primary'), status: :created
   rescue ::Outsider::Apps::Google::Client::Error => e
     graph_error(e)
   end
 
   def destroy
-    calendar.delete(params[:id])
+    calendar.delete(params[:id], calendar_id: params[:calendar_id].presence || 'primary')
     head :no_content
   rescue ::Outsider::Apps::Google::Client::Error => e
     graph_error(e)
@@ -47,6 +58,11 @@ class Api::V1::Accounts::Outsider::Apps::GoogleCalendarController < Api::V1::Acc
   end
 
   private
+
+  def calendar_ids
+    ids = Array(params[:calendar_ids]).map(&:to_s).compact_blank.uniq.first(MAX_CALENDARS)
+    ids.presence || ['primary']
+  end
 
   # OUTSIDER (Maps): o ponto exato escolhido no mapa vai no evento (coordenadas guardadas e o link do Maps na descrição)
   def place_fields

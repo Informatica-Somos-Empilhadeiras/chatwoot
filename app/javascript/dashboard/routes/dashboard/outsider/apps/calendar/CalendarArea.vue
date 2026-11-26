@@ -14,6 +14,14 @@ import AppLogo from '../AppLogo.vue';
 import AppsGate from '../AppsGate.vue';
 import EventForm from './EventForm.vue';
 import PlaceView from 'dashboard/components-next/outsider/maps/PlaceView.vue'; // OUTSIDER (Maps): local do evento
+import { useUISettings } from 'dashboard/composables/useUISettings';
+import {
+  savedChoice,
+  choicePatch,
+  targetOf,
+  visibleOf,
+  colorClassOf,
+} from 'dashboard/helper/outsider/calendarChoice';
 import { providerOf, gateOf } from '../providers';
 import { errorText } from '../appsErrors';
 import {
@@ -65,6 +73,46 @@ const gridRef = ref(null);
 
 const timeZone =
   Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Sao_Paulo';
+
+// ---------- agendas (a principal e as compartilhadas com a pessoa) ----------
+const { uiSettings, updateUISettings } = useUISettings();
+const calendars = ref([]);
+const calendarsComplete = ref(true);
+const choice = computed(() => savedChoice(uiSettings.value, providerKey.value));
+const visibleIds = computed(() =>
+  calendars.value.length
+    ? visibleOf(calendars.value, choice.value.visible)
+    : ['primary']
+);
+const editableCalendars = computed(() =>
+  calendars.value.filter(item => item.can_edit)
+);
+const targetId = computed(() => targetOf(calendars.value, choice.value.target));
+const remember = patch =>
+  updateUISettings(choicePatch(uiSettings.value, providerKey.value, patch));
+const toggleCalendar = id => {
+  const list = visibleIds.value.includes(id)
+    ? visibleIds.value.filter(item => item !== id)
+    : [...visibleIds.value, id];
+  if (list.length) remember({ visible: list });
+};
+const calendarName = id => calendars.value.find(item => item.id === id)?.name;
+const eventKey = event => `${event.calendar_id || 'primary'}:${event.id}`;
+// com mais de uma agenda na tela, a cor é a da agenda; com uma só, cada evento tem a sua
+const eventColor = event =>
+  visibleIds.value.length > 1
+    ? colorClassOf(calendars.value, event.calendar_id)
+    : colorOf(event);
+const loadCalendars = async () => {
+  if (gate.value !== 'ready' || !cal.value.calendars) return;
+  try {
+    const { data } = await cal.value.calendars();
+    calendars.value = data.payload || [];
+    calendarsComplete.value = data.complete !== false;
+  } catch {
+    calendars.value = [];
+  }
+};
 const todayKey = computed(() => dayKey(new Date()));
 const range = computed(() => rangeOf(view.value, anchor.value));
 
@@ -219,6 +267,7 @@ const load = async () => {
       from: from.toISOString(),
       to: to.toISOString(),
       timeZone,
+      calendarIds: visibleIds.value,
     });
     if (mine !== ticket) return;
     events.value = data.payload || [];
@@ -258,7 +307,7 @@ const today = () => {
 
 const pickDay = (day, event = null) => {
   selectedDay.value = startOfDay(day);
-  selectedEventId.value = event?.id || null;
+  selectedEventId.value = event ? eventKey(event) : null;
 };
 
 const openDay = day => {
@@ -272,6 +321,8 @@ const newEvent = (day = null, hour = '') => {
 };
 const onSaved = event => {
   form.value = null;
+  if (event.calendar_id && event.calendar_id !== choice.value.target)
+    remember({ target: event.calendar_id });
   events.value = [...events.value, event];
   pickDay(parseLocal(event.start), event);
 };
@@ -287,17 +338,23 @@ const remove = async event => {
   );
   if (!ok) return;
   try {
-    await cal.value.remove(event.id);
-    events.value = events.value.filter(item => item.id !== event.id);
+    await cal.value.remove(event.id, event.calendar_id);
+    events.value = events.value.filter(
+      item => eventKey(item) !== eventKey(event)
+    );
   } catch (e) {
     useAlert(errorText(e, t));
   }
 };
 
-watch([range, gate], load);
+watch([range, gate, () => visibleIds.value.join('|')], load);
+watch([gate, providerKey], loadCalendars);
 // a grade só aparece depois de saber se a conta está conectada: rola para as 7h quando ela surge ou muda de visão
 watch([view, gridRef], scrollToMorning);
-onMounted(load);
+onMounted(() => {
+  load();
+  loadCalendars();
+});
 </script>
 
 <template>
@@ -447,10 +504,10 @@ onMounted(load);
                 </span>
                 <button
                   v-for="event in day.items"
-                  :key="event.id"
+                  :key="eventKey(event)"
                   type="button"
                   class="oa-ev"
-                  :class="colorOf(event)"
+                  :class="eventColor(event)"
                   :title="`${timeRange(event)} · ${event.subject || ''}`"
                   data-apps-event
                   @click.stop="pickDay(day.date, event)"
@@ -498,10 +555,10 @@ onMounted(load);
                 <div class="flex flex-col gap-0.5 mt-1">
                   <button
                     v-for="event in day.allDay"
-                    :key="event.id"
+                    :key="eventKey(event)"
                     type="button"
                     class="oa-ev"
-                    :class="colorOf(event)"
+                    :class="eventColor(event)"
                     data-apps-event
                     @click.stop="pickDay(day.date, event)"
                   >
@@ -549,14 +606,14 @@ onMounted(load);
                 />
                 <button
                   v-for="item in day.timed"
-                  :key="item.event.id"
+                  :key="eventKey(item.event)"
                   type="button"
                   class="absolute z-[5] flex flex-col overflow-hidden oa-ev !whitespace-normal shadow-sm"
                   :class="[
-                    colorOf(item.event),
+                    eventColor(item.event),
                     {
                       'ring-2 ring-[var(--oa-accent)]':
-                        selectedEventId === item.event.id,
+                        selectedEventId === eventKey(item.event),
                       '!flex-row items-center gap-1 !py-0': item.short,
                     },
                   ]"
@@ -583,6 +640,46 @@ onMounted(load);
           class="hidden lg:flex flex-col w-[300px] shrink-0 gap-3 p-4 overflow-y-auto border-l border-n-weak"
           data-apps-day-panel
         >
+          <!-- OUTSIDER: agendas para ver (a principal e as compartilhadas) -->
+          <div
+            v-if="calendars.length > 1 || !calendarsComplete"
+            class="flex flex-col gap-1 pb-3 border-b border-n-weak"
+            data-apps-calendars
+          >
+            <b class="text-xs tracking-wide uppercase text-n-slate-11">
+              {{ t('OUTSIDER_APPS.CAL.CALENDARS') }}
+            </b>
+            <label
+              v-for="item in calendars"
+              :key="item.id"
+              class="flex items-center gap-2 text-sm cursor-pointer text-n-slate-12"
+              :data-apps-calendar-id="item.id"
+            >
+              <input
+                type="checkbox"
+                class="!m-0"
+                :checked="visibleIds.includes(item.id)"
+                @change="toggleCalendar(item.id)"
+              />
+              <span
+                class="w-3 h-3 rounded-sm shrink-0 oa-ev !p-0"
+                :class="colorClassOf(calendars, item.id)"
+              />
+              <span class="flex-1 min-w-0 truncate">{{ item.name }}</span>
+              <Icon
+                v-if="!item.can_edit"
+                v-tooltip.top="t('OUTSIDER_APPS.CAL.READ_ONLY')"
+                icon="i-lucide-eye"
+                class="size-3.5 text-n-slate-10"
+              />
+            </label>
+            <p
+              v-if="!calendarsComplete"
+              class="mb-0 text-[11px] text-n-amber-11"
+            >
+              {{ t('OUTSIDER_APPS.CAL.SHARED_RELOGIN') }}
+            </p>
+          </div>
           <div class="flex items-center justify-between gap-2">
             <b class="text-sm text-n-slate-12">{{ dayTitle }}</b>
             <button
@@ -599,16 +696,26 @@ onMounted(load);
           </p>
           <article
             v-for="event in dayEvents"
-            :key="event.id"
+            :key="eventKey(event)"
             class="flex flex-col gap-1 p-3 border rounded-xl border-n-weak"
             :class="{
-              'ring-2 ring-[var(--oa-accent)]': selectedEventId === event.id,
+              'ring-2 ring-[var(--oa-accent)]':
+                selectedEventId === eventKey(event),
             }"
             data-apps-day-event
           >
-            <span class="text-xs font-semibold text-n-slate-11">{{
-              timeRange(event)
-            }}</span>
+            <span
+              class="flex items-center gap-1.5 text-xs font-semibold text-n-slate-11"
+            >
+              {{ timeRange(event) }}
+              <span
+                v-if="visibleIds.length > 1 && calendarName(event.calendar_id)"
+                class="px-1.5 rounded oa-ev !inline !py-0 truncate"
+                :class="eventColor(event)"
+              >
+                {{ calendarName(event.calendar_id) }}
+              </span>
+            </span>
             <h3
               class="flex items-center gap-1.5 mb-0 text-sm font-semibold text-n-slate-12"
             >
@@ -642,7 +749,7 @@ onMounted(load);
               v-if="(event.latitude ?? null) !== null || event.location"
             >
               <PlaceView
-                v-if="selectedEventId === event.id"
+                v-if="selectedEventId === eventKey(event)"
                 class="mt-1"
                 :latitude="event.latitude ?? null"
                 :longitude="event.longitude ?? null"
@@ -655,7 +762,7 @@ onMounted(load);
                 type="button"
                 class="flex items-center gap-1 !p-0 text-xs text-[var(--oa-accent)] hover:underline w-fit"
                 data-apps-event-place-show
-                @click="selectedEventId = event.id"
+                @click="selectedEventId = eventKey(event)"
               >
                 <Icon icon="i-lucide-map-pin" class="size-3.5" />
                 {{ t('OUTSIDER_MAPS.SCHEDULE.SEE_PLACE') }}
@@ -729,6 +836,8 @@ onMounted(load);
       :day="form.day"
       :hour="form.hour"
       :online-label="t(cal.onlineLabel)"
+      :calendars="editableCalendars"
+      :calendar-id="targetId"
       @close="form = null"
       @saved="onSaved"
     />

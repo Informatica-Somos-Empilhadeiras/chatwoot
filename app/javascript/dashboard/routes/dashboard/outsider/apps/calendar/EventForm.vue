@@ -20,6 +20,9 @@ const props = defineProps({
   day: { type: String, default: '' },
   hour: { type: String, default: '' },
   onlineLabel: { type: String, required: true },
+  // OUTSIDER: agendas onde dá para marcar (a principal e as compartilhadas com edição) e a lembrada
+  calendars: { type: Array, default: () => [] },
+  calendarId: { type: String, default: 'primary' },
 });
 
 const emit = defineEmits(['close', 'saved']);
@@ -49,6 +52,7 @@ const form = ref({
   location: '',
 });
 const isSaving = ref(false);
+const calendar = ref(props.calendarId);
 const place = ref(null);
 const pickRef = ref(null);
 const onPlacePicked = picked => {
@@ -123,8 +127,9 @@ const save = async () => {
       body: f.body,
       location: f.location,
       place: place.value || undefined,
+      calendar_id: calendar.value,
     });
-    emit('saved', data);
+    emit('saved', { calendar_id: calendar.value, ...data });
     useAlert(t('OUTSIDER_APPS.CAL.CREATED'));
   } catch (e) {
     useAlert(errorText(e, t));
@@ -155,6 +160,21 @@ const save = async () => {
         maxlength="250"
         required
       />
+      <label
+        v-if="calendars.length > 1"
+        class="flex flex-col gap-1 text-xs font-medium text-n-slate-11"
+      >
+        {{ t('OUTSIDER_APPS.CAL.CALENDAR_FIELD') }}
+        <select
+          v-model="calendar"
+          class="!mb-0 text-sm"
+          data-apps-event-calendar
+        >
+          <option v-for="item in calendars" :key="item.id" :value="item.id">
+            {{ item.name }}
+          </option>
+        </select>
+      </label>
       <div
         class="grid gap-2"
         :class="form.allDay ? 'grid-cols-1' : 'grid-cols-3'"

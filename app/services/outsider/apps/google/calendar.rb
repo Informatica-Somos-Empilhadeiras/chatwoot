@@ -1,5 +1,7 @@
-# OUTSIDER: Agenda do Google no bloco Google (Aplicativos), a agenda principal da pessoa (permissão calendar.events).
-# Nada fica gravado no Chatwoot: os eventos vêm do Google na hora, no fuso da pessoa.
+# OUTSIDER: Agenda do Google no bloco Google (Aplicativos): a agenda principal da pessoa e as outras que ela vê na conta
+# Google (as dela e as compartilhadas com ela, permissão calendar.calendarlist.readonly para a lista; calendar.events
+# para ler e marcar). calendar_id 'primary' = a principal. Nada fica gravado no Chatwoot: os eventos vêm do Google na
+# hora, no fuso da pessoa.
 # Mesmo formato da agenda da Microsoft (Api::V1::Accounts::Outsider::TeamsCalendarController#event_json): datas no fuso
 # dela, sem o fuso no fim (2026-11-24T09:00:00); dia inteiro vai de 00:00 do dia até 00:00 do dia seguinte.
 class Outsider::Apps::Google::Calendar
@@ -8,6 +10,7 @@ class Outsider::Apps::Google::Calendar
   MAX_PAGES = 4
   RESPONSES = { 'accepted' => 'accepted', 'tentative' => 'tentativelyAccepted', 'declined' => 'declined',
                 'needsAction' => 'notResponded' }.freeze
+  EDIT_ROLES = %w[writer owner].freeze
 
   def initialize(link, time_zone)
     @link = link
@@ -17,13 +20,25 @@ class Outsider::Apps::Google::Calendar
 
   attr_reader :zone
 
-  def events(from, to)
+  # [{ id, name, color, primary, can_edit }]: sem a permissão da lista (entrou antes dela), só a principal
+  def calendars
+    return [primary_calendar] unless @link.allows?(:calendars)
+
+    data = @client.get("#{Outsider::Apps::Google::Client::CALENDAR}/users/me/calendarList", query: { maxResults: 100 })
+    list = Array(data['items']).reject { |item| item['hidden'] || item['deleted'] }.map do |item|
+      { id: item['primary'] ? 'primary' : item['id'], name: item['summaryOverride'].presence || item['summary'].to_s,
+        color: item['backgroundColor'], primary: item['primary'] == true, can_edit: EDIT_ROLES.include?(item['accessRole']) }
+    end
+    list.sort_by { |item| [item[:primary] ? 0 : 1, item[:can_edit] ? 0 : 1, item[:name].downcase] }
+  end
+
+  def events(from, to, calendar_id: 'primary')
     to = from + MAX_RANGE if to - from > MAX_RANGE
     query = { timeMin: from.utc.iso8601, timeMax: to.utc.iso8601, singleEvents: true, orderBy: 'startTime', maxResults: 250,
               timeZone: @zone }
     list = []
     MAX_PAGES.times do
-      data = @client.get(events_url, query: query)
+      data = @client.get(events_url(calendar_id), query: query)
       list.concat(Array(data['items']))
       break if data['nextPageToken'].blank?
 
@@ -34,7 +49,8 @@ class Outsider::Apps::Google::Calendar
 
   # online: reunião do Google Meet (o link vem no evento); attendees: e-mails convidados (o Google manda o convite)
   # place: { latitude, longitude } (opcional): o ponto exato fica guardado no evento para o Chatwoot mostrar o Street View
-  def create(subject:, start:, finish:, all_day: false, online: true, attendees: [], body: nil, location: nil, place: nil)
+  def create(subject:, start:, finish:, all_day: false, online: true, attendees: [], body: nil, location: nil, place: nil, # rubocop:disable Metrics/ParameterLists
+             calendar_id: 'primary')
     event = { summary: subject.to_s.first(250), description: body.to_s.first(4000).presence, location: location.to_s.first(250).presence,
               start: moment(start, all_day), end: moment(finish, all_day),
               attendees: Array(attendees).first(MAX_ATTENDEES).map { |email| { email: email } } }.compact
@@ -42,12 +58,12 @@ class Outsider::Apps::Google::Calendar
     if online && !all_day
       event[:conferenceData] = { createRequest: { requestId: SecureRandom.uuid, conferenceSolutionKey: { type: 'hangoutsMeet' } } }
     end
-    event_json(@client.post(events_url, event, query: { conferenceDataVersion: 1, sendUpdates: 'all' }))
+    event_json(@client.post(events_url(calendar_id), event, query: { conferenceDataVersion: 1, sendUpdates: 'all' }))
   end
 
   # quem marcou cancela para todos (o Google avisa os convidados); convidado só tira da própria agenda
-  def delete(id)
-    @client.delete("#{events_url}/#{Outsider::Apps::Google::Client.enc(id)}", query: { sendUpdates: 'all' })
+  def delete(id, calendar_id: 'primary')
+    @client.delete("#{events_url(calendar_id)}/#{Outsider::Apps::Google::Client.enc(id)}", query: { sendUpdates: 'all' })
     true
   end
 
@@ -68,8 +84,12 @@ class Outsider::Apps::Google::Calendar
 
   private
 
-  def events_url
-    "#{Outsider::Apps::Google::Client::CALENDAR}/calendars/primary/events"
+  def events_url(calendar_id)
+    "#{Outsider::Apps::Google::Client::CALENDAR}/calendars/#{Outsider::Apps::Google::Client.enc(calendar_id.presence || 'primary')}/events"
+  end
+
+  def primary_calendar
+    { id: 'primary', name: @link.email.to_s, color: nil, primary: true, can_edit: true }
   end
 
   # "2026-11-24T09:00:00" no fuso da pessoa; dia inteiro só com a data

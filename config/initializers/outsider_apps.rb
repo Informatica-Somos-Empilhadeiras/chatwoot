@@ -47,6 +47,7 @@ Rails.application.routes.prepend do
                 get 'drive/items/:id/download', to: 'google_drive#download', constraints: { id: %r{[^/]+} }
                 post 'drive/items/:id/share', to: 'google_drive#share', constraints: { id: %r{[^/]+} }
                 delete 'drive/items/:id', to: 'google_drive#destroy', constraints: { id: %r{[^/]+} }
+                get 'calendar/calendars', to: 'google_calendar#calendars'
                 get 'calendar/events', to: 'google_calendar#index'
                 post 'calendar/events', to: 'google_calendar#create'
                 delete 'calendar/events/:id', to: 'google_calendar#destroy', constraints: { id: %r{[^/]+} }

@@ -7,8 +7,10 @@ class Outsider::GoogleLink < ApplicationRecord
 
   STATUSES = %w[active reconnect disconnected].freeze
   SCOPE = 'https://www.googleapis.com/auth/'.freeze
-  # cada parte e a permissão que ela precisa
-  FEATURES = { mail: "#{SCOPE}gmail.modify", calendar: "#{SCOPE}calendar.events", drive: "#{SCOPE}drive" }.freeze
+  # cada parte e a permissão que ela precisa. calendars: a lista das agendas da pessoa (inclusive as compartilhadas com
+  # ela); quem entrou antes dela continua só com a agenda principal até "Entrar de novo".
+  FEATURES = { mail: "#{SCOPE}gmail.modify", calendar: "#{SCOPE}calendar.events", drive: "#{SCOPE}drive",
+               calendars: "#{SCOPE}calendar.calendarlist.readonly" }.freeze
 
   belongs_to :account
   belongs_to :user

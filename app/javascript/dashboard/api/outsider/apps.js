@@ -139,9 +139,14 @@ class AppsAPI extends ApiClient {
     return axios.delete(`${this.url}/google/account/links/${id}`);
   }
 
-  googleEvents({ from, to, timeZone }) {
+  // OUTSIDER: as agendas que a pessoa vê no Google (a principal e as compartilhadas com ela)
+  googleCalendars() {
+    return axios.get(`${this.url}/google/calendar/calendars`);
+  }
+
+  googleEvents({ from, to, timeZone, calendarIds }) {
     return axios.get(`${this.url}/google/calendar/events`, {
-      params: { from, to, time_zone: timeZone },
+      params: { from, to, time_zone: timeZone, calendar_ids: calendarIds },
     });
   }
 
@@ -149,9 +154,10 @@ class AppsAPI extends ApiClient {
     return axios.post(`${this.url}/google/calendar/events`, data);
   }
 
-  googleDeleteEvent(id) {
+  googleDeleteEvent(id, calendarId) {
     return axios.delete(
-      `${this.url}/google/calendar/events/${encodeURIComponent(id)}`
+      `${this.url}/google/calendar/events/${encodeURIComponent(id)}`,
+      { params: { calendar_id: calendarId } }
     );
   }
 

@@ -141,10 +141,15 @@ class TeamsGraphAPI extends ApiClient {
 
   // ---------- agenda ----------
   // eventos entre duas datas (ISO), no fuso informado
-  calendar({ from, to, timeZone }) {
+  calendar({ from, to, timeZone, calendarIds }) {
     return axios.get(`${this.url}/teams_calendar`, {
-      params: { from, to, time_zone: timeZone },
+      params: { from, to, time_zone: timeZone, calendar_ids: calendarIds },
     });
+  }
+
+  // OUTSIDER: as agendas da pessoa e as compartilhadas com ela
+  calendars() {
+    return axios.get(`${this.url}/teams_calendar/calendars`);
   }
 
   // { subject, start, end, time_zone, attendees: [email], body, online: true/false, all_day }
@@ -152,8 +157,13 @@ class TeamsGraphAPI extends ApiClient {
     return axios.post(`${this.url}/teams_calendar`, data);
   }
 
-  deleteEvent(id) {
-    return axios.delete(`${this.url}/teams_calendar/${encodeURIComponent(id)}`);
+  deleteEvent(id, calendarId) {
+    return axios.delete(
+      `${this.url}/teams_calendar/${encodeURIComponent(id)}`,
+      {
+        params: { calendar_id: calendarId },
+      }
+    );
   }
 }
 

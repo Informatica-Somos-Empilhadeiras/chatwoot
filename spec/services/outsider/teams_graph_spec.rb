@@ -541,7 +541,7 @@ RSpec.describe 'Outsider Conectar meu Teams (Microsoft Graph)', type: :request d
   it 'keeps the agenda in Microsoft: reads it in the person time zone, marks Teams meetings and cancels them' do
     api = "/api/v1/accounts/#{account.id}/outsider"
     link.update!(scope_version: Outsider::Teams::Graph::Login::SCOPE_VERSION, access_token: 'token-v2')
-    view = stub_request(:get, %r{graph.microsoft.com/v1.0/me/calendarView\?})
+    view = stub_request(:get, %r{graph.microsoft.com/v1.0/me/calendar/calendarView\?})
            .with(headers: { 'Prefer' => 'outlook.timezone="America/Sao_Paulo"', 'Authorization' => 'Bearer token-v2' })
            .to_return(graph_json(value: [{ id: 'ev-1', subject: 'Reunião de vendas', start: { dateTime: '2026-11-10T09:00:00.0000000' },
                                            end: { dateTime: '2026-11-10T10:00:00.0000000' }, isOnlineMeeting: true,
@@ -555,7 +555,7 @@ RSpec.describe 'Outsider Conectar meu Teams (Microsoft Graph)', type: :request d
                                                             'join_url' => 'https://teams.microsoft.com/l/meetup-join/x', 'mine' => false,
                                                             'organizer' => 'Paula', 'response' => 'accepted')
 
-    create_event = stub_request(:post, 'https://graph.microsoft.com/v1.0/me/events')
+    create_event = stub_request(:post, 'https://graph.microsoft.com/v1.0/me/calendar/events')
                    .with(body: hash_including('subject' => 'Alinhamento', 'isOnlineMeeting' => true, 'onlineMeetingProvider' => 'teamsForBusiness',
                                               'start' => { 'dateTime' => '2026-11-11T14:00:00', 'timeZone' => 'America/Sao_Paulo' },
                                               'attendees' => [{ 'emailAddress' => { 'address' => 'ana@empresa.com' }, 'type' => 'required' }]))
@@ -569,7 +569,7 @@ RSpec.describe 'Outsider Conectar meu Teams (Microsoft Graph)', type: :request d
     expect(response.parsed_body).to include('id' => 'ev-2', 'mine' => true)
 
     # OUTSIDER (Maps): o local exato vai com as coordenadas e o link do Maps, e volta na lista
-    with_place = stub_request(:post, 'https://graph.microsoft.com/v1.0/me/events')
+    with_place = stub_request(:post, 'https://graph.microsoft.com/v1.0/me/calendar/events')
                  .with(body: hash_including('location' => { 'displayName' => 'Galpão - Rua 10, 250',
                                                             'coordinates' => { 'latitude' => -16.68, 'longitude' => -49.25 } },
                                             'body' => { 'contentType' => 'text',
@@ -586,9 +586,51 @@ RSpec.describe 'Outsider Conectar meu Teams (Microsoft Graph)', type: :request d
                                   headers: agent.create_new_auth_token, as: :json
     expect(response).to have_http_status(:unprocessable_entity)
 
-    remove = stub_request(:delete, 'https://graph.microsoft.com/v1.0/me/events/ev-2').to_return(status: 204)
+    remove = stub_request(:delete, 'https://graph.microsoft.com/v1.0/me/calendar/events/ev-2').to_return(status: 204)
     delete "#{api}/teams_calendar/ev-2", headers: agent.create_new_auth_token, as: :json
     expect(remove).to have_been_requested
     expect(response).to have_http_status(:no_content)
+  end
+
+  it 'lists the shared calendars (with edit rights) and reads/marks/cancels events in the chosen one' do
+    api = "/api/v1/accounts/#{account.id}/outsider"
+    link.update!(scope_version: Outsider::Teams::Graph::Login::SCOPE_VERSION, access_token: 'token-v2')
+    stub_request(:get, %r{graph.microsoft.com/v1.0/me/calendars\?})
+      .to_return(graph_json(value: [{ id: 'AAA', name: 'Calendário', isDefaultCalendar: true, canEdit: true },
+                                    { id: 'TEC/1', name: 'Técnicos', canEdit: true, hexColor: '#ff0000' }]))
+    get "#{api}/teams_calendar/calendars", headers: agent.create_new_auth_token, as: :json
+    expect(response.parsed_body).to include('complete' => true)
+    expect(response.parsed_body['payload'].pluck('id', 'can_edit')).to eq([['primary', true], ['TEC/1', true]])
+
+    shared = stub_request(:get, %r{graph.microsoft.com/v1.0/me/calendars/TEC%2F1/calendarView\?})
+             .to_return(graph_json(value: [{ id: 'ev-9', subject: 'OS 900', start: { dateTime: '2026-11-10T09:00:00.0000000' },
+                                             end: { dateTime: '2026-11-10T10:00:00.0000000' } }]))
+    stub_request(:get, %r{graph.microsoft.com/v1.0/me/calendar/calendarView\?}).to_return(graph_json(value: []))
+    get "#{api}/teams_calendar", params: { from: '2026-11-09', to: '2026-11-16', calendar_ids: %w[primary TEC/1] },
+                                 headers: agent.create_new_auth_token
+    expect(shared).to have_been_requested
+    expect(response.parsed_body['payload'].sole).to include('id' => 'ev-9', 'calendar_id' => 'TEC/1')
+
+    marked = stub_request(:post, 'https://graph.microsoft.com/v1.0/me/calendars/TEC%2F1/events')
+             .to_return(graph_json(id: 'ev-10', subject: 'OS 901', isOrganizer: true))
+    post "#{api}/teams_calendar", params: { subject: 'OS 901', start: '2026-11-11T14:00:00', end: '2026-11-11T15:00:00', calendar_id: 'TEC/1' },
+                                  headers: agent.create_new_auth_token, as: :json
+    expect(marked).to have_been_requested
+    expect(response.parsed_body).to include('id' => 'ev-10', 'calendar_id' => 'TEC/1')
+
+    removed = stub_request(:delete, 'https://graph.microsoft.com/v1.0/me/calendars/TEC%2F1/events/ev-10').to_return(status: 204)
+    delete "#{api}/teams_calendar/ev-10", params: { calendar_id: 'TEC/1' }, headers: agent.create_new_auth_token, as: :json
+    expect(removed).to have_been_requested
+  end
+
+  it 'keeps only the main calendar until the person signs in again with the shared-calendar permission' do
+    api = "/api/v1/accounts/#{account.id}/outsider"
+    link.update!(scope_version: 4, access_token: 'token-v2')
+    stub_request(:get, %r{graph.microsoft.com/v1.0/me/calendars\?})
+      .to_return(graph_json(value: [{ id: 'AAA', name: 'Calendário', isDefaultCalendar: true, canEdit: true },
+                                    { id: 'TEC', name: 'Técnicos', canEdit: true }]))
+    get "#{api}/teams_calendar/calendars", headers: agent.create_new_auth_token, as: :json
+    expect(response.parsed_body).to include('complete' => false)
+    expect(response.parsed_body['payload'].pluck('id')).to eq(['primary'])
   end
 end

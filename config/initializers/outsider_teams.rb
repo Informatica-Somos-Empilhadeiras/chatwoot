@@ -33,7 +33,9 @@ Rails.application.routes.prepend do
             delete 'teams_graph/me', to: 'teams_graph#disconnect'
             delete 'teams_graph/links/:link_id', to: 'teams_graph#destroy_link'
             # agenda do Teams/Outlook da pessoa (ver e marcar reunião)
-            resources :teams_calendar, only: [:index, :create, :destroy]
+            resources :teams_calendar, only: [:index, :create, :destroy] do
+              get :calendars, on: :collection # OUTSIDER: agendas da pessoa e as compartilhadas com ela
+            end
             resources :teams_threads, only: [:index, :show] do
               collection do
                 get :summary

@@ -30,20 +30,24 @@ class Outsider::Erp::OrderCalendars
 
   # event: { subject, start, finish ("2026-11-25T09:00:00", no fuso da pessoa), all_day, attendees, body, location,
   #          place { name, address, latitude, longitude } (opcional: o ponto exato) }
-  # => { provider, id, web_link }
-  def create(provider, event)
-    case provider.to_s
-    when 'microsoft' then create_microsoft(event)
-    when 'google' then create_google(event)
-    else raise ArgumentError, 'provider'
-    end
+  # calendar_id: a agenda escolhida (uma compartilhada com a pessoa, por exemplo a dos técnicos); 'primary' = a dela
+  # => { provider, id, web_link, calendar_id }
+  def create(provider, event, calendar_id: 'primary')
+    calendar_id = calendar_id.to_s.presence || 'primary'
+    row = case provider.to_s
+          when 'microsoft' then create_microsoft(event, calendar_id)
+          when 'google' then create_google(event, calendar_id)
+          else raise ArgumentError, 'provider'
+          end
+    row.merge(calendar_id: calendar_id)
   end
 
   # cancela o evento (o Google e a Microsoft avisam os convidados); já apagado na agenda conta como cancelado
-  def delete(provider, id)
+  def delete(provider, id, calendar_id: 'primary')
+    calendar_id = calendar_id.to_s.presence || 'primary'
     case provider.to_s
-    when 'microsoft' then microsoft_client.delete("/me/events/#{Outsider::Teams::Graph::Client.enc(id)}")
-    when 'google' then Outsider::Apps::Google::Calendar.new(google_link, @zone).delete(id)
+    when 'microsoft' then microsoft_client.delete("#{microsoft_calendar(calendar_id)}/events/#{Outsider::Teams::Graph::Client.enc(id)}")
+    when 'google' then Outsider::Apps::Google::Calendar.new(google_link, @zone).delete(id, calendar_id: calendar_id)
     end
     true
   rescue Error => e
@@ -76,7 +80,11 @@ class Outsider::Erp::OrderCalendars
     Outsider::Teams::Graph::Client.new(microsoft_link)
   end
 
-  def create_microsoft(event)
+  def microsoft_calendar(calendar_id)
+    calendar_id == 'primary' ? '/me/calendar' : "/me/calendars/#{Outsider::Teams::Graph::Client.enc(calendar_id)}"
+  end
+
+  def create_microsoft(event, calendar_id)
     body = {
       subject: event[:subject], isAllDay: event[:all_day] == true,
       start: { dateTime: microsoft_time(event[:start], event[:all_day]), timeZone: @zone },
@@ -85,7 +93,7 @@ class Outsider::Erp::OrderCalendars
       attendees: Array(event[:attendees]).map { |email| { emailAddress: { address: email }, type: 'required' } }
     }
     body[:location] = microsoft_location(event) if event[:location].present?
-    data = microsoft_client.post('/me/events', body, headers: { 'Prefer' => "outlook.timezone=\"#{@zone}\"" })
+    data = microsoft_client.post("#{microsoft_calendar(calendar_id)}/events", body, headers: { 'Prefer' => "outlook.timezone=\"#{@zone}\"" })
     { provider: 'microsoft', id: data['id'], web_link: data['webLink'] }
   end
 
@@ -103,12 +111,12 @@ class Outsider::Erp::OrderCalendars
     all_day ? "#{value.to_s.first(10)}T00:00:00" : value.to_s.first(19)
   end
 
-  def create_google(event)
+  def create_google(event, calendar_id)
     raise Error.new('not_connected', 422) unless ready?('google')
 
     data = Outsider::Apps::Google::Calendar.new(google_link, @zone).create(
       subject: event[:subject], start: event[:start], finish: event[:finish], all_day: event[:all_day] == true, online: false,
-      attendees: event[:attendees], body: event[:body], location: event[:location], place: event[:place]
+      attendees: event[:attendees], body: event[:body], location: event[:location], place: event[:place], calendar_id: calendar_id
     )
     { provider: 'google', id: data[:id], web_link: data[:web_link] }
   end

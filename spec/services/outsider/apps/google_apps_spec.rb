@@ -397,5 +397,47 @@ RSpec.describe 'Outsider Aplicativos Google (Gmail, Agenda e Drive)', type: :req
       get "#{base}/calendar/people", headers: auth, as: :json
       expect(response.parsed_body['payload']).to include({ 'name' => 'Colega', 'email' => 'colega@empresa.com' })
     end
+
+    it 'lists the calendars shared with the person and reads/marks/cancels events in the chosen one' do
+      stub_request(:get, %r{calendar/v3/users/me/calendarList})
+        .to_return(ok(items: [{ id: 'tec@group.calendar.google.com', summary: 'Técnicos', accessRole: 'writer', backgroundColor: '#f00' },
+                              { id: 'agente@gmail.com', summary: 'agente@gmail.com', primary: true, accessRole: 'owner' },
+                              { id: 'feriados', summary: 'Feriados', accessRole: 'reader' },
+                              { id: 'velha', summary: 'Escondida', accessRole: 'owner', hidden: true }]))
+      get "#{base}/calendar/calendars", headers: auth, as: :json
+      expect(response.parsed_body['complete']).to be(true)
+      expect(response.parsed_body['payload'].map { |c| c.values_at('id', 'name', 'can_edit') })
+        .to eq([['primary', 'agente@gmail.com', true], ['tec@group.calendar.google.com', 'Técnicos', true], ['feriados', 'Feriados', false]])
+
+      shared = stub_request(:get, %r{calendars/tec@group.calendar.google.com/events\?})
+               .to_return(ok(items: [{ id: 'S1', summary: 'OS 900', start: { dateTime: '2026-11-24T13:00:00Z' },
+                                       end: { dateTime: '2026-11-24T14:00:00Z' } }]))
+      stub_request(:get, %r{calendars/primary/events\?}).to_return(ok(items: [{ id: 'S1', summary: 'Mesmo id', start: { date: '2026-11-25' },
+                                                                                end: { date: '2026-11-26' } }]))
+      get "#{base}/calendar/events", params: { from: '2026-11-23T03:00:00Z', to: '2026-11-30T03:00:00Z', time_zone: 'America/Sao_Paulo',
+                                               calendar_ids: %w[primary tec@group.calendar.google.com] }, headers: auth
+      expect(shared).to have_been_requested
+      expect(response.parsed_body['payload'].map { |e| e.values_at('id', 'calendar_id') })
+        .to eq([%w[S1 primary], %w[S1 tec@group.calendar.google.com]])
+
+      marked = stub_request(:post, %r{calendars/tec@group.calendar.google.com/events\?})
+               .to_return(ok(id: 'S2', summary: 'OS 901', start: { dateTime: '2026-11-26T09:00:00-03:00' },
+                             end: { dateTime: '2026-11-26T10:00:00-03:00' }))
+      post "#{base}/calendar/events", params: { subject: 'OS 901', start: '2026-11-26T09:00:00', end: '2026-11-26T10:00:00', online: false,
+                                                calendar_id: 'tec@group.calendar.google.com' }, headers: auth, as: :json
+      expect(marked).to have_been_requested
+      expect(response.parsed_body).to include('id' => 'S2', 'calendar_id' => 'tec@group.calendar.google.com')
+
+      removed = stub_request(:delete, %r{calendars/tec@group.calendar.google.com/events/S2}).to_return(status: 204)
+      delete "#{base}/calendar/events/S2", params: { calendar_id: 'tec@group.calendar.google.com' }, headers: auth, as: :json
+      expect(removed).to have_been_requested
+    end
+
+    it 'shows only the main calendar until the person signs in again with the calendar-list permission' do
+      link.update!(scopes: all_scopes.sub(" #{Outsider::GoogleLink::FEATURES[:calendars]}", ''))
+      get "#{base}/calendar/calendars", headers: auth, as: :json
+      expect(response.parsed_body['complete']).to be(false)
+      expect(response.parsed_body['payload'].sole).to include('id' => 'primary', 'name' => 'agente@gmail.com', 'can_edit' => true)
+    end
   end
 end
